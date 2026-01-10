@@ -1,0 +1,5 @@
+name: EasyActions
+components:
+  communication:
+    plugins:
+      EasyCommunicationPlugin: {}

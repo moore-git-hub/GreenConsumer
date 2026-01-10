@@ -1,0 +1,42 @@
+templates:
+  - name: "ConsumerAgent"
+    # 定义组件初始化的顺序
+    component_order:
+        - "profile"
+        - "state"
+        - "perceive"
+        - "reflect"
+        - "plan"
+        - "invoke"
+    components:
+      # 1. 画像组件
+      profile:
+        plugin:
+          GreenProfilePlugin:
+            # 这里对应 simulation_config.yaml 里的 data key
+            profile_data: "agent_profiles"
+
+      # 2. 状态组件
+      state:
+        plugin:
+          GreenStatePlugin: {}
+
+      # 3. 感知组件 (新增)
+      perceive:
+        plugin:
+          GreenPerceivePlugin: {}
+
+      # 4. 认知/反思组件 (新增 - 对应代码中的 reflect)
+      reflect:
+        plugin:
+          GreenCognitionPlugin: {}
+
+      # 5. 计划/决策组件 (新增)
+      plan:
+        plugin:
+          ConsumerPlanPlugin: {}
+
+      # 6. 执行组件 (新增)
+      invoke:
+        plugin:
+          GreenInvokePlugin: {}

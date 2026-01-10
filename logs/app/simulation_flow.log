@@ -1,0 +1,142 @@
+2026-01-09 15:14:01 | INFO     | PID:48456 | __main__:main:29 - Project path set to: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\examples\standalone_test
+2026-01-09 15:14:01 | INFO     | PID:48456 | __main__:main:31 - Creating simulation builder...
+2026-01-09 15:14:01 | INFO     | PID:48456 | __main__:main:34 - Assembling all simulation components...
+2026-01-09 15:14:01 | INFO     | PID:48456 | __main__:main:39 - --- Starting Simulation Run for 10 ticks ---
+2026-01-09 15:14:06 | ERROR    | PID:48456 | __main__:main:69 - Simulation failed: list indices must be integers or slices, not str
+2026-01-09 15:14:06 | ERROR    | PID:48456 | __main__:main:70 - An unhandled exception occurred during simulation.
+Traceback (most recent call last):
+  File "E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\examples\standalone_test\run_simulation.py", line 48, in main
+    await controller.step_agent()
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\controller\controller.py", line 68, in step_agent
+    await self._agent_manager.run_tick(current_tick)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\agent\agent_manager.py", line 120, in run_tick
+    await asyncio.gather(*tasks)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\agent\agent.py", line 206, in run
+    await component.execute(current_tick)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\agent\components\invoke.py", line 67, in execute
+    await self._plugin.execute(current_tick)
+  File "E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\examples\standalone_test\plugins\agent\invoke\EasyInvokePlugin.py", line 28, in execute
+    if plan['action'] == 'move':
+       ~~~~^^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+2026-01-09 15:14:06 | INFO     | PID:48456 | __main__:main:74 - Controller close result is None
+2026-01-09 15:14:06 | INFO     | PID:48456 | __main__:main:77 - System close result is True
+2026-01-09 15:14:06 | INFO     | PID:48456 | __main__:<module>:87 - Simulation ended.
+2026-01-09 15:18:03 | INFO     | PID:4168 | __main__:main:29 - Project path set to: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\examples\standalone_test
+2026-01-09 15:18:03 | INFO     | PID:4168 | __main__:main:31 - Creating simulation builder...
+2026-01-09 15:18:03 | INFO     | PID:4168 | __main__:main:34 - Assembling all simulation components...
+2026-01-09 15:18:03 | INFO     | PID:4168 | __main__:main:39 - --- Starting Simulation Run for 10 ticks ---
+2026-01-09 15:18:06 | INFO     | PID:4168 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 15:18:06 | INFO     | PID:4168 | __main__:main:61 - --- Tick 0 finished in 2.8774 seconds ---
+2026-01-09 15:18:11 | INFO     | PID:4168 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 15:18:11 | INFO     | PID:4168 | __main__:main:61 - --- Tick 1 finished in 4.6933 seconds ---
+2026-01-09 15:18:15 | INFO     | PID:4168 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 15:18:15 | INFO     | PID:4168 | __main__:main:61 - --- Tick 2 finished in 4.5197 seconds ---
+2026-01-09 15:18:17 | INFO     | PID:4168 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 15:18:17 | INFO     | PID:4168 | __main__:main:61 - --- Tick 3 finished in 1.3390 seconds ---
+2026-01-09 15:18:20 | INFO     | PID:4168 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 15:18:20 | INFO     | PID:4168 | __main__:main:61 - --- Tick 4 finished in 3.1244 seconds ---
+2026-01-09 15:18:24 | INFO     | PID:4168 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 15:18:24 | INFO     | PID:4168 | __main__:main:61 - --- Tick 5 finished in 3.9917 seconds ---
+2026-01-09 15:18:28 | INFO     | PID:4168 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 15:18:28 | INFO     | PID:4168 | __main__:main:61 - --- Tick 6 finished in 4.2951 seconds ---
+2026-01-09 15:18:37 | INFO     | PID:4168 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 15:18:37 | INFO     | PID:4168 | __main__:main:61 - --- Tick 7 finished in 9.0001 seconds ---
+2026-01-09 15:18:39 | INFO     | PID:4168 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 15:18:39 | INFO     | PID:4168 | __main__:main:61 - --- Tick 8 finished in 1.4130 seconds ---
+2026-01-09 15:18:42 | INFO     | PID:4168 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 15:18:42 | INFO     | PID:4168 | __main__:main:61 - --- Tick 9 finished in 2.9301 seconds ---
+2026-01-09 15:18:42 | INFO     | PID:4168 | __main__:main:65 - 
+--- Ran 10 ticks. Average time per tick: 3.8184 seconds ---
+2026-01-09 15:18:42 | INFO     | PID:4168 | __main__:main:67 - 
+--- Simulation Finished ---
+2026-01-09 15:18:42 | INFO     | PID:4168 | __main__:main:74 - Controller close result is None
+2026-01-09 15:18:42 | INFO     | PID:4168 | __main__:main:77 - System close result is True
+2026-01-09 15:18:42 | INFO     | PID:4168 | __main__:<module>:87 - Simulation ended.
+2026-01-09 16:32:49 | INFO     | PID:41032 | __main__:main:29 - Project path set to: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\examples\standalone_test
+2026-01-09 16:32:49 | INFO     | PID:41032 | __main__:main:31 - Creating simulation builder...
+2026-01-09 16:32:49 | INFO     | PID:41032 | __main__:main:34 - Assembling all simulation components...
+2026-01-09 16:32:49 | INFO     | PID:41032 | __main__:main:39 - --- Starting Simulation Run for 10 ticks ---
+2026-01-09 16:32:50 | INFO     | PID:41032 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:32:50 | INFO     | PID:41032 | __main__:main:61 - --- Tick 0 finished in 1.1985 seconds ---
+2026-01-09 16:32:53 | INFO     | PID:41032 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:32:53 | INFO     | PID:41032 | __main__:main:61 - --- Tick 1 finished in 3.3527 seconds ---
+2026-01-09 16:32:59 | ERROR    | PID:41032 | __main__:main:69 - Simulation failed: list indices must be integers or slices, not str
+2026-01-09 16:32:59 | ERROR    | PID:41032 | __main__:main:70 - An unhandled exception occurred during simulation.
+Traceback (most recent call last):
+  File "E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\examples\standalone_test\run_simulation.py", line 48, in main
+    await controller.step_agent()
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\controller\controller.py", line 68, in step_agent
+    await self._agent_manager.run_tick(current_tick)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\agent\agent_manager.py", line 120, in run_tick
+    await asyncio.gather(*tasks)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\agent\agent.py", line 206, in run
+    await component.execute(current_tick)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\agent\components\invoke.py", line 67, in execute
+    await self._plugin.execute(current_tick)
+  File "E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\examples\standalone_test\plugins\agent\invoke\EasyInvokePlugin.py", line 28, in execute
+    if plan['action'] == 'move':
+       ~~~~^^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+2026-01-09 16:32:59 | INFO     | PID:41032 | __main__:main:74 - Controller close result is None
+2026-01-09 16:32:59 | INFO     | PID:41032 | __main__:main:77 - System close result is True
+2026-01-09 16:32:59 | INFO     | PID:41032 | __main__:<module>:87 - Simulation ended.
+2026-01-09 16:33:22 | INFO     | PID:392 | __main__:main:29 - Project path set to: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\examples\standalone_test
+2026-01-09 16:33:22 | INFO     | PID:392 | __main__:main:31 - Creating simulation builder...
+2026-01-09 16:33:22 | INFO     | PID:392 | __main__:main:34 - Assembling all simulation components...
+2026-01-09 16:33:22 | INFO     | PID:392 | __main__:main:39 - --- Starting Simulation Run for 10 ticks ---
+2026-01-09 16:33:28 | INFO     | PID:392 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:33:28 | INFO     | PID:392 | __main__:main:61 - --- Tick 0 finished in 5.0702 seconds ---
+2026-01-09 16:33:32 | INFO     | PID:392 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:33:32 | INFO     | PID:392 | __main__:main:61 - --- Tick 1 finished in 4.4090 seconds ---
+2026-01-09 16:33:35 | ERROR    | PID:392 | __main__:main:69 - Simulation failed: list indices must be integers or slices, not str
+2026-01-09 16:33:35 | ERROR    | PID:392 | __main__:main:70 - An unhandled exception occurred during simulation.
+Traceback (most recent call last):
+  File "E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\examples\standalone_test\run_simulation.py", line 48, in main
+    await controller.step_agent()
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\controller\controller.py", line 68, in step_agent
+    await self._agent_manager.run_tick(current_tick)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\agent\agent_manager.py", line 120, in run_tick
+    await asyncio.gather(*tasks)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\agent\agent.py", line 206, in run
+    await component.execute(current_tick)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\agent\components\invoke.py", line 67, in execute
+    await self._plugin.execute(current_tick)
+  File "E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\examples\standalone_test\plugins\agent\invoke\EasyInvokePlugin.py", line 28, in execute
+    if plan['action'] == 'move':
+       ~~~~^^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+2026-01-09 16:33:35 | INFO     | PID:392 | __main__:main:74 - Controller close result is None
+2026-01-09 16:33:35 | INFO     | PID:392 | __main__:main:77 - System close result is True
+2026-01-09 16:33:35 | INFO     | PID:392 | __main__:<module>:87 - Simulation ended.
+2026-01-09 16:34:05 | INFO     | PID:40612 | __main__:main:29 - Project path set to: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\examples\standalone_test
+2026-01-09 16:34:05 | INFO     | PID:40612 | __main__:main:31 - Creating simulation builder...
+2026-01-09 16:34:05 | INFO     | PID:40612 | __main__:main:34 - Assembling all simulation components...
+2026-01-09 16:34:05 | INFO     | PID:40612 | __main__:main:39 - --- Starting Simulation Run for 10 ticks ---
+2026-01-09 16:34:07 | INFO     | PID:40612 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:34:07 | INFO     | PID:40612 | __main__:main:61 - --- Tick 0 finished in 2.1406 seconds ---
+2026-01-09 16:34:11 | INFO     | PID:40612 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:34:11 | INFO     | PID:40612 | __main__:main:61 - --- Tick 1 finished in 4.0210 seconds ---
+2026-01-09 16:34:14 | INFO     | PID:40612 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:34:14 | INFO     | PID:40612 | __main__:main:61 - --- Tick 2 finished in 2.7891 seconds ---
+2026-01-09 16:34:17 | INFO     | PID:40612 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:34:17 | INFO     | PID:40612 | __main__:main:61 - --- Tick 3 finished in 2.8516 seconds ---
+2026-01-09 16:34:21 | INFO     | PID:40612 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:34:21 | INFO     | PID:40612 | __main__:main:61 - --- Tick 4 finished in 4.7789 seconds ---
+2026-01-09 16:34:23 | INFO     | PID:40612 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:34:23 | INFO     | PID:40612 | __main__:main:61 - --- Tick 5 finished in 2.0405 seconds ---
+2026-01-09 16:34:28 | INFO     | PID:40612 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:34:28 | INFO     | PID:40612 | __main__:main:61 - --- Tick 6 finished in 5.0303 seconds ---
+2026-01-09 16:34:32 | INFO     | PID:40612 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:34:32 | INFO     | PID:40612 | __main__:main:61 - --- Tick 7 finished in 3.7723 seconds ---
+2026-01-09 16:34:35 | INFO     | PID:40612 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:34:35 | INFO     | PID:40612 | __main__:main:61 - --- Tick 8 finished in 2.5352 seconds ---
+2026-01-09 16:34:39 | INFO     | PID:40612 | examples.standalone_test.custom_controller:update_agents_status:23 - Updating agent status...
+2026-01-09 16:34:39 | INFO     | PID:40612 | __main__:main:61 - --- Tick 9 finished in 4.4063 seconds ---
+2026-01-09 16:34:39 | INFO     | PID:40612 | __main__:main:65 - 
+--- Ran 10 ticks. Average time per tick: 3.4366 seconds ---
+2026-01-09 16:34:39 | INFO     | PID:40612 | __main__:main:67 - 
+--- Simulation Finished ---
+2026-01-09 16:34:39 | INFO     | PID:40612 | __main__:main:74 - Controller close result is None
+2026-01-09 16:34:39 | INFO     | PID:40612 | __main__:main:77 - System close result is True
+2026-01-09 16:34:39 | INFO     | PID:40612 | __main__:<module>:87 - Simulation ended.

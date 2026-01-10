@@ -1,0 +1,45 @@
+2026-01-09 15:14:01 | INFO     | PID:48456 | agentkernel_standalone.mas.system.components.messager:__init__:57 - Messager initialized
+2026-01-09 15:14:01 | INFO     | PID:48456 | agentkernel_standalone.mas.system.system:add_component:38 - Component 'messager' has been added to the system.
+2026-01-09 15:14:01 | INFO     | PID:48456 | agentkernel_standalone.mas.system.components.timer:__init__:36 - Timer initialized at 2026-01-09T07:14:01.512637+00:00 with config: {"start_tick":0,"timeout_ticks":5}
+2026-01-09 15:14:01 | INFO     | PID:48456 | agentkernel_standalone.mas.system.system:add_component:38 - Component 'timer' has been added to the system.
+2026-01-09 15:14:01 | INFO     | PID:48456 | agentkernel_standalone.mas.system.system:post_init:47 - Running post_init for all applicable system components...
+2026-01-09 15:14:01 | INFO     | PID:48456 | agentkernel_standalone.mas.system.system:post_init:61 - All applicable system components have been post-initialized.
+2026-01-09 15:14:06 | INFO     | PID:48456 | agentkernel_standalone.mas.system.system:close:101 - Closing all applicable system components...
+2026-01-09 15:14:06 | INFO     | PID:48456 | agentkernel_standalone.mas.system.system:close:108 - Component 'messager' has been closed.
+2026-01-09 15:14:06 | INFO     | PID:48456 | agentkernel_standalone.mas.system.system:close:108 - Component 'timer' has been closed.
+2026-01-09 15:18:03 | INFO     | PID:4168 | agentkernel_standalone.mas.system.components.messager:__init__:57 - Messager initialized
+2026-01-09 15:18:03 | INFO     | PID:4168 | agentkernel_standalone.mas.system.system:add_component:38 - Component 'messager' has been added to the system.
+2026-01-09 15:18:03 | INFO     | PID:4168 | agentkernel_standalone.mas.system.components.timer:__init__:36 - Timer initialized at 2026-01-09T07:18:03.863557+00:00 with config: {"start_tick":0,"timeout_ticks":5}
+2026-01-09 15:18:03 | INFO     | PID:4168 | agentkernel_standalone.mas.system.system:add_component:38 - Component 'timer' has been added to the system.
+2026-01-09 15:18:03 | INFO     | PID:4168 | agentkernel_standalone.mas.system.system:post_init:47 - Running post_init for all applicable system components...
+2026-01-09 15:18:03 | INFO     | PID:4168 | agentkernel_standalone.mas.system.system:post_init:61 - All applicable system components have been post-initialized.
+2026-01-09 15:18:42 | INFO     | PID:4168 | agentkernel_standalone.mas.system.system:close:101 - Closing all applicable system components...
+2026-01-09 15:18:42 | INFO     | PID:4168 | agentkernel_standalone.mas.system.system:close:108 - Component 'messager' has been closed.
+2026-01-09 15:18:42 | INFO     | PID:4168 | agentkernel_standalone.mas.system.system:close:108 - Component 'timer' has been closed.
+2026-01-09 16:32:49 | INFO     | PID:41032 | agentkernel_standalone.mas.system.components.messager:__init__:57 - Messager initialized
+2026-01-09 16:32:49 | INFO     | PID:41032 | agentkernel_standalone.mas.system.system:add_component:38 - Component 'messager' has been added to the system.
+2026-01-09 16:32:49 | INFO     | PID:41032 | agentkernel_standalone.mas.system.components.timer:__init__:36 - Timer initialized at 2026-01-09T08:32:49.332506+00:00 with config: {"start_tick":0,"timeout_ticks":5}
+2026-01-09 16:32:49 | INFO     | PID:41032 | agentkernel_standalone.mas.system.system:add_component:38 - Component 'timer' has been added to the system.
+2026-01-09 16:32:49 | INFO     | PID:41032 | agentkernel_standalone.mas.system.system:post_init:47 - Running post_init for all applicable system components...
+2026-01-09 16:32:49 | INFO     | PID:41032 | agentkernel_standalone.mas.system.system:post_init:61 - All applicable system components have been post-initialized.
+2026-01-09 16:32:59 | INFO     | PID:41032 | agentkernel_standalone.mas.system.system:close:101 - Closing all applicable system components...
+2026-01-09 16:32:59 | INFO     | PID:41032 | agentkernel_standalone.mas.system.system:close:108 - Component 'messager' has been closed.
+2026-01-09 16:32:59 | INFO     | PID:41032 | agentkernel_standalone.mas.system.system:close:108 - Component 'timer' has been closed.
+2026-01-09 16:33:22 | INFO     | PID:392 | agentkernel_standalone.mas.system.components.messager:__init__:57 - Messager initialized
+2026-01-09 16:33:22 | INFO     | PID:392 | agentkernel_standalone.mas.system.system:add_component:38 - Component 'messager' has been added to the system.
+2026-01-09 16:33:22 | INFO     | PID:392 | agentkernel_standalone.mas.system.components.timer:__init__:36 - Timer initialized at 2026-01-09T08:33:22.959489+00:00 with config: {"start_tick":0,"timeout_ticks":5}
+2026-01-09 16:33:22 | INFO     | PID:392 | agentkernel_standalone.mas.system.system:add_component:38 - Component 'timer' has been added to the system.
+2026-01-09 16:33:22 | INFO     | PID:392 | agentkernel_standalone.mas.system.system:post_init:47 - Running post_init for all applicable system components...
+2026-01-09 16:33:22 | INFO     | PID:392 | agentkernel_standalone.mas.system.system:post_init:61 - All applicable system components have been post-initialized.
+2026-01-09 16:33:35 | INFO     | PID:392 | agentkernel_standalone.mas.system.system:close:101 - Closing all applicable system components...
+2026-01-09 16:33:35 | INFO     | PID:392 | agentkernel_standalone.mas.system.system:close:108 - Component 'messager' has been closed.
+2026-01-09 16:33:35 | INFO     | PID:392 | agentkernel_standalone.mas.system.system:close:108 - Component 'timer' has been closed.
+2026-01-09 16:34:05 | INFO     | PID:40612 | agentkernel_standalone.mas.system.components.messager:__init__:57 - Messager initialized
+2026-01-09 16:34:05 | INFO     | PID:40612 | agentkernel_standalone.mas.system.system:add_component:38 - Component 'messager' has been added to the system.
+2026-01-09 16:34:05 | INFO     | PID:40612 | agentkernel_standalone.mas.system.components.timer:__init__:36 - Timer initialized at 2026-01-09T08:34:05.277126+00:00 with config: {"start_tick":0,"timeout_ticks":5}
+2026-01-09 16:34:05 | INFO     | PID:40612 | agentkernel_standalone.mas.system.system:add_component:38 - Component 'timer' has been added to the system.
+2026-01-09 16:34:05 | INFO     | PID:40612 | agentkernel_standalone.mas.system.system:post_init:47 - Running post_init for all applicable system components...
+2026-01-09 16:34:05 | INFO     | PID:40612 | agentkernel_standalone.mas.system.system:post_init:61 - All applicable system components have been post-initialized.
+2026-01-09 16:34:39 | INFO     | PID:40612 | agentkernel_standalone.mas.system.system:close:101 - Closing all applicable system components...
+2026-01-09 16:34:39 | INFO     | PID:40612 | agentkernel_standalone.mas.system.system:close:108 - Component 'messager' has been closed.
+2026-01-09 16:34:39 | INFO     | PID:40612 | agentkernel_standalone.mas.system.system:close:108 - Component 'timer' has been closed.

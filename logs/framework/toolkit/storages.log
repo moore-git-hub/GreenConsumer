@@ -1,0 +1,5 @@
+2026-01-09 15:14:01 | WARNING  | PID:48456 | agentkernel_standalone.toolkit.storages.connection_pools:create_connection_pools:29 - Database config is empty or contains no pools. Returning empty dict.
+2026-01-09 15:18:03 | WARNING  | PID:4168 | agentkernel_standalone.toolkit.storages.connection_pools:create_connection_pools:29 - Database config is empty or contains no pools. Returning empty dict.
+2026-01-09 16:32:49 | WARNING  | PID:41032 | agentkernel_standalone.toolkit.storages.connection_pools:create_connection_pools:29 - Database config is empty or contains no pools. Returning empty dict.
+2026-01-09 16:33:22 | WARNING  | PID:392 | agentkernel_standalone.toolkit.storages.connection_pools:create_connection_pools:29 - Database config is empty or contains no pools. Returning empty dict.
+2026-01-09 16:34:05 | WARNING  | PID:40612 | agentkernel_standalone.toolkit.storages.connection_pools:create_connection_pools:29 - Database config is empty or contains no pools. Returning empty dict.

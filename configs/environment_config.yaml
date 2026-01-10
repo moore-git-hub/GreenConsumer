@@ -1,0 +1,10 @@
+name: EasyEnvironment
+components:
+  relation:
+    plugin:
+      EasyRelationPlugin:
+        relations: 'agents_relation'
+  space:
+    plugin:
+      EasySpacePlugin:
+        agents: 'map_agents'

@@ -1,0 +1,80 @@
+2026-01-09 15:14:01 | INFO     | PID:48456 | agentkernel_standalone.mas.environment.base.component_base:init:65 - Plugin 'EasyRelationPlugin' for component 'relation' initialized successfully.
+2026-01-09 15:14:01 | INFO     | PID:48456 | agentkernel_standalone.mas.environment.base.component_base:init:65 - Plugin 'EasySpacePlugin' for component 'space' initialized successfully.
+2026-01-09 15:14:01 | INFO     | PID:48456 | agentkernel_standalone.mas.environment.base.component_base:post_init:73 - Actor 'relation' and its plugins initialized.
+2026-01-09 15:14:01 | INFO     | PID:48456 | agentkernel_standalone.mas.environment.base.component_base:post_init:73 - Actor 'space' and its plugins initialized.
+2026-01-09 15:14:01 | INFO     | PID:48456 | agentkernel_standalone.mas.environment.environment:post_init:48 - Environment Proxy: All components initialized.
+2026-01-09 15:14:01 | INFO     | PID:48456 | agentkernel_standalone.mas.environment.environment:save_to_db:62 - Environment Proxy: Saving state for 2 components...
+2026-01-09 15:14:01 | ERROR    | PID:48456 | agentkernel_standalone.mas.environment.environment:save_to_db:69 - Environment Proxy: Error during concurrent component save: Plugin EasySpacePlugin does not implement 'save_to_db'
+Traceback (most recent call last):
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\environment.py", line 66, in save_to_db
+    await asyncio.gather(*save_tasks)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\base\component_base.py", line 122, in forward
+    return await method_to_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\base\plugin_base.py", line 41, in save_to_db
+    raise NotImplementedError(f"Plugin {self.__class__.__name__} does not implement 'save_to_db'")
+NotImplementedError: Plugin EasySpacePlugin does not implement 'save_to_db'
+2026-01-09 15:18:03 | INFO     | PID:4168 | agentkernel_standalone.mas.environment.base.component_base:init:65 - Plugin 'EasyRelationPlugin' for component 'relation' initialized successfully.
+2026-01-09 15:18:03 | INFO     | PID:4168 | agentkernel_standalone.mas.environment.base.component_base:init:65 - Plugin 'EasySpacePlugin' for component 'space' initialized successfully.
+2026-01-09 15:18:03 | INFO     | PID:4168 | agentkernel_standalone.mas.environment.base.component_base:post_init:73 - Actor 'relation' and its plugins initialized.
+2026-01-09 15:18:03 | INFO     | PID:4168 | agentkernel_standalone.mas.environment.base.component_base:post_init:73 - Actor 'space' and its plugins initialized.
+2026-01-09 15:18:03 | INFO     | PID:4168 | agentkernel_standalone.mas.environment.environment:post_init:48 - Environment Proxy: All components initialized.
+2026-01-09 15:18:03 | INFO     | PID:4168 | agentkernel_standalone.mas.environment.environment:save_to_db:62 - Environment Proxy: Saving state for 2 components...
+2026-01-09 15:18:03 | ERROR    | PID:4168 | agentkernel_standalone.mas.environment.environment:save_to_db:69 - Environment Proxy: Error during concurrent component save: Plugin EasySpacePlugin does not implement 'save_to_db'
+Traceback (most recent call last):
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\environment.py", line 66, in save_to_db
+    await asyncio.gather(*save_tasks)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\base\component_base.py", line 122, in forward
+    return await method_to_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\base\plugin_base.py", line 41, in save_to_db
+    raise NotImplementedError(f"Plugin {self.__class__.__name__} does not implement 'save_to_db'")
+NotImplementedError: Plugin EasySpacePlugin does not implement 'save_to_db'
+2026-01-09 16:32:49 | INFO     | PID:41032 | agentkernel_standalone.mas.environment.base.component_base:init:65 - Plugin 'EasyRelationPlugin' for component 'relation' initialized successfully.
+2026-01-09 16:32:49 | INFO     | PID:41032 | agentkernel_standalone.mas.environment.base.component_base:init:65 - Plugin 'EasySpacePlugin' for component 'space' initialized successfully.
+2026-01-09 16:32:49 | INFO     | PID:41032 | agentkernel_standalone.mas.environment.base.component_base:post_init:73 - Actor 'relation' and its plugins initialized.
+2026-01-09 16:32:49 | INFO     | PID:41032 | agentkernel_standalone.mas.environment.base.component_base:post_init:73 - Actor 'space' and its plugins initialized.
+2026-01-09 16:32:49 | INFO     | PID:41032 | agentkernel_standalone.mas.environment.environment:post_init:48 - Environment Proxy: All components initialized.
+2026-01-09 16:32:49 | INFO     | PID:41032 | agentkernel_standalone.mas.environment.environment:save_to_db:62 - Environment Proxy: Saving state for 2 components...
+2026-01-09 16:32:49 | ERROR    | PID:41032 | agentkernel_standalone.mas.environment.environment:save_to_db:69 - Environment Proxy: Error during concurrent component save: Plugin EasySpacePlugin does not implement 'save_to_db'
+Traceback (most recent call last):
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\environment.py", line 66, in save_to_db
+    await asyncio.gather(*save_tasks)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\base\component_base.py", line 122, in forward
+    return await method_to_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\base\plugin_base.py", line 41, in save_to_db
+    raise NotImplementedError(f"Plugin {self.__class__.__name__} does not implement 'save_to_db'")
+NotImplementedError: Plugin EasySpacePlugin does not implement 'save_to_db'
+2026-01-09 16:33:22 | INFO     | PID:392 | agentkernel_standalone.mas.environment.base.component_base:init:65 - Plugin 'EasyRelationPlugin' for component 'relation' initialized successfully.
+2026-01-09 16:33:22 | INFO     | PID:392 | agentkernel_standalone.mas.environment.base.component_base:init:65 - Plugin 'EasySpacePlugin' for component 'space' initialized successfully.
+2026-01-09 16:33:22 | INFO     | PID:392 | agentkernel_standalone.mas.environment.base.component_base:post_init:73 - Actor 'relation' and its plugins initialized.
+2026-01-09 16:33:22 | INFO     | PID:392 | agentkernel_standalone.mas.environment.base.component_base:post_init:73 - Actor 'space' and its plugins initialized.
+2026-01-09 16:33:22 | INFO     | PID:392 | agentkernel_standalone.mas.environment.environment:post_init:48 - Environment Proxy: All components initialized.
+2026-01-09 16:33:22 | INFO     | PID:392 | agentkernel_standalone.mas.environment.environment:save_to_db:62 - Environment Proxy: Saving state for 2 components...
+2026-01-09 16:33:22 | ERROR    | PID:392 | agentkernel_standalone.mas.environment.environment:save_to_db:69 - Environment Proxy: Error during concurrent component save: Plugin EasySpacePlugin does not implement 'save_to_db'
+Traceback (most recent call last):
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\environment.py", line 66, in save_to_db
+    await asyncio.gather(*save_tasks)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\base\component_base.py", line 122, in forward
+    return await method_to_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\base\plugin_base.py", line 41, in save_to_db
+    raise NotImplementedError(f"Plugin {self.__class__.__name__} does not implement 'save_to_db'")
+NotImplementedError: Plugin EasySpacePlugin does not implement 'save_to_db'
+2026-01-09 16:34:05 | INFO     | PID:40612 | agentkernel_standalone.mas.environment.base.component_base:init:65 - Plugin 'EasyRelationPlugin' for component 'relation' initialized successfully.
+2026-01-09 16:34:05 | INFO     | PID:40612 | agentkernel_standalone.mas.environment.base.component_base:init:65 - Plugin 'EasySpacePlugin' for component 'space' initialized successfully.
+2026-01-09 16:34:05 | INFO     | PID:40612 | agentkernel_standalone.mas.environment.base.component_base:post_init:73 - Actor 'relation' and its plugins initialized.
+2026-01-09 16:34:05 | INFO     | PID:40612 | agentkernel_standalone.mas.environment.base.component_base:post_init:73 - Actor 'space' and its plugins initialized.
+2026-01-09 16:34:05 | INFO     | PID:40612 | agentkernel_standalone.mas.environment.environment:post_init:48 - Environment Proxy: All components initialized.
+2026-01-09 16:34:05 | INFO     | PID:40612 | agentkernel_standalone.mas.environment.environment:save_to_db:62 - Environment Proxy: Saving state for 2 components...
+2026-01-09 16:34:05 | ERROR    | PID:40612 | agentkernel_standalone.mas.environment.environment:save_to_db:69 - Environment Proxy: Error during concurrent component save: Plugin EasySpacePlugin does not implement 'save_to_db'
+Traceback (most recent call last):
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\environment.py", line 66, in save_to_db
+    await asyncio.gather(*save_tasks)
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\base\component_base.py", line 122, in forward
+    return await method_to_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Python\Anaconda\envs\Kernel\Lib\site-packages\agentkernel_standalone\mas\environment\base\plugin_base.py", line 41, in save_to_db
+    raise NotImplementedError(f"Plugin {self.__class__.__name__} does not implement 'save_to_db'")
+NotImplementedError: Plugin EasySpacePlugin does not implement 'save_to_db'

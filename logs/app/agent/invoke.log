@@ -1,0 +1,145 @@
+2026-01-09 15:14:02 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Jane move to (50, 60)
+2026-01-09 15:14:02 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Teresa move to (150, 150)
+2026-01-09 15:14:02 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Holly move to (150, 250)
+2026-01-09 15:14:02 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Edward move to (150, 150)
+2026-01-09 15:14:02 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Irene move to (150, 150)
+2026-01-09 15:14:02 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Gwen move to (47, 137)
+2026-01-09 15:14:02 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Henry move to (150, 150)
+2026-01-09 15:14:02 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Jasmine say to Fiona : Hello, Fiona! What's happening around here?
+2026-01-09 15:14:02 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Iris say to Fiona : Hello, Fiona! What can you tell me about the area around here?
+2026-01-09 15:14:02 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Veronica move to (150, 150)
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Aaron move to (150, 150)
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Kyle move to (150, 150)
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Tiffany move to (150, 150)
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Graham say to Mitch : Hi Mitch, what's happening around here?
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Ruth say to Paula : Hello, Paula! What's happening around here?
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Erin move to (150, 150)
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Michael move to (150, 70)
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Rachel move to (100, 100)
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Amy move to (100, 150)
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Helen move to (150, 150)
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Kim move to (150, 150)
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Cara move to (150, 150)
+2026-01-09 15:14:03 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Willow move to (150, 150)
+2026-01-09 15:14:04 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Pamela move to (150, 150)
+2026-01-09 15:14:04 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Paula say to Ruth : Hello, Ruth! How are you doing today?
+2026-01-09 15:14:04 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Caleb move to (100, 100)
+2026-01-09 15:14:04 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Danny move to (150, 150)
+2026-01-09 15:14:04 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Adam move to (150, 150)
+2026-01-09 15:14:04 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Larry move to (100, 200)
+2026-01-09 15:14:04 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Nina say to Cindy : Hi Cindy, what's up? Do you have any interesting plans or information to share?
+2026-01-09 15:14:04 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Fiona say to Iris : Hi Iris, what's happening around here?
+2026-01-09 15:14:04 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Ulysses move to (150, 176)
+2026-01-09 15:14:04 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Zane move to (150, 150)
+2026-01-09 15:14:05 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Timmy move to (150, 150)
+2026-01-09 15:14:05 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Ivan move to (150, 150)
+2026-01-09 15:14:05 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Daphne move to (50, 60)
+2026-01-09 15:14:05 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Andrew move to (50, 60)
+2026-01-09 15:14:05 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Pauline move to (50, 109)
+2026-01-09 15:14:05 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Ben move to (150, 150)
+2026-01-09 15:14:05 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Evan move to (150, 150)
+2026-01-09 15:14:05 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Kelly move to (50, 60)
+2026-01-09 15:14:05 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Giselle move to (50, 60)
+2026-01-09 15:14:06 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Thomas move to (150, 150)
+2026-01-09 15:14:06 | INFO     | PID:48456 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Bella move to (150, 150)
+2026-01-09 15:18:05 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (50, 60)
+2026-01-09 15:18:05 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Charlie move to (150, 150)
+2026-01-09 15:18:05 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What's happening around here?
+2026-01-09 15:18:06 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Alice move to (150, 150)
+2026-01-09 15:18:07 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Bob move to (277, 25)
+2026-01-09 15:18:09 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Charlie : Hello, Charlie! What can we do together or is there anything interesting happening around here?
+2026-01-09 15:18:10 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (70, 80)
+2026-01-09 15:18:11 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Alice : Hello, Alice! What can we do together or is there anything interesting around here?
+2026-01-09 15:18:12 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Alice : Hello, Alice! What's happening around here?
+2026-01-09 15:18:12 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Charlie : Hello, Charlie! What's happening around here?
+2026-01-09 15:18:13 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Diana say to Amy : Hello, Amy! How can we collaborate or help each other today?
+2026-01-09 15:18:15 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! How are you doing?
+2026-01-09 15:18:17 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What can you tell me about this area?
+2026-01-09 15:18:17 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Charlie : Hello, Charlie! What's happening around here?
+2026-01-09 15:18:17 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Alice : Hello, Alice! What's happening around here?
+2026-01-09 15:18:17 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Diana say to Amy : Hello, Amy! How can I assist you today?
+2026-01-09 15:18:18 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Charlie : Hello, Charlie! What's up?
+2026-01-09 15:18:19 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Diana say to Amy : Hello, Amy! How can we collaborate or help each other today?
+2026-01-09 15:18:19 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Alice : Hello, Alice! What can we do together today?
+2026-01-09 15:18:20 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What brings you here today?
+2026-01-09 15:18:21 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (63, 87)
+2026-01-09 15:18:21 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Alice : Hello, Alice! What's happening around here?
+2026-01-09 15:18:21 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Charlie : Hello, Charlie! What can you tell me about the area around here?
+2026-01-09 15:18:24 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! How are you doing today?
+2026-01-09 15:18:25 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Charlie : Hello, Charlie! What's happening around here?
+2026-01-09 15:18:25 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Diana say to Amy : Hello, Amy! What can we do around here?
+2026-01-09 15:18:26 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Alice : Hello Alice, nice to meet you! Do you have any suggestions on what we should do next?
+2026-01-09 15:18:28 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! How are you doing today?
+2026-01-09 15:18:29 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Alice : Hello, Alice! What brings you to this part of the map?
+2026-01-09 15:18:29 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Diana say to Amy : Hello, Amy! What brings you here today?
+2026-01-09 15:18:30 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Charlie : Hello, Charlie! What can you tell me about this area?
+2026-01-09 15:18:37 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! How are you doing today?
+2026-01-09 15:18:38 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What can you tell me about this area?
+2026-01-09 15:18:38 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Charlie : Hello, Charlie! What's happening around here?
+2026-01-09 15:18:39 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Diana say to Amy : Hello, Amy! It's nice to see you here. What brings you to this part of the map?
+2026-01-09 15:18:39 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Alice : Hello Alice, nice to meet you. What can we do together or is there anything interesting happening around here?
+2026-01-09 15:18:40 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Charlie : Hello, Charlie! What can you tell me about this area?
+2026-01-09 15:18:40 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Diana say to Amy : Hello, Amy! What's happening around here?
+2026-01-09 15:18:41 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Alice : Hello, Alice! What can we do together on this map?
+2026-01-09 15:18:42 | INFO     | PID:4168 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! How are you doing today?
+2026-01-09 16:32:50 | INFO     | PID:41032 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Charlie move to (150, 150)
+2026-01-09 16:32:50 | INFO     | PID:41032 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (50, 60)
+2026-01-09 16:32:50 | INFO     | PID:41032 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What brings you to this part of the map?
+2026-01-09 16:32:50 | INFO     | PID:41032 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Alice move to (100, 100)
+2026-01-09 16:32:51 | INFO     | PID:41032 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (100, 100)
+2026-01-09 16:32:51 | INFO     | PID:41032 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What's happening around here?
+2026-01-09 16:32:51 | INFO     | PID:41032 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Alice move to (106, 106)
+2026-01-09 16:32:53 | INFO     | PID:41032 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Charlie move to (100, 150)
+2026-01-09 16:32:55 | INFO     | PID:41032 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hi Dale, what's happening around here?
+2026-01-09 16:32:55 | INFO     | PID:41032 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Jeff : Hi Jeff, what's up? Do you have any interesting news or tasks we could work on together?
+2026-01-09 16:32:57 | INFO     | PID:41032 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Charlie move to (120, 180)
+2026-01-09 16:33:24 | INFO     | PID:392 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (50, 60)
+2026-01-09 16:33:24 | INFO     | PID:392 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Alice move to (100, 100)
+2026-01-09 16:33:24 | INFO     | PID:392 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Bob move to (277, 25)
+2026-01-09 16:33:28 | INFO     | PID:392 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Charlie move to (150, 150)
+2026-01-09 16:33:29 | INFO     | PID:392 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Alice move to (106, 106)
+2026-01-09 16:33:29 | INFO     | PID:392 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What can you tell me about this area?
+2026-01-09 16:33:31 | INFO     | PID:392 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Charlie move to (100, 100)
+2026-01-09 16:33:32 | INFO     | PID:392 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (80, 90)
+2026-01-09 16:33:33 | INFO     | PID:392 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (100, 100)
+2026-01-09 16:33:34 | INFO     | PID:392 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! How are you doing?
+2026-01-09 16:34:06 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Alice move to (100, 100)
+2026-01-09 16:34:06 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Charlie move to (150, 150)
+2026-01-09 16:34:06 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What brings you to this part of the map?
+2026-01-09 16:34:07 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (50, 60)
+2026-01-09 16:34:08 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Bob move to (277, 25)
+2026-01-09 16:34:08 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Alice move to (106, 106)
+2026-01-09 16:34:10 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (51, 60)
+2026-01-09 16:34:11 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Charlie move to (10, 10)
+2026-01-09 16:34:13 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (52, 60)
+2026-01-09 16:34:13 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Jeff : Hi Jeff, what's up? Do you have any interesting plans or information to share?
+2026-01-09 16:34:13 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Kelly : Hello Kelly, nice to meet you. What can you tell me about the area around here?
+2026-01-09 16:34:14 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What brings you here? Is there anything interesting happening around?
+2026-01-09 16:34:15 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (50, 60)
+2026-01-09 16:34:15 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Kelly : Hello Kelly, how are you doing today?
+2026-01-09 16:34:15 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Jeff : Hi Jeff, what's up? Any interesting things happening around here?
+2026-01-09 16:34:17 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What brings you here today?
+2026-01-09 16:34:17 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Kelly : Hello, Kelly! How can I assist you today?
+2026-01-09 16:34:20 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Jeff : Hello Jeff, nice to meet you. Do you have any suggestions on where I should go next or anything interesting to do around here?
+2026-01-09 16:34:20 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:move_to_pos:38 - Agent Diana move to (100, 120)
+2026-01-09 16:34:21 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello Dale! What brings you here?
+2026-01-09 16:34:23 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello Dale, it's nice to meet you. What can we do together?
+2026-01-09 16:34:23 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Diana say to Veronica : Hello, Veronica! What's happening around here?
+2026-01-09 16:34:23 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Kelly : Hello Kelly, how are you doing today?
+2026-01-09 16:34:23 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Jeff : Hi Jeff, what's up? Do you have any interesting plans or information to share?
+2026-01-09 16:34:25 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Kelly : Hello, Kelly! What's happening around here?
+2026-01-09 16:34:25 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Diana say to Veronica : Hello, Veronica! What's happening around here?
+2026-01-09 16:34:25 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Jeff : Hi Jeff, what's up? Do you have any suggestions on where to go next or anything interesting happening around here?
+2026-01-09 16:34:28 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What can you tell me about what's going on around here?
+2026-01-09 16:34:29 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What's happening around here?
+2026-01-09 16:34:31 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Diana say to Veronica : Hello, Veronica! What can you tell me about this area?
+2026-01-09 16:34:31 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Jeff : Hi Jeff, what's up? Do you have any interesting plans or information to share?
+2026-01-09 16:34:32 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Kelly : Hello Kelly, nice to meet you. What's happening around here?
+2026-01-09 16:34:34 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What's happening around here?
+2026-01-09 16:34:34 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Kelly : Hello Kelly, nice to meet you. What interesting things can you share with me about this area?
+2026-01-09 16:34:34 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Diana say to Veronica : Hello, Veronica! What can you tell me about this area?
+2026-01-09 16:34:35 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Jeff : Hi Jeff, what's up? I noticed we're at the same spot. Do you have any interesting plans or information to share?
+2026-01-09 16:34:37 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Alice say to Jeff : Hello Jeff, what's up? I'm trying to figure out my next move. Any suggestions?
+2026-01-09 16:34:37 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Diana say to Veronica : Hello, Veronica! What can you tell me about the area around here?
+2026-01-09 16:34:38 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Charlie say to Kelly : Hello Kelly, what's happening around here?
+2026-01-09 16:34:39 | INFO     | PID:40612 | examples.standalone_test.plugins.agent.invoke.EasyInvokePlugin:chat_with_agent:42 - Agent Bob say to Dale : Hello, Dale! What brings you here?

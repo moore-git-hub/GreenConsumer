@@ -8524,3 +8524,5 @@
 2026-01-10 19:24:58 | DEBUG    | PID:26652 | agentkernel_standalone.toolkit.models.async_router:chat:140 - Attempting chat request with provider: qwen-max
 2026-01-10 19:25:00 | DEBUG    | PID:26652 | agentkernel_standalone.toolkit.models.async_router:_get_target_providers:87 - Filtering for capability 'chat': 1 total -> 1 capable.
 2026-01-10 19:25:00 | DEBUG    | PID:26652 | agentkernel_standalone.toolkit.models.async_router:chat:140 - Attempting chat request with provider: qwen-max
+2026-01-10 19:25:03 | DEBUG    | PID:26652 | agentkernel_standalone.toolkit.models.async_router:_get_target_providers:87 - Filtering for capability 'chat': 1 total -> 1 capable.
+2026-01-10 19:25:03 | DEBUG    | PID:26652 | agentkernel_standalone.toolkit.models.async_router:chat:140 - Attempting chat request with provider: qwen-max

@@ -53,8 +53,8 @@ class GreenInvokePlugin(InvokePlugin):
 
     async def _perform_buy(self, state_plugin):
         s_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
-        current_budget = s_data.get("budget", 0)
-        price = 50
+        current_budget = s_data.get("+", 0)
+        price = 50 # 从 State 读
 
         if current_budget >= price:
             new_budget = current_budget - price

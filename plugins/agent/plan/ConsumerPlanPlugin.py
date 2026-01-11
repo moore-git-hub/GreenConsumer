@@ -47,10 +47,10 @@ class ConsumerPlanPlugin(PlanPlugin):
         s_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
 
         trust_score = s_data.get("trust_score", 5.0)
-        budget = s_data.get("budget", 100)
+        budget = s_data.get("budget", 0)
         latest_thought = s_data.get("latest_thought", {})
 
-        product_price = 50
+        product_price = s_data.get("product_price", 50)
         product_name = "EcoBottle"
 
         # 2. 规则过滤器

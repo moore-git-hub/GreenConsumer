@@ -6,7 +6,7 @@ import json
 import csv
 import datetime
 import numpy as np
-import networkx as nx  # 【新增】用于保存图结构
+import networkx as nx
 
 # --- 1. 环境与路径设置 ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -80,23 +80,22 @@ def mount_env_component(env, comp, name):
 async def run():
     print("🚀 [GABM] 绿色消费仿真启动...")
 
-    # --- 准备 CSV Logger ---
+    # --- 准备日志文件 ---
     results_dir = os.path.join(current_dir, "results")
     os.makedirs(results_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # 1. 基础仿真日志 (行为与状态)
+    # 1. 基础仿真日志
     csv_path = os.path.join(results_dir, f"simulation_log_{timestamp}.csv")
     csv_file = open(csv_path, "w", newline="", encoding="utf-8")
     writer = csv.writer(csv_file)
     writer.writerow(["Tick", "AgentID", "Type", "TrustScore", "Action", "Thought_Hypocrisy"])
     print(f"📂 基础数据: {csv_path}")
 
-    # 2. 【新增】思维链详细日志 (认知过程)
+    # 2. 思维链详细日志
     thought_path = os.path.join(results_dir, f"thoughts_log_{timestamp}.csv")
     thought_file = open(thought_path, "w", newline="", encoding="utf-8")
     thought_writer = csv.writer(thought_file)
-    # 记录：Tick, Agent, 类型, 是否感知伪善, 信任变化量, 具体推理内容
     thought_writer.writerow(["Tick", "AgentID", "AgentType", "Hypocrisy", "TrustChange", "Reasoning"])
     print(f"🧠 思维日志: {thought_path}")
 
@@ -115,7 +114,7 @@ async def run():
 
     agents = []
     # 限制 Agent 数量方便测试
-    target_configs = agent_configs
+    target_configs = agent_configs  # agent_configs[:10]
 
     for conf in target_configs:
         agent = Agent(conf.id, conf.component_order)
@@ -135,20 +134,19 @@ async def run():
     await net_plugin.init()
     net_plugin.register_agents(agents)
 
-    # 保存网络结构供可视化使用
-    # 将 NetworkX 图保存为 Adjacency List
+    # 保存网络结构
     graph_path = os.path.join(results_dir, f"network_graph_{timestamp}.json")
     graph_data = nx.node_link_data(net_plugin.graph)
     with open(graph_path, "w", encoding="utf-8") as f:
         json.dump(graph_data, f)
-    print(f"网络拓扑已保存至: {graph_path}")
+    print(f"🕸️ 网络拓扑: {graph_path}")
 
     # LLM Router
     try:
         with open(os.path.join(current_dir, "configs/models_config.yaml"), "r") as f:
             models_conf = yaml.safe_load(f)
         router = ModelRouter(AsyncModelRouter(models_conf))
-        print("LLM 引擎已就绪。")
+        print("🧠 LLM 引擎已就绪。")
     except:
         print("⚠️ 使用 Mock Router")
 
@@ -163,57 +161,54 @@ async def run():
     for ag in agents: ag._model = router
 
     # ==========================================
-    # 🧹 状态初始化与清理 (State Initialization)
+    # 🧹 状态初始化与清理 (关键修复步骤)
     # ==========================================
     print("🧹 正在初始化 Agent 状态...")
     for ag in agents:
         state_plugin = ag.get_component("state")._plugin
         profile_plugin = ag.get_component("profile")._plugin
 
-        # 1. 从 Profile 获取初始信任值
-        # 注意：要确保 profile_data 已加载。如果是旧代码，属性名可能是 _profile_data
+        # 1. 从 Profile 同步初始数据
         p_data = getattr(profile_plugin, "profile_data", getattr(profile_plugin, "_profile_data", {}))
 
-        # 默认 5.0，如果 jsonl 里有 initial_trust 就用 jsonl 里的
-        init_trust = p_data.get("trust_score")
+        # 获取初始信任
+        init_trust = p_data.get("initial_trust", 5.0)
+        # 获取初始预算 【修复点：同步 budget】
+        budget = p_data.get("budget", 100)  # 默认为 100
 
-        # 2. 将初始值写入 State
+        # 2. 写入 State
         await state_plugin.set_state("trust_score", float(init_trust))
+        await state_plugin.set_state("budget", float(budget))  # 【修复点】
 
         # 3. 清空其他动态状态
         await state_plugin.set_state("incoming_messages", [])
         await state_plugin.set_state("observations", [])
         await state_plugin.set_state("latest_thought", None)
 
-        # (可选) 打印一下，确认是否生效
-        # print(f"   - {ag.agent_id} 初始信任已设定为: {init_trust}")
+    print("✅ 状态初始化完成 (Trust & Budget 已同步)。")
 
-    print("✅ 状态初始化完成 (已同步 initial_trust)。")
-
-    total_ticks = 10
+    # --- 仿真循环 ---
+    total_ticks = 4
 
     for tick in range(1, total_ticks + 1):
         print(f"\n⏰ === Tick {tick} ===")
 
-        # 事件 A：T=1 正面品牌建设 (建立信任锚点)
+        # 事件 A：T=1 正面品牌建设
         if tick == 1:
-            print("📣 [Event] 厂商发布正面权威广告 (信任建立)")
-            # 关键：内容要包含 Deep Green 喜欢的 "Certified", "Verified" 等词
+            print("📣 [Event] 厂商发布正面权威广告")
             positive_ad = {
                 "source": "EcoBrand_Official",
                 "content": "We are proud to announce that EcoBottle is now officially certified by the Global Green Standard (GGS). Verified sustainability you can trust.",
                 "type": "official_advertisement"
             }
-            # 全员广播
             for ag in agents:
                 s_plugin = ag.get_component("state")._plugin
                 inbox = getattr(s_plugin, "state_data", {}).get("incoming_messages", [])
                 await s_plugin.set_state("incoming_messages", list(inbox) + [positive_ad])
 
-        # 事件 B：T=4 漂绿危机爆发 (信任崩塌点)
+        # 事件 B：T=4 漂绿危机爆发
         elif tick == 4:
-            print("📣 [Event] 厂商发布涉嫌漂绿的虚假广告 (信任危机)")
-            # 关键：内容包含 "No Proof", "Vague"
+            print("📣 [Event] 厂商发布涉嫌漂绿的虚假广告")
             greenwashing_ad = {
                 "source": "EcoBrand_Official",
                 "content": "Our new edition is 100% Planet-Friendly! (Internal study, no external certification available yet).",
@@ -257,20 +252,19 @@ async def run():
             writer.writerow([tick, ag.agent_id, agent_type, trust, action, hypocrisy])
             trust_list.append(trust)
 
-            # 2. 【新增】写入思维日志
+            # 2. 写入思维日志
             if thought:
-                # 只有当 Agent 本轮产生了思考时才记录
                 reasoning = thought.get("reasoning", "No detail")
                 trust_change = thought.get("trust_change", 0.0)
                 thought_writer.writerow([tick, ag.agent_id, agent_type, hypocrisy, trust_change, reasoning])
 
-
-
         avg_trust = np.mean(trust_list)
         print(f"📊 平均信任: {avg_trust:.2f}")
 
+    # 清理工作
     csv_file.close()
-    print(f"\n✅ 仿真结束。数据已保存至 {csv_path}")
+    thought_file.close()
+    print(f"\n✅ 仿真结束。")
 
 
 if __name__ == "__main__":

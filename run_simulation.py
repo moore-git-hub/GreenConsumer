@@ -107,7 +107,7 @@ async def run():
 
     agents = []
     # 限制 Agent 数量方便测试
-    target_configs = agent_configs  # agent_configs[:10]
+    target_configs = agent_configs
 
     for conf in target_configs:
         agent = Agent(conf.id, conf.component_order)
@@ -127,20 +127,20 @@ async def run():
     await net_plugin.init()
     net_plugin.register_agents(agents)
 
-    # 【新增】保存网络结构供可视化使用
-    # 将 NetworkX 图保存为 Adjacency List (JSON格式)
+    # 保存网络结构供可视化使用
+    # 将 NetworkX 图保存为 Adjacency List
     graph_path = os.path.join(results_dir, f"network_graph_{timestamp}.json")
     graph_data = nx.node_link_data(net_plugin.graph)
     with open(graph_path, "w", encoding="utf-8") as f:
         json.dump(graph_data, f)
-    print(f"🕸️ 网络拓扑已保存至: {graph_path}")
+    print(f"网络拓扑已保存至: {graph_path}")
 
     # LLM Router
     try:
         with open(os.path.join(current_dir, "configs/models_config.yaml"), "r") as f:
             models_conf = yaml.safe_load(f)
         router = ModelRouter(AsyncModelRouter(models_conf))
-        print("🧠 LLM 引擎已就绪。")
+        print("LLM 引擎已就绪。")
     except:
         print("⚠️ 使用 Mock Router")
 
@@ -163,22 +163,41 @@ async def run():
         await state_plugin.set_state("latest_thought", None)
     print("✅ 状态清理完成，仿真准备就绪。")
 
-    # --- 仿真循环 ---
     total_ticks = 10
 
     for tick in range(1, total_ticks + 1):
         print(f"\n⏰ === Tick {tick} ===")
 
-        # 事件注入 (Tick 4)
-        if tick == 4:
-            print("📣 [Event] 虚假广告发布！")
-            ad_msg = {"source": "EcoBrand", "content": "100% Green! (No Proof)", "type": "ad"}
+        # 事件 A：T=1 正面品牌建设 (建立信任锚点)
+        if tick == 1:
+            print("📣 [Event] 厂商发布正面权威广告 (信任建立)")
+            # 关键：内容要包含 Deep Green 喜欢的 "Certified", "Verified" 等词
+            positive_ad = {
+                "source": "EcoBrand_Official",
+                "content": "We are proud to announce that EcoBottle is now officially certified by the Global Green Standard (GGS). Verified sustainability you can trust.",
+                "type": "official_advertisement"
+            }
+            # 全员广播
             for ag in agents:
                 s_plugin = ag.get_component("state")._plugin
                 inbox = getattr(s_plugin, "state_data", {}).get("incoming_messages", [])
-                await s_plugin.set_state("incoming_messages", list(inbox) + [ad_msg])
+                await s_plugin.set_state("incoming_messages", list(inbox) + [positive_ad])
 
-        # 执行循环
+        # 事件 B：T=4 漂绿危机爆发 (信任崩塌点)
+        elif tick == 4:
+            print("📣 [Event] 厂商发布涉嫌漂绿的虚假广告 (信任危机)")
+            # 关键：内容包含 "No Proof", "Vague"
+            greenwashing_ad = {
+                "source": "EcoBrand_Official",
+                "content": "Our new edition is 100% Planet-Friendly! (Internal study, no external certification available yet).",
+                "type": "official_advertisement"
+            }
+            for ag in agents:
+                s_plugin = ag.get_component("state")._plugin
+                inbox = getattr(s_plugin, "state_data", {}).get("incoming_messages", [])
+                await s_plugin.set_state("incoming_messages", list(inbox) + [greenwashing_ad])
+
+        # 执行循环 (保持不变)
         for ag in agents:
             await ag.get_component("perceive").execute(tick)
             await ag.get_component("reflect").execute(tick)

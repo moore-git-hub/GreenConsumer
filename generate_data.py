@@ -4,7 +4,7 @@ import random
 import sys
 
 # 默认配置
-DEFAULT_NUM_AGENTS = 10
+DEFAULT_NUM_AGENTS = 20
 
 def generate_profiles(mode="mixed", filename="profiles.jsonl"):
     """
@@ -53,7 +53,7 @@ def generate_profiles(mode="mixed", filename="profiles.jsonl"):
                 "big_five": big_five
             },
             # 初始信任值 (0-10)
-            "initial_trust": round(random.uniform(5.0, 7.0), 1),
+            "initial_trust": round(random.uniform(5.0, 9.0), 1),
             "budget": random.randint(50, 200)
         }
         profiles.append(profile_data)

@@ -21,7 +21,7 @@ templates:
         plugin:
           GreenStatePlugin: {}
 
-      # 3. 感知组件 (新增)
+      # 3. 感知组件
       perceive:
         plugin:
           GreenPerceivePlugin: {}
@@ -31,7 +31,7 @@ templates:
         plugin:
           GreenCognitionPlugin: {}
 
-      # 5. 计划/决策组件 (新增)
+      # 5. 计划/决策组件
       plan:
         plugin:
           ConsumerPlanPlugin: {}

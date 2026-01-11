@@ -6,9 +6,6 @@ class GreenProfilePlugin(ProfilePlugin):
     def __init__(self, profile_data: Optional[Dict[str, Any]] = None):
         # 1. 必须调用父类初始化，建立组件关联的基础
         super().__init__()
-
-        # 2. 【核心修复】不能赋值给 self.profile_data (它是只读属性)
-        # 必须赋值给基类定义的内部存储变量 self._profile_data
         self._profile_data = profile_data if profile_data is not None else {}
 
     async def init(self):

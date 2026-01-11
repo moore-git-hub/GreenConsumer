@@ -145,21 +145,33 @@ async def run():
 
     for ag in agents: ag._model = router
 
+    # ==========================================
+    # 🧹【新增】强制清空初始状态 q
+    # ==========================================
+    print("🧹正在清理 Agent 初始状态...")
+    for ag in agents:
+        state_plugin = ag.get_component("state")._plugin
+        # 清空收件箱
+        await state_plugin.set_state("incoming_messages", [])
+        # 清空观察队列
+        await state_plugin.set_state("observations", [])
+
+    print("✅ 状态清理完成，仿真准备就绪。")
+
     # --- 仿真循环 ---
-    total_ticks = 4
+    total_ticks = 10  # 建议增加 Tick 数以观察完整趋势
 
     for tick in range(1, total_ticks + 1):
         print(f"\n⏰ === Tick {tick} ===")
 
-        # 事件注入
-        if tick == 2:
+        # 事件注入 (这里你可以改为 4)
+        if tick == 4:
             print("📣 [Event] 虚假广告发布！")
             ad_msg = {"source": "EcoBrand", "content": "100% Green! (No Proof)", "type": "ad"}
             for ag in agents:
                 s_plugin = ag.get_component("state")._plugin
                 inbox = getattr(s_plugin, "state_data", {}).get("incoming_messages", [])
                 await s_plugin.set_state("incoming_messages", list(inbox) + [ad_msg])
-
         # 执行循环
         for ag in agents:
             await ag.get_component("perceive").execute(tick)
@@ -202,3 +214,5 @@ async def run():
 
 if __name__ == "__main__":
     asyncio.run(run())
+
+    # 测试修改结果？？？

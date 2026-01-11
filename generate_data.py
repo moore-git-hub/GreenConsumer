@@ -4,8 +4,7 @@ import random
 import sys
 
 # 默认配置
-DEFAULT_NUM_AGENTS = 50
-
+DEFAULT_NUM_AGENTS = 10
 
 def generate_profiles(mode="mixed", filename="profiles.jsonl"):
     """

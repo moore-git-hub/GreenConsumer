@@ -9,11 +9,11 @@ def plot_latest_simulation():
     results_dir = os.path.join(os.path.dirname(__file__), "results")
     list_of_files = glob.glob(os.path.join(results_dir, '*.csv'))
     if not list_of_files:
-        print("❌ 没有找到 CSV 数据文件，请先运行 run_simulation.py")
+        print(" 没有找到 CSV 数据文件，请先运行 run_simulation.py")
         return
 
     latest_file = max(list_of_files, key=os.path.getctime)
-    print(f"📈 正在绘制文件: {latest_file}")
+    print(f"正在绘制文件: {latest_file}")
 
     # 2. 读取数据
     df = pd.read_csv(latest_file)

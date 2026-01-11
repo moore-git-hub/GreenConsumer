@@ -517,3 +517,105 @@
 2026-01-11 19:57:14 | DEBUG    | PID:8492 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'agents_relation' into env plugin 'EasyRelationPlugin'.
 2026-01-11 19:57:14 | DEBUG    | PID:8492 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'map_agents' into env plugin 'EasySpacePlugin'.
 2026-01-11 19:57:14 | INFO     | PID:8492 | agentkernel_standalone.mas.builder:_load_data_into_config:251 - Data injection complete.
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:__init__:129 - Initializing Simulation Engine (Builder)...
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:load_config:40 - Loading configuration from project path: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'environment' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\environment_config.yaml
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'actions' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\actions_config.yaml
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'agent_templates' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\agents_config.yaml
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'system' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\system_config.yaml
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'database' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\db_config.yaml
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'models' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\models_config.yaml
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'agent_profiles' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/agents/profiles.jsonl
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'agents_relation' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/relation/relation.jsonl
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'map_agents' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/map/agents.jsonl
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:load_config:105 - Configuration loaded and validated successfully.
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:__init__:154 - Using default Controller.
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:_load_data_into_config:231 - Injecting loaded data into agent and environment configurations...
+2026-01-12 00:32:28 | DEBUG    | PID:18844 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'agents_relation' into env plugin 'EasyRelationPlugin'.
+2026-01-12 00:32:28 | DEBUG    | PID:18844 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'map_agents' into env plugin 'EasySpacePlugin'.
+2026-01-12 00:32:28 | INFO     | PID:18844 | agentkernel_standalone.mas.builder:_load_data_into_config:251 - Data injection complete.
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:__init__:129 - Initializing Simulation Engine (Builder)...
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:load_config:40 - Loading configuration from project path: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'environment' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\environment_config.yaml
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'actions' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\actions_config.yaml
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'agent_templates' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\agents_config.yaml
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'system' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\system_config.yaml
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'database' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\db_config.yaml
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'models' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\models_config.yaml
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'agent_profiles' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/agents/profiles.jsonl
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'agents_relation' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/relation/relation.jsonl
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'map_agents' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/map/agents.jsonl
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:load_config:105 - Configuration loaded and validated successfully.
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:__init__:154 - Using default Controller.
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:_load_data_into_config:231 - Injecting loaded data into agent and environment configurations...
+2026-01-12 00:35:21 | DEBUG    | PID:26348 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'agents_relation' into env plugin 'EasyRelationPlugin'.
+2026-01-12 00:35:21 | DEBUG    | PID:26348 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'map_agents' into env plugin 'EasySpacePlugin'.
+2026-01-12 00:35:21 | INFO     | PID:26348 | agentkernel_standalone.mas.builder:_load_data_into_config:251 - Data injection complete.
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:__init__:129 - Initializing Simulation Engine (Builder)...
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:load_config:40 - Loading configuration from project path: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'environment' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\environment_config.yaml
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'actions' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\actions_config.yaml
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'agent_templates' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\agents_config.yaml
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'system' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\system_config.yaml
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'database' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\db_config.yaml
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'models' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\models_config.yaml
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'agent_profiles' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/agents/profiles.jsonl
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'agents_relation' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/relation/relation.jsonl
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'map_agents' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/map/agents.jsonl
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:load_config:105 - Configuration loaded and validated successfully.
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:__init__:154 - Using default Controller.
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:_load_data_into_config:231 - Injecting loaded data into agent and environment configurations...
+2026-01-12 00:39:56 | DEBUG    | PID:25868 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'agents_relation' into env plugin 'EasyRelationPlugin'.
+2026-01-12 00:39:56 | DEBUG    | PID:25868 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'map_agents' into env plugin 'EasySpacePlugin'.
+2026-01-12 00:39:56 | INFO     | PID:25868 | agentkernel_standalone.mas.builder:_load_data_into_config:251 - Data injection complete.
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:__init__:129 - Initializing Simulation Engine (Builder)...
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:load_config:40 - Loading configuration from project path: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'environment' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\environment_config.yaml
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'actions' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\actions_config.yaml
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'agent_templates' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\agents_config.yaml
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'system' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\system_config.yaml
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'database' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\db_config.yaml
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'models' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\models_config.yaml
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'agent_profiles' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/agents/profiles.jsonl
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'agents_relation' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/relation/relation.jsonl
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'map_agents' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/map/agents.jsonl
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:load_config:105 - Configuration loaded and validated successfully.
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:__init__:154 - Using default Controller.
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:_load_data_into_config:231 - Injecting loaded data into agent and environment configurations...
+2026-01-12 00:40:42 | DEBUG    | PID:26204 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'agents_relation' into env plugin 'EasyRelationPlugin'.
+2026-01-12 00:40:42 | DEBUG    | PID:26204 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'map_agents' into env plugin 'EasySpacePlugin'.
+2026-01-12 00:40:42 | INFO     | PID:26204 | agentkernel_standalone.mas.builder:_load_data_into_config:251 - Data injection complete.
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:__init__:129 - Initializing Simulation Engine (Builder)...
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:load_config:40 - Loading configuration from project path: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'environment' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\environment_config.yaml
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'actions' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\actions_config.yaml
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'agent_templates' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\agents_config.yaml
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'system' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\system_config.yaml
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'database' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\db_config.yaml
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'models' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\models_config.yaml
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'agent_profiles' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/agents/profiles.jsonl
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'agents_relation' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/relation/relation.jsonl
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'map_agents' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/map/agents.jsonl
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:load_config:105 - Configuration loaded and validated successfully.
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:__init__:154 - Using default Controller.
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:_load_data_into_config:231 - Injecting loaded data into agent and environment configurations...
+2026-01-12 00:41:10 | DEBUG    | PID:23860 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'agents_relation' into env plugin 'EasyRelationPlugin'.
+2026-01-12 00:41:10 | DEBUG    | PID:23860 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'map_agents' into env plugin 'EasySpacePlugin'.
+2026-01-12 00:41:10 | INFO     | PID:23860 | agentkernel_standalone.mas.builder:_load_data_into_config:251 - Data injection complete.
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:__init__:129 - Initializing Simulation Engine (Builder)...
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:load_config:40 - Loading configuration from project path: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'environment' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\environment_config.yaml
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'actions' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\actions_config.yaml
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'agent_templates' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\agents_config.yaml
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'system' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\system_config.yaml
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'database' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\db_config.yaml
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:load_config:60 - Loading 'models' config from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\configs\models_config.yaml
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'agent_profiles' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/agents/profiles.jsonl
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'agents_relation' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/relation/relation.jsonl
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:load_config:71 - Loading data source 'map_agents' from: E:\BaiduSyncdisk\Project\Thesis\03 GABM 模型\Kernel\GreenConsumer\data/map/agents.jsonl
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:load_config:105 - Configuration loaded and validated successfully.
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:__init__:154 - Using default Controller.
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:_load_data_into_config:231 - Injecting loaded data into agent and environment configurations...
+2026-01-12 00:46:37 | DEBUG    | PID:19968 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'agents_relation' into env plugin 'EasyRelationPlugin'.
+2026-01-12 00:46:37 | DEBUG    | PID:19968 | agentkernel_standalone.mas.builder:_load_data_into_config:244 - Injecting data for 'map_agents' into env plugin 'EasySpacePlugin'.
+2026-01-12 00:46:37 | INFO     | PID:19968 | agentkernel_standalone.mas.builder:_load_data_into_config:251 - Data injection complete.

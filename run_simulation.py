@@ -85,12 +85,20 @@ async def run():
     os.makedirs(results_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # 1. 仿真日志路径
+    # 1. 基础仿真日志 (行为与状态)
     csv_path = os.path.join(results_dir, f"simulation_log_{timestamp}.csv")
     csv_file = open(csv_path, "w", newline="", encoding="utf-8")
     writer = csv.writer(csv_file)
     writer.writerow(["Tick", "AgentID", "Type", "TrustScore", "Action", "Thought_Hypocrisy"])
-    print(f"📂 数据将保存至: {csv_path}")
+    print(f"📂 基础数据: {csv_path}")
+
+    # 2. 【新增】思维链详细日志 (认知过程)
+    thought_path = os.path.join(results_dir, f"thoughts_log_{timestamp}.csv")
+    thought_file = open(thought_path, "w", newline="", encoding="utf-8")
+    thought_writer = csv.writer(thought_file)
+    # 记录：Tick, Agent, 类型, 是否感知伪善, 信任变化量, 具体推理内容
+    thought_writer.writerow(["Tick", "AgentID", "AgentType", "Hypocrisy", "TrustChange", "Reasoning"])
+    print(f"🧠 思维日志: {thought_path}")
 
     # --- 初始化 ---
     builder = Builder(current_dir, resource_maps)
@@ -154,14 +162,33 @@ async def run():
 
     for ag in agents: ag._model = router
 
-    # 🧹 强制清场
-    print("🧹 正在清理 Agent 初始状态...")
+    # ==========================================
+    # 🧹 状态初始化与清理 (State Initialization)
+    # ==========================================
+    print("🧹 正在初始化 Agent 状态...")
     for ag in agents:
         state_plugin = ag.get_component("state")._plugin
+        profile_plugin = ag.get_component("profile")._plugin
+
+        # 1. 从 Profile 获取初始信任值
+        # 注意：要确保 profile_data 已加载。如果是旧代码，属性名可能是 _profile_data
+        p_data = getattr(profile_plugin, "profile_data", getattr(profile_plugin, "_profile_data", {}))
+
+        # 默认 5.0，如果 jsonl 里有 initial_trust 就用 jsonl 里的
+        init_trust = p_data.get("trust_score")
+
+        # 2. 将初始值写入 State
+        await state_plugin.set_state("trust_score", float(init_trust))
+
+        # 3. 清空其他动态状态
         await state_plugin.set_state("incoming_messages", [])
         await state_plugin.set_state("observations", [])
         await state_plugin.set_state("latest_thought", None)
-    print("✅ 状态清理完成，仿真准备就绪。")
+
+        # (可选) 打印一下，确认是否生效
+        # print(f"   - {ag.agent_id} 初始信任已设定为: {init_trust}")
+
+    print("✅ 状态初始化完成 (已同步 initial_trust)。")
 
     total_ticks = 10
 
@@ -197,7 +224,7 @@ async def run():
                 inbox = getattr(s_plugin, "state_data", {}).get("incoming_messages", [])
                 await s_plugin.set_state("incoming_messages", list(inbox) + [greenwashing_ad])
 
-        # 执行循环 (保持不变)
+        # 执行循环
         for ag in agents:
             await ag.get_component("perceive").execute(tick)
             await ag.get_component("reflect").execute(tick)
@@ -209,20 +236,35 @@ async def run():
         # --- 数据记录 ---
         trust_list = []
         for ag in agents:
+            # 获取组件
             state_plugin = ag.get_component("state")._plugin
-            s_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
             profile_plugin = ag.get_component("profile")._plugin
-            p_data = getattr(profile_plugin, "profile_data", getattr(profile_plugin, "_profile_data", {}))
-            agent_type = p_data.get("psychology", {}).get("environmental_involvement", "Unknown")
 
+            # 获取数据
+            s_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
+            p_data = getattr(profile_plugin, "profile_data", getattr(profile_plugin, "_profile_data", {}))
+
+            agent_type = p_data.get("psychology", {}).get("environmental_involvement", "Unknown")
             trust = s_data.get("trust_score", 5.0)
+
             plan = s_data.get("plan_result", {})
             action = plan.get("action", "none") if plan else "none"
-            thought = s_data.get("latest_thought", {})
+
+            thought = s_data.get("latest_thought")
             hypocrisy = thought.get("hypocrisy_perceived", False) if thought else False
 
+            # 1. 写入基础日志
             writer.writerow([tick, ag.agent_id, agent_type, trust, action, hypocrisy])
             trust_list.append(trust)
+
+            # 2. 【新增】写入思维日志
+            if thought:
+                # 只有当 Agent 本轮产生了思考时才记录
+                reasoning = thought.get("reasoning", "No detail")
+                trust_change = thought.get("trust_change", 0.0)
+                thought_writer.writerow([tick, ag.agent_id, agent_type, hypocrisy, trust_change, reasoning])
+
+
 
         avg_trust = np.mean(trust_list)
         print(f"📊 平均信任: {avg_trust:.2f}")

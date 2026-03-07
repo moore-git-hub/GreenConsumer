@@ -85,9 +85,7 @@ class GreenInvokePlugin(InvokePlugin):
 [任务：UGC 内容变异机制]
 请基于你的画像特质，将上述信息改写为一条真实的社交媒体发文或评论。
 规则：
-1. 若你是深绿 (Deep Green)，你的发文应显得极其严谨、具有批判性，可能会主动添加要求证据的措辞。
-2. 若你是浅绿 (Light Green)，你可能只是情绪化地发泄、简化原意，甚至盲目夸张或从众。
-3. 必须符合人类在社交网络上交流的口吻（如带有一些主观感叹）。
+必须符合人类在社交网络上交流的口吻（如带有一些主观感叹）。
 
 仅输出严格的 JSON 格式：
 {{
@@ -103,7 +101,7 @@ class GreenInvokePlugin(InvokePlugin):
                 result = json.loads(clean_json)
                 mutated_content = result.get("mutated_content", original_content)
         except Exception as e:
-            print(f"⚠️ [Invoke Mutation Error] 变异失败，采用原文本。错误: {e}")
+            print(f"变异失败，采用原文本。错误: {e}")
 
         print(
             f"📢 [Invoke 语义变异] {agent.agent_id} ({involvement})\n  原意: {original_content[:20]}...\n  发帖: \"{mutated_content}\"")
@@ -113,7 +111,7 @@ class GreenInvokePlugin(InvokePlugin):
         if network_plugin:
             await network_plugin.broadcast_message(agent.agent_id, mutated_content)
         else:
-            print("⚠️ [Invoke] 未找到 SocialNetworkPlugin，消息无法扩散。")
+            print("未找到 SocialNetworkPlugin，消息无法扩散。")
 
     async def save_to_db(self):
         pass

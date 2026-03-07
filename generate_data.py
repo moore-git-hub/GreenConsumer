@@ -14,7 +14,7 @@ DEFAULT_NUM_AGENTS = 50
 INVOLVEMENT_RULES = {
     "Deep Green": (
         "【认知模式：中心路径加工】你是一名'深绿消费者'，具备极高的环境卷入度与环保知识。\n"
-        "- 决策核心：对'漂绿 (Greenwashing)'行为零容忍，唯证据论（如必须看到碳足迹认证、第三方环保检测报告）。\n"
+        "- 决策核心：对'漂绿 (Greenwashing)'行为容忍度很低。\n"
         "- 信息处理：对企业官方的华丽宣传天然脱敏且持高度怀疑态度，倾向于独立查证事实。"
     ),
     "Light Green": (
@@ -27,16 +27,16 @@ INVOLVEMENT_RULES = {
 # 社交媒体角色设定表
 SOCIAL_MEDIA_ROLES = {
     "KOL": (
-        "【社交媒体角色：意见领袖 (1人)】你是拥有大量粉丝的环保/消费领域大V。\n"
-        "- 行为特征：你极度外向，表达欲旺盛。你发布的每一条内容都带有强烈的个人观点，并且会用极具煽动性或严谨专业的语气质问企业。"
+        "【社交媒体角色：意见领袖 】你是拥有大量粉丝的环保/消费领域大V。\n"
+        "- 行为特征：你表达欲旺盛。你发布的每一条内容都带有个人观点，并且会用煽动性或严谨专业的语气质问企业。"
     ),
     "Active User": (
-        "【社交媒体角色：活跃网民 (9%)】你是社交网络上的活跃分子。\n"
-        "- 行为特征：你喜欢冲浪、吃瓜、点赞和转发。遇到有争议的品牌事件，你非常乐于在评论区发表自己的看法，容易被带节奏。"
+        "【社交媒体角色：活跃网民】你是社交网络上的活跃分子。\n"
+        "- 行为特征：你喜欢冲浪、吃瓜、点赞和转发。遇到有争议的品牌事件，你非常乐于在评论区发表自己的看法。"
     ),
     "Lurker": (
-        "【社交媒体角色：潜水者 (90%)】你是互联网上'沉默的大多数'。\n"
-        "- 行为特征：你极度内向，几乎从不主动发帖或评论。你只默默观看网上的舆论战，这些信息会改变你对品牌的信任度，但你绝不参与网络骂战。"
+        "【社交媒体角色：潜水者】你是互联网上'沉默的大多数'。\n"
+        "- 行为特征：你很少不主动发帖或评论。你习惯于观看网上的舆论战，这些信息会改变你对品牌的信任度，你除非对某事有发声欲，否则绝不参与网络骂战。"
     )
 }
 
@@ -54,7 +54,7 @@ BIG_FIVE_MAPPING = {
 def generate_profiles(mode="mixed", filename="profiles.jsonl"):
     os.makedirs("data/agents", exist_ok=True)
     profiles = []
-    print(f"⚙️ 正在基于 [90-9-1 社交网络法则] 生成数据... 数量: {DEFAULT_NUM_AGENTS}")
+    print(f"生成数据... 数量: {DEFAULT_NUM_AGENTS}")
 
     # 统计验证字典
     stats = {"Role": {"KOL": 0, "Active User": 0, "Lurker": 0}, "Involvement": {"Deep Green": 0, "Light Green": 0}}
@@ -62,9 +62,9 @@ def generate_profiles(mode="mixed", filename="profiles.jsonl"):
     for i in range(DEFAULT_NUM_AGENTS):
         agent_id = f"Consumer_{i:03d}"
 
-        # --- 1. 社交媒体角色分配 (90-9-1 参与度不平等法则) ---
+        # --- 1. 社交媒体角色分配  ---
         # 概率分布：1% KOL, 9% Active, 90% Lurker
-        role = np.random.choice(["KOL", "Active User", "Lurker"], p=[0.01, 0.09, 0.90])
+        role = np.random.choice(["KOL", "Active User", "Lurker"], p=[0.03, 0.20, 0.77])
         stats["Role"][role] += 1
 
         # --- 2. 人口统计学与预算 ---
@@ -138,12 +138,10 @@ def generate_profiles(mode="mixed", filename="profiles.jsonl"):
         for p in profiles:
             f.write(json.dumps(p) + "\n")
 
-    print(f"✅ 高质量社交网络数据集已生成: {file_path}")
-
     # === 自带验证系统 (Validation) ===
-    print("\n📊 === 数据分布有效性验证 (Validation) ===")
+    print("\n=== 数据分布有效性验证 (Validation) ===")
     total = sum(stats["Role"].values())
-    print(f"1. 社交角色分布 (目标: 1% KOL, 9% Active, 90% Lurker):")
+    print(f"1. 社交角色分布:")
     for r, count in stats["Role"].items():
         print(f"   - {r}: {count} 人 ({count / total * 100:.1f}%)")
 

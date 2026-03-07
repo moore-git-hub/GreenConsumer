@@ -78,7 +78,7 @@ def analyze_thoughts():
     else:
         axes[0, 1].text(0.5, 0.5, "无负面信任变化记录", ha='center')
 
-    # --- 图 3 & 4: 关键词提取 (他们在说什么？) ---
+    # --- 图 3 & 4: 关键词提取 ---
     # 简单的分词与词频统计
     def get_top_words(text_series, top_n=10):
         text = " ".join(text_series.astype(str).tolist()).lower()

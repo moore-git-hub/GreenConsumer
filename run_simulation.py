@@ -178,21 +178,43 @@ async def run():
     # ==========================================
     # 🚀 仿真主循环
     # ==========================================
-    TOTAL_TICKS = 20
+    TOTAL_TICKS = 30
     BURN_IN_TICKS = 5
 
+    # ==========================================
+    # 🚀 高阶真实商业公关博弈矩阵 (Advanced Enterprise Strategy)
+    # ==========================================
     ENTERPRISE_STRATEGY = {
-        2: {"source": "EcoBrand_Official", "content": "【产品预热】最新一代100%可降解材料即将上市！"},
-        6: {"source": "EcoBrand_Official", "content": "【正式发售】产品发售，获国际绿色环保认证(GGS)。"},
-        10: {"source": "Whistleblower", "content": "【黑料曝光】所谓GGS认证系伪造，生产线存在严重水污染！"},
-        14: {"source": "EcoBrand_PR", "content": "【企业澄清】前员工造谣，已发律师函，绝无水污染。"},
-        17: {"source": "KOL_Environmentalist", "content": "【KOL实地测评】受邀参观工厂，污染传闻为虚，产品达标。"}
+        1: {
+            "source": "EcoBrand_Official",
+            "content": "自然，是我们唯一的答案。历经1000个日夜，EcoBottle 采用独家提取的深海海藻复合纤维，为您带来极致体验。这不仅是一个水杯，更是对地球的一份承诺。每售出一件，我们将向‘蓝色海洋计划’捐助1元。下周，开启您的零碳生活方式。"
+        },
+        6: {
+            "source": "EcoBrand_Official",
+            "content": "今日正式开售！EcoBottle 荣获业内首创的 'Eco-Future 内部先锋环保金奖'。产品生命周期参数已上传我们的自建碳足迹模型（注：该测算正由第三方智库评估中）。"
+        },
+        10: {
+            "source": "Consumer_Rights_Blogger (测评博主)",
+            "content": "避雷！刚收到首发盲盒，用开水一烫底部竟然轻微变形了？而且我刮开底部的所谓的‘原木环保漆’，里面隐约印着回收代码7（不可降解的PC塑料）！说好的海藻提取物呢？这真的是智商税吧！"
+        },
+        15: {
+            "source": "Green_Earth_NGO (独立环保组织)",
+            "content": "【深度调查】经本机构实验室光谱分析，EcoBottle 核心材质仍为传统石油基塑料，海藻纤维含量不足 2%。更令人震惊的是，其宣称捐助的‘蓝色海洋计划’实为该企业高管实际控制的空壳基金。这是极其恶劣的‘漂绿’与虚假营销。"
+        },
+        20: {
+            "source": "EcoBrand_PR (官方公关部)",
+            "content": "致关心我们的朋友：对不起。经连夜彻查，系上游原材料供应商为压缩成本，私自篡改了配方比例，我们未能察觉，这也是我们的失职。目前已向公安机关报案并起诉该供应商，全线产品启动召回。至于基金争议，属于合理合法的税务统筹，绝非中饱私囊。我们做环保的初心从未改变，恳请大家给本土创新企业一个纠错的机会。"
+        },
+        25: {
+            "source": "Top_Lifestyle_KOL (百万粉丝生活大V)",
+            "content": "今天去了EcoBrand的总部。其实大家没必要这么苛刻，国内做植物基新材料的本来就没几家，能迈出第一步已经很了不起了。我亲眼看到那些被坑的年轻研发人员在哭。揪着一点管理漏洞往死里打，以后谁还敢做环保创新？（我已下单支持复产版，不喜勿喷）"
+        }
     }
 
     cumulative_buyers = set()  # 追踪历史购买者
 
     for tick in range(1, TOTAL_TICKS + 1):
-        print(f"\n⏰ === Tick {tick} ===")
+        print(f"\n === Tick {tick} ===")
 
         if tick <= BURN_IN_TICKS:
             time_context = f"产品上市预热中，当前是预热期第 {tick} 天。不允许购买。"
@@ -326,7 +348,14 @@ def analyze_results(macro_path, log_path, graph_path, total_agents, results_dir,
     ax2.set_ylim([0, 100])
 
     # 标注干预事件
-    events = {2: '预热', 6: '发售', 10: '黑料曝光', 14: '澄清', 17: 'KOL背书'}
+    events = {
+        1: '发售预热',
+        6: '正式发售',
+        10: '散户爆料',
+        15: '实锤爆发',
+        20: '甩锅公关',
+        25: '大V洗地'
+    }
     for t, label in events.items():
         ax1.axvline(x=t, color='red', linestyle=':', alpha=0.5)
         ax1.text(t, 0.5, label, rotation=90, verticalalignment='bottom', color='red')

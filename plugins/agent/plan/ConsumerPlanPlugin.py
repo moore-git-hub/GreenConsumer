@@ -33,10 +33,10 @@ class ConsumerPlanPlugin(PlanPlugin):
 
         trust_score = s_data.get("trust_score", 5.0)
 
-        # ✅ 从 State 获取同步后的预算，默认为 0 以防止未初始化带来的错误决策
+        # 从 State 获取同步后的预算，默认为 0 以防止未初始化带来的错误决策
         budget = s_data.get("budget", 0)
 
-        # ✅ 从 State 获取同步后的价格
+        # 从 State 获取同步后的价格
         product_price = s_data.get("product_price", 50)
         product_name = "EcoBottle"
 
@@ -61,7 +61,7 @@ You are considering buying '{product_name}' (Price: {product_price}).
 Your Budget: {budget}
 
 [State]
-- Trust: {trust_score}/10.0 (Buy Threshold: ~6.0)
+- Trust: {trust_score}/10.0
 - Thought: {thought_str}
 
 [Task]

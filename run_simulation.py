@@ -163,7 +163,7 @@ async def run():
 
     for ag in agents: ag._model = router
 
-    print("🧹 正在初始化 Agent 状态...")
+    print("初始化 Agent 状态")
     for ag in agents:
         state_plugin = ag.get_component("state")._plugin
         profile_plugin = ag.get_component("profile")._plugin
@@ -274,7 +274,7 @@ def analyze_results(macro_path, log_path, graph_path, total_agents, results_dir,
     # 1. 计算 T50 (达到 50% 转化率的时间)
     t50_row = df_macro[df_macro['ConversionRate'] >= 0.5]
     t50 = t50_row['Tick'].iloc[0] if not t50_row.empty else "未达到50%"
-    print(f"🏆 关键 KPI - T50 扩散指标: {t50}")
+    print(f"T50 扩散指标: {t50}")
 
     # 2. 计算最大信息级联深度 (Cascade Depth)
     # 推导逻辑: A发帖后，若B(A的邻居)在后续周期发帖，则存在级联边 A->B。

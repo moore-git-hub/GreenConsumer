@@ -1,0 +1,21 @@
+Tick,AgentID,Type,TrustScore,Action,Thought_Hypocrisy
+1,Consumer_000,Deep Green,6.5,buy,False
+1,Consumer_001,Light Green,5.8,ignore,False
+2,Consumer_000,Deep Green,6.5,buy,False
+2,Consumer_001,Light Green,5.8,ignore,False
+3,Consumer_000,Deep Green,6.5,buy,False
+3,Consumer_001,Light Green,5.8,ignore,False
+4,Consumer_000,Deep Green,5.5,ignore,True
+4,Consumer_001,Light Green,6.1,buy,False
+5,Consumer_000,Deep Green,5.5,ignore,True
+5,Consumer_001,Light Green,6.1,ignore,False
+6,Consumer_000,Deep Green,5.5,ignore,True
+6,Consumer_001,Light Green,6.1,ignore,False
+7,Consumer_000,Deep Green,5.5,ignore,True
+7,Consumer_001,Light Green,6.1,ignore,False
+8,Consumer_000,Deep Green,5.5,ignore,True
+8,Consumer_001,Light Green,6.1,ignore,False
+9,Consumer_000,Deep Green,5.5,ignore,True
+9,Consumer_001,Light Green,6.1,ignore,False
+10,Consumer_000,Deep Green,5.5,ignore,True
+10,Consumer_001,Light Green,6.1,ignore,False

@@ -7,6 +7,12 @@ import csv
 import datetime
 import numpy as np
 import networkx as nx
+import logging
+
+# === 强制屏蔽 Agent-Kernel 底层 INFO 日志 ===
+logging.getLogger("agentkernel_standalone").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+# ============================================
 
 # --- 1. 环境与路径设置 ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -85,19 +91,16 @@ async def run():
     os.makedirs(results_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # 1. 基础仿真日志
     csv_path = os.path.join(results_dir, f"simulation_log_{timestamp}.csv")
     csv_file = open(csv_path, "w", newline="", encoding="utf-8")
     writer = csv.writer(csv_file)
     writer.writerow(["Tick", "AgentID", "Type", "TrustScore", "Action", "Thought_Hypocrisy"])
-    print(f"📂 基础数据: {csv_path}")
 
-    # 2. 思维链详细日志
     thought_path = os.path.join(results_dir, f"thoughts_log_{timestamp}.csv")
     thought_file = open(thought_path, "w", newline="", encoding="utf-8")
     thought_writer = csv.writer(thought_file)
     thought_writer.writerow(["Tick", "AgentID", "AgentType", "Hypocrisy", "TrustChange", "Reasoning"])
-    print(f"🧠 思维日志: {thought_path}")
+    print(f"📂 日志文件已创建。")
 
     # --- 初始化 ---
     builder = Builder(current_dir, resource_maps)
@@ -113,10 +116,7 @@ async def run():
     mount_env_component(env, net_comp, "network")
 
     agents = []
-    # 限制 Agent 数量方便测试
-    target_configs = agent_configs  # agent_configs[:10]
-
-    for conf in target_configs:
+    for conf in agent_configs:
         agent = Agent(conf.id, conf.component_order)
         agent.env = env
         await agent.init(conf.components, resource_maps)
@@ -130,18 +130,9 @@ async def run():
 
     print(f"👥 初始化了 {len(agents)} 个 Agent。")
 
-    # 构建网络
     await net_plugin.init()
     net_plugin.register_agents(agents)
 
-    # 保存网络结构
-    graph_path = os.path.join(results_dir, f"network_graph_{timestamp}.json")
-    graph_data = nx.node_link_data(net_plugin.graph)
-    with open(graph_path, "w", encoding="utf-8") as f:
-        json.dump(graph_data, f)
-    print(f"🕸️ 网络拓扑: {graph_path}")
-
-    # LLM Router
     try:
         with open(os.path.join(current_dir, "configs/models_config.yaml"), "r") as f:
             models_conf = yaml.safe_load(f)
@@ -153,89 +144,82 @@ async def run():
         class Mock:
             async def chat(self, p):
                 return json.dumps(
-                    {"hypocrisy_perceived": True, "trust_change": -1.0, "action": "post_review", "content": "Bad!",
-                     "reason": "Mock"})
+                    {"hypocrisy_perceived": True, "trust_change": -1.0, "importance": 5.0, "reasoning": "Mock"})
 
         router = Mock()
 
     for ag in agents: ag._model = router
 
-    # ==========================================
-    # 🧹 状态初始化与清理 (关键修复步骤)
-    # ==========================================
+    # 🧹 状态初始化
     print("🧹 正在初始化 Agent 状态...")
     for ag in agents:
         state_plugin = ag.get_component("state")._plugin
         profile_plugin = ag.get_component("profile")._plugin
-
-        # 1. 从 Profile 同步初始数据
         p_data = getattr(profile_plugin, "profile_data", getattr(profile_plugin, "_profile_data", {}))
 
-        # 获取初始信任
         init_trust = p_data.get("initial_trust", 5.0)
-        # 获取初始预算 【修复点：同步 budget】
-        budget = p_data.get("budget", 100)  # 默认为 100
+        budget = p_data.get("budget", 100)
 
-        # 2. 写入 State
         await state_plugin.set_state("trust_score", float(init_trust))
-        await state_plugin.set_state("budget", float(budget))  # 【修复点】
-
-        # 3. 清空其他动态状态
+        await state_plugin.set_state("budget", float(budget))
         await state_plugin.set_state("incoming_messages", [])
         await state_plugin.set_state("observations", [])
         await state_plugin.set_state("latest_thought", None)
 
     print("✅ 状态初始化完成 (Trust & Budget 已同步)。")
 
-    # --- 仿真循环 ---
-    total_ticks = 4
+    # ==========================================
+    # 🚀 唯一仿真主循环
+    # ==========================================
+    TOTAL_TICKS = 20
+    BURN_IN_TICKS = 5  # 预热期: 绝对禁止购买
 
-    for tick in range(1, total_ticks + 1):
+    ENTERPRISE_STRATEGY = {
+        2: {"source": "EcoBrand_Official", "content": "【产品预热】最新一代100%可降解材料即将上市！"},
+        6: {"source": "EcoBrand_Official", "content": "【正式发售】产品发售，获国际绿色环保认证(GGS)。"},
+        10: {"source": "Whistleblower", "content": "【黑料曝光】所谓GGS认证系内部伪造，生产线存在严重水污染！"},
+        14: {"source": "EcoBrand_PR", "content": "【企业澄清】前员工造谣，已发律师函，我们的材料经得起检验。"},
+        17: {"source": "KOL_Environmentalist", "content": "【KOL实地测评】受邀参观工厂，污染传闻为虚，治污系统确在运作。"}
+    }
+
+    for tick in range(1, TOTAL_TICKS + 1):
         print(f"\n⏰ === Tick {tick} ===")
 
-        # 事件 A：T=1 正面品牌建设
-        if tick == 1:
-            print("📣 [Event] 厂商发布正面权威广告")
-            positive_ad = {
-                "source": "EcoBrand_Official",
-                "content": "We are proud to announce that EcoBottle is now officially certified by the Global Green Standard (GGS). Verified sustainability you can trust.",
-                "type": "official_advertisement"
-            }
+        # 1. 注入时间感知与动作限制
+        if tick <= BURN_IN_TICKS:
+            time_context = f"产品上市预热中，当前是预热期第 {tick} 天。不允许购买。"
+        else:
+            time_context = f"产品已正式发售第 {tick - BURN_IN_TICKS} 天。"
+
+        # 2. 触发全局信息干预
+        if tick in ENTERPRISE_STRATEGY:
+            event = ENTERPRISE_STRATEGY[tick]
+            print(f"📣 [全局干预注入] {event['source']}: {event['content']}")
             for ag in agents:
                 s_plugin = ag.get_component("state")._plugin
                 inbox = getattr(s_plugin, "state_data", {}).get("incoming_messages", [])
-                await s_plugin.set_state("incoming_messages", list(inbox) + [positive_ad])
+                await s_plugin.set_state("incoming_messages", list(inbox) + [event])
 
-        # 事件 B：T=4 漂绿危机爆发
-        elif tick == 4:
-            print("📣 [Event] 厂商发布涉嫌漂绿的虚假广告")
-            greenwashing_ad = {
-                "source": "EcoBrand_Official",
-                "content": "Our new edition is 100% Planet-Friendly! (Internal study, no external certification available yet).",
-                "type": "official_advertisement"
-            }
-            for ag in agents:
-                s_plugin = ag.get_component("state")._plugin
-                inbox = getattr(s_plugin, "state_data", {}).get("incoming_messages", [])
-                await s_plugin.set_state("incoming_messages", list(inbox) + [greenwashing_ad])
-
-        # 执行循环
+        # 3. Agent 执行感知与认知
         for ag in agents:
+            s_plugin = ag.get_component("state")._plugin
+            await s_plugin.set_state("time_context", time_context)
+            await s_plugin.set_state("current_tick", tick)  # 同步tick供RAG使用
+
             await ag.get_component("perceive").execute(tick)
             await ag.get_component("reflect").execute(tick)
 
+        # 4. Agent 执行计划与行动 (预热期阻断 Plan)
         for ag in agents:
-            await ag.get_component("plan").execute(tick)
+            if tick > BURN_IN_TICKS:
+                await ag.get_component("plan").execute(tick)
             await ag.get_component("invoke").execute(tick)
 
-        # --- 数据记录 ---
+        # 5. 数据记录
         trust_list = []
         for ag in agents:
-            # 获取组件
             state_plugin = ag.get_component("state")._plugin
             profile_plugin = ag.get_component("profile")._plugin
-
-            # 获取数据
             s_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
             p_data = getattr(profile_plugin, "profile_data", getattr(profile_plugin, "_profile_data", {}))
 
@@ -248,11 +232,9 @@ async def run():
             thought = s_data.get("latest_thought")
             hypocrisy = thought.get("hypocrisy_perceived", False) if thought else False
 
-            # 1. 写入基础日志
             writer.writerow([tick, ag.agent_id, agent_type, trust, action, hypocrisy])
             trust_list.append(trust)
 
-            # 2. 写入思维日志
             if thought:
                 reasoning = thought.get("reasoning", "No detail")
                 trust_change = thought.get("trust_change", 0.0)

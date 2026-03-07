@@ -1,10 +1,18 @@
 from typing import Any, Dict
 from agentkernel_standalone.mas.agent.components.state import StatePlugin
+from plugins.agent.reflect.MemoryManager import MemoryManager
 
 
 class GreenStatePlugin(StatePlugin):
+    def __init__(self, *args, **kwargs):
+        """强制在对象实例化时挂载记忆管理器"""
+        super().__init__(*args, **kwargs)
+        self.memory_manager = MemoryManager()
+
     async def init(self):
-        pass
+        # 兼容 Agent-Kernel 异步生命周期，做二次防错
+        if not hasattr(self, 'memory_manager'):
+            self.memory_manager = MemoryManager()
 
     async def execute(self, current_tick: int) -> None:
         pass
@@ -15,11 +23,20 @@ class GreenStatePlugin(StatePlugin):
     async def load_from_db(self):
         pass
 
-    # === 核心修复 ===
-    # 1. 必须是 async，且更新基类的 self._state_data
     async def set_state(self, key: str, value: Any) -> None:
         self._state_data[key] = value
 
-    # 2. 增加同步获取方法 (方便其他插件调用)
     def get_state_sync(self, key: str) -> Any:
         return self._state_data.get(key)
+
+    def add_to_memory(self, tick: int, content: str, importance: float = 5.0):
+        # 三次防错：懒加载机制
+        if not hasattr(self, 'memory_manager'):
+            self.memory_manager = MemoryManager()
+        self.memory_manager.add_memory(tick, content, importance)
+
+    def retrieve_memory(self, current_tick: int, query: str, top_k: int = 3) -> list:
+        # 三次防错：懒加载机制
+        if not hasattr(self, 'memory_manager'):
+            self.memory_manager = MemoryManager()
+        return self.memory_manager.retrieve(current_tick, query, top_k)

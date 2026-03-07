@@ -19,9 +19,7 @@ class GreenInvokePlugin(InvokePlugin):
         return getattr(comp, "_plugin", getattr(comp, "plugin", None)) if comp else None
 
     def _get_env_plugin(self, name):
-        """获取环境插件的辅助方法"""
         agent = self._get_agent()
-        # 假设 Agent 有 .env 引用 (在 debug_step4 中我们会手动注入)
         if hasattr(agent, "env") and agent.env:
             comp = agent.env.get_component(name)
             return getattr(comp, "_plugin", getattr(comp, "plugin", None)) if comp else None
@@ -48,33 +46,34 @@ class GreenInvokePlugin(InvokePlugin):
             content = plan.get("content", "No content")
             await self._perform_post_review(content)
 
-        # 清空计划
-        await state_plugin.set_state("plan_result", None)
+        # 清空计划，防止下一轮重复执行
+        # await state_plugin.set_stateset_state("plan_result", None)
 
     async def _perform_buy(self, state_plugin):
         s_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
-        current_budget = s_data.get("+", 0)
-        price = 50 # 从 State 读
+
+        # ✅ 修复 1: 正确读取 budget (之前写成了 "+")
+        current_budget = s_data.get("budget", 0)
+
+        # ✅ 修复 2: 从 State 读取统一价格，不再硬编码 50
+        price = s_data.get("product_price", 50)
 
         if current_budget >= price:
             new_budget = current_budget - price
             await state_plugin.set_state("budget", new_budget)
-            print(f"🛒 [Invoke] {self._get_agent().agent_id} 购买成功！余额: {new_budget}")
+            print(f"🛒 [Invoke] {self._get_agent().agent_id} 购买成功！(花费: {price}, 余额: {new_budget})")
         else:
-            print(f"❌ [Invoke] 预算不足，购买失败。")
+            print(f"❌ [Invoke] {self._get_agent().agent_id} 预算不足 (余额: {current_budget}, 价格: {price})，购买失败。")
 
     async def _perform_post_review(self, content):
         agent = self._get_agent()
         print(f"📢 [Invoke] {agent.agent_id} 决定发帖: \"{content}\"")
 
-        # 获取社交网络插件 (假设环境组件名为 'network')
         network_plugin = self._get_env_plugin("network")
-
         if network_plugin:
-            # 调用网络插件进行广播
             await network_plugin.broadcast_message(agent.agent_id, content)
         else:
-            print("⚠️ [Invoke] 未找到 SocialNetworkPlugin，消息无法扩散 (请检查环境挂载)。")
+            print("⚠️ [Invoke] 未找到 SocialNetworkPlugin，消息无法扩散。")
 
     async def save_to_db(self):
         pass

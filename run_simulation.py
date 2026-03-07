@@ -237,8 +237,7 @@ async def run():
             await ag.get_component("reflect").execute(tick)
 
         for ag in agents:
-            if tick > BURN_IN_TICKS:
-                await ag.get_component("plan").execute(tick)
+            await ag.get_component("plan").execute(tick)
             await ag.get_component("invoke").execute(tick)
 
         # 数据结算

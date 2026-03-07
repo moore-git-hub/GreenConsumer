@@ -64,7 +64,7 @@ def generate_profiles(mode="mixed", filename="profiles.jsonl"):
 
         # --- 1. 社交媒体角色分配  ---
         # 概率分布：1% KOL, 9% Active, 90% Lurker
-        role = np.random.choice(["KOL", "Active User", "Lurker"], p=[0.03, 0.20, 0.77])
+        role = np.random.choice(["KOL", "Active User", "Lurker"], p=[0.05, 0.20, 0.75])
         stats["Role"][role] += 1
 
         # --- 2. 人口统计学与预算 ---

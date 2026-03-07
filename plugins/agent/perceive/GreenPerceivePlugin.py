@@ -56,4 +56,4 @@ class GreenPerceivePlugin(PerceivePlugin):
             current_observations.extend(new_messages)
             await state_plugin.set_state("incoming_messages", [])
             await state_plugin.set_state("observations", current_observations)
-            print(f"👀 [Perceive] 感知到 {len(new_messages)} 条新消息。")
+            # print(f"👀 [Perceive] 感知到 {len(new_messages)} 条新消息。")

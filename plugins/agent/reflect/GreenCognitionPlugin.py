@@ -63,7 +63,7 @@ Output JSON ONLY:
     "hypocrisy_perceived": true/false,
     "trust_change": float, // Scale: -1.0 to +1.0
     "importance": float, // Rate importance of this event (1.0 to 10.0) for future memory
-    "reasoning": "Short first-person thought."
+    "reasoning": "Short first-person thought.(STRICTLY IN ENGLISH)"
 }}
 """
         try:
@@ -91,8 +91,8 @@ Output JSON ONLY:
 
             await state_plugin.set_state("observations", [])
 
-            print(
-                f"🧠 [Cognition] {agent.agent_id} | 信任 {current_trust:.1f}->{new_trust:.1f} | 想法: {result.get('reasoning')[:40]}")
+            # print(
+            #     f"🧠 [Cognition] {agent.agent_id} | 信任 {current_trust:.1f}->{new_trust:.1f} | 想法: {result.get('reasoning')[:40]}")
         except Exception as e:
             print(f"❌ [Cognition Error] {e}")
 

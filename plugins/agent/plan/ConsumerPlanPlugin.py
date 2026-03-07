@@ -32,32 +32,28 @@ class ConsumerPlanPlugin(PlanPlugin):
         s_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
 
         trust_score = s_data.get("trust_score", 5.0)
-
-        # 从 State 获取同步后的预算，默认为 0 以防止未初始化带来的错误决策
         budget = s_data.get("budget", 0)
-
-        # 从 State 获取同步后的价格
         product_price = s_data.get("product_price", 50)
         product_name = "EcoBottle"
-
         latest_thought = s_data.get("latest_thought", {})
 
-        # 2. 规则过滤器 (Fail Fast)
-        if budget < product_price:
-            # 这里的 print 可以帮助你确认 budget 是否正确传入
-            # print(f"💰 [Plan] 预算不足 ({budget} < {product_price})，跳过购买选项。")
-            # 注意：这里我们不直接 return，而是让 Agent 知道自己没钱，但也许它想吐槽呢？
-            pass
+        # 1. 获取时间上下文，判断是否处于预热期 (Tick 1-5)
+        time_context = s_data.get("time_context", "")
+        is_burn_in = "预热期" in time_context or "不允许购买" in time_context
 
-            # 3. 构造决策 Prompt
+        # 2. 动态调整 LLM 的动作规则
+        buy_rule = "UNAVAILABLE (Product not released yet, DO NOT CHOOSE THIS)" if is_burn_in else "ONLY if budget >= price AND trust is high."
+
         persona = profile_plugin.get_prompt()
         thought_str = json.dumps(latest_thought) if latest_thought else "No specific thoughts."
 
+        # 3. 构造决策 Prompt
         prompt = f"""
 {persona}
 
 [Context]
-You are considering buying '{product_name}' (Price: {product_price}).
+System Environment: {time_context}
+You are considering '{product_name}' (Price: {product_price}).
 Your Budget: {budget}
 
 [State]
@@ -66,11 +62,18 @@ Your Budget: {budget}
 
 [Task]
 Decide NEXT ACTION:
-1. 'buy': ONLY if budget >= price AND trust is high.
-2. 'post_review': If trust low, warn others.
+1. 'buy': {buy_rule}
+2. 'post_review': If trust low/high, express your anticipation, skepticism, or warn others based on your persona.
 3. 'ignore': Do nothing (or if cannot afford).
 
-Output JSON: {{ "action": "...", "content": "..." (if review), "reason": "..." }}
+CRITICAL RULE: The "reason" and "content" fields MUST BE WRITTEN ENTIRELY IN ENGLISH.
+
+Output JSON ONLY: 
+{{ 
+    "action": "...", 
+    "content": "Social media post content if you choose post_review (IN ENGLISH)", 
+    "reason": "Explain your reason here (STRICTLY IN ENGLISH)" 
+}}
 """
         try:
             model = getattr(agent, "model", getattr(agent, "_model", None))
@@ -86,16 +89,23 @@ Output JSON: {{ "action": "...", "content": "..." (if review), "reason": "..." }
             else:
                 plan = response
 
-            # 安全检查：如果 Agent 没钱还硬要买，Plan 层拦截
+            # ==========================================
+            # 🛡️ 物理拦截网 (Fail-Safe)
+            # ==========================================
+            # 拦截 1：如果 LLM 发生幻觉在预热期强行购买，立即改为 ignore
+            if plan.get("action") == "buy" and is_burn_in:
+                plan = {"action": "ignore", "reason": "Pre-release period, cannot buy (Auto-corrected)"}
+
+            # 拦截 2：如果 LLM 在发售后没钱还强行购买，拦截
             if plan.get("action") == "buy" and budget < product_price:
                 plan = {"action": "ignore", "reason": "Budget insufficient (Auto-corrected)"}
 
             await state_plugin.set_state("plan_result", plan)
             if plan.get("action") != "ignore":
-                print(f"📅 [Plan] 决策生成: {plan.get('action')} (理由: {plan.get('reason')})")
+                print(f"📅 [Plan] {agent.agent_id} 决策: {plan.get('action')} (理由: {plan.get('reason')[:40]}...)")
 
         except Exception as e:
-            print(f"❌ [Plan Error] {e}")
+            print(f"❌ [Plan Error] {agent.agent_id}: {e}")
 
     async def save_to_db(self):
         pass

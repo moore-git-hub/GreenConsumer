@@ -103,8 +103,8 @@ class GreenInvokePlugin(InvokePlugin):
         except Exception as e:
             print(f"变异失败，采用原文本。错误: {e}")
 
-        print(
-            f"📢 [Invoke 语义变异] {agent.agent_id} ({involvement})\n  原意: {original_content[:20]}...\n  发帖: \"{mutated_content}\"")
+        # print(
+        #     f"📢 [Invoke 语义变异] {agent.agent_id} ({involvement})\n  原意: {original_content[:20]}...\n  发帖: \"{mutated_content}\"")
 
         # 广播变异后的内容
         network_plugin = self._get_env_plugin("network")

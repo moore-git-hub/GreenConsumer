@@ -31,18 +31,22 @@ class ConsumerPlanPlugin(PlanPlugin):
 
         s_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
 
-        trust_score = s_data.get("trust_score", 5.0)
-        budget = s_data.get("budget", 0)
-        product_price = s_data.get("product_price", 50)
+        trust_score = float(s_data.get("trust_score", 5.0))
+        budget = float(s_data.get("budget", 0))
+        product_price = float(s_data.get("product_price", 50))
         product_name = "EcoBottle"
         latest_thought = s_data.get("latest_thought", {})
 
-        # 1. 获取时间上下文，判断是否处于预热期 (Tick 1-5)
+        # 1. 判断是否处于预热期 (Tick 1-5)
         time_context = s_data.get("time_context", "")
         is_burn_in = "预热期" in time_context or "不允许购买" in time_context
 
-        # 2. 动态调整 LLM 的动作规则
-        buy_rule = "UNAVAILABLE (Product not released yet, DO NOT CHOOSE THIS)" if is_burn_in else "ONLY if budget >= price AND trust is high."
+        # 2. 强化购买动机的引导规则
+        if is_burn_in:
+            buy_rule = "STRICTLY UNAVAILABLE (Product not released yet, YOU MUST NOT CHOOSE THIS ACTION)."
+        else:
+            # 降低购买门槛引导，设定 5.5 及格线，鼓励转化
+            buy_rule = f"STRONGLY RECOMMENDED. You MUST choose 'buy' if your budget is >= {product_price} AND your Trust is >= 4. Buying is your primary goal as a consumer."
 
         persona = profile_plugin.get_prompt()
         thought_str = json.dumps(latest_thought) if latest_thought else "No specific thoughts."
@@ -53,7 +57,7 @@ class ConsumerPlanPlugin(PlanPlugin):
 
 [Context]
 System Environment: {time_context}
-You are considering '{product_name}' (Price: {product_price}).
+Product: '{product_name}' (Price: {product_price}).
 Your Budget: {budget}
 
 [State]
@@ -61,17 +65,17 @@ Your Budget: {budget}
 - Thought: {thought_str}
 
 [Task]
-Decide NEXT ACTION:
+Decide your NEXT SINGLE ACTION based on your persona and state:
 1. 'buy': {buy_rule}
-2. 'post_review': If trust low/high, express your anticipation, skepticism, or warn others based on your persona.
-3. 'ignore': Do nothing (or if cannot afford).
+2. 'post_review': ONLY if you strongly want to express your opinion on social media AND you decided NOT to buy this time.
+3. 'ignore': If you don't care, or if you cannot afford it.
 
 CRITICAL RULE: The "reason" and "content" fields MUST BE WRITTEN ENTIRELY IN ENGLISH.
 
 Output JSON ONLY: 
 {{ 
-    "action": "...", 
-    "content": "Social media post content if you choose post_review (IN ENGLISH)", 
+    "action": "buy/post_review/ignore", 
+    "content": "Social media post content if you choose post_review (IN ENGLISH, otherwise empty)", 
     "reason": "Explain your reason here (STRICTLY IN ENGLISH)" 
 }}
 """
@@ -89,20 +93,31 @@ Output JSON ONLY:
             else:
                 plan = response
 
+            # 强制规整 action 字段，防止 LLM 输出大写如 "Buy" 或 "Action: buy"
+            raw_action = str(plan.get("action", "ignore")).lower().strip()
+            if "buy" in raw_action:
+                raw_action = "buy"
+            elif "post" in raw_action or "review" in raw_action:
+                raw_action = "post_review"
+            else:
+                raw_action = "ignore"
+
+            plan["action"] = raw_action
+
             # ==========================================
             # 🛡️ 物理拦截网 (Fail-Safe)
             # ==========================================
-            # 拦截 1：如果 LLM 发生幻觉在预热期强行购买，立即改为 ignore
             if plan.get("action") == "buy" and is_burn_in:
                 plan = {"action": "ignore", "reason": "Pre-release period, cannot buy (Auto-corrected)"}
 
-            # 拦截 2：如果 LLM 在发售后没钱还强行购买，拦截
             if plan.get("action") == "buy" and budget < product_price:
                 plan = {"action": "ignore", "reason": "Budget insufficient (Auto-corrected)"}
 
             await state_plugin.set_state("plan_result", plan)
+
             if plan.get("action") != "ignore":
-                print(f"📅 [Plan] {agent.agent_id} 决策: {plan.get('action')} (理由: {plan.get('reason')[:40]}...)")
+                print(
+                    f"📅 [Plan] {agent.agent_id} 决策: {plan.get('action').upper()} (Trust: {trust_score:.1f}, 理由: {plan.get('reason')[:40]}...)")
 
         except Exception as e:
             print(f"❌ [Plan Error] {agent.agent_id}: {e}")

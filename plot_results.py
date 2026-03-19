@@ -5,15 +5,16 @@ import glob
 
 
 def plot_latest_simulation():
-    # 1. 自动找到最新的 CSV 文件
+    # 1. 强制精确匹配 simulation_log 文件，彻底阻断抓取到 thought 或 macro 日志
     results_dir = os.path.join(os.path.dirname(__file__), "results")
-    list_of_files = glob.glob(os.path.join(results_dir, '*.csv'))
+    list_of_files = glob.glob(os.path.join(results_dir, 'simulation_log_*.csv'))
+
     if not list_of_files:
-        print(" 没有找到 CSV 数据文件，请先运行 run_simulation.py")
+        print("❌ 没有找到 simulation_log 数据文件，请先运行 run_simulation.py")
         return
 
     latest_file = max(list_of_files, key=os.path.getctime)
-    print(f"正在绘制文件: {latest_file}")
+    print(f"📈 正在读取并绘制基础动作日志: {os.path.basename(latest_file)}")
 
     # 2. 读取数据
     df = pd.read_csv(latest_file)
@@ -45,7 +46,7 @@ def plot_latest_simulation():
     # 保存图片
     img_path = latest_file.replace(".csv", ".png")
     plt.savefig(img_path)
-    print(f"🖼️ 图片已保存至: {img_path}")
+    print(f"🖼️ 信任演化对比图已保存至: {img_path}")
     plt.show()
 
 

@@ -5,7 +5,7 @@ import sys
 import numpy as np
 
 # 建议在仿真中将数量调高以体现统计学规律 (如 100)
-DEFAULT_NUM_AGENTS = 50
+DEFAULT_NUM_AGENTS = 30
 
 # ==========================================
 # 🧠 学术级画像库：ELM + Big Five + 90-9-1 社交媒体法则

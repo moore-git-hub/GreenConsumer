@@ -94,7 +94,7 @@ async def run():
     csv_path = os.path.join(results_dir, f"simulation_log_{timestamp}.csv")
     csv_file = open(csv_path, "w", newline="", encoding="utf-8")
     writer = csv.writer(csv_file)
-    writer.writerow(["Tick", "AgentID", "Type", "TrustScore", "Action", "Hypocrisy"])
+    writer.writerow(["Tick", "AgentID", "Type", "TrustScore", "Action", "Thought_Hypocrisy"])
 
     # 2. 详细思维日志
     thought_path = os.path.join(results_dir, f"thoughts_log_{timestamp}.csv")

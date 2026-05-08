@@ -182,65 +182,67 @@ async def run():
     BURN_IN_TICKS = 5
 
     # ==========================================
-    # 🚀 高阶真实商业公关博弈矩阵 (Advanced Enterprise Strategy)
+    # 🕒 Oatly 真实时间轴干预策略 (宏观环境刺激)
     # ==========================================
     ENTERPRISE_STRATEGY = {
-        1: {
-            "source": "EcoBrand_Official",
-            "content": "自然，是我们唯一的答案。历经1000个日夜，EcoBottle 采用独家提取的深海海藻复合纤维，为您带来极致体验。这不仅是一个水杯，更是对地球的一份承诺。每售出一件，我们将向‘蓝色海洋计划’捐助1元。下周，开启您的零碳生活方式。"
-        },
-        6: {
-            "source": "EcoBrand_Official",
-            "content": "今日正式开售！EcoBottle 荣获业内首创的 'Eco-Future 内部先锋环保金奖'。产品生命周期参数已上传我们的自建碳足迹模型（注：该测算正由第三方智库评估中）。"
-        },
-        10: {
-            "source": "Consumer_Rights_Blogger (测评博主)",
-            "content": "避雷！刚收到首发盲盒，用开水一烫底部竟然轻微变形了？而且我刮开底部的所谓的‘原木环保漆’，里面隐约印着回收代码7（不可降解的PC塑料）！说好的海藻提取物呢？这真的是智商税吧！"
-        },
-        15: {
-            "source": "Green_Earth_NGO (独立环保组织)",
-            "content": "【深度调查】经本机构实验室光谱分析，EcoBottle 核心材质仍为传统石油基塑料，海藻纤维含量不足 2%。更令人震惊的是，其宣称捐助的‘蓝色海洋计划’实为该企业高管实际控制的空壳基金。这是极其恶劣的‘漂绿’与虚假营销。"
-        },
-        20: {
-            "source": "EcoBrand_PR (官方公关部)",
-            "content": "致关心我们的朋友：对不起。经连夜彻查，系上游原材料供应商为压缩成本，私自篡改了配方比例，我们未能察觉，这也是我们的失职。目前已向公安机关报案并起诉该供应商，全线产品启动召回。至于基金争议，属于合理合法的税务统筹，绝非中饱私囊。我们做环保的初心从未改变，恳请大家给本土创新企业一个纠错的机会。"
-        },
-        25: {
-            "source": "Top_Lifestyle_KOL (百万粉丝生活大V)",
-            "content": "今天去了EcoBrand的总部。其实大家没必要这么苛刻，国内做植物基新材料的本来就没几家，能迈出第一步已经很了不起了。我亲眼看到那些被坑的年轻研发人员在哭。揪着一点管理漏洞往死里打，以后谁还敢做环保创新？（我已下单支持复产版，不喜勿喷）"
-        }
+        1: (
+            "Oatly launches a quirky, eco-friendly ad campaign highlighting their Barista edition oat milk's perfect micro-foam. "
+            "The slogan is: 'It's like milk, but made for humans.'"
+        ),
+        # 【黑天鹅事件 1：黑石资本丑闻】-> 专门引爆“监管哨兵”和“纯素斗士”
+        5: (
+            "🚨 BREAKING NEWS & SCANDAL: It is publicly revealed that Oatly accepted a $200 million investment from Blackstone Group, "
+            "a controversial private equity firm heavily linked to deforestation in the Amazon rainforest and backing anti-climate politicians. "
+            "Environmentalists are furious, calling it a massive betrayal and severe greenwashing."
+        ),
+        # 【黑天鹅事件 2：菜籽油健康风波】-> 专门引爆“口感与成分考究派”和“散户”
+        10: (
+            "🚨 VIRAL HEALTH CONTROVERSY: A top nutrition influencer posts a viral video exposing Oatly's ingredients. "
+            "They claim Oatly is 'essentially sugar water' packed with inflammatory canola oil (rapeseed oil) that causes massive blood glucose spikes. "
+            "Consumers are starting to worry about the health impacts."
+        )
     }
 
     cumulative_buyers = set()  # 追踪历史购买者
 
     for tick in range(1, TOTAL_TICKS + 1):
-        print(f"\n === Tick {tick} ===")
+        print(f"\n" + "=" * 40)
+        print(f" ⏳ === Simulation Tick {tick} ===")
+        print("=" * 40)
 
-        if tick <= BURN_IN_TICKS:
-            time_context = f"产品上市预热中，当前是预热期第 {tick} 天。不允许购买。"
-        else:
-            time_context = f"产品已正式发售第 {tick - BURN_IN_TICKS} 天。"
+        # 1. 宏观时间上下文 (Oatly 已上市，移除旧版禁止购买的预热期逻辑)
+        time_context = f"Current Environment: Day {tick} of the simulation."
 
+        # 2. 全局事件注入 (适配最新的纯字符串 ENTERPRISE_STRATEGY)
         if tick in ENTERPRISE_STRATEGY:
-            event = ENTERPRISE_STRATEGY[tick]
-            print(f"📣 [全局干预注入] {event['source']}: {event['content']}")
+            event_text = ENTERPRISE_STRATEGY[tick]
+            print(f"🚨 [Global News Injection]: {event_text}")
+
+            # 将纯字符串包装为 Agent 能够理解的消息字典
+            event_msg = {"source": "Global News", "content": event_text}
+
             for ag in agents:
                 s_plugin = ag.get_component("state")._plugin
                 inbox = getattr(s_plugin, "state_data", {}).get("incoming_messages", [])
-                await s_plugin.set_state("incoming_messages", list(inbox) + [event])
+                await s_plugin.set_state("incoming_messages", list(inbox) + [event_msg])
 
+        # 3. 认知与反思层 (更新 Agent 时间戳并读取新闻)
         for ag in agents:
             s_plugin = ag.get_component("state")._plugin
             await s_plugin.set_state("time_context", time_context)
             await s_plugin.set_state("current_tick", tick)
+
             await ag.get_component("perceive").execute(tick)
             await ag.get_component("reflect").execute(tick)
 
+        # 4. 计划与执行层 (消费决策与发帖)
         for ag in agents:
             await ag.get_component("plan").execute(tick)
             await ag.get_component("invoke").execute(tick)
 
-        # 数据结算
+        # ==========================================
+        # 📊 5. 数据结算与持久化
+        # ==========================================
         trust_list = []
         tick_buys = 0
         tick_posts = 0
@@ -249,13 +251,16 @@ async def run():
             s_data = getattr(ag.get_component("state")._plugin, "state_data", {})
             p_data = getattr(ag.get_component("profile")._plugin, "profile_data", {})
 
-            agent_type = p_data.get("psychology", {}).get("environmental_involvement", "Unknown")
-            trust = s_data.get("trust_score", 5.0)
+            # 🚨 核心修复：将旧的 environmental_involvement 替换为最新的 cluster_type
+            agent_type = p_data.get("psychology", {}).get("cluster_type", "Unknown")
+            trust = round(float(s_data.get("trust_score", 5.0)), 2)
             trust_list.append(trust)
 
             plan = s_data.get("plan_result", {})
             action = plan.get("action", "none") if plan else "none"
+
             thought = s_data.get("latest_thought", {}) or {}
+            # 兼容大模型偶尔返回的布尔值或字符串
             hypocrisy = thought.get("hypocrisy_perceived", False)
 
             if action == "buy":
@@ -264,10 +269,14 @@ async def run():
             elif action == "post_review":
                 tick_posts += 1
 
+            # 写入基础动作日志
             writer.writerow([tick, ag.agent_id, agent_type, trust, action, hypocrisy])
+
+            # 写入内部思维日志 (Thought Log)
             if thought:
-                thought_writer.writerow([tick, ag.agent_id, agent_type, hypocrisy, thought.get("trust_change", 0.0),
-                                         thought.get("reasoning", "")])
+                trust_change = thought.get("trust_change", 0.0)
+                reasoning = thought.get("reasoning", "")
+                thought_writer.writerow([tick, ag.agent_id, agent_type, hypocrisy, trust_change, reasoning])
 
         avg_trust = np.mean(trust_list)
         conversion_rate = len(cumulative_buyers) / len(agents)

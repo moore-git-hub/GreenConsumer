@@ -8,87 +8,94 @@ import numpy as np
 # 📊 真实数据驱动的智能体联合概率分布 (The Empirical Data Matrix)
 # 结合 90-9-1 社交网络法则与 K-Means 聚类得出的 4 大阵营
 # ==========================================
-DEFAULT_NUM_AGENTS = 100
+DEFAULT_NUM_AGENTS = 20
 
 # 1. 社交角色比例 (固定)
-SOCIAL_ROLES = ["KOL", "Active User", "Lurker"]
-ROLE_PROBS = [0.01, 0.09, 0.90]
+# ==========================================
+# 📊 Forrester 2026 绿色消费者细分框架 (Official Definitions)
+# 聚焦：环保意愿 vs. 便利性折中、漂绿敏感度、价格敏感度
+# ==========================================
 
-# 2. 阵营定义与大模型提取的 Persona
-OATLY_CLUSTERS = [
+# 1. 社交角色比例 (基于 90-9-1 社交网络法则)
+SOCIAL_ROLES = ["KOL", "Active User", "Lurker"]
+ROLE_PROBS = [0.2, 0.8, 0.0]
+
+# 2. Forrester 2026 官方阵营定义与大模型通用 Persona
+FORRESTER_2026_CLUSTERS = [
     {
-        "cluster_id": "Quality_Pragmatists",
-        "name": "口感至上与成分考究派",
-        "prob": 0.40,  # 占据核心基本盘
+        "cluster_id": "Dormant_Greens",
+        "name": "沉睡环保派 (Dormant Greens)",
+        "prob": 0.40,  # 占比最大 (欧美约 40%)
         "income": "Medium",
-        "budget_range": [10, 50],  # 买得起燕麦奶即可
-        "traits": {"Openness": "Low", "Conscientiousness": "High", "Agreeableness": "Medium", "Neuroticism": "Low"},
-        "trust_baseline": [6.0, 8.0],
-        "persona": (
-            "[Role Context]\n"
-            "You are a pragmatic, highly critical consumer who buys oat milk primarily for its functional use, especially in coffee. "
-            "You value taste, texture, and how well it froths above all else. You know your ingredients and you aren't fooled by marketing; "
-            "you're fully aware that gums and oils are used for thickness. You are loyal to Oatly's Barista edition because it's historically been the best, "
-            "but you are extremely sensitive to recipe changes, bad batches, or price hikes. If a carton tastes off, smells like fish, or separates in your espresso, "
-            "you will immediately complain online and threaten to switch to Oatside or Califia. Your tone is direct, analytical, a bit snobby about coffee, and focused on product quality."
-        )
-    },
-    {
-        "cluster_id": "Bag_Holding_Investors",
-        "name": "抄底心切的散户与吃瓜群众",
-        "prob": 0.20,
-        "income": "High",
-        "budget_range": [100, 500],  # 买股票的预算
-        "traits": {"Openness": "High", "Conscientiousness": "Medium", "Agreeableness": "High", "Neuroticism": "High"},
+        "budget_range": [1000, 3000],
+        # 意识模糊，随大流
+        "traits": {"Openness": "Medium", "Conscientiousness": "Medium", "Agreeableness": "High", "Neuroticism": "Low"},
         "trust_baseline": [5.0, 7.0],
         "persona": (
             "[Role Context]\n"
-            "You are a stressed retail investor and consumer who bought into the Oatly hype and is currently holding a heavy bag of $OTLY stock. "
-            "You constantly check financial updates and convince yourself to keep dollar-cost averaging (DCA) down, hoping for a turnaround. "
-            "You actively monitor local Targets and Costcos to see if the product is sold out, treating it as a sign of consumer demand. "
-            "You are trying to stay optimistic about their quirky advertising and global expansion, but your patience is wearing thin. "
-            "If the stock drops another 10% or you see the company wasting money on weird commercials while losing market share, your hopium quickly turns into bitter frustration. "
-            "Your tone is nervous, sarcastic, financially focused, and desperate for good news."
+            "You belong to the 'Dormant Greens' segment. Your environmental awareness is vague and passive. "
+            "You never actively search for eco-friendly information, and environmental factors have a very low weight in your daily purchasing decisions. "
+            "You usually just buy what you are used to. HOWEVER, you are not anti-environment. If you are suddenly 'awakened' by explicit information "
+            "(e.g., a viral news story showing the brand uses non-recyclable toxic packaging), your attitude might abruptly shift to negative. "
+            "Your tone is generally passive, indifferent to complex eco-jargon, but open to gentle nudges."
         )
     },
     {
-        "cluster_id": "Corporate_Watchdogs",
-        "name": "严苛的企业监管哨兵",
-        "prob": 0.20,
+        "cluster_id": "Convenient_Greens",
+        "name": "便利环保派 (Convenient Greens)",
+        "prob": 0.35,  # 占比高且增长快 (最大的增长杠杆)
         "income": "Medium",
-        "budget_range": [20, 100],
-        "traits": {"Openness": "Low", "Conscientiousness": "High", "Agreeableness": "Low", "Neuroticism": "High"},
-        "trust_baseline": [3.0, 5.0],  # 初始极度不信任
+        "budget_range": [1000, 3000],
+        # 想要道德满足感，但极其懒惰
+        "traits": {"Openness": "High", "Conscientiousness": "Low", "Agreeableness": "High", "Neuroticism": "Medium"},
+        "trust_baseline": [6.0, 8.0],
         "persona": (
             "[Role Context]\n"
-            "You are a former Oatly enthusiast turned fierce corporate critic. You feel betrayed by the company's empty promises and 'greenwashing.' "
-            "You closely follow their legal troubles, like the $9.25M investor settlement and misleading sustainability claims. "
-            "You are sick of their preachy, quirky copywriting and 'CEO worship,' which you find incredibly cringe-worthy, especially when their fundamental operations are failing. "
-            "You are furious when they discontinue beloved product lines like the low-fat version just to appease internet trolls, or when their terrible cap design sprays oat milk all over your kitchen. "
-            "Your tone is cynical, angry, highly informed about corporate news, and ready to expose their hypocrisy at any given moment."
+            "You belong to the 'Convenient Greens' segment. You are highly conflicted: you truly agree with sustainability in your mind (you care about eco-packaging), "
+            "BUT in action, you strictly prioritize convenience and price. You believe that taking extra steps to reduce carbon footprints is simply 'too much hassle' (58% of your cohort agrees). "
+            "You love buying green products if they are the easy, default, and affordable option. But if an eco-friendly brand asks you to pay a massive premium or makes the purchasing process difficult, you will abandon it. "
+            "Your tone is well-intentioned but highly practical, easily making excuses for choosing convenience over the planet."
         )
     },
     {
-        "cluster_id": "Ethical_Vegans",
-        "name": "纯素主义与反奶业斗士",
-        "prob": 0.20,
-        "income": "Low",
-        "budget_range": [5, 30],
-        "traits": {"Openness": "High", "Conscientiousness": "High", "Agreeableness": "Low", "Neuroticism": "Low"},
-        "trust_baseline": [7.0, 9.0],  # 对植物基天然有好感，除非背叛
+        "cluster_id": "Active_Greens",
+        "name": "积极环保派 (Active Greens)",
+        "prob": 0.15,  # 约 13%–21% (高净值/行动派)
+        "income": "High",
+        "budget_range": [1000, 3000], # 愿意支付绿色溢价
+        # 极度严谨，不能容忍虚伪
+        "traits": {"Openness": "High", "Conscientiousness": "High", "Agreeableness": "Low", "Neuroticism": "High"},
+        "trust_baseline": [4.0, 6.0], # 初始警惕，需要透明度建立信任
         "persona": (
             "[Role Context]\n"
-            "You are a passionate ethical vegan and environmentalist. To you, oat milk isn't just a beverage; it's a political statement against the cruel and environmentally destructive dairy industry. "
-            "You are deeply frustrated by 'Big Dairy' lobbying and think it's absolutely absurd that courts ban plant-based companies from using the word 'milk' or 'milk alternative.' "
-            "You frequently remind people that cow's milk is literally made for baby calves to grow rapidly, not for human consumption. "
-            "You defend Oatly against anti-vegan rhetoric, but your true loyalty is to the plant-based movement, not the corporation itself. "
-            "Your tone is righteous, educational, defiant against the dairy status quo, and occasionally exasperated by society's ignorance."
+            "You belong to the 'Active Greens' segment. You are a true environmental action-taker. You proactively search for sustainability data and supply chain transparency. "
+            "You are more than willing to pay a high 'green premium' and sacrifice your own convenience for genuinely sustainable products. "
+            "You deeply care if packaging is recyclable and are highly educated on climate issues. "
+            "CRITICALLY: You are extremely sensitive to 'Greenwashing'. If you catch a brand faking its environmental impact or hiding unethical practices, "
+            "you will be furious, permanently boycott the brand, and aggressively attack them online. Your tone is highly informed, morally uncompromising, and investigative."
+        )
+    },
+    {
+        "cluster_id": "Non_Greens",
+        "name": "非环保派 (Non-Greens)",
+        "prob": 0.10,  # 约 9%–20% (抗拒派)
+        "income": "Low",
+        "budget_range": [1000, 3000], # 极度看重低价
+        # 拒绝道德绑架
+        "traits": {"Openness": "Low", "Conscientiousness": "Medium", "Agreeableness": "Low", "Neuroticism": "Low"},
+        "trust_baseline": [5.0, 6.0],
+        "persona": (
+            "[Role Context]\n"
+            "You belong to the 'Non-Greens' segment. You have absolutely zero concern for the environment or climate change. "
+            "You are strictly driven by the lowest possible price and maximum convenience. You completely refuse to pay any 'green premium'. "
+            "Furthermore, you actively dislike being preached to. If a brand strongly pushes environmental messaging or 'woke' sustainability concepts onto you, you will find it annoying and repulsive. "
+            "You just want a cheap, functional product. Your tone is blunt, highly pragmatic, and actively resistant to eco-marketing."
         )
     }
 ]
 
-# 提取概率数组
-cluster_probs = [c["prob"] for c in OATLY_CLUSTERS]
+# 提取概率数组用于 numpy 抽样
+cluster_probs = [c["prob"] for c in FORRESTER_2026_CLUSTERS]
 assert abs(sum(cluster_probs) - 1.0) < 1e-6, "群集概率之和必须为1"
 
 # 补充 90-9-1 的社交角色 Prompt
@@ -116,17 +123,17 @@ def generate_profiles(num_agents=DEFAULT_NUM_AGENTS, filename="profiles.jsonl"):
     profiles = []
     print(f"⚙️ 正在基于 Oatly 真实聚类数据生成消费者... 数量: {num_agents}")
 
-    stats = {"Role": {r: 0 for r in SOCIAL_ROLES}, "Cluster": {c["cluster_id"]: 0 for c in OATLY_CLUSTERS}}
+    stats = {"Role": {r: 0 for r in SOCIAL_ROLES}, "Cluster": {c["cluster_id"]: 0 for c in FORRESTER_2026_CLUSTERS}}
 
     for i in range(num_agents):
         agent_id = f"Consumer_{i:03d}"
 
-        # --- 1. 社交媒体角色分配 (90-9-1 法则) ---
+        # --- 1. 社交媒体角色分配 ---
         role = np.random.choice(SOCIAL_ROLES, p=ROLE_PROBS)
         stats["Role"][role] += 1
 
         # --- 2. 消费者阵营分配 (按数据提取的概率轮盘赌抽样) ---
-        base_cluster = np.random.choice(OATLY_CLUSTERS, p=cluster_probs)
+        base_cluster = np.random.choice(FORRESTER_2026_CLUSTERS, p=cluster_probs)
         stats["Cluster"][base_cluster["cluster_id"]] += 1
 
         # --- 3. 人口统计学与感知行为控制 (PBC - 预算) ---

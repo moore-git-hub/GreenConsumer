@@ -1,136 +1,113 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import os
-import glob
-from collections import Counter
 import re
-import warnings
+from collections import Counter
+import os
 
-# 忽略一些无关紧要的警告
-warnings.filterwarnings("ignore")
-
-# 设置绘图风格 (支持中文)
-sns.set_theme(style="whitegrid")
+# 设置图表字体以支持中文和英文
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial']
 plt.rcParams['axes.unicode_minus'] = False
 
 
-def analyze_thoughts():
-    # 1. 自动读取最新的 thoughts_log
-    results_dir = os.path.join(os.path.dirname(__file__), "results")
-    list_of_files = glob.glob(os.path.join(results_dir, 'thoughts_log_*.csv'))
+def analyze_thoughts_log(file_path):
+    print(f"📂 正在加载数据: {file_path}")
+    df = pd.read_csv(file_path)
 
-    if not list_of_files:
-        print("❌ 未找到 thoughts_log 文件，请先运行 run_simulation.py")
-        return
+    # 清理和格式化数据
+    df['Hypocrisy'] = df['Hypocrisy'].astype(bool)
+    df['TrustChange'] = pd.to_numeric(df['TrustChange'], errors='coerce').fillna(0)
 
-    latest_file = max(list_of_files, key=os.path.getctime)
-    print(f"📖 正在分析思维日志: {os.path.basename(latest_file)}")
+    # 建立输出目录
+    results_dir = os.path.dirname(file_path)
+    if not results_dir: results_dir = '.'
 
-    try:
-        df = pd.read_csv(latest_file, encoding='ansi')
-    except Exception as e:
-        print(f"⚠️ 读取失败，尝试默认编码... {e}")
-        df = pd.read_csv(latest_file)
+    print("\n" + "=" * 40)
+    print("📊 第一部分：核心量化指标 (Quantitative Metrics)")
+    print("=" * 40)
 
-    if df.empty:
-        print("❌ 日志为空，无法分析。")
-        return
+    # 1. 计算不同群体的平均信任惩罚与伪善感知率
+    summary = df.groupby('AgentType').agg(
+        Average_Trust_Change=('TrustChange', 'mean'),
+        Hypocrisy_Perception_Rate=('Hypocrisy', lambda x: x.mean() * 100),
+        Total_Thoughts=('AgentID', 'count')
+    ).round(2)
 
-    # 预处理：将 Hypocrisy 转为布尔/数值
-    df['Hypocrisy'] = df['Hypocrisy'].astype(str).str.lower() == 'true'
+    print(summary)
 
-    # 创建画布 (2行2列)
-    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-    fig.suptitle(f'认知思维分析\n {os.path.basename(latest_file)}', fontsize=16)
+    # ==========================================
+    # 📈 可视化 1：不同人群的伪善感知与信任惩罚对比图
+    # ==========================================
+    fig, ax1 = plt.subplots(figsize=(10, 6))
 
-    # --- 图 1: 伪善感知率 ---
-    # 统计每个 Tick 不同类型的 Agent 有多少比例感知到了 Hypocrisy
-    hypocrisy_rate = df.groupby(['Tick', 'AgentType'])['Hypocrisy'].mean().reset_index()
+    # 柱状图：伪善感知率
+    sns.barplot(x=summary.index, y='Hypocrisy_Perception_Rate', data=summary, ax=ax1, color='lightblue', alpha=0.7)
+    ax1.set_ylabel('伪善感知率 / Hypocrisy Perception Rate (%)', color='blue')
+    ax1.tick_params(axis='y', labelcolor='blue')
+    ax1.set_ylim(0, 100)
 
-    sns.barplot(
-        ax=axes[0, 0],
-        data=hypocrisy_rate,
-        x='Tick',
-        y='Hypocrisy',
-        hue='AgentType',
-        palette='Set2'
-    )
-    axes[0, 0].set_title('不同群体的“漂绿”感知率', fontsize=12)
-    axes[0, 0].set_ylabel('感知比例')
-    axes[0, 0].set_ylim(0, 1.1)
+    # 折线图：信任惩罚 (双Y轴)
+    ax2 = ax1.twinx()
+    sns.lineplot(x=summary.index, y='Average_Trust_Change', data=summary, ax=ax2, color='red', marker='o', linewidth=3,
+                 markersize=10)
+    ax2.set_ylabel('平均信任惩罚 / Avg Trust Change', color='red')
+    ax2.tick_params(axis='y', labelcolor='red')
 
-    # --- 图 2: 信任扣分力度 (愤怒程度) ---
-    # 分析当 TrustChange < 0 时，扣分的力度分布
-    negative_impact = df[df['TrustChange'] < 0]
-
-    if not negative_impact.empty:
-        sns.boxplot(
-            ax=axes[0, 1],
-            data=negative_impact,
-            x='AgentType',
-            y='TrustChange',
-            palette='Reds'
-        )
-        axes[0, 1].set_title('负面冲击分布', fontsize=12)
-        axes[0, 1].set_ylabel('信任值变化')
-    else:
-        axes[0, 1].text(0.5, 0.5, "无负面信任变化记录", ha='center')
-
-    # --- 图 3 & 4: 关键词提取 ---
-    # 简单的分词与词频统计
-    def get_top_words(text_series, top_n=10):
-        text = " ".join(text_series.astype(str).tolist()).lower()
-        # 简单清洗：去标点
-        text = re.sub(r'[^\w\s]', '', text)
-        words = text.split()
-        # 过滤停用词 (根据需要添加)
-        stopwords = {'the', 'a', 'to', 'of', 'is', 'in', 'and', 'for', 'that', 'it', 'its', 'but', 'with', 'be', 'as',
-                     'on', 'not', 'have', 'are'}
-        words = [w for w in words if w not in stopwords and len(w) > 2]
-        return Counter(words).most_common(top_n)
-
-    # 提取 Deep Green 的高频词
-    deep_green_thoughts = df[df['AgentType'].str.contains('Deep', case=False, na=False)]['Reasoning']
-    deep_words = get_top_words(deep_green_thoughts)
-
-    # 提取 Light Green 的高频词
-    light_green_thoughts = df[df['AgentType'].str.contains('Light', case=False, na=False)]['Reasoning']
-    light_words = get_top_words(light_green_thoughts)
-
-    # 绘制 Deep Green 词频
-    if deep_words:
-        words, counts = zip(*deep_words)
-        sns.barplot(ax=axes[1, 0], x=list(counts), y=list(words), palette="Greens_r")
-        axes[1, 0].set_title('深绿消费者高频关注词', fontsize=12)
-    else:
-        axes[1, 0].text(0.5, 0.5, "数据不足", ha='center')
-
-    # 绘制 Light Green 词频
-    if light_words:
-        words, counts = zip(*light_words)
-        sns.barplot(ax=axes[1, 1], x=list(counts), y=list(words), palette="Blues_r")
-        axes[1, 1].set_title('浅绿消费者高频关注词', fontsize=12)
-    else:
-        axes[1, 1].text(0.5, 0.5, "数据不足", ha='center')
-
-    # 保存与显示
+    plt.title('Agent 认知层核算：各群体伪善感知与信任惩罚对比', fontsize=14, fontweight='bold')
     plt.tight_layout()
-    save_path = latest_file.replace(".csv", "_analysis.png")
-    plt.savefig(save_path, dpi=300)
-    print(f"✅ 深度分析图表已生成: {save_path}")
-    plt.show()
+    plot_path1 = os.path.join(results_dir, "thoughts_analysis_summary.png")
+    plt.savefig(plot_path1, dpi=300)
+    print(f"\n🖼️ 图表1已保存: {plot_path1}")
 
-    # --- 打印具体的 Case Study (控制台输出) ---
-    print("\n🧐 [Case Study] 随机抽取各类型的一条推理记录:")
-    for atype in df['AgentType'].unique():
-        sample = df[df['AgentType'] == atype].sample(1)
-        if not sample.empty:
-            print(f"--- {atype} (Tick {sample.iloc[0]['Tick']}) ---")
-            print(f"Trust Change: {sample.iloc[0]['TrustChange']}")
-            print(f"Thought: {sample.iloc[0]['Reasoning']}\n")
+    # ==========================================
+    # 📈 可视化 2：信任度变化随时间 (Tick) 的演化分布
+    # ==========================================
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(data=df, x='Tick', y='TrustChange', hue='AgentType', marker='o', errorbar=None)
+
+    # 标注可能的危机点 (假定负值最深的地方是危机点)
+    min_tick = df.groupby('Tick')['TrustChange'].mean().idxmin()
+    plt.axvline(x=min_tick, color='gray', linestyle='--', alpha=0.7)
+    plt.text(min_tick + 0.5, df['TrustChange'].min(), 'Major Outrage Point', color='black', fontsize=10)
+
+    plt.title('不同群体内心信任变动轨迹 (Trust Change Dynamics over Time)', fontsize=14, fontweight='bold')
+    plt.xlabel('Simulation Tick')
+    plt.ylabel('Trust Change (per tick)')
+    plt.legend(title='Agent Type', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True, linestyle=':', alpha=0.6)
+    plt.tight_layout()
+    plot_path2 = os.path.join(results_dir, "thoughts_analysis_timeline.png")
+    plt.savefig(plot_path2, dpi=300)
+    print(f"🖼️ 图表2已保存: {plot_path2}")
+
+    print("\n" + "=" * 40)
+    print("🧠 第二部分：深度语义分析 (Qualitative Analysis)")
+    print("=" * 40)
+
+    # 简单的 NLP 高频词汇提取，挖掘各阵营脑子里的核心聚焦点
+    stop_words = {'that', 'this', 'with', 'from', 'your', 'have', 'they', 'will', 'just', 'about',
+                  'their', 'when', 'what', 'brand', 'product', 'because', 'which', 'than', 'more',
+                  'also', 'would', 'could', 'should', 'been', 'were'}
+
+    def get_top_keywords(texts, n=10):
+        words = re.findall(r'\b[a-zA-Z]{4,}\b', ' '.join(texts).lower())
+        words = [w for w in words if w not in stop_words]
+        return Counter(words).most_common(n)
+
+    for agent_type in df['AgentType'].unique():
+        type_texts = df[(df['AgentType'] == agent_type) & (df['TrustChange'] < -0.3)]['Reasoning'].dropna()
+        if not type_texts.empty:
+            top_words = get_top_keywords(type_texts, 5)
+            print(f"[{agent_type}] 在极度愤怒(Trust Drop < -0.3)时，内心 OS 的高频词汇:")
+            words_str = ", ".join([f"{w} ({c}次)" for w, c in top_words])
+            print(f"   👉 {words_str}\n")
 
 
 if __name__ == "__main__":
-    analyze_thoughts()
+    # 请确保将文件名替换为你实际的最新文件名
+    target_csv = "thoughts_log_20260515_140826.csv"
+
+    if os.path.exists(target_csv):
+        analyze_thoughts_log(target_csv)
+    else:
+        print(f"❌ 找不到文件 {target_csv}，请检查路径。")

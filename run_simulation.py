@@ -166,11 +166,6 @@ async def run():
     print("初始化 Agent 状态")
     for ag in agents:
         state_plugin = ag.get_component("state")._plugin
-        profile_plugin = ag.get_component("profile")._plugin
-        p_data = getattr(profile_plugin, "profile_data", getattr(profile_plugin, "_profile_data", {}))
-
-        await state_plugin.set_state("trust_score", float(p_data.get("initial_trust", 5.0)))
-        await state_plugin.set_state("budget", float(p_data.get("budget", 100)))
         await state_plugin.set_state("incoming_messages", [])
         await state_plugin.set_state("observations", [])
         await state_plugin.set_state("latest_thought", None)
@@ -257,20 +252,28 @@ async def run():
             trust_list.append(trust)
 
             plan = s_data.get("plan_result", {})
-            action = plan.get("action", "none") if plan else "none"
+            is_buying = plan.get("is_buying", False)
+            is_posting = plan.get("is_posting", False)
 
             thought = s_data.get("latest_thought", {}) or {}
-            # 兼容大模型偶尔返回的布尔值或字符串
             hypocrisy = thought.get("hypocrisy_perceived", False)
 
-            if action == "buy":
+            # 并行统计
+            if is_buying:
                 tick_buys += 1
                 cumulative_buyers.add(ag.agent_id)
-            elif action == "post_review":
+            if is_posting:
                 tick_posts += 1
 
+            # 生成组合动作日志字符串 (e.g., "BUY", "POST", "BUY+POST", "IGNORE")
+            action_tags = []
+            if is_buying: action_tags.append("BUY")
+            if is_posting: action_tags.append("POST")
+            if not action_tags: action_tags.append("IGNORE")
+            action_log = "+".join(action_tags)
+
             # 写入基础动作日志
-            writer.writerow([tick, ag.agent_id, agent_type, trust, action, hypocrisy])
+            writer.writerow([tick, ag.agent_id, agent_type, trust, action_log, hypocrisy])
 
             # 写入内部思维日志 (Thought Log)
             if thought:

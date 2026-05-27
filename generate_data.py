@@ -8,7 +8,7 @@ import numpy as np
 # 📊 Forrester 2026 绿色消费者细分框架 (全语义人格驱动)
 # 彻底移除 Budget 和 Trust 的数值硬编码，交由 LLM 自主涌现
 # ==========================================
-DEFAULT_NUM_AGENTS = 20
+DEFAULT_NUM_AGENTS = 7
 
 SOCIAL_ROLES = ["KOL", "Active User", "Lurker"]
 ROLE_PROBS = [0.2, 0.8, 0.0]  # 测试期强制全员活跃
@@ -95,7 +95,7 @@ def generate_profiles(num_agents=DEFAULT_NUM_AGENTS, filename="profiles.jsonl"):
         role = np.random.choice(SOCIAL_ROLES, p=ROLE_PROBS)
         stats["Role"][role] += 1
 
-        base_cluster = np.random.choice(FORRESTER_2026_CLUSTERS, p=cluster_probs)
+        base_cluster = random.choices(FORRESTER_2026_CLUSTERS, weights=cluster_probs, k=1)[0]
         stats["Cluster"][base_cluster["cluster_id"]] += 1
 
         age = random.randint(18, 60)

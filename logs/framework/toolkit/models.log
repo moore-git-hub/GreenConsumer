@@ -12600,3 +12600,4 @@
 2026-05-15 15:14:52 | WARNING  | PID:53656 | agentkernel_standalone.toolkit.models.async_router:chat:150 - [AsyncModelRouter] providers=1 chat request failed with qwen-plus: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
 2026-05-15 15:14:52 | ERROR    | PID:53656 | agentkernel_standalone.toolkit.models.async_router:chat:153 - All providers failed for chat request. Retrying in 1 seconds...
 2026-05-15 15:16:14 | WARNING  | PID:53656 | agentkernel_standalone.toolkit.models.async_router:__del__:219 - [AsyncModelRouter] providers=1 session was not closed explicitly before destruction: <aiohttp.client.ClientSession object at 0x000001DE384BB6E0>
+2026-05-27 21:10:19 | WARNING  | PID:16444 | agentkernel_standalone.toolkit.models.async_router:__del__:219 - [AsyncModelRouter] providers=1 session was not closed explicitly before destruction: <aiohttp.client.ClientSession object at 0x000001E9C1C10E60>

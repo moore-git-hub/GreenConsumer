@@ -22,24 +22,58 @@ class GreenProfilePlugin(ProfilePlugin):
         self._profile_data[key] = value
 
     def get_prompt(self) -> str:
-        # 使用 self._profile_data 访问数据
+        """
+        返回 Agent 的 Persona Prompt。
+
+        优先使用 profiles.jsonl 中预生成的完整 `persona` 字段（由 generate_data.py 写入）。
+        若该字段不存在（旧格式数据），则回退到从结构化字段动态拼接。
+        """
         if not self._profile_data:
             return "You are a consumer agent."
 
         p = self._profile_data
+
+        # 优先路径：直接使用预生成的完整 Persona Prompt
+        if p.get("persona"):
+            return p["persona"]
+
+        # 回退路径：从结构化字段动态拼接（兼容旧格式数据）
         demos = p.get('demographics', {})
         psych = p.get('psychology', {})
+        cluster_type = psych.get('cluster_type', psych.get('environmental_involvement', 'Unknown'))
+        big_five = psych.get('big_five', {})
+        social_role = psych.get('social_role', 'Active User')
 
         prompt = (
-            f"You are {p.get('name', 'Unknown')}, a {demos.get('age', 'N/A')}-year-old with {demos.get('education', 'N/A')} education.\n"
+            f"You are {p.get('name', 'Unknown')}, a {demos.get('age', 'N/A')}-year-old consumer.\n"
             f"Income Level: {demos.get('income', 'N/A')}.\n"
-            f"Personality: {psych.get('big_five', 'N/A')}.\n"
-            f"Green Identity: You are a '{psych.get('environmental_involvement', 'N/A')}' consumer.\n"
+            f"Personality (Big Five): {big_five}.\n"
+            f"Consumer Segment: '{cluster_type}'.\n"
+            f"Social Role: {social_role}.\n"
         )
 
-        if psych.get('environmental_involvement') == 'Deep Green':
-            prompt += "Guideline: You are extremely sensitive to greenwashing. If you detect hypocrisy, you will lose trust immediately.\n"
-        else:
-            prompt += "Guideline: You care about price and convenience more than strict environmental claims.\n"
+        # 根据消费者类型注入行为指导规则
+        guidelines = {
+            'Active_Greens': (
+                "You are a true environmental action-taker, extremely sensitive to greenwashing. "
+                "If you detect brand hypocrisy, you will lose trust immediately and aggressively call it out online."
+            ),
+            'Convenient_Greens': (
+                "You care about sustainability in principle, but in practice you prioritize convenience and price. "
+                "You will abandon eco-friendly brands if they are too expensive or inconvenient."
+            ),
+            'Dormant_Greens': (
+                "Your environmental awareness is passive. You rarely seek eco-info, but a shocking scandal can abruptly shift your attitude."
+            ),
+            'Non_Greens': (
+                "You have zero concern for the environment. You are strictly driven by the lowest price and maximum convenience."
+            ),
+            # 旧字段兼容
+            'Deep Green': (
+                "You are extremely sensitive to greenwashing. If you detect hypocrisy, you will lose trust immediately."
+            ),
+        }
+        guideline = guidelines.get(cluster_type, "You care about price and convenience more than strict environmental claims.")
+        prompt += f"Guideline: {guideline}\n"
 
         return prompt

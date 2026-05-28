@@ -5,7 +5,9 @@
 # --- Global Simulation Configuration ---
 # Parameters for controlling overall simulator behavior.
 simulation:
-  max_ticks: 10          # Maximum time steps for simulation run
+  max_ticks: 30          # Maximum time steps for simulation run
+                         # 与 run_simulation.py 中 TOTAL_TICKS=30 保持一致
+                         # 事件时间轴: Tick1(发售预热) / Tick5(黑石漂绿丑闻) / Tick10(菜籽油健康风波)
 
 # --- Module Path Configuration ---
 # Defines configuration file paths for all core modules.

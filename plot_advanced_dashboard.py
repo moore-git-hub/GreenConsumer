@@ -96,8 +96,8 @@ def plot_advanced_dashboard():
     post_counts = df_sim[df_sim['IsPost']].groupby(['Tick', 'Type']).size().unstack(fill_value=0)
     post_counts = post_counts.reindex(range(1, df_sim['Tick'].max() + 1), fill_value=0)
 
-    # 获取可用列对应的颜色
-    colors = [styles[c]['color'] if c in styles else '#gray' for c in post_counts.columns]
+    # 获取可用列对应的颜色（fallback 用合法的灰色 hex）
+    colors = [styles[c]['color'] if c in styles else '#888888' for c in post_counts.columns]
     labels = [styles[c]['label'] if c in styles else c for c in post_counts.columns]
 
     post_counts.plot(kind='bar', stacked=True, ax=ax3, color=colors, width=0.8)

@@ -39,9 +39,9 @@ def plot_comparison():
     plt.legend(fontsize=12)
     plt.ylim(0, 10)
 
-    # 标注漂绿事件
-    plt.axvline(x=4, color='red', linestyle=':', alpha=0.5)
-    plt.text(3.1, 9.5, 'Greenwashing Ad Released', color='red')
+    # 标注漂绿事件（对齐 ENTERPRISE_STRATEGY Tick 5）
+    plt.axvline(x=5, color='red', linestyle=':', alpha=0.5)
+    plt.text(5.1, 9.5, 'Greenwashing Scandal (Tick 5)', color='red')
 
     save_path = os.path.join(results_dir, "Comparison_Result.png")
     plt.savefig(save_path, dpi=300)

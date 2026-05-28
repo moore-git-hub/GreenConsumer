@@ -4,23 +4,44 @@ import seaborn as sns
 import re
 from collections import Counter
 import os
+import glob
+
+from typing import Optional
 
 # 设置图表字体以支持中文和英文
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial']
 plt.rcParams['axes.unicode_minus'] = False
 
 
-def analyze_thoughts_log(file_path):
+def find_latest_thoughts_log(results_dir: Optional[str] = None) -> Optional[str]:
+    """
+    自动在 results/ 目录下查找最新的 thoughts_log_*.csv 文件。
+    若 results_dir 为 None，则以脚本所在目录下的 results/ 为准。
+    """
+    if results_dir is None:
+        results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
+
+    pattern = os.path.join(results_dir, "thoughts_log_*.csv")
+    files = glob.glob(pattern)
+    if not files:
+        return None
+    return max(files, key=os.path.getctime)
+
+
+def analyze_thoughts_log(file_path: str):
     print(f"📂 正在加载数据: {file_path}")
     df = pd.read_csv(file_path)
 
     # 清理和格式化数据
     df['Hypocrisy'] = df['Hypocrisy'].astype(bool)
-    df['TrustChange'] = pd.to_numeric(df['TrustChange'], errors='coerce').fillna(0)
+    # 兼容新列名 AffectiveChange 和旧列名 TrustChange
+    if 'AffectiveChange' in df.columns:
+        df['TrustChange'] = pd.to_numeric(df['AffectiveChange'], errors='coerce').fillna(0)
+    else:
+        df['TrustChange'] = pd.to_numeric(df['TrustChange'], errors='coerce').fillna(0)
 
-    # 建立输出目录
-    results_dir = os.path.dirname(file_path)
-    if not results_dir: results_dir = '.'
+    # 建立输出目录（与输入文件同目录）
+    results_dir = os.path.dirname(os.path.abspath(file_path))
 
     print("\n" + "=" * 40)
     print("📊 第一部分：核心量化指标 (Quantitative Metrics)")
@@ -104,10 +125,11 @@ def analyze_thoughts_log(file_path):
 
 
 if __name__ == "__main__":
-    # 请确保将文件名替换为你实际的最新文件名
-    target_csv = "thoughts_log_20260515_140826.csv"
+    # 自动查找 results/ 目录下最新的 thoughts_log 文件，无需手动修改文件名
+    latest = find_latest_thoughts_log()
 
-    if os.path.exists(target_csv):
-        analyze_thoughts_log(target_csv)
+    if latest:
+        print(f"🔍 自动定位到最新日志: {os.path.basename(latest)}")
+        analyze_thoughts_log(latest)
     else:
-        print(f"❌ 找不到文件 {target_csv}，请检查路径。")
+        print("❌ 在 results/ 目录下未找到任何 thoughts_log_*.csv 文件，请先运行 run_simulation.py。")

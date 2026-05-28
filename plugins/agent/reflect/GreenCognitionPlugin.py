@@ -1,4 +1,17 @@
+"""
+GreenCognitionPlugin — Reflect 层（System 1：快速直觉评估）
+
+职责：
+  对当前观察到的信息做情绪性认知评估，输出情绪冲击量 trust_change_affective。
+  不直接修改 trust_score，将冲击量交给 Plan 层（System 2）的确定性公式处理。
+
+双过程理论（Dual Process Theory）对应：
+  System 1（本层）：快速、情绪性、基于直觉的即时反应
+  System 2（Plan层）：慢速、理性、基于规则的深思熟虑
+"""
 import json
+import re
+import math
 from agentkernel_standalone.mas.agent.base.plugin_base import ReflectPlugin
 
 
@@ -29,20 +42,47 @@ class GreenCognitionPlugin(ReflectPlugin):
 
         state_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
         observations = state_data.get("observations")
-        if not observations: return
 
-        target_info = observations[0]
-        info_content = target_info.get("content", "")
-        info_source = target_info.get("source", "Unknown")
-        current_trust = state_data.get("trust_score", 5.0)
+        # ── 无观察时：情绪冲击归零，System 2 将只执行遗忘曲线 ──────────
+        if not observations:
+            await state_plugin.set_state("trust_change_affective", 0.0)
+            return
+
+        # ── 聚合多条观察（全局新闻优先，社交帖子补充） ──────────────────
+        global_news = [o for o in observations if o.get("source") == "Global News"]
+        social_posts = [o for o in observations if o.get("source") in ("Social", "social_review")]
+        other_obs   = [o for o in observations if o not in global_news and o not in social_posts]
+
+        info_parts = []
+        primary_source = "Unknown"
+
+        if global_news:
+            primary_source = "Global News"
+            info_parts.append(f"[Breaking News] {global_news[0]['content']}")
+        if social_posts:
+            # 最多取 2 条社交帖子，防止 Prompt 过长
+            for p in social_posts[:2]:
+                info_parts.append(f"[Social Feed] {p['content'][:120]}")
+            if not global_news:
+                primary_source = "Social"
+        if other_obs and not info_parts:
+            primary_source = other_obs[0].get("source", "Unknown")
+            info_parts.append(other_obs[0].get("content", ""))
+
+        combined_info = "\n".join(info_parts)
+        current_trust = float(state_data.get("trust_score", 5.0))
 
         p_data = getattr(profile_plugin, "profile_data", getattr(profile_plugin, "_profile_data", {}))
-        persona_rules = p_data.get("persona", "你是一名普通消费者。")  # 直接读取生成好的严格画像
+        persona_rules = p_data.get("persona", "You are a consumer.")
 
-        # === RAG 检索执行 ===
-        retrieved_memories = state_plugin.retrieve_memory(current_tick, info_content, top_k=3)
-        memory_text = "\n".join([f"- {m}" for m in retrieved_memories]) if retrieved_memories else "无相关历史回忆。"
+        # ── RAG 记忆检索 ─────────────────────────────────────────────
+        retrieved_memories = state_plugin.retrieve_memory(current_tick, combined_info, top_k=3)
+        memory_text = (
+            "\n".join([f"- {m}" for m in retrieved_memories])
+            if retrieved_memories else "No relevant past memories."
+        )
 
+        # ── System 1 Prompt：只评估情绪冲击，不做行为决策 ───────────────
         prompt = f"""
 [Character Persona]
 {persona_rules}
@@ -52,49 +92,79 @@ class GreenCognitionPlugin(ReflectPlugin):
 
 [Current Context]
 - Time: Tick {current_tick}
-- Source: '{info_source}'
-- Your Current Trust: {current_trust}/10.0
-- New Info: "{info_content}"
+- Primary Source: '{primary_source}'
+- Your Current Trust Score: {current_trust:.1f}/10.0
+- Information Received:
+{combined_info}
 
-[Task]
-Based on your persona and historical memory, evaluate this information. Limited rationality and path dependence applies.
+[Your Task — System 1 (Fast, Intuitive Reaction)]
+You are experiencing an immediate emotional reaction to this information.
+Do NOT think about long-term forgetting or mean reversion — that is handled separately.
+Focus ONLY on your raw, gut-level emotional response RIGHT NOW.
+
 Output JSON ONLY:
 {{
-    "hypocrisy_perceived": true/false,
-    "trust_change": float, // Scale: -1.0 to +1.0
-    "importance": float, // Rate importance of this event (1.0 to 10.0) for future memory
-    "reasoning": "Short first-person thought.(STRICTLY IN ENGLISH)"
+    "hypocrisy_perceived": <true or false>,
+    "trust_change_affective": <float, scale -3.0 to +3.0>,
+    "importance": <float, 1.0 to 10.0, how memorable is this event>,
+    "reasoning": "One sentence first-person gut reaction. (STRICTLY IN ENGLISH)"
 }}
+
+Guidelines for trust_change_affective:
+  - Strong negative shock (major scandal, betrayal): -2.0 to -3.0
+  - Moderate negative (concerning news): -0.5 to -1.5
+  - Neutral / no reaction: 0.0
+  - Moderate positive (good news): +0.5 to +1.5
+  - Strong positive (major endorsement): +2.0 to +3.0
+  - Your persona's sensitivity MUST influence the magnitude.
 """
         try:
             model = getattr(agent, "model", getattr(agent, "_model", None))
             response = await model.chat(prompt)
 
             if isinstance(response, str):
-                clean_json = response.replace("```json", "").replace("```", "").strip()
-                result = json.loads(clean_json)
+                clean = re.sub(r"```(?:json)?", "", response).replace("```", "").strip()
+                match = re.search(r'\{.*\}', clean, re.DOTALL)
+                if match:
+                    result = json.loads(match.group(0))
+                else:
+                    raise ValueError(f"No JSON found in response: {response[:80]}...")
             elif isinstance(response, list):
                 result = response[0]
             else:
                 result = response
 
-            change = max(-1.0, min(1.0, float(result.get("trust_change", 0.0))))
-            new_trust = max(0.0, min(10.0, current_trust + change))
+            # 情绪冲击量：范围 [-3, +3]，不直接修改 trust_score
+            raw_change = float(result.get("trust_change_affective",
+                                          result.get("trust_change", 0.0)))
+            affective_change = max(-3.0, min(3.0, raw_change))
 
-            await state_plugin.set_state("trust_score", new_trust)
+            importance_score = max(1.0, min(10.0, float(result.get("importance", 5.0))))
+
+            # ── 写入 state（不修改 trust_score，交给 Plan 层处理） ────────
+            await state_plugin.set_state("trust_change_affective", affective_change)
             await state_plugin.set_state("latest_thought", result)
 
-            # === 写入记忆库 ===
-            importance_score = float(result.get("importance", 5.0))
-            memory_entry = f"接收到来源 {info_source} 的消息: {info_content}。我的评价是: {result.get('reasoning')}"
+            # ── 写入记忆库 ───────────────────────────────────────────────
+            memory_entry = (
+                f"[Tick {current_tick}] Source={primary_source} | "
+                f"Info: {combined_info[:100]} | "
+                f"My reaction: {result.get('reasoning', '')}"
+            )
             state_plugin.add_to_memory(current_tick, memory_entry, importance_score)
 
             await state_plugin.set_state("observations", [])
 
-            # print(
-            #     f"🧠 [Cognition] {agent.agent_id} | 信任 {current_trust:.1f}->{new_trust:.1f} | 想法: {result.get('reasoning')[:40]}")
+            print(f"💭 [Reflect] {agent.agent_id} | "
+                  f"Affective Δ: {affective_change:+.2f} | "
+                  f"Hypocrisy: {result.get('hypocrisy_perceived', False)} | "
+                  f"Importance: {importance_score:.1f}")
+
         except Exception as e:
-            print(f"❌ [Cognition Error] {e}")
+            print(f"❌ [Cognition Error] {agent.agent_id} Tick {current_tick}: {e}")
+            # 失败时情绪冲击归零，Plan 层仍可正常执行遗忘曲线
+            await state_plugin.set_state("trust_change_affective", 0.0)
+            await state_plugin.set_state("observations", [])
 
     async def save_to_db(self):
         pass

@@ -90,18 +90,24 @@ async def run():
     os.makedirs(results_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # 1. 基础动作日志 (🚨 修复：对齐 BaselineTrust 和 QuietTicks 表头)
+    # 1. 基础动作日志（新增双过程分解字段：TrustAfterDecay / AffectiveChange / DecayLambda）
     csv_path = os.path.join(results_dir, f"simulation_log_{timestamp}.csv")
     csv_file = open(csv_path, "w", newline="", encoding="utf-8")
     writer = csv.writer(csv_file)
-    writer.writerow(
-        ["Tick", "AgentID", "Type", "TrustScore", "BaselineTrust", "QuietTicks", "Action", "Thought_Hypocrisy"])
+    writer.writerow([
+        "Tick", "AgentID", "Type",
+        "TrustScore", "BaselineTrust", "TrustAfterDecay", "AffectiveChange",
+        "DecayLambda", "QuietTicks", "Action", "Thought_Hypocrisy"
+    ])
 
-    # 2. 详细思维日志
+    # 2. 详细思维日志（新增 AffectiveChange 替代旧的 TrustChange）
     thought_path = os.path.join(results_dir, f"thoughts_log_{timestamp}.csv")
     thought_file = open(thought_path, "w", newline="", encoding="utf-8")
     thought_writer = csv.writer(thought_file)
-    thought_writer.writerow(["Tick", "AgentID", "AgentType", "Hypocrisy", "TrustChange", "Reasoning"])
+    thought_writer.writerow([
+        "Tick", "AgentID", "AgentType",
+        "Hypocrisy", "AffectiveChange", "TrustAfterDecay", "FinalTrust", "Reasoning"
+    ])
 
     # 3. 宏观 KPI 日志
     macro_path = os.path.join(results_dir, f"macro_metrics_{timestamp}.csv")
@@ -109,6 +115,9 @@ async def run():
     macro_writer = csv.writer(macro_file)
     macro_writer.writerow(["Tick", "AvgTrust", "NewBuys", "CumulativeBuys", "ConversionRate", "PostCount"])
     print(f"📂 数据收集流管道已建立。")
+
+    # 注册 finally 保证文件在任何情况下都能关闭
+    _open_files = [csv_file, thought_file, macro_file]
 
     # --- 初始化 ---
     builder = Builder(current_dir, resource_maps)
@@ -141,9 +150,12 @@ async def run():
     await net_plugin.init()
     net_plugin.register_agents(agents)
 
-    # 保存网络拓扑用于后续级联推导
+    # 保存网络拓扑用于后续级联推导（兼容 networkx >= 3.0 的 edges 参数变更）
     graph_path = os.path.join(results_dir, f"network_graph_{timestamp}.json")
-    graph_data = nx.node_link_data(net_plugin.graph)
+    try:
+        graph_data = nx.node_link_data(net_plugin.graph, edges="links")
+    except TypeError:
+        graph_data = nx.node_link_data(net_plugin.graph)
     with open(graph_path, "w", encoding="utf-8") as f:
         json.dump(graph_data, f)
 
@@ -152,31 +164,60 @@ async def run():
             models_conf = yaml.safe_load(f)
         router = ModelRouter(AsyncModelRouter(models_conf))
         print("🧠 LLM 引擎已就绪。")
-    except:
+    except Exception:
         print("⚠️ 使用 Mock Router")
 
         class Mock:
-            async def chat(self, p):
-                return json.dumps(
-                    {"hypocrisy_perceived": True, "current_trust": 2.0, "is_buying": False, "is_posting": True,
-                     "reasoning": "Mocking..."})
+            async def chat(self, prompt):
+                # 根据 Prompt 内容区分 Reflect 层和 Plan 层的响应
+                if "System 1" in prompt or "trust_change_affective" in prompt:
+                    # Reflect 层 Mock：返回情绪冲击
+                    return json.dumps({
+                        "hypocrisy_perceived": True,
+                        "trust_change_affective": -1.5,
+                        "importance": 7.0,
+                        "reasoning": "Mock: I feel betrayed by this brand."
+                    })
+                else:
+                    # Plan 层 Mock：返回行为决策
+                    return json.dumps({
+                        "is_buying": False,
+                        "is_posting": True,
+                        "post_content": "I can't believe this brand betrayed us!",
+                        "reason": "Mock: Trust is too low to buy."
+                    })
 
         router = Mock()
 
     for ag in agents: ag._model = router
 
     print("初始化 Agent 状态")
+    # 各消费者类型的初始信任基线
+    INITIAL_TRUST_MAP = {
+        "Active_Greens":     8.0,
+        "Convenient_Greens": 6.5,
+        "Dormant_Greens":    5.5,
+        "Non_Greens":        5.0,
+    }
     for ag in agents:
         state_plugin = ag.get_component("state")._plugin
         await state_plugin.set_state("incoming_messages", [])
         await state_plugin.set_state("observations", [])
         await state_plugin.set_state("latest_thought", None)
 
+        # 根据消费者类型设置差异化初始信任（而非统一 5.0）
+        p_data = getattr(ag.get_component("profile")._plugin, "_profile_data",
+                         getattr(ag.get_component("profile")._plugin, "profile_data", {}))
+        cluster_type = p_data.get("psychology", {}).get("cluster_type", "")
+        initial_trust = INITIAL_TRUST_MAP.get(cluster_type, 5.5)
+        await state_plugin.set_state("trust_score", initial_trust)
+        await state_plugin.set_state("baseline_trust", initial_trust)
+        await state_plugin.set_state("trust_score_initialized", True)
+
     # ==========================================
     # 🚀 仿真主循环
     # ==========================================
     TOTAL_TICKS = 30  # 延长至30期，观察长尾遗忘曲线效应
-    BURN_IN_TICKS = 5
 
     # ==========================================
     # 🕒 Oatly 真实时间轴干预策略 (宏观环境刺激)
@@ -216,11 +257,17 @@ async def run():
             event_msg = {"source": "Global News", "content": event_text}
             for ag in agents:
                 s_plugin = ag.get_component("state")._plugin
-                # 规范：使用异步 get_state
-                # 访问插件的内部数据属性 (通常是 state_data 或 _state_data)
                 s_data = getattr(s_plugin, "state_data", getattr(s_plugin, "_state_data", {}))
                 inbox = s_data.get("incoming_messages", [])
                 await s_plugin.set_state("incoming_messages", list(inbox) + [event_msg])
+                # 同时写入专用的 current_news 字段，供 Plan 层独立读取
+                # （Reflect 层会消费并清空 observations，Plan 层不能依赖它）
+                await s_plugin.set_state("current_news", event_text)
+        else:
+            # 无事件的 Tick：重置 current_news 为平静状态
+            for ag in agents:
+                s_plugin = ag.get_component("state")._plugin
+                await s_plugin.set_state("current_news", "")
         # 3. 认知与反思层
         for ag in agents:
             s_plugin = ag.get_component("state")._plugin
@@ -243,21 +290,26 @@ async def run():
         tick_posts = 0
 
         for ag in agents:
-            s_data = getattr(ag.get_component("state")._plugin, "state_data", {})
-            p_data = getattr(ag.get_component("profile")._plugin, "profile_data", {})
+            s_data = getattr(ag.get_component("state")._plugin, "state_data",
+                             getattr(ag.get_component("state")._plugin, "_state_data", {}))
+            p_data = getattr(ag.get_component("profile")._plugin, "_profile_data",
+                             getattr(ag.get_component("profile")._plugin, "profile_data", {}))
 
             agent_type = p_data.get("psychology", {}).get("cluster_type", "Unknown")
             trust = round(float(s_data.get("trust_score", 5.0)), 2)
             trust_list.append(trust)
 
             plan = s_data.get("plan_result", {})
-            is_buying = plan.get("is_buying", False)
+            is_buying  = plan.get("is_buying", False)
             is_posting = plan.get("is_posting", False)
 
-            baseline_trust = round(float(s_data.get("baseline_trust", trust)), 2)
-            quiet_ticks = int(s_data.get("quiet_ticks", 0))
+            baseline_trust    = round(float(s_data.get("baseline_trust", trust)), 3)
+            quiet_ticks       = int(s_data.get("quiet_ticks", 0))
+            trust_after_decay = round(float(plan.get("trust_after_decay", trust)), 3)
+            affective_change  = round(float(plan.get("affective_change", 0.0)), 3)
+            decay_lambda      = float(plan.get("decay_lambda", 0.15))
 
-            thought = s_data.get("latest_thought", {}) or {}
+            thought   = s_data.get("latest_thought", {}) or {}
             hypocrisy = thought.get("hypocrisy_perceived", False)
 
             if is_buying:
@@ -267,19 +319,23 @@ async def run():
                 tick_posts += 1
 
             action_tags = []
-            if is_buying: action_tags.append("BUY")
+            if is_buying:  action_tags.append("BUY")
             if is_posting: action_tags.append("POST")
             if not action_tags: action_tags.append("IGNORE")
             action_log = "+".join(action_tags)
 
             writer.writerow([
-                tick, ag.agent_id, agent_type, trust, baseline_trust, quiet_ticks, action_log, hypocrisy
+                tick, ag.agent_id, agent_type,
+                trust, baseline_trust, trust_after_decay, affective_change,
+                decay_lambda, quiet_ticks, action_log, hypocrisy
             ])
 
             if thought:
-                trust_change = thought.get("trust_change", 0.0)
                 reasoning = thought.get("reasoning", "")
-                thought_writer.writerow([tick, ag.agent_id, agent_type, hypocrisy, trust_change, reasoning])
+                thought_writer.writerow([
+                    tick, ag.agent_id, agent_type,
+                    hypocrisy, affective_change, trust_after_decay, trust, reasoning
+                ])
 
         avg_trust = np.mean(trust_list)
         conversion_rate = len(cumulative_buyers) / len(agents)
@@ -288,40 +344,34 @@ async def run():
             f"📈 [宏观结算] 平均信任 {avg_trust:.2f} | 累计转化率 {conversion_rate * 100:.1f}% | 本期发帖 {tick_posts} 人")
 
         # ==========================================
-        # 🌐 6. 核心修复：社交网络消息路由网关 (Social Routing Gateway)
+        # 🌐 6. 社交网络路由与时间步状态重置
         # ==========================================
-        print(f"🔄 正在执行网络消息分发与上下文清理...")
+        print(f"🔄 正在执行网络消息分发与跨周期清理...")
 
-        # 收集本回合发帖
+        # 1. 收集本回合所有人的发帖
         tick_posts_dict = {}
         for ag in agents:
             try:
                 state_plugin = ag.get_component("state")._plugin
-                plan = state_plugin.get_state_sync("plan_result") or {}
+                s_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
+                plan = s_data.get("plan_result", {})
                 if plan.get("is_posting", False) and plan.get("post_content", "").strip():
                     tick_posts_dict[ag.agent_id] = plan.get("post_content").strip()
-            except Exception as e:
+            except Exception:
                 pass
 
-        # 根据 NetworkX 图分发消息
-        if tick_posts_dict and hasattr(net_plugin, 'graph'):
-            G = net_plugin.graph
-            for author_id, content in tick_posts_dict.items():
-                if author_id in G.nodes:
-                    for neighbor_id in G.neighbors(author_id):
-                        neighbor_agent = next((a for a in agents if a.agent_id == neighbor_id), None)
-                        if neighbor_agent:
-                            n_state = neighbor_agent.get_component("state")._plugin
-                            n_msgs = n_state.get_state_sync("incoming_messages") or []
-                            social_msg = {
-                                "source": author_id,
-                                "type": "social_post",
-                                "content": f"[Social Media Alert] Your connection {author_id} posted: \"{content}\""
-                            }
-                            n_msgs.append(social_msg)
-                            await n_state.set_state("incoming_messages", n_msgs)
+        # 2. 物理清空所有人的本回合信箱，防止"土拨鼠之日"陷阱
+        for ag in agents:
+            state_plugin = ag.get_component("state")._plugin
+            await state_plugin.set_state("incoming_messages", [])
 
-        # 拦截 Token 爆炸：实施严格的滑动窗口清理 (仅保留最近 3 条记忆)
+        # 3. 跨周期路由：通过 SocialNetworkPlugin.broadcast_message() 分发帖子
+        #    帖子在 Tick N 发出，Tick N+1 才被邻居的 Perceive 层读取（模拟传播时延）
+        for author_id, content in tick_posts_dict.items():
+            social_content = f"[Social Media Feed] Connection {author_id} posted: \"{content}\""
+            await net_plugin.broadcast_message(author_id, social_content)
+
+        # 4. 拦截信箱爆炸：每人最多保留 3 条消息，防止 Token 爆炸
         MAX_RETAINED_MESSAGES = 3
         for ag in agents:
             state_plugin = ag.get_component("state")._plugin
@@ -329,10 +379,12 @@ async def run():
             if len(msgs) > MAX_RETAINED_MESSAGES:
                 await state_plugin.set_state("incoming_messages", msgs[-MAX_RETAINED_MESSAGES:])
 
-    # 循环结束
-    csv_file.close()
-    thought_file.close()
-    macro_file.close()
+    # 循环结束，用 finally 保证文件关闭
+    for f in _open_files:
+        try:
+            f.close()
+        except Exception:
+            pass
     print(f"\n✅ 仿真阶段结束。进入后置数据分析阶段...")
 
     # 自动触发级联深度与转化率图谱分析
@@ -355,7 +407,11 @@ def analyze_results(macro_path, log_path, graph_path, total_agents, results_dir,
     # 2. 计算最大信息级联深度 (Cascade Depth)
     with open(graph_path, 'r', encoding='utf-8') as f:
         graph_data = json.load(f)
-    base_G = nx.node_link_graph(graph_data)
+    # networkx >= 3.0 node_link_graph 签名变更，兼容新旧版本
+    try:
+        base_G = nx.node_link_graph(graph_data, edges="links")
+    except TypeError:
+        base_G = nx.node_link_graph(graph_data)
 
     cascade_G = nx.DiGraph()  # 有向传播图
     # 🚨 修复：由于使用了 BUY+POST，必须用 str.contains 才能抓取到所有发帖事件
@@ -376,7 +432,7 @@ def analyze_results(macro_path, log_path, graph_path, total_agents, results_dir,
     if len(cascade_G.edges) > 0:
         try:
             max_depth = len(nx.dag_longest_path(cascade_G)) - 1
-        except:
+        except Exception:
             pass
     print(f"最大信息级联深度: {max_depth} 级")
 

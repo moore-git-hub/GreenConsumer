@@ -39,8 +39,7 @@ class GreenInvokePlugin(InvokePlugin):
         if is_posting:
             content = plan.get("post_content", "No content provided.")
             print(f"📢 [Invoke] {agent.agent_id} 发帖: {content[:60]}...")
-
-            # 将发帖内容同步到网络空间，供其他人感知
+            # latest_post 供外部查询用，post_content 已在 plan_result 中供主循环路由使用
             latest_post = {"author": agent.agent_id, "content": content, "tick": current_tick}
             await state_plugin.set_state("latest_post", latest_post)
 

@@ -1,4 +1,5 @@
 import json
+import re
 from agentkernel_standalone.mas.agent.base.plugin_base import PlanPlugin
 
 
@@ -109,20 +110,35 @@ class ConsumerPlanPlugin(PlanPlugin):
 
             response = await model.chat(prompt)
 
+            # --- 🛠️ 修复：强健的 JSON 正则提取 ---
+            plan = {}
             if isinstance(response, str):
-                clean_json = response.replace("```json", "").replace("```", "").strip()
-                plan = json.loads(clean_json)
+                # 寻找第一个 { 和最后一个 } 之间的所有内容
+                match = re.search(r'\{.*\}', response, re.DOTALL)
+                if match:
+                    json_str = match.group(0)
+                    plan = json.loads(json_str)
+                else:
+                    raise ValueError(f"LLM 响应中未找到 JSON 结构: {response[:50]}...")
             elif isinstance(response, list):
                 plan = response[0]
             else:
                 plan = response
 
-            # 解析结果
+            # 解析结果 (带安全类型转换)
             current_trust = float(plan.get("current_trust", previous_trust))
             is_buying = bool(plan.get("is_buying", False))
             is_posting = bool(plan.get("is_posting", False))
 
             plan["current_trust"] = current_trust
+
+            # 🛠️ 修复：在获取 LLM 的首次真实打分后，再锚定基线
+            if "baseline_trust" not in s_data:
+                await state_plugin.set_state("baseline_trust", current_trust)
+
+            # 更新状态
+            await state_plugin.set_state("plan_result", plan)
+            await state_plugin.set_state("trust_score", current_trust)
             plan["is_buying"] = is_buying
             plan["is_posting"] = is_posting
 
@@ -146,8 +162,26 @@ class ConsumerPlanPlugin(PlanPlugin):
             print(
                 f"🧠 [Thought] {agent.agent_id} | Trust: {current_trust:.1f} ({sign}{trust_delta:.1f}) | {decay_tag}Quiet: {quiet_ticks}d | 动作: {'+'.join(actions_str)}")
 
+
         except Exception as e:
-            print(f"❌ [Plan Error] {agent.agent_id}: {e}")
+
+            # --- 🛠️ 修复：安全兜底机制，防止仿真崩溃 ---
+
+            print(f"⚠️ [Plan Error - Auto Recovered] {agent.agent_id}: {e}")
+
+            fallback_plan = {
+
+                "current_trust": previous_trust,  # 信任不变
+
+                "is_buying": False,  # 报错默认不买
+
+                "is_posting": False,  # 报错默认不发帖
+
+                "reason": "System parsing error, fell back to silent mode."
+
+            }
+
+            await state_plugin.set_state("plan_result", fallback_plan)
 
     async def save_to_db(self):
         pass

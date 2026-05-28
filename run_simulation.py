@@ -90,11 +90,12 @@ async def run():
     os.makedirs(results_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # 1. 基础动作日志
+    # 1. 基础动作日志 (🚨 修复：对齐 BaselineTrust 和 QuietTicks 表头)
     csv_path = os.path.join(results_dir, f"simulation_log_{timestamp}.csv")
     csv_file = open(csv_path, "w", newline="", encoding="utf-8")
     writer = csv.writer(csv_file)
-    writer.writerow(["Tick", "AgentID", "Type", "TrustScore", "Action", "Thought_Hypocrisy"])
+    writer.writerow(
+        ["Tick", "AgentID", "Type", "TrustScore", "BaselineTrust", "QuietTicks", "Action", "Thought_Hypocrisy"])
 
     # 2. 详细思维日志
     thought_path = os.path.join(results_dir, f"thoughts_log_{timestamp}.csv")
@@ -102,7 +103,7 @@ async def run():
     thought_writer = csv.writer(thought_file)
     thought_writer.writerow(["Tick", "AgentID", "AgentType", "Hypocrisy", "TrustChange", "Reasoning"])
 
-    # 3. 宏观 KPI 日志 (新引入的转化率收集流)
+    # 3. 宏观 KPI 日志
     macro_path = os.path.join(results_dir, f"macro_metrics_{timestamp}.csv")
     macro_file = open(macro_path, "w", newline="", encoding="utf-8")
     macro_writer = csv.writer(macro_file)
@@ -117,8 +118,8 @@ async def run():
     env = Environment()
     net_plugin = SocialNetworkPlugin()
     net_comp = EnvironmentComponent()
-    net_comp.plugin = net_plugin;
-    net_comp._plugin = net_plugin;
+    net_comp.plugin = net_plugin
+    net_comp._plugin = net_plugin
     net_plugin.component = net_comp
     mount_env_component(env, net_comp, "network")
 
@@ -131,7 +132,7 @@ async def run():
             comp._agent = agent
             plugin = getattr(comp, "plugin", None)
             if plugin:
-                comp._plugin = plugin;
+                comp._plugin = plugin
                 plugin.component = comp
         agents.append(agent)
 
@@ -157,7 +158,8 @@ async def run():
         class Mock:
             async def chat(self, p):
                 return json.dumps(
-                    {"hypocrisy_perceived": True, "trust_change": -0.5, "importance": 5.0, "reasoning": "Mocking..."})
+                    {"hypocrisy_perceived": True, "current_trust": 2.0, "is_buying": False, "is_posting": True,
+                     "reasoning": "Mocking..."})
 
         router = Mock()
 
@@ -173,7 +175,7 @@ async def run():
     # ==========================================
     # 🚀 仿真主循环
     # ==========================================
-    TOTAL_TICKS = 10
+    TOTAL_TICKS = 30  # 延长至30期，观察长尾遗忘曲线效应
     BURN_IN_TICKS = 5
 
     # ==========================================
@@ -184,13 +186,11 @@ async def run():
             "Oatly launches a quirky, eco-friendly ad campaign highlighting their Barista edition oat milk's perfect micro-foam. "
             "The slogan is: 'It's like milk, but made for humans.'"
         ),
-        # 【黑天鹅事件 1：黑石资本丑闻】-> 专门引爆“监管哨兵”和“纯素斗士”
         5: (
             "🚨 BREAKING NEWS & SCANDAL: It is publicly revealed that Oatly accepted a $200 million investment from Blackstone Group, "
             "a controversial private equity firm heavily linked to deforestation in the Amazon rainforest and backing anti-climate politicians. "
             "Environmentalists are furious, calling it a massive betrayal and severe greenwashing."
         ),
-        # 【黑天鹅事件 2：菜籽油健康风波】-> 专门引爆“口感与成分考究派”和“散户”
         10: (
             "🚨 VIRAL HEALTH CONTROVERSY: A top nutrition influencer posts a viral video exposing Oatly's ingredients. "
             "They claim Oatly is 'essentially sugar water' packed with inflammatory canola oil (rapeseed oil) that causes massive blood glucose spikes. "
@@ -205,23 +205,23 @@ async def run():
         print(f" ⏳ === Simulation Tick {tick} ===")
         print("=" * 40)
 
-        # 1. 宏观时间上下文 (Oatly 已上市，移除旧版禁止购买的预热期逻辑)
+        # 1. 宏观时间上下文
         time_context = f"Current Environment: Day {tick} of the simulation."
 
-        # 2. 全局事件注入 (适配最新的纯字符串 ENTERPRISE_STRATEGY)
+        # 2. 全局事件注入
         if tick in ENTERPRISE_STRATEGY:
             event_text = ENTERPRISE_STRATEGY[tick]
             print(f"🚨 [Global News Injection]: {event_text}")
 
-            # 将纯字符串包装为 Agent 能够理解的消息字典
             event_msg = {"source": "Global News", "content": event_text}
-
             for ag in agents:
                 s_plugin = ag.get_component("state")._plugin
-                inbox = getattr(s_plugin, "state_data", {}).get("incoming_messages", [])
+                # 规范：使用异步 get_state
+                # 访问插件的内部数据属性 (通常是 state_data 或 _state_data)
+                s_data = getattr(s_plugin, "state_data", getattr(s_plugin, "_state_data", {}))
+                inbox = s_data.get("incoming_messages", [])
                 await s_plugin.set_state("incoming_messages", list(inbox) + [event_msg])
-
-        # 3. 认知与反思层 (更新 Agent 时间戳并读取新闻)
+        # 3. 认知与反思层
         for ag in agents:
             s_plugin = ag.get_component("state")._plugin
             await s_plugin.set_state("time_context", time_context)
@@ -230,7 +230,7 @@ async def run():
             await ag.get_component("perceive").execute(tick)
             await ag.get_component("reflect").execute(tick)
 
-        # 4. 计划与执行层 (消费决策与发帖)
+        # 4. 计划与执行层
         for ag in agents:
             await ag.get_component("plan").execute(tick)
             await ag.get_component("invoke").execute(tick)
@@ -246,7 +246,6 @@ async def run():
             s_data = getattr(ag.get_component("state")._plugin, "state_data", {})
             p_data = getattr(ag.get_component("profile")._plugin, "profile_data", {})
 
-            # 🚨 核心修复：将旧的 environmental_involvement 替换为最新的 cluster_type
             agent_type = p_data.get("psychology", {}).get("cluster_type", "Unknown")
             trust = round(float(s_data.get("trust_score", 5.0)), 2)
             trust_list.append(trust)
@@ -255,27 +254,28 @@ async def run():
             is_buying = plan.get("is_buying", False)
             is_posting = plan.get("is_posting", False)
 
+            baseline_trust = round(float(s_data.get("baseline_trust", trust)), 2)
+            quiet_ticks = int(s_data.get("quiet_ticks", 0))
+
             thought = s_data.get("latest_thought", {}) or {}
             hypocrisy = thought.get("hypocrisy_perceived", False)
 
-            # 并行统计
             if is_buying:
                 tick_buys += 1
                 cumulative_buyers.add(ag.agent_id)
             if is_posting:
                 tick_posts += 1
 
-            # 生成组合动作日志字符串 (e.g., "BUY", "POST", "BUY+POST", "IGNORE")
             action_tags = []
             if is_buying: action_tags.append("BUY")
             if is_posting: action_tags.append("POST")
             if not action_tags: action_tags.append("IGNORE")
             action_log = "+".join(action_tags)
 
-            # 写入基础动作日志
-            writer.writerow([tick, ag.agent_id, agent_type, trust, action_log, hypocrisy])
+            writer.writerow([
+                tick, ag.agent_id, agent_type, trust, baseline_trust, quiet_ticks, action_log, hypocrisy
+            ])
 
-            # 写入内部思维日志 (Thought Log)
             if thought:
                 trust_change = thought.get("trust_change", 0.0)
                 reasoning = thought.get("reasoning", "")
@@ -285,12 +285,55 @@ async def run():
         conversion_rate = len(cumulative_buyers) / len(agents)
         macro_writer.writerow([tick, avg_trust, tick_buys, len(cumulative_buyers), conversion_rate, tick_posts])
         print(
-            f"平均信任 {avg_trust:.2f} | 累计转化率 {conversion_rate * 100:.1f}% | 本期发帖 {tick_posts} 人")
+            f"📈 [宏观结算] 平均信任 {avg_trust:.2f} | 累计转化率 {conversion_rate * 100:.1f}% | 本期发帖 {tick_posts} 人")
 
+        # ==========================================
+        # 🌐 6. 核心修复：社交网络消息路由网关 (Social Routing Gateway)
+        # ==========================================
+        print(f"🔄 正在执行网络消息分发与上下文清理...")
+
+        # 收集本回合发帖
+        tick_posts_dict = {}
+        for ag in agents:
+            try:
+                state_plugin = ag.get_component("state")._plugin
+                plan = state_plugin.get_state_sync("plan_result") or {}
+                if plan.get("is_posting", False) and plan.get("post_content", "").strip():
+                    tick_posts_dict[ag.agent_id] = plan.get("post_content").strip()
+            except Exception as e:
+                pass
+
+        # 根据 NetworkX 图分发消息
+        if tick_posts_dict and hasattr(net_plugin, 'graph'):
+            G = net_plugin.graph
+            for author_id, content in tick_posts_dict.items():
+                if author_id in G.nodes:
+                    for neighbor_id in G.neighbors(author_id):
+                        neighbor_agent = next((a for a in agents if a.agent_id == neighbor_id), None)
+                        if neighbor_agent:
+                            n_state = neighbor_agent.get_component("state")._plugin
+                            n_msgs = n_state.get_state_sync("incoming_messages") or []
+                            social_msg = {
+                                "source": author_id,
+                                "type": "social_post",
+                                "content": f"[Social Media Alert] Your connection {author_id} posted: \"{content}\""
+                            }
+                            n_msgs.append(social_msg)
+                            await n_state.set_state("incoming_messages", n_msgs)
+
+        # 拦截 Token 爆炸：实施严格的滑动窗口清理 (仅保留最近 3 条记忆)
+        MAX_RETAINED_MESSAGES = 3
+        for ag in agents:
+            state_plugin = ag.get_component("state")._plugin
+            msgs = state_plugin.get_state_sync("incoming_messages") or []
+            if len(msgs) > MAX_RETAINED_MESSAGES:
+                await state_plugin.set_state("incoming_messages", msgs[-MAX_RETAINED_MESSAGES:])
+
+    # 循环结束
     csv_file.close()
     thought_file.close()
     macro_file.close()
-    print(f"\n仿真阶段结束。进入后置数据分析阶段...")
+    print(f"\n✅ 仿真阶段结束。进入后置数据分析阶段...")
 
     # 自动触发级联深度与转化率图谱分析
     analyze_results(macro_path, csv_path, graph_path, len(agents), results_dir, timestamp)
@@ -310,35 +353,31 @@ def analyze_results(macro_path, log_path, graph_path, total_agents, results_dir,
     print(f"T50 扩散指标: {t50}")
 
     # 2. 计算最大信息级联深度 (Cascade Depth)
-    # 推导逻辑: A发帖后，若B(A的邻居)在后续周期发帖，则存在级联边 A->B。
     with open(graph_path, 'r', encoding='utf-8') as f:
         graph_data = json.load(f)
     base_G = nx.node_link_graph(graph_data)
 
     cascade_G = nx.DiGraph()  # 有向传播图
-    post_events = df_log[df_log['Action'] == 'post_review'].sort_values(by='Tick')
+    # 🚨 修复：由于使用了 BUY+POST，必须用 str.contains 才能抓取到所有发帖事件
+    post_events = df_log[df_log['Action'].astype(str).str.contains('POST')].sort_values(by='Tick')
 
-    # 构建级联树
     for _, row in post_events.iterrows():
         tick = row['Tick']
         agent_id = row['AgentID']
         cascade_G.add_node(agent_id, tick=tick)
 
-        # 寻找启发源: 是否有邻居在之前的周期发过帖？
         neighbors = list(base_G.neighbors(agent_id))
         potential_sources = post_events[(post_events['Tick'] < tick) & (post_events['AgentID'].isin(neighbors))]
         if not potential_sources.empty:
-            # 假设受最近发帖的邻居影响
             source = potential_sources.iloc[-1]['AgentID']
             cascade_G.add_edge(source, agent_id)
 
     max_depth = 0
     if len(cascade_G.edges) > 0:
-        # 计算有向无环图的最长路径即为最大级联深度
         try:
             max_depth = len(nx.dag_longest_path(cascade_G)) - 1
         except:
-            pass  # 存在环的情况忽略
+            pass
     print(f"最大信息级联深度: {max_depth} 级")
 
     # 3. 绘制转化率与信任度耦合图谱
@@ -358,21 +397,25 @@ def analyze_results(macro_path, log_path, graph_path, total_agents, results_dir,
     ax2.tick_params(axis='y', labelcolor='green')
     ax2.set_ylim([0, 100])
 
-    # 标注干预事件
+    # 🚨 修复：标注干预事件完全对齐最新的 ENTERPRISE_STRATEGY (1, 5, 10)
     events = {
-        1: '发售预热',
-        6: '正式发售',
-        10: '散户爆料',
-        15: '实锤爆发',
-        20: '甩锅公关',
-        25: '大V洗地'
+        1: '发售预热 (Launch)',
+        5: '黑石漂绿丑闻 (Greenwashing)',
+        10: '菜籽油健康风波 (Utility Drop)'
     }
     for t, label in events.items():
-        ax1.axvline(x=t, color='red', linestyle=':', alpha=0.5)
-        ax1.text(t, 0.5, label, rotation=90, verticalalignment='bottom', color='red')
+        if t <= df_macro['Tick'].max():
+            ax1.axvline(x=t, color='red', linestyle=':', alpha=0.5)
+            ax1.text(t + 0.2, 2.0, label, rotation=90, verticalalignment='bottom', color='red', fontweight='bold')
 
-    plt.title('信任度波动与购买转化率耦合图谱')
+    plt.title('信任度波动与购买转化率耦合图谱 (含网络传播修正)', pad=15)
     plot_path = os.path.join(results_dir, f"macro_analysis_{timestamp}.png")
+
+    # 防止图例重叠
+    lines_1, labels_1 = ax1.get_legend_handles_labels()
+    lines_2, labels_2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='upper left')
+
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     print(f"🖼️ 图谱已保存至: {plot_path}")
 

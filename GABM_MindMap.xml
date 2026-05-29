@@ -1,0 +1,311 @@
+<map version="1.0.1">
+<node TEXT="GABM 绿色消费者仿真模型" FOLDED="false" COLOR="#000000">
+
+  <!-- ═══════════════ 1. 研究问题 ═══════════════ -->
+  <node TEXT="1. 研究问题" POSITION="right" COLOR="#cc0000">
+    <node TEXT="漂绿丑闻后，何种危机澄清策略最有效修复消费者信任？">
+      <node TEXT="原型情境：Oatly 接受黑石集团投资引发的漂绿争议"/>
+      <node TEXT="核心矛盾：品牌绿色承诺 vs 资本逐利行为"/>
+    </node>
+    <node TEXT="方法论定位">
+      <node TEXT="生成式智能体仿真 (Generative Agent-Based Model)"/>
+      <node TEXT="LLM 生成式推理 + 经典确定性公式 的混合架构"/>
+    </node>
+  </node>
+
+  <!-- ═══════════════ 2. 实验设计 ═══════════════ -->
+  <node TEXT="2. 实验设计 (2×2×3 析因)" POSITION="right" COLOR="#0066cc">
+    <node TEXT="因子 1：内容 (Content)">
+      <node TEXT="rational-evidence（理性证据型）">
+        <node TEXT="第三方审计数据、碳足迹认证、雨林联盟"/>
+      </node>
+      <node TEXT="emotional-empathy（情感共情型）">
+        <node TEXT="承认错误、表达歉意、承诺透明化"/>
+      </node>
+    </node>
+    <node TEXT="因子 2：渠道 (Channel)">
+      <node TEXT="hub（Hub 策略）">
+        <node TEXT="投放给网络中度数最高的 K 个 KOL 节点"/>
+      </node>
+      <node TEXT="random（随机策略）">
+        <node TEXT="从所有节点中均匀采样 K 个"/>
+      </node>
+    </node>
+    <node TEXT="因子 3：时机 (Timing)">
+      <node TEXT="immediate（即时）">
+        <node TEXT="丑闻当天 Tick 5 立即澄清"/>
+      </node>
+      <node TEXT="delay-3（延迟 3 天）">
+        <node TEXT="Tick 8 澄清"/>
+      </node>
+      <node TEXT="no-clarification（不澄清）">
+        <node TEXT="对照组"/>
+      </node>
+    </node>
+    <node TEXT="固定参数">
+      <node TEXT="num_agents = 10（快速迭代）/ 50（生产）"/>
+      <node TEXT="total_ticks = 30"/>
+      <node TEXT="scandal_tick = 5"/>
+      <node TEXT="budget_k = 3"/>
+      <node TEXT="random_seed = 42"/>
+    </node>
+  </node>
+
+  <!-- ═══════════════ 3. Agent 设计 ═══════════════ -->
+  <node TEXT="3. 消费者 Agent 设计" POSITION="right" COLOR="#009900">
+    <node TEXT="Forrester 2026 消费者细分">
+      <node TEXT="Active Greens (15%)">
+        <node TEXT="初始信任 8.0 | λ=0.05（记仇）"/>
+        <node TEXT="高开放性、高尽责性、低宜人性、高神经质"/>
+        <node TEXT="对漂绿极度敏感，会抵制并在线攻击"/>
+      </node>
+      <node TEXT="Convenient Greens (35%)">
+        <node TEXT="初始信任 6.5 | λ=0.15（适中）"/>
+        <node TEXT="高开放性、低尽责性、高宜人性、中神经质"/>
+        <node TEXT="认同环保但优先便利和价格"/>
+      </node>
+      <node TEXT="Dormant Greens (40%)">
+        <node TEXT="初始信任 5.5 | λ=0.20（遗忘较快）"/>
+        <node TEXT="中开放性、中尽责性、高宜人性、低神经质"/>
+        <node TEXT="被动，可被重大新闻唤醒"/>
+      </node>
+      <node TEXT="Non Greens (10%)">
+        <node TEXT="初始信任 5.0 | λ=0.25（快速遗忘）"/>
+        <node TEXT="低开放性、中尽责性、低宜人性、低神经质"/>
+        <node TEXT="完全不关心环保，纯价格驱动"/>
+      </node>
+    </node>
+    <node TEXT="社交角色">
+      <node TEXT="KOL (20%)：意见领袖，引导舆论"/>
+      <node TEXT="Active User (80%)：活跃用户，情绪化表达"/>
+      <node TEXT="Lurker (0%，测试期禁用)：永不发帖"/>
+    </node>
+    <node TEXT="Persona Prompt 构建">
+      <node TEXT="[基础人口统计] 年龄"/>
+      <node TEXT="[消费者细分角色] 80-120 词行为指导"/>
+      <node TEXT="[社交媒体角色] 发帖行为约束"/>
+    </node>
+  </node>
+
+  <!-- ═══════════════ 4. 认知架构 ═══════════════ -->
+  <node TEXT="4. Agent 认知架构（六组件管线）" POSITION="left" COLOR="#9900cc">
+    <node TEXT="4.1 Profile（画像层）">
+      <node TEXT="静态组件，整个仿真不变"/>
+      <node TEXT="存储 persona prompt + 人口统计 + 心理特征"/>
+      <node TEXT="get_prompt() 返回完整角色描述"/>
+    </node>
+    <node TEXT="4.2 State（状态层）">
+      <node TEXT="动态数据总线，连接各组件"/>
+      <node TEXT="核心字段">
+        <node TEXT="trust_score [0,10]"/>
+        <node TEXT="baseline_trust（心理锚点）"/>
+        <node TEXT="quiet_ticks（连续无事件天数）"/>
+        <node TEXT="trust_change_affective [-3,+3]"/>
+        <node TEXT="incoming_messages（收件箱）"/>
+        <node TEXT="observations（感知结果）"/>
+        <node TEXT="plan_result（行为决策）"/>
+      </node>
+      <node TEXT="内嵌 MemoryManager 实例"/>
+    </node>
+    <node TEXT="4.3 Perceive（感知层）">
+      <node TEXT="incoming_messages → observations"/>
+      <node TEXT="清空信箱防止重复消费"/>
+      <node TEXT="统一消息格式 {source, content, type}"/>
+    </node>
+    <node TEXT="4.4 Reflect — System 1（快速直觉）">
+      <node TEXT="LLM 驱动的情绪性认知评估"/>
+      <node TEXT="执行流程">
+        <node TEXT="① 观察聚合（新闻优先，社交补充≤2条）"/>
+        <node TEXT="② RAG 记忆检索（Top-3 相关历史记忆）"/>
+        <node TEXT="③ LLM 评估情绪冲击"/>
+        <node TEXT="④ 写入记忆库（content + importance）"/>
+      </node>
+      <node TEXT="输出">
+        <node TEXT="trust_change_affective ∈ [-3, +3]"/>
+        <node TEXT="hypocrisy_perceived: bool"/>
+        <node TEXT="importance ∈ [1, 10]"/>
+      </node>
+      <node TEXT="设计要点：不直接修改 trust_score"/>
+    </node>
+    <node TEXT="4.5 Plan — System 2（慢速理性）">
+      <node TEXT="Step 1：Ebbinghaus 遗忘曲线（确定性公式）">
+        <node TEXT="decay_rate = 1 - e^(-λ × quiet_ticks)"/>
+        <node TEXT="trust_decay = prev + decay_rate × (baseline - prev)"/>
+        <node TEXT="λ 按消费者类型差异化"/>
+      </node>
+      <node TEXT="Step 2：叠加 System 1 情绪冲击">
+        <node TEXT="trust_final = trust_decay + Δ_affective"/>
+        <node TEXT="clamp to [0, 10]"/>
+      </node>
+      <node TEXT="Step 3：LLM 行为决策">
+        <node TEXT="is_buying: trust≥5.0 且价格可接受"/>
+        <node TEXT="is_posting: 有新闻 + 情绪强 + 非Lurker"/>
+        <node TEXT="post_content: 社交帖子内容"/>
+      </node>
+      <node TEXT="设计哲学：公式保证数学可控，LLM 保证语义丰富"/>
+    </node>
+    <node TEXT="4.6 Invoke（执行层）">
+      <node TEXT="is_buying=True → 记录购买"/>
+      <node TEXT="is_posting=True → 存储帖子，供网络路由广播"/>
+    </node>
+  </node>
+
+  <!-- ═══════════════ 5. 记忆系统 ═══════════════ -->
+  <node TEXT="5. 记忆管理模块 (MemoryManager)" POSITION="left" COLOR="#cc6600">
+    <node TEXT="理论基础">
+      <node TEXT="有限理性假设 (Bounded Rationality)"/>
+      <node TEXT="借鉴 Park et al. 2023 Generative Agents"/>
+    </node>
+    <node TEXT="Embedding 策略">
+      <node TEXT="优先：sentence-transformers MiniLM-L12-v2 (384维)"/>
+      <node TEXT="降级：确定性哈希向量（无依赖环境）"/>
+    </node>
+    <node TEXT="三维检索评分函数">
+      <node TEXT="Score = α·Recency + β·Importance + γ·Relevance"/>
+      <node TEXT="Recency = e^(-0.1 × Δtick)（指数衰减）"/>
+      <node TEXT="Importance = importance / 10.0"/>
+      <node TEXT="Relevance = cos(query_emb, memory_emb)"/>
+      <node TEXT="权重：α=1.0, β=1.0, γ=1.5（相关性最高）"/>
+    </node>
+    <node TEXT="记忆写入">
+      <node TEXT="时机：Reflect 层 LLM 返回后"/>
+      <node TEXT="内容：[Tick] + 事件摘要 + 主观反应"/>
+      <node TEXT="重要性：由 LLM 实时评分 [1,10]"/>
+    </node>
+    <node TEXT="作用：实现触景生情的累积情绪效应"/>
+  </node>
+
+  <!-- ═══════════════ 6. 社交网络 ═══════════════ -->
+  <node TEXT="6. 社交网络环境" POSITION="left" COLOR="#006666">
+    <node TEXT="网络拓扑">
+      <node TEXT="Barabási-Albert 无标度网络 (m=2)"/>
+      <node TEXT="富者越富效应 → 自然产生 Hub/KOL 节点"/>
+      <node TEXT="降级：节点&lt;5 全连接，BA失败回退 ER 随机图"/>
+    </node>
+    <node TEXT="消息广播机制">
+      <node TEXT="发帖者 → broadcast → 所有网络邻居"/>
+      <node TEXT="传播时延：Tick N 发出，Tick N+1 被读取"/>
+    </node>
+    <node TEXT="信箱限流">
+      <node TEXT="每人每 Tick 最多保留 3 条消息"/>
+      <node TEXT="滑动窗口，保留最新，防 Token 爆炸"/>
+    </node>
+    <node TEXT="级联效应">
+      <node TEXT="Hub 发帖 → 大量邻居收到 → 部分邻居再发帖"/>
+      <node TEXT="形成多级信息级联（Cascade Depth）"/>
+    </node>
+  </node>
+
+  <!-- ═══════════════ 7. 澄清注入 ═══════════════ -->
+  <node TEXT="7. 企业澄清注入模块" POSITION="left" COLOR="#996633">
+    <node TEXT="ClarificationInjector">
+      <node TEXT="根据 timing_factor 确定注入 Tick"/>
+      <node TEXT="根据 content_factor 选择消息模板"/>
+      <node TEXT="消息格式：{source: Enterprise_Clarification}"/>
+    </node>
+    <node TEXT="NodeSelector（渠道节点选择）">
+      <node TEXT="hub 策略：度数降序 Top-K"/>
+      <node TEXT="random 策略：均匀采样 K 个"/>
+    </node>
+    <node TEXT="注入时机">
+      <node TEXT="immediate → Tick 5（与丑闻同天）"/>
+      <node TEXT="delay-3 → Tick 8（延迟 3 天）"/>
+      <node TEXT="no-clarification → 不注入"/>
+    </node>
+  </node>
+
+  <!-- ═══════════════ 8. 仿真主循环 ═══════════════ -->
+  <node TEXT="8. 仿真主循环 (30 Ticks)" POSITION="right" COLOR="#660066">
+    <node TEXT="事件时间线">
+      <node TEXT="Tick 1：Oatly 产品发售预热广告"/>
+      <node TEXT="Tick 5：黑石集团投资丑闻曝光"/>
+      <node TEXT="Tick 10：菜籽油健康争议"/>
+    </node>
+    <node TEXT="单 Tick 执行流程">
+      <node TEXT="Phase 1：外部刺激注入">
+        <node TEXT="全局事件 → 所有 Agent 信箱"/>
+        <node TEXT="企业澄清 → 目标节点信箱（条件触发）"/>
+      </node>
+      <node TEXT="Phase 2：认知管线">
+        <node TEXT="Perceive → Reflect(System1)"/>
+      </node>
+      <node TEXT="Phase 3：决策管线">
+        <node TEXT="Plan(System2) → Invoke"/>
+      </node>
+      <node TEXT="Phase 4：数据结算">
+        <node TEXT="记录信任分、行为、思维日志"/>
+        <node TEXT="计算宏观 KPI"/>
+      </node>
+      <node TEXT="Phase 5：社交网络路由">
+        <node TEXT="收集发帖 → 清空信箱 → 广播给邻居 → 限流"/>
+      </node>
+    </node>
+  </node>
+
+  <!-- ═══════════════ 9. 评估指标 ═══════════════ -->
+  <node TEXT="9. 评估指标体系" POSITION="right" COLOR="#333333">
+    <node TEXT="三目标评估">
+      <node TEXT="T80（恢复速度）">
+        <node TEXT="信任从最低点恢复到基线 80% 所需 Tick 数"/>
+        <node TEXT="越小越好"/>
+      </node>
+      <node TEXT="Steady_State_Score（稳态质量）">
+        <node TEXT="Tick 30 最终平均信任分"/>
+        <node TEXT="越高越好"/>
+      </node>
+      <node TEXT="Recovery_Rate（修复率）">
+        <node TEXT="最终转化率 / 丑闻前峰值转化率"/>
+        <node TEXT="越高越好"/>
+      </node>
+    </node>
+    <node TEXT="辅助指标">
+      <node TEXT="trust_min：信任最低点"/>
+      <node TEXT="trust_min_tick：最低点所在 Tick"/>
+      <node TEXT="T50：达到 50% 转化率的时间"/>
+      <node TEXT="Cascade Depth：最大信息级联深度"/>
+    </node>
+    <node TEXT="帕累托前沿分析">
+      <node TEXT="12 组策略在三目标空间中的非支配排序"/>
+      <node TEXT="识别最优策略组合"/>
+      <node TEXT="3D 散点图 + 2D 投影 + 排名表"/>
+    </node>
+  </node>
+
+  <!-- ═══════════════ 10. 技术栈 ═══════════════ -->
+  <node TEXT="10. 技术栈" POSITION="right" COLOR="#666666">
+    <node TEXT="Agent 框架：agentkernel-standalone（自研）"/>
+    <node TEXT="LLM 后端：阿里云通义千问 qwen-plus"/>
+    <node TEXT="语义编码：sentence-transformers MiniLM-L12-v2"/>
+    <node TEXT="网络科学：NetworkX (BA 无标度网络)"/>
+    <node TEXT="数据分析：pandas / numpy"/>
+    <node TEXT="可视化：matplotlib"/>
+    <node TEXT="语言：Python 3.12"/>
+  </node>
+
+  <!-- ═══════════════ 11. 创新点 ═══════════════ -->
+  <node TEXT="11. 关键创新点" POSITION="left" COLOR="#cc0066">
+    <node TEXT="LLM-公式混合架构">
+      <node TEXT="公式保证信任动态的数学可控性"/>
+      <node TEXT="LLM 保证认知评估的语义丰富性"/>
+    </node>
+    <node TEXT="双过程理论的计算实现">
+      <node TEXT="System 1 (Reflect)：快速情绪反应"/>
+      <node TEXT="System 2 (Plan)：理性决策"/>
+      <node TEXT="通过 trust_change_affective 耦合"/>
+    </node>
+    <node TEXT="差异化遗忘速率 λ">
+      <node TEXT="态度强度影响记忆持久性"/>
+      <node TEXT="Active Greens 记仇 vs Non Greens 快速遗忘"/>
+    </node>
+    <node TEXT="RAG 联想记忆">
+      <node TEXT="语义相似度驱动的记忆检索"/>
+      <node TEXT="实现触景生情的累积情绪效应"/>
+    </node>
+    <node TEXT="无标度网络上的信息级联">
+      <node TEXT="Hub 结构产生传播不对称性"/>
+      <node TEXT="为渠道因子实验提供结构基础"/>
+    </node>
+  </node>
+
+</node>
+</map>

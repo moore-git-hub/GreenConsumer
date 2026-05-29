@@ -228,12 +228,12 @@ async def run():
             "The slogan is: 'It's like milk, but made for humans.'"
         ),
         5: (
-            "🚨 BREAKING NEWS & SCANDAL: It is publicly revealed that Oatly accepted a $200 million investment from Blackstone Group, "
+            "BREAKING NEWS & SCANDAL: It is publicly revealed that Oatly accepted a $200 million investment from Blackstone Group, "
             "a controversial private equity firm heavily linked to deforestation in the Amazon rainforest and backing anti-climate politicians. "
             "Environmentalists are furious, calling it a massive betrayal and severe greenwashing."
         ),
         10: (
-            "🚨 VIRAL HEALTH CONTROVERSY: A top nutrition influencer posts a viral video exposing Oatly's ingredients. "
+            "VIRAL HEALTH CONTROVERSY: A top nutrition influencer posts a viral video exposing Oatly's ingredients. "
             "They claim Oatly is 'essentially sugar water' packed with inflammatory canola oil (rapeseed oil) that causes massive blood glucose spikes. "
             "Consumers are starting to worry about the health impacts."
         )
@@ -385,7 +385,7 @@ async def run():
             f.close()
         except Exception:
             pass
-    print(f"\n✅ 仿真阶段结束。进入后置数据分析阶段...")
+    print(f"\n仿真阶段结束。进入后置数据分析阶段...")
 
     # 自动触发级联深度与转化率图谱分析
     analyze_results(macro_path, csv_path, graph_path, len(agents), results_dir, timestamp)

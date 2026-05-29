@@ -8,7 +8,7 @@ import numpy as np
 # 📊 Forrester 2026 绿色消费者细分框架 (全语义人格驱动)
 # 彻底移除 Budget 和 Trust 的数值硬编码，交由 LLM 自主涌现
 # ==========================================
-DEFAULT_NUM_AGENTS = 15
+DEFAULT_NUM_AGENTS = 16
 
 SOCIAL_ROLES = ["KOL", "Active User", "Lurker"]
 ROLE_PROBS = [0.2, 0.8, 0.0]  # 测试期强制全员活跃
@@ -17,7 +17,7 @@ FORRESTER_2026_CLUSTERS = [
     {
         "cluster_id": "Dormant_Greens",
         "name": "沉睡环保派 (Dormant Greens)",
-        "prob": 0.40,
+        "prob": 0.25,
         "income": "Medium",
         "traits": {"Openness": "Medium", "Conscientiousness": "Medium", "Agreeableness": "High", "Neuroticism": "Low"},
         "persona": (
@@ -32,7 +32,7 @@ FORRESTER_2026_CLUSTERS = [
     {
         "cluster_id": "Convenient_Greens",
         "name": "便利环保派 (Convenient Greens)",
-        "prob": 0.35,
+        "prob": 0.25,
         "income": "Medium",
         "traits": {"Openness": "High", "Conscientiousness": "Low", "Agreeableness": "High", "Neuroticism": "Medium"},
         "persona": (
@@ -46,7 +46,7 @@ FORRESTER_2026_CLUSTERS = [
     {
         "cluster_id": "Active_Greens",
         "name": "积极环保派 (Active Greens)",
-        "prob": 0.15,
+        "prob": 0.25,
         "income": "High",
         "traits": {"Openness": "High", "Conscientiousness": "High", "Agreeableness": "Low", "Neuroticism": "High"},
         "persona": (
@@ -60,15 +60,15 @@ FORRESTER_2026_CLUSTERS = [
     {
         "cluster_id": "Non_Greens",
         "name": "非环保派 (Non-Greens)",
-        "prob": 0.10,
+        "prob": 0.25,
         "income": "Low",
         "traits": {"Openness": "Low", "Conscientiousness": "Medium", "Agreeableness": "Low", "Neuroticism": "Low"},
         "persona": (
             "[Role Context]\n"
-            "You belong to the 'Non-Greens' segment. You have absolutely zero concern for the environment or climate change. "
-            "You are strictly driven by the lowest possible price and maximum convenience. You completely refuse to pay any 'green premium'. "
-            "Furthermore, you actively dislike being preached to. If a brand strongly pushes environmental messaging onto you, you will find it annoying. "
-            "You just want a cheap, functional product. Your tone is blunt, highly pragmatic, and actively resistant to eco-marketing."
+            "You belong to the 'Non-Greens' segment. You have  zero concern for the environment or climate change. "
+            "You are driven by the favorable price and convenience. You refuse to pay any 'green premium'. "
+            "Furthermore, you actively dislike being preached to. "
+            "You just want a favorable product. Your tone is blunt, highly pragmatic"
         )
     }
 ]
@@ -129,6 +129,18 @@ def generate_profiles(num_agents=DEFAULT_NUM_AGENTS, filename="profiles.jsonl"):
     print(f"✅ 高质量无参化数据集已生成: {file_path}")
     print(f"   📊 角色分布: { {k: v for k, v in stats['Role'].items() if v > 0} }")
     print(f"   📊 群集分布: { {k: v for k, v in stats['Cluster'].items() if v > 0} }")
+
+    # 打印详细的人群组成表
+    print(f"\n{'─'*70}")
+    print(f"{'ID':<15} {'Age':<5} {'Income':<8} {'Cluster':<20} {'Social Role':<15}")
+    print(f"{'─'*70}")
+    for p in profiles:
+        print(f"{p['id']:<15} {p['demographics']['age']:<5} "
+              f"{p['demographics']['income']:<8} "
+              f"{p['psychology']['cluster_type']:<20} "
+              f"{p['psychology']['social_role']:<15}")
+    print(f"{'─'*70}")
+    print(f"总计: {len(profiles)} 个 Agent")
 
 
 if __name__ == "__main__":

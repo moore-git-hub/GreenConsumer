@@ -48,10 +48,12 @@ class GreenCognitionPlugin(ReflectPlugin):
             await state_plugin.set_state("trust_change_affective", 0.0)
             return
 
-        # ── 聚合多条观察（全局新闻优先，社交帖子补充） ──────────────────
+        # ── 聚合多条观察（全局新闻优先，企业澄清次之，社交帖子补充） ──
         global_news = [o for o in observations if o.get("source") == "Global News"]
+        clarifications = [o for o in observations if o.get("source") == "Enterprise_Clarification"]
         social_posts = [o for o in observations if o.get("source") in ("Social", "social_review")]
-        other_obs   = [o for o in observations if o not in global_news and o not in social_posts]
+        other_obs = [o for o in observations
+                     if o not in global_news and o not in clarifications and o not in social_posts]
 
         info_parts = []
         primary_source = "Unknown"
@@ -59,11 +61,15 @@ class GreenCognitionPlugin(ReflectPlugin):
         if global_news:
             primary_source = "Global News"
             info_parts.append(f"[Breaking News] {global_news[0]['content']}")
+        if clarifications:
+            if not global_news:
+                primary_source = "Enterprise_Clarification"
+            info_parts.append(f"[Brand Statement] {clarifications[0]['content'][:200]}")
         if social_posts:
             # 最多取 2 条社交帖子，防止 Prompt 过长
             for p in social_posts[:2]:
                 info_parts.append(f"[Social Feed] {p['content'][:120]}")
-            if not global_news:
+            if not global_news and not clarifications:
                 primary_source = "Social"
         if other_obs and not info_parts:
             primary_source = other_obs[0].get("source", "Unknown")
@@ -99,24 +105,34 @@ class GreenCognitionPlugin(ReflectPlugin):
 
 [Your Task — System 1 (Fast, Intuitive Reaction)]
 You are experiencing an immediate emotional reaction to this information.
-Do NOT think about long-term forgetting or mean reversion — that is handled separately.
-Focus ONLY on your raw, gut-level emotional response RIGHT NOW.
+Do NOT think about long-term consequences or rational analysis — just feel.
+React as YOUR character would in this moment.
 
 Output JSON ONLY:
 {{
-    "hypocrisy_perceived": <true or false>,
-    "trust_change_affective": <float, scale -3.0 to +3.0>,
-    "importance": <float, 1.0 to 10.0, how memorable is this event>,
+    "hypocrisy_perceived": <true or false — do you feel the brand is being hypocritical?>,
+    "trust_change_affective": <float, -2.0 to +1.5 — how much does this emotionally move you?>,
+    "importance": <float, 1.0 to 10.0 — how memorable will this be for you?>,
     "reasoning": "One sentence first-person gut reaction. (STRICTLY IN ENGLISH)"
 }}
 
-Guidelines for trust_change_affective:
-  - Strong negative shock (major scandal, betrayal): -2.0 to -3.0
-  - Moderate negative (concerning news): -0.5 to -1.5
-  - Neutral / no reaction: 0.0
-  - Moderate positive (good news): +0.5 to +1.5
-  - Strong positive (major endorsement): +2.0 to +3.0
-  - Your persona's sensitivity MUST influence the magnitude.
+Scale guidance for trust_change_affective:
+  -2.0: "I feel deeply betrayed, this is personal"
+  -1.0: "This is concerning and disappointing"
+  -0.3: "Hmm, that's a bit worrying I guess"
+   0.0: "I don't really care about this"
+  +0.5: "That's reassuring, good to hear"
+  +1.5: "Wow, they really proved themselves, I'm impressed"
+
+Remember: your PERSONA determines your sensitivity.
+A Non-Greens consumer barely reacts to environmental news.
+An Active Greens consumer takes greenwashing as a personal betrayal.
+React authentically as YOUR character — not as a generic consumer.
+
+SOURCE CONTEXT:
+  - [Breaking News]: direct, verified information — react at full intensity
+  - [Social Feed]: second-hand opinions from peers — react with less certainty (roughly half intensity)
+  - [Brand Statement]: corporate communication — judge its sincerity based on your persona
 """
         try:
             model = getattr(agent, "model", getattr(agent, "_model", None))
@@ -134,10 +150,10 @@ Guidelines for trust_change_affective:
             else:
                 result = response
 
-            # 情绪冲击量：范围 [-3, +3]，不直接修改 trust_score
+            # 情绪冲击量：范围 [-2, +1.5]，不直接修改 trust_score
             raw_change = float(result.get("trust_change_affective",
                                           result.get("trust_change", 0.0)))
-            affective_change = max(-3.0, min(3.0, raw_change))
+            affective_change = max(-2.0, min(1.5, raw_change))
 
             importance_score = max(1.0, min(10.0, float(result.get("importance", 5.0))))
 

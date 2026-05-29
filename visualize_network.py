@@ -30,7 +30,11 @@ def visualize_simulation_gif():
     # 读取网络结构
     with open(latest_graph, "r", encoding="utf-8") as f:
         graph_data = json.load(f)
-    G = nx.node_link_graph(graph_data)
+    # 兼容 networkx >= 3.0 的 edges 参数变更
+    try:
+        G = nx.node_link_graph(graph_data, edges="links")
+    except TypeError:
+        G = nx.node_link_graph(graph_data)
 
     # 读取仿真日志
     df = pd.read_csv(latest_csv)

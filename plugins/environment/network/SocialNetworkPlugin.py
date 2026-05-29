@@ -66,9 +66,10 @@ class SocialNetworkPlugin(EnvironmentPlugin):
         # print(f"📡 [Network] '{sender_id}' 正在广播消息给 {len(neighbors)} 个邻居...")
 
         message_packet = {
-            "source": sender_id,
+            "source": "Social",
             "content": content,
-            "type": "social_review"
+            "type": "social_review",
+            "sender_id": sender_id
         }
 
         deliver_count = 0

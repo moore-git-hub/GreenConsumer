@@ -25,13 +25,15 @@ import math
 from agentkernel_standalone.mas.agent.base.plugin_base import PlanPlugin
 
 # 各消费者类型的遗忘曲线衰减速率 λ
+# 注意：遗忘曲线现在只在收到正面信息时才触发回升
+# λ 控制的是"正面信息到来后的恢复速度"，而非"自动回升速度"
 DECAY_LAMBDA = {
-    "Active_Greens":     0.05,   # 记仇，恢复极慢
-    "Convenient_Greens": 0.12,   # 适中偏慢
-    "Dormant_Greens":    0.18,   # 遗忘较快
-    "Non_Greens":        0.25,   # 快速回归（本来就不在乎）
+    "Active_Greens":     0.03,   # 即使有正面信息也恢复极慢（记仇）
+    "Convenient_Greens": 0.08,   # 正面信息能缓慢修复
+    "Dormant_Greens":    0.12,   # 正面信息能较快修复
+    "Non_Greens":        0.20,   # 正面信息能快速修复（本来就不在乎）
 }
-DEFAULT_LAMBDA = 0.12
+DEFAULT_LAMBDA = 0.08
 
 # 各消费者类型的初始信任基线（心理锚点）
 INITIAL_BASELINE_TRUST = {
@@ -41,6 +43,16 @@ INITIAL_BASELINE_TRUST = {
     "Non_Greens":        5.0,    # 纯看价格
 }
 DEFAULT_BASELINE = 5.5
+
+# 各消费者类型的情绪冲击敏感度系数
+# LLM 输出的 affective_change 会乘以此系数，控制不同人群的反应幅度
+SENSITIVITY_MULTIPLIER = {
+    "Active_Greens":     1.0,    # 全额感受冲击（对漂绿极度敏感）
+    "Convenient_Greens": 0.6,    # 中等敏感
+    "Dormant_Greens":    0.4,    # 低敏感（被动，需要强刺激）
+    "Non_Greens":        0.15,   # 几乎不受环保相关新闻影响
+}
+DEFAULT_SENSITIVITY = 0.5
 
 
 class ConsumerPlanPlugin(PlanPlugin):
@@ -121,26 +133,37 @@ class ConsumerPlanPlugin(PlanPlugin):
         lam = DECAY_LAMBDA.get(cluster_type, DEFAULT_LAMBDA)
 
         # ── 4. 读取 shock_anchor（冲击锚定点） ──────────────────────────
-        # shock_anchor = 最近一次事件冲击后的信任值，遗忘曲线从这里开始回归
-        # 初始值 = baseline_trust（无冲击时，遗忘曲线不产生任何变化）
         shock_anchor = float(s_data.get("shock_anchor", baseline_trust))
 
-        # ── 5. Step 1：遗忘曲线（从 shock_anchor 向 baseline 回归） ──────
-        trust_after_decay = self._forgetting_curve(shock_anchor, baseline_trust, quiet_ticks, lam)
+        # ── 5. Step 1：遗忘曲线逻辑 ─────────────────────────────────────
+        # 核心规则：
+        #   - 平静期（无正面信息）：信任保持在 previous_trust（上一 Tick 的值）
+        #   - 收到正面信息时：从 shock_anchor 向 baseline 恢复（遗忘曲线生效）
+        #   - 事件当天：遗忘曲线不执行，情绪冲击直接叠加
+        trust_after_decay = previous_trust  # 默认：保持上一 Tick 的信任值
 
-        # ── 6. Step 2：叠加 System 1 的情绪冲击 ──────────────────────────
-        affective_change = float(s_data.get("trust_change_affective", 0.0))
+        # ── 6. Step 2：叠加 System 1 的情绪冲击（带敏感度系数） ──────────
+        raw_affective = float(s_data.get("trust_change_affective", 0.0))
+        sensitivity = SENSITIVITY_MULTIPLIER.get(cluster_type, DEFAULT_SENSITIVITY)
+        affective_change = round(raw_affective * sensitivity, 3)
+
+        # 如果是正面冲击（affective_change > 0），触发遗忘曲线恢复
+        if affective_change > 0 and quiet_ticks > 0:
+            # 正面信息到来时，允许从 shock_anchor 向 baseline 恢复一部分
+            trust_after_decay = self._forgetting_curve(shock_anchor, baseline_trust, quiet_ticks, lam)
+
         trust_after_shock = trust_after_decay + affective_change
         final_trust = round(max(0.0, min(10.0, trust_after_shock)), 3)
 
         # ── 7. Step 3：更新 shock_anchor ─────────────────────────────────
-        # 事件当天（quiet_ticks=0）：用 final_trust 作为新的冲击锚定点
-        # 平静期：shock_anchor 保持不变（遗忘曲线从固定点回归）
+        # 核心规则：只有全局事件当天（quiet_ticks=0 且有 current_news）才更新 anchor
+        # 社交传播的负面冲击直接影响当前信任，但不改变遗忘曲线的回归起点
+        # 这防止了"级联下探"：多个邻居的帖子不会把 anchor 无限往下拉
         if not is_quiet_day:
+            # 全局事件当天：锚定新的冲击点
             await state_plugin.set_state("shock_anchor", final_trust)
-        # 如果是平静期但有社交消息导致的情绪冲击（affective_change != 0），
-        # 也需要更新 anchor（社交传播也是一种"事件"）
-        elif abs(affective_change) > 0.5:
+        # 正面信息导致信任回升时，也更新 anchor（防止下次遗忘曲线从旧的低点开始）
+        elif affective_change > 0 and final_trust > shock_anchor:
             await state_plugin.set_state("shock_anchor", final_trust)
 
         # 写入最终信任分
@@ -160,28 +183,32 @@ class ConsumerPlanPlugin(PlanPlugin):
 
         [Your Current Mental State]
         Your Trust Score RIGHT NOW: {final_trust:.1f}/10.0
-        (This score already reflects today's news impact and memory decay — do NOT recalculate it.)
         Your Latest Inner Thought: {thought_str}
+        Days since last major event: {quiet_ticks}
 
-        [Task — Behavioral Decision]
-        Based on your trust score and persona, decide your actions:
+        [Task — Make Your Decision as This Character]
+        You are living your life as this consumer. Based on who you are, how you feel
+        right now, and what's happening in the world, naturally decide:
 
-        1. **Purchase Decision (is_buying)**:
-           - True if trust >= 5.0 AND price is acceptable for your income level.
-           - False if trust < 4.0 OR you are actively boycotting.
+        1. **Would you buy this product today?**
+           Consider: your trust level, your income, the price, whether you feel good
+           about supporting this brand right now. There's no fixed threshold — it's
+           YOUR personal judgment as this character.
 
-        2. **Social Media Decision (is_posting)**:
-           - True ONLY if: (a) there is fresh news TODAY, AND (b) your emotional reaction
-             is strong (trust dropped sharply or you feel betrayed/excited), AND
-             (c) your social role allows posting (Lurkers NEVER post).
-           - False during quiet periods — people rarely post about old news.
+        2. **Would you post something on social media today?**
+           Consider: is there something worth talking about? Are you still upset or
+           excited enough to share your feelings publicly? Would your character
+           actually bother posting, or would they just scroll past? 
+           Remember who you are — some people post constantly, others rarely speak up.
+
+        Stay in character. Make the decision that YOUR persona would naturally make.
 
         Output JSON ONLY:
         {{
-            "is_buying": <boolean true or false>,
-            "is_posting": <boolean true or false>,
-            "post_content": "Your social media post IN ENGLISH (only if is_posting, else empty)",
-            "reason": "One sentence explaining your decision. (IN ENGLISH)"
+            "is_buying": <boolean>,
+            "is_posting": <boolean>,
+            "post_content": "Your post IN ENGLISH (empty string if not posting)",
+            "reason": "Brief first-person explanation of your decision (IN ENGLISH)"
         }}
         """
         try:

@@ -74,22 +74,50 @@ resource_maps = {
     "environment_components": {}, "action_components": {}, "controller": None
 }
 
-# Oatly 事件时间轴（固定）
+# Oatly 真实事件时间轴（基于公开报道）
 ENTERPRISE_STRATEGY = {
     1: (
-        "Oatly launches a quirky, eco-friendly ad campaign highlighting their Barista edition oat milk's perfect micro-foam. "
-        "The slogan is: 'It's like milk, but made for humans.'"
+        "Oatly's Barista Edition oat milk is taking US coffee shops by storm, "
+        "with baristas praising its perfect micro-foam for lattes. The brand's quirky "
+        "anti-dairy ads — featuring slogans like 'It's like milk, but made for humans' "
+        "and 'Wow, no cow' — go viral. Demand far exceeds supply, with long waitlists "
+        "at cafes across the country. Oatly is widely celebrated as the pioneer of "
+        "the sustainable, plant-based milk movement."
     ),
     5: (
-        "🚨 BREAKING NEWS & SCANDAL: It is publicly revealed that Oatly accepted a $200 million investment from Blackstone Group, "
-        "a controversial private equity firm heavily linked to deforestation in the Amazon rainforest and backing anti-climate politicians. "
-        "Environmentalists are furious, calling it a massive betrayal and severe greenwashing."
+        "BREAKING: Oatly sold a 10% stake ($200 million) to an investment group led by "
+        "Blackstone Group in July 2020. Blackstone is the world's largest private equity "
+        "firm, directly linked to Amazon deforestation in Brazil, and its CEO Stephen "
+        "Schwarzman is a major donor to Trump's political campaigns opposing climate policy. "
+        "Activists on Twitter are trending #BoycottOatly, calling this a 'sell-out' and "
+        "'enabling Blackstone to greenwash its climate-damaging portfolio.' "
+        "Critics say Oatly has 'sold its soul for growth capital.' "
+        "Oatly defended the deal, saying the investment would help them scale sustainably — "
+        "but many long-time fans feel profoundly betrayed."
     ),
     10: (
-        "🚨 VIRAL HEALTH CONTROVERSY: A top nutrition influencer posts a viral video exposing Oatly's ingredients. "
-        "They claim Oatly is 'essentially sugar water' packed with inflammatory canola oil (rapeseed oil) that causes massive blood glucose spikes. "
-        "Consumers are starting to worry about the health impacts."
-    )
+        "HEALTH BACKLASH: A popular nutrition blogger's post exposing Oatly's ingredient "
+        "list goes viral. Critics highlight that Oatly Barista contains rapeseed (canola) "
+        "oil and high levels of rapidly digestible starch from enzymatic processing, "
+        "which can cause significant blood sugar spikes — one analysis showed a glycemic "
+        "response comparable to Coca-Cola. The post has been shared over 100,000 times. "
+        "Many consumers feel misled: they bought Oatly thinking it was a health food, "
+        "but are now questioning whether it is 'just glorified sugar water.' "
+        "Note: mainstream nutrition scientists largely dispute these claims, but the "
+        "viral perception damage is already spreading across social media."
+    ),
+    15: (
+        "INVESTOR LAWSUIT & SHORT SELLER ATTACK: Just weeks after Oatly's May 2021 "
+        "Nasdaq IPO (OTLY), activist short-seller Spruce Point Capital publishes a "
+        "devastating 68-page report accusing Oatly of: overstating revenue and margins, "
+        "exaggerating its sustainability impact in official filings, misleading investors "
+        "about growth in China, and producing abnormally high wastewater at its New "
+        "Jersey plant. Oatly's stock crashes 30% in a single day. "
+        "A class-action securities lawsuit is filed. "
+        "Oatly later settles a greenwashing lawsuit for $9.25 million in 2024. "
+        "Consumer trust in the brand hits a new low as the IPO scandal reinforces "
+        "earlier fears that Oatly was always more about marketing than sustainability."
+    ),
 }
 
 

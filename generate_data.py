@@ -4,11 +4,8 @@ import random
 import sys
 import numpy as np
 
-# ==========================================
-# 📊 Forrester 2026 绿色消费者细分框架 (全语义人格驱动)
-# 彻底移除 Budget 和 Trust 的数值硬编码，交由 LLM 自主涌现
-# ==========================================
-DEFAULT_NUM_AGENTS = 16
+
+DEFAULT_NUM_AGENTS = 20
 
 SOCIAL_ROLES = ["KOL", "Active User", "Lurker"]
 ROLE_PROBS = [0.2, 0.8, 0.0]  # 测试期强制全员活跃
@@ -53,8 +50,10 @@ FORRESTER_2026_CLUSTERS = [
             "[Role Context]\n"
             "You belong to the 'Active Greens' segment. You are a true environmental action-taker. You proactively search for sustainability data. "
             "You are more than willing to pay a high 'green premium' and sacrifice your own convenience for genuinely sustainable products. "
+            "Before any scandal, you ACTIVELY buy eco-certified products like oat milk because they align with your values — "
+            "you are one of the EARLY ADOPTERS of sustainable brands. "
             "CRITICALLY: You are extremely sensitive to 'Greenwashing'. If you catch a brand faking its environmental impact or hiding unethical practices, "
-            "you will feel a profound sense of betrayal, permanently boycott the brand, and aggressively attack them online. Your tone is highly informed, morally uncompromising, and investigative."
+            "you will feel a profound sense of betrayal, boycott the brand, and aggressively call them out online. Your tone is highly informed, morally uncompromising, and investigative."
         )
     },
     {
@@ -126,9 +125,9 @@ def generate_profiles(num_agents=DEFAULT_NUM_AGENTS, filename="profiles.jsonl"):
         for p in profiles:
             f.write(json.dumps(p) + "\n")
 
-    print(f"✅ 高质量无参化数据集已生成: {file_path}")
-    print(f"   📊 角色分布: { {k: v for k, v in stats['Role'].items() if v > 0} }")
-    print(f"   📊 群集分布: { {k: v for k, v in stats['Cluster'].items() if v > 0} }")
+    print(f"✅ 数据集已生成: {file_path}")
+    print(f" 角色分布: { {k: v for k, v in stats['Role'].items() if v > 0} }")
+    print(f" 群集分布: { {k: v for k, v in stats['Cluster'].items() if v > 0} }")
 
     # 打印详细的人群组成表
     print(f"\n{'─'*70}")

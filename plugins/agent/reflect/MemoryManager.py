@@ -15,12 +15,7 @@ except ImportError:
 class MemoryManager:
     """
     基于有限理性 (Bounded Rationality) 假设的联想记忆模型。
-
-    Embedding 策略（按优先级）：
-      1. sentence-transformers paraphrase-multilingual-MiniLM-L12-v2（真实语义，支持中英文）
-      2. 确定性哈希向量（无需额外依赖，相关性为近似值，但保证同文本同向量）
-
-    安装真实 Embedding：
+    真实 Embedding：
         pip install sentence-transformers
     """
 
@@ -29,17 +24,9 @@ class MemoryManager:
         self.weights = {'alpha': alpha, 'beta': beta, 'gamma': gamma}
 
     def _get_embedding(self, text: str) -> np.ndarray:
-        """获取文本的向量表示。优先使用 sentence-transformers，否则用确定性哈希向量。"""
-        if _USE_SBERT and _SBERT_MODEL is not None:
-            # encode() 返回 numpy array，shape=(384,)
-            return _SBERT_MODEL.encode(text, normalize_embeddings=True)
-        else:
-            # 确定性哈希向量：同一文本始终返回相同向量，避免随机种子污染全局状态
-            h = hash(text) & 0xFFFFFFFF  # 32-bit 无符号哈希
-            rng = np.random.default_rng(seed=h)
-            vec = rng.random(384).astype(np.float32)
-            norm = np.linalg.norm(vec)
-            return vec / (norm + 1e-9)  # 归一化，使余弦相似度有意义
+        """获取文本的向量表示。使用 sentence-transformers。"""
+        return _SBERT_MODEL.encode(text, normalize_embeddings=True)
+
 
     def add_memory(self, tick: int, content: str, importance: float):
         self.memory_stream.append({

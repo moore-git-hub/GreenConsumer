@@ -33,12 +33,12 @@ class GreenInvokePlugin(InvokePlugin):
 
         # 动作 1：处理购买
         if is_buying:
-            print(f"🛒 [Invoke] {agent.agent_id} 购买成功！")
+            print(f"[Invoke] {agent.agent_id} 购买成功！")
 
         # 动作 2：处理发声
         if is_posting:
             content = plan.get("post_content", "No content provided.")
-            print(f"📢 [Invoke] {agent.agent_id} 发帖: {content[:60]}...")
+            print(f"[Invoke] {agent.agent_id} 发帖: {content[:60]}...")
             # latest_post 供外部查询用，post_content 已在 plan_result 中供主循环路由使用
             latest_post = {"author": agent.agent_id, "content": content, "tick": current_tick}
             await state_plugin.set_state("latest_post", latest_post)

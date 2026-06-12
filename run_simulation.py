@@ -222,21 +222,56 @@ async def run():
     # ==========================================
     # 🕒 Oatly 真实时间轴干预策略 (宏观环境刺激)
     # ==========================================
+    # 🕒 Oatly 真实事件时间轴（基于公开报道）
+    #
+    # Tick 1  → 广告预热：Oatly Barista 在美国咖啡馆快速铺开
+    # Tick 5  → 黑石丑闻：2020年7月，$2亿美元黑石投资曝光，社交媒体爆炸
+    # Tick 10 → 健康争议：菜籽油/血糖风波在各类健康博主中发酵
+    # Tick 15 → IPO+做空：2021年5月IPO后，Spruce Point做空报告指控财务造假+漂绿
+    # ==========================================
     ENTERPRISE_STRATEGY = {
         1: (
-            "Oatly launches a quirky, eco-friendly ad campaign highlighting their Barista edition oat milk's perfect micro-foam. "
-            "The slogan is: 'It's like milk, but made for humans.'"
+            "Oatly's Barista Edition oat milk is taking US coffee shops by storm, "
+            "with baristas praising its perfect micro-foam for lattes. The brand's quirky "
+            "anti-dairy ads — featuring slogans like 'It's like milk, but made for humans' "
+            "and 'Wow, no cow' — go viral. Demand far exceeds supply, with long waitlists "
+            "at cafes across the country. Oatly is widely celebrated as the pioneer of "
+            "the sustainable, plant-based milk movement."
         ),
         5: (
-            "BREAKING NEWS & SCANDAL: It is publicly revealed that Oatly accepted a $200 million investment from Blackstone Group, "
-            "a controversial private equity firm heavily linked to deforestation in the Amazon rainforest and backing anti-climate politicians. "
-            "Environmentalists are furious, calling it a massive betrayal and severe greenwashing."
+            "BREAKING: Oatly sold a 10% stake ($200 million) to an investment group led by "
+            "Blackstone Group in July 2020. Blackstone is the world's largest private equity "
+            "firm, directly linked to Amazon deforestation in Brazil, and its CEO Stephen "
+            "Schwarzman is a major donor to Trump's political campaigns opposing climate policy. "
+            "Activists on Twitter are trending #BoycottOatly, calling this a 'sell-out' and "
+            "'enabling Blackstone to greenwash its climate-damaging portfolio.' "
+            "Critics say Oatly has 'sold its soul for growth capital.' "
+            "Oatly defended the deal, saying the investment would help them scale sustainably — "
+            "but many long-time fans feel profoundly betrayed."
         ),
         10: (
-            "VIRAL HEALTH CONTROVERSY: A top nutrition influencer posts a viral video exposing Oatly's ingredients. "
-            "They claim Oatly is 'essentially sugar water' packed with inflammatory canola oil (rapeseed oil) that causes massive blood glucose spikes. "
-            "Consumers are starting to worry about the health impacts."
-        )
+            "HEALTH BACKLASH: A popular nutrition blogger's post exposing Oatly's ingredient "
+            "list goes viral. Critics highlight that Oatly Barista contains rapeseed (canola) "
+            "oil and high levels of rapidly digestible starch from enzymatic processing, "
+            "which can cause significant blood sugar spikes — one analysis showed a glycemic "
+            "response comparable to Coca-Cola. The post has been shared over 100,000 times. "
+            "Many consumers feel misled: they bought Oatly thinking it was a health food, "
+            "but are now questioning whether it is 'just glorified sugar water.' "
+            "Note: mainstream nutrition scientists largely dispute these claims, but the "
+            "viral perception damage is already spreading across social media."
+        ),
+        15: (
+            "INVESTOR LAWSUIT & SHORT SELLER ATTACK: Just weeks after Oatly's May 2021 "
+            "Nasdaq IPO (OTLY), activist short-seller Spruce Point Capital publishes a "
+            "devastating 68-page report accusing Oatly of: overstating revenue and margins, "
+            "exaggerating its sustainability impact in official filings, misleading investors "
+            "about growth in China, and producing abnormally high wastewater at its New "
+            "Jersey plant. Oatly's stock crashes 30% in a single day. "
+            "A class-action securities lawsuit is filed. "
+            "Oatly later settles a greenwashing lawsuit for $9.25 million in 2024. "
+            "Consumer trust in the brand hits a new low as the IPO scandal reinforces "
+            "earlier fears that Oatly was always more about marketing than sustainability."
+        ),
     }
 
     cumulative_buyers = set()  # 追踪历史购买者
@@ -456,8 +491,9 @@ def analyze_results(macro_path, log_path, graph_path, total_agents, results_dir,
     # 🚨 修复：标注干预事件完全对齐最新的 ENTERPRISE_STRATEGY (1, 5, 10)
     events = {
         1: '发售预热 (Launch)',
-        5: '黑石漂绿丑闻 (Greenwashing)',
-        10: '菜籽油健康风波 (Utility Drop)'
+        5: '黑石漂绿丑闻 (Blackstone)',
+        10: '菜籽油健康争议 (Health)',
+        15: '做空报告+IPO崩盘 (Spruce Point)'
     }
     for t, label in events.items():
         if t <= df_macro['Tick'].max():

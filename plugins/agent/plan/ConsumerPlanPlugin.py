@@ -78,7 +78,7 @@ class ConsumerPlanPlugin(PlanPlugin):
     def _forgetting_curve(shock_anchor: float, baseline_trust: float,
                           quiet_ticks: int, lam: float) -> float:
         """
-        Ebbinghaus 遗忘曲线 + 均值回归（从冲击锚定点回归）。
+        Ebbinghaus 遗忘曲线 + 均值回归（从冲击锚定点回归）。情绪适应/均值回归函数（Hedonic Adaptation）
 
         公式：
             trust = shock_anchor + (1 - exp(-λ * quiet_ticks)) * (baseline - shock_anchor)
@@ -180,6 +180,10 @@ class ConsumerPlanPlugin(PlanPlugin):
         [Environment Context]
         Current Global News: {news_text}
         Product available: '{product_name}' (Price: ${product_price}).
+        Market context: Regular dairy milk costs $2.5, other oat milks cost $3.5-4.5.
+        This product is competitively priced for its category.
+        Brand background: Oatly holds B Corp certification and has a published sustainability
+        report — widely regarded as a credible green brand before any scandal.
 
         [Your Current Mental State]
         Your Trust Score RIGHT NOW: {final_trust:.1f}/10.0
@@ -198,8 +202,9 @@ class ConsumerPlanPlugin(PlanPlugin):
         2. **Would you post something on social media today?**
            Consider: is there something worth talking about? Are you still upset or
            excited enough to share your feelings publicly? Would your character
-           actually bother posting, or would they just scroll past? 
-           Remember who you are — some people post constantly, others rarely speak up.
+           actually bother posting, or would they just scroll past?
+
+           IMPORTANT — Posting frequency varies GREATLY by persona.
 
         Stay in character. Make the decision that YOUR persona would naturally make.
 
@@ -252,7 +257,7 @@ class ConsumerPlanPlugin(PlanPlugin):
             trust_delta = final_trust - previous_trust
             sign = "+" if trust_delta >= 0 else ""
 
-            print(f"🧠 [Plan] {agent.agent_id} | "
+            print(f" [Plan] {agent.agent_id} | "
                   f"Trust: {previous_trust:.1f}→{final_trust:.1f} ({sign}{trust_delta:.2f}) | "
                   f"Anchor:{shock_anchor:.1f} Decay→{trust_after_decay:.1f} Affect:{affective_change:+.1f} | "
                   f"λ={lam} Quiet:{quiet_ticks}d | {'+'.join(actions_str)}")

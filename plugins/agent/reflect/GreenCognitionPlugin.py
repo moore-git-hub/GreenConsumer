@@ -171,7 +171,7 @@ SOURCE CONTEXT:
 
             await state_plugin.set_state("observations", [])
 
-            print(f"💭 [Reflect] {agent.agent_id} | "
+            print(f"[Reflect] {agent.agent_id} | "
                   f"Affective Δ: {affective_change:+.2f} | "
                   f"Hypocrisy: {result.get('hypocrisy_perceived', False)} | "
                   f"Importance: {importance_score:.1f}")

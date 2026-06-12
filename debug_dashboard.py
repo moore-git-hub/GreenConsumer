@@ -15,12 +15,12 @@ def generate_dashboard():
     # 1. 自动读取最新的 CSV
     results_dir = os.path.join(os.path.dirname(__file__), "results")
     if not os.path.exists(results_dir):
-        print("❌ 未找到 results 文件夹")
+        print(" 未找到 results 文件夹")
         return
 
     list_of_files = glob.glob(os.path.join(results_dir, 'simulation_log_*.csv'))
     if not list_of_files:
-        print("❌ 未找到数据文件，请先运行 run_simulation.py")
+        print("未找到数据文件，请先运行 run_simulation.py")
         return
 
     latest_file = max(list_of_files, key=os.path.getctime)
@@ -33,7 +33,6 @@ def generate_dashboard():
     fig.suptitle(f'调试数据\n源文件: {os.path.basename(latest_file)}', fontsize=16)
 
     # --- 图 1: 个体信任轨迹 (微观视角) ---
-    # 作用：一眼看出有没有 Agent 走势异常（例如 Deep Green 居然在上升）
     sns.lineplot(
         ax=axes[0, 0],
         data=df,

@@ -4,144 +4,154 @@ import random
 import sys
 import numpy as np
 
-
 DEFAULT_NUM_AGENTS = 20
 
-SOCIAL_ROLES = ["KOL", "Active User", "Lurker"]
-ROLE_PROBS = [0.2, 0.8, 0.0]  # 测试期强制全员活跃
+# 按 Forrester (2026) 绿色消费者分层框架的实际比例设定配额
+# Dormant 40% / Convenient 35% / Active 15% / Non 10%
+# 对应 20 人时：8 / 7 / 3 / 2（已精确配额，误差修正到 Dormant）
+AGENT_QUOTA = {
+    "Dormant_Greens":    8,   # 40%
+    "Convenient_Greens": 7,   # 35%
+    "Active_Greens":     3,   # 15%
+    "Non_Greens":        2,   # 10%
+}
+assert sum(AGENT_QUOTA.values()) == DEFAULT_NUM_AGENTS
+
+# 社交活跃风格只约束表达倾向，不代表网络结构位置。
+# Hub/普通节点由有向网络中的出度在建图后确定。
+SOCIAL_ROLES = ["Frequent Poster", "Regular User", "Lurker"]
+ROLE_PROBS = [0.2, 0.8, 0.0]
 
 FORRESTER_2026_CLUSTERS = [
     {
         "cluster_id": "Dormant_Greens",
-        "name": "沉睡环保派 (Dormant Greens)",
-        "prob": 0.25,
-        "income": "Medium",
-        "traits": {"Openness": "Medium", "Conscientiousness": "Medium", "Agreeableness": "High", "Neuroticism": "Low"},
         "persona": (
             "[Role Context]\n"
-            "You belong to the 'Dormant Greens' segment. Your environmental awareness is vague and passive. "
-            "You never actively search for eco-friendly information, and environmental factors have a very low weight in your daily purchasing decisions. "
-            "You usually just buy what you are used to. HOWEVER, you are not anti-environment. If you are suddenly 'awakened' by explicit information "
-            "(e.g., a viral news story showing the brand uses toxic packaging), your attitude might abruptly shift to negative. "
-            "Your tone is generally passive, indifferent to complex eco-jargon, but open to gentle nudges."
+            "You belong to the 'Dormant Greens' segment. You have a vague positive feeling toward "
+            "sustainability but it rarely drives your actual purchases. You started buying Oatly "
+            "because a friend recommended it and it tasted fine — the environmental angle was a "
+            "nice bonus, not the reason. You are not a brand loyalist. When news comes up, you "
+            "encounter it passively through your feed rather than seeking it out. "
+            "Your threshold for caring is high: mild news won't change your behavior, but a "
+            "sufficiently loud and persistent controversy might make you switch to a cheaper "
+            "alternative simply because it removes the only marginal reason you had for choosing "
+            "this brand over others."
         )
     },
     {
         "cluster_id": "Convenient_Greens",
-        "name": "便利环保派 (Convenient Greens)",
-        "prob": 0.25,
-        "income": "Medium",
-        "traits": {"Openness": "High", "Conscientiousness": "Low", "Agreeableness": "High", "Neuroticism": "Medium"},
         "persona": (
             "[Role Context]\n"
-            "You belong to the 'Convenient Greens' segment. You are highly conflicted: you truly agree with sustainability in your mind, "
-            "BUT in action, you strictly prioritize convenience and price. You believe that taking extra steps to reduce carbon footprints is simply 'too much hassle'. "
-            "You love buying green products if they are the easy, default, and affordable option. But if an eco-friendly brand asks you to pay a massive premium or makes the purchasing process difficult, you will abandon it. "
-            "Your tone is well-intentioned but highly practical, easily making excuses for choosing convenience over the planet."
+            "You belong to the 'Convenient Greens' segment. You genuinely prefer sustainable "
+            "products when the premium is reasonable — you pay a little more for brands with "
+            "credible environmental claims because it feels like a guilt-free choice. You follow "
+            "a couple of eco-lifestyle accounts on social media and stay loosely informed. "
+            "You are not an activist, but corporate hypocrisy bothers you — especially when a "
+            "brand you trusted turns out to have financial ties that contradict its values. "
+            "Your purchasing calculus is pragmatic: if a brand can credibly address a concern "
+            "with transparent evidence, you will stay. If the response feels like spin, you will "
+            "quietly switch to a comparable competitor at the same price point."
         )
     },
     {
         "cluster_id": "Active_Greens",
-        "name": "积极环保派 (Active Greens)",
-        "prob": 0.25,
-        "income": "High",
-        "traits": {"Openness": "High", "Conscientiousness": "High", "Agreeableness": "Low", "Neuroticism": "High"},
         "persona": (
             "[Role Context]\n"
-            "You belong to the 'Active Greens' segment. You are a true environmental action-taker. You proactively search for sustainability data. "
-            "You are more than willing to pay a high 'green premium' and sacrifice your own convenience for genuinely sustainable products. "
-            "Before any scandal, you ACTIVELY buy eco-certified products like oat milk because they align with your values — "
-            "you are one of the EARLY ADOPTERS of sustainable brands. "
-            "CRITICALLY: You are extremely sensitive to 'Greenwashing'. If you catch a brand faking its environmental impact or hiding unethical practices, "
-            "you will feel a profound sense of betrayal, boycott the brand, and aggressively call them out online. Your tone is highly informed, morally uncompromising, and investigative."
+            "You belong to the 'Active Greens' segment. You actively research the brands you "
+            "support — you read sustainability reports, check certifications, and follow "
+            "environmental accountability journalism. You chose Oatly specifically because of "
+            "its B Corp certification and published carbon disclosures. For you, a brand's "
+            "financial partnerships and investor relationships are part of its values statement, "
+            "not just business decisions. You are highly attuned to greenwashing and corporate "
+            "hypocrisy. You are skeptical of vague apologies and will only be moved by specific, "
+            "independently verified evidence. When you feel betrayed by a brand, you speak up "
+            "publicly and encourage others to reconsider."
         )
     },
     {
         "cluster_id": "Non_Greens",
-        "name": "非环保派 (Non-Greens)",
-        "prob": 0.25,
-        "income": "Low",
-        "traits": {"Openness": "Low", "Conscientiousness": "Medium", "Agreeableness": "Low", "Neuroticism": "Low"},
         "persona": (
             "[Role Context]\n"
-            "You belong to the 'Non-Greens' segment. You have  zero concern for the environment or climate change. "
-            "You are driven by the favorable price and convenience. You refuse to pay any 'green premium'. "
-            "Furthermore, you actively dislike being preached to. "
-            "You just want a favorable product. Your tone is blunt, highly pragmatic"
+            "You belong to the 'Non-Greens' segment. You buy products based on taste, price, "
+            "and convenience — sustainability is not a factor in your purchasing decisions. "
+            "You chose this oat milk because it has fewer calories than dairy and tastes decent "
+            "in coffee. Environmental news generally does not move you. What could change your "
+            "behavior is price or a direct quality issue. Social pressure can have a small "
+            "effect: if enough people around you stop using a product, you might quietly "
+            "reconsider, but you would not post about it or actively campaign."
         )
     }
 ]
 
-cluster_probs = [c["prob"] for c in FORRESTER_2026_CLUSTERS]
-assert abs(sum(cluster_probs) - 1.0) < 1e-6, "群集概率之和必须为1"
-
 SOCIAL_MEDIA_ROLES = {
-    "KOL": "\n[Social Role]\nYou are an influential KOL. Your posts are meant to guide public opinion.",
-    "Active User": "\n[Social Role]\nYou are an Active Internet User. You love to leave comments and share thoughts using emotional language.",
+    "Frequent Poster": "\n[Posting Style]\nYou frequently express your views online, but your network reach is determined separately by the graph structure.",
+    "Regular User": "\n[Posting Style]\nYou sometimes comment or share when the topic is relevant to you.",
     "Lurker": "\n[Social Role]\nYou are a Lurker. YOU NEVER POST, COMMENT, OR REPOST on social media. You only buy or ignore."
 }
 
 
-def generate_profiles(num_agents=DEFAULT_NUM_AGENTS, filename="profiles.jsonl"):
+def generate_profiles(num_agents=DEFAULT_NUM_AGENTS, filename="profiles.jsonl", seed=42):
+    random.seed(seed)
+    np.random.seed(seed)
     os.makedirs("data/agents", exist_ok=True)
     profiles = []
-    print(f"⚙️ 正在生成全语义驱动的消费者 Agent... 数量: {num_agents}")
+    print(f"Generating {num_agents} agents with seed={seed}...")
 
-    stats = {"Role": {r: 0 for r in SOCIAL_ROLES}, "Cluster": {c["cluster_id"]: 0 for c in FORRESTER_2026_CLUSTERS}}
+    if num_agents == DEFAULT_NUM_AGENTS:
+        quota = AGENT_QUOTA.copy()
+    else:
+        total = sum(AGENT_QUOTA.values())
+        quota = {k: max(1, round(v / total * num_agents)) for k, v in AGENT_QUOTA.items()}
+        quota["Dormant_Greens"] += num_agents - sum(quota.values())
 
-    for i in range(num_agents):
+    cluster_order = []
+    for cid, count in quota.items():
+        cluster_order.extend([cid] * count)
+    random.shuffle(cluster_order)
+
+    cluster_map = {c["cluster_id"]: c for c in FORRESTER_2026_CLUSTERS}
+    stats = {"Role": {r: 0 for r in SOCIAL_ROLES},
+             "Cluster": {c["cluster_id"]: 0 for c in FORRESTER_2026_CLUSTERS}}
+
+    for i, cluster_id in enumerate(cluster_order):
         agent_id = f"Consumer_{i:03d}"
+        base_cluster = cluster_map[cluster_id]
+        stats["Cluster"][cluster_id] += 1
+
         role = np.random.choice(SOCIAL_ROLES, p=ROLE_PROBS)
         stats["Role"][role] += 1
 
-        base_cluster = random.choices(FORRESTER_2026_CLUSTERS, weights=cluster_probs, k=1)[0]
-        stats["Cluster"][base_cluster["cluster_id"]] += 1
+        persona_prompt = base_cluster["persona"] + SOCIAL_MEDIA_ROLES[role]
 
-        age = random.randint(18, 60)
-
-        # 构建纯粹的 Prompt
-        persona_blocks = [
-            f"You are a {age}-year-old consumer.",
-            base_cluster["persona"],
-            SOCIAL_MEDIA_ROLES[role]
-        ]
-        persona_prompt = "\n\n".join(persona_blocks)
-
-        profile_data = {
+        profiles.append({
             "id": agent_id,
             "name": agent_id,
-            "demographics": {"age": age, "income": base_cluster["income"]},
             "psychology": {
                 "cluster_type": base_cluster["cluster_id"],
-                "big_five": base_cluster["traits"],
                 "social_role": role
             },
             "persona": persona_prompt
-        }
-        profiles.append(profile_data)
+        })
 
     file_path = f"data/agents/{filename}"
     with open(file_path, "w", encoding="utf-8") as f:
         for p in profiles:
             f.write(json.dumps(p) + "\n")
 
-    print(f"✅ 数据集已生成: {file_path}")
-    print(f" 角色分布: { {k: v for k, v in stats['Role'].items() if v > 0} }")
-    print(f" 群集分布: { {k: v for k, v in stats['Cluster'].items() if v > 0} }")
+    print(f"Saved to {file_path}")
+    print(f"Roles:    {dict((k, v) for k, v in stats['Role'].items() if v > 0)}")
+    print(f"Clusters: {dict((k, v) for k, v in stats['Cluster'].items() if v > 0)}")
 
-    # 打印详细的人群组成表
-    print(f"\n{'─'*70}")
-    print(f"{'ID':<15} {'Age':<5} {'Income':<8} {'Cluster':<20} {'Social Role':<15}")
-    print(f"{'─'*70}")
+    print(f"\n{'─'*60}")
+    print(f"{'ID':<15} {'Cluster':<22} {'Posting style'}")
+    print(f"{'─'*60}")
     for p in profiles:
-        print(f"{p['id']:<15} {p['demographics']['age']:<5} "
-              f"{p['demographics']['income']:<8} "
-              f"{p['psychology']['cluster_type']:<20} "
-              f"{p['psychology']['social_role']:<15}")
-    print(f"{'─'*70}")
-    print(f"总计: {len(profiles)} 个 Agent")
+        print(f"{p['id']:<15} {p['psychology']['cluster_type']:<22} "
+              f"{p['psychology']['social_role']}")
+    print(f"{'─'*60}\nTotal: {len(profiles)} agents")
 
 
 if __name__ == "__main__":
-    num = int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_NUM_AGENTS
-    generate_profiles(num)
+    n = int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_NUM_AGENTS
+    s = int(sys.argv[2]) if len(sys.argv) > 2 else 42
+    generate_profiles(n, seed=s)

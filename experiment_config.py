@@ -59,9 +59,15 @@ class ExperimentConfig:
 
     @property
     def clarification_tick(self) -> Optional[int]:
-        """澄清注入的 Tick，None 表示不澄清"""
+        """澄清注入的 Tick，None 表示不澄清
+
+        时机定义（相对于丑闻爆发 Tick）：
+          - immediate:        丑闻次日（scandal_tick + 1）
+          - delay-3:          丑闻后第 4 天（scandal_tick + 3）
+          - no-clarification: 不澄清
+        """
         if self.timing_factor == "immediate":
-            return self.scandal_tick
+            return self.scandal_tick + 1   # 次日即刻响应
         elif self.timing_factor == "delay-3":
             return self.scandal_tick + 3
         return None

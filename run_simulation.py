@@ -148,7 +148,7 @@ async def run():
     print(f"👥 初始化了 {len(agents)} 个 Agent。")
 
     await net_plugin.init()
-    net_plugin.register_agents(agents)
+    net_plugin.register_agents(agents, seed=42)
 
     # 保存网络拓扑用于后续级联推导（兼容 networkx >= 3.0 的 edges 参数变更）
     graph_path = os.path.join(results_dir, f"network_graph_{timestamp}.json")
@@ -169,8 +169,9 @@ async def run():
 
         class Mock:
             async def chat(self, prompt):
-                # 根据 Prompt 内容区分 Reflect 层和 Plan 层的响应
-                if "System 1" in prompt or "trust_change_affective" in prompt:
+                # Reflect 层特征：含 trust_change_affective 或 hypocrisy_perceived 字段
+                # Plan 层特征：含 is_buying 和 is_posting 字段
+                if "trust_change_affective" in prompt or "hypocrisy_perceived" in prompt:
                     # Reflect 层 Mock：返回情绪冲击
                     return json.dumps({
                         "hypocrisy_perceived": True,
@@ -203,6 +204,7 @@ async def run():
         state_plugin = ag.get_component("state")._plugin
         await state_plugin.set_state("incoming_messages", [])
         await state_plugin.set_state("observations", [])
+        await state_plugin.set_state("last_observations", [])
         await state_plugin.set_state("latest_thought", None)
 
         # 根据消费者类型设置差异化初始信任（而非统一 5.0）
@@ -220,23 +222,23 @@ async def run():
     TOTAL_TICKS = 30  # 延长至30期，观察长尾遗忘曲线效应
 
     # ==========================================
-    # 🕒 Oatly 真实时间轴干预策略 (宏观环境刺激)
-    # ==========================================
     # 🕒 Oatly 真实事件时间轴（基于公开报道）
-    #
-    # Tick 1  → 广告预热：Oatly Barista 在美国咖啡馆快速铺开
-    # Tick 5  → 黑石丑闻：2020年7月，$2亿美元黑石投资曝光，社交媒体爆炸
-    # Tick 10 → 健康争议：菜籽油/血糖风波在各类健康博主中发酵
-    # Tick 15 → IPO+做空：2021年5月IPO后，Spruce Point做空报告指控财务造假+漂绿
+    # Tick 1  → 品牌扩张：Oatly Barista 在北美铺开，数据支撑的正面形象
+    # Tick 5  → 黑石丑闻：$2亿投资曝光，#BoycottOatly
+    # Tick 10 → 健康争议：菜籽油/血糖风波病毒式传播
+    # Tick 15 → IPO+做空：Spruce Point报告+股价崩盘
     # ==========================================
     ENTERPRISE_STRATEGY = {
         1: (
-            "Oatly's Barista Edition oat milk is taking US coffee shops by storm, "
-            "with baristas praising its perfect micro-foam for lattes. The brand's quirky "
-            "anti-dairy ads — featuring slogans like 'It's like milk, but made for humans' "
-            "and 'Wow, no cow' — go viral. Demand far exceeds supply, with long waitlists "
-            "at cafes across the country. Oatly is widely celebrated as the pioneer of "
-            "the sustainable, plant-based milk movement."
+            "Oatly's Barista Edition oat milk is expanding rapidly across the US. "
+            "The brand now supplies over 10,000 coffee shops in North America, up from 2,000 two years ago. "
+            "Oatly holds B Corp certification (score: 93.4/200, above the 80-point qualifying threshold) "
+            "and publishes an annual sustainability report disclosing its carbon footprint at 0.44 kg CO₂e "
+            "per liter — roughly 80% lower than conventional dairy milk. "
+            "The brand's signature ad 'It's like milk, but made for humans' goes viral with 4.2 million "
+            "organic shares. Independent barista forums rate Oatly Barista as the #1 plant-based milk "
+            "for latte art, citing its consistent micro-foam texture. Oatly is widely regarded as the "
+            "most credible and transparent brand in the sustainable food sector."
         ),
         5: (
             "BREAKING: Oatly sold a 10% stake ($200 million) to an investment group led by "
@@ -457,7 +459,7 @@ def analyze_results(macro_path, log_path, graph_path, total_agents, results_dir,
         agent_id = row['AgentID']
         cascade_G.add_node(agent_id, tick=tick)
 
-        neighbors = list(base_G.neighbors(agent_id))
+        neighbors = list(base_G.successors(agent_id)) if base_G.is_directed() else list(base_G.neighbors(agent_id))
         potential_sources = post_events[(post_events['Tick'] < tick) & (post_events['AgentID'].isin(neighbors))]
         if not potential_sources.empty:
             source = potential_sources.iloc[-1]['AgentID']

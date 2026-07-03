@@ -6,64 +6,85 @@ from agentkernel_standalone.mas.environment.base.plugin_base import EnvironmentP
 class SocialNetworkPlugin(EnvironmentPlugin):
     def __init__(self):
         super().__init__()
-        # 存储图结构
-        self.graph = nx.Graph()
-        # “上帝通讯录”：Agent ID -> Agent 实例
+        # 有向图：BA 底图中的高度数节点向低度数节点单向传播。
+        # 结构角色统一按拓扑定义为 Hub 节点与普通节点。
+        self.graph = nx.DiGraph()
+        # "上帝通讯录"：Agent ID -> Agent 实例
         self.agent_registry = {}
 
     async def init(self):
         print("🌐 [Network] 社交网络插件初始化...")
-        pass
 
-    def register_agents(self, agents: List[Any]):
+    def register_agents(self, agents: List[Any], seed: int = 42):
         """
-        [初始化辅助] 将所有 Agent 注册到网络中，并生成随机连接
+        将所有 Agent 注册到网络中，构建有向 BA 无标度网络。
+        边方向规则：度数高的节点 → 度数低的节点（Hub 向下游节点广播）
+
+        Args:
+            agents: Agent 实例列表
+            seed:   BA 网络生成随机种子，默认 42，
+                    批量实验中应传入 ExperimentConfig.random_seed 保证可复现性
         """
         self.agent_registry = {a.agent_id: a for a in agents}
         agent_ids = list(self.agent_registry.keys())
-
-        # 构建图结构
         n = len(agent_ids)
+
         if n > 0:
-            # 节点很少时直接全连接，避免孤立
             if n < 5:
-                self.graph = nx.complete_graph(n)
-                print(f"🌐 [Network] 节点过少 ({n})，采用全连接图。")
+                # 节点过少时使用完全图作为有向化底图
+                undirected = nx.complete_graph(n)
+                print(f"🌐 [Network] 节点过少 ({n})，采用完全图底图。")
             else:
-                # 【核心修改】切换为 BA 无标度网络 (Barabási-Albert)
-                # m=2: 每个新加入的节点会连接 2 个现有的节点
-                # 这种机制会产生“富者越富”的效应，形成少数拥有大量连接的 Hub 节点
                 try:
-                    self.graph = nx.barabasi_albert_graph(n, m=2)
-                    print(f"🌐 [Network] 已构建 BA 无标度网络 (n={n}, m=2)。")
+                    undirected = nx.barabasi_albert_graph(n, m=2, seed=seed)
+                    print(f"🌐 [Network] 已构建 BA 无标度网络底图 (n={n}, m=2, seed={seed})。")
                 except Exception as e:
                     print(f"⚠️ [Network] BA 图构建失败 ({e})，回退到随机图。")
-                    self.graph = nx.erdos_renyi_graph(n, p=0.1)
+                    undirected = nx.erdos_renyi_graph(n, p=0.3, seed=seed)
 
-            # 将图节点的整数索引映射回 Agent ID
+            # 映射整数索引 → Agent ID
             mapping = {i: agent_ids[i] for i in range(n)}
-            self.graph = nx.relabel_nodes(self.graph, mapping)
+            undirected = nx.relabel_nodes(undirected, mapping)
 
-        print(f"🌐 [Network] 网络构建完成: {n} 节点, {self.graph.number_of_edges()} 边")
+            # 将无向图转换为有向图：
+            # 对每条无向边 (u, v)，度数较高的节点作为发送方（→），度数较低的作为接收方
+            degrees = dict(undirected.degree())
+            directed = nx.DiGraph()
+            directed.add_nodes_from(undirected.nodes())
+            for u, v in undirected.edges():
+                if degrees[u] >= degrees[v]:
+                    directed.add_edge(u, v)  # u 度数更高，u → v
+                else:
+                    directed.add_edge(v, u)  # v 度数更高，v → u
 
-        # [调试] 打印度数最高的节点 (KOL)，方便观察
-        degrees = dict(self.graph.degree())
-        if degrees:
-            top_k = sorted(degrees.items(), key=lambda x: x[1], reverse=True)[:3]
-            print(f"   🔥 影响力最大的节点 (Hubs): {top_k}")
+            self.graph = directed
+
+        print(f"🌐 [Network] 有向网络构建完成: {n} 节点, {self.graph.number_of_edges()} 条有向边")
+
+        # 打印出度最高的结构 Hub
+        out_degrees = dict(self.graph.out_degree())
+        if out_degrees:
+            top_k = sorted(out_degrees.items(), key=lambda x: x[1], reverse=True)[:3]
+            print(f"   🔥 广播影响力最强的节点 (Hub, 出度 Top-3): {top_k}")
+
+    def get_successors(self, agent_id: str) -> List[str]:
+        """获取该节点的直接下游节点（它能广播到的粉丝）"""
+        if agent_id in self.graph:
+            return list(self.graph.successors(agent_id))
+        return []
 
     def get_neighbors(self, agent_id: str) -> List[str]:
-        """获取邻居 ID 列表"""
-        if agent_id in self.graph:
-            return list(self.graph.neighbors(agent_id))
-        return []
+        """兼容旧接口，返回出向邻居（等同于 get_successors）"""
+        return self.get_successors(agent_id)
 
     async def broadcast_message(self, sender_id: str, content: str):
         """
-        [核心功能] 将消息投递给所有邻居
+        将消息沿有向边投递给所有下游节点（粉丝）。
+        只有出度 > 0 的节点才能实际触达下游节点；该结构属性不由 Persona 决定。
         """
-        neighbors = self.get_neighbors(sender_id)
-        # print(f"📡 [Network] '{sender_id}' 正在广播消息给 {len(neighbors)} 个邻居...")
+        successors = self.get_successors(sender_id)
+        if not successors:
+            return
 
         message_packet = {
             "source": "Social",
@@ -73,30 +94,24 @@ class SocialNetworkPlugin(EnvironmentPlugin):
         }
 
         deliver_count = 0
-        for neighbor_id in neighbors:
+        for neighbor_id in successors:
             neighbor_agent = self.agent_registry.get(neighbor_id)
             if neighbor_agent:
-                # 获取邻居的 State 插件
                 state_comp = neighbor_agent.get_component("state")
-                # 兼容性获取
                 state_plugin = getattr(state_comp, "_plugin", getattr(state_comp, "plugin", None))
 
                 if state_plugin:
-                    # 读取旧收件箱
                     s_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
                     inbox = s_data.get("incoming_messages") or []
-
-                    # 写入新消息 (复制一份以防引用问题)
                     new_inbox = list(inbox)
                     new_inbox.append(message_packet)
 
-                    # 写入状态
                     if hasattr(state_plugin, "set_state"):
                         await state_plugin.set_state("incoming_messages", new_inbox)
                         deliver_count += 1
 
         if deliver_count > 0:
-            print(f"📡 [Network] {sender_id} -> {deliver_count} 邻居 (广播成功)")
+            print(f"📡 [Network] {sender_id} → {deliver_count} 粉丝 (单向广播)")
 
     async def execute(self, current_tick: int) -> None:
         pass

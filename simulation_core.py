@@ -57,7 +57,7 @@ from experiment_config import ExperimentConfig
 from node_selector import select_target_nodes
 from clarification_injector import ClarificationInjector
 from metrics_calculator import compute_metrics, SimulationMetrics
-from generate_data import FORRESTER_2026_CLUSTERS, SOCIAL_MEDIA_ROLES, ROLE_PROBS, SOCIAL_ROLES
+from generate_data import FORRESTER_2026_CLUSTERS, SOCIAL_MEDIA_ROLES, ROLE_PROBS, SOCIAL_ROLES  # kept for reference
 
 resource_maps = {
     "agent_components": {
@@ -77,12 +77,15 @@ resource_maps = {
 # Oatly 真实事件时间轴（基于公开报道）
 ENTERPRISE_STRATEGY = {
     1: (
-        "Oatly's Barista Edition oat milk is taking US coffee shops by storm, "
-        "with baristas praising its perfect micro-foam for lattes. The brand's quirky "
-        "anti-dairy ads — featuring slogans like 'It's like milk, but made for humans' "
-        "and 'Wow, no cow' — go viral. Demand far exceeds supply, with long waitlists "
-        "at cafes across the country. Oatly is widely celebrated as the pioneer of "
-        "the sustainable, plant-based milk movement."
+        "Oatly's Barista Edition oat milk is expanding rapidly across the US. "
+        "The brand now supplies over 10,000 coffee shops in North America, up from 2,000 two years ago. "
+        "Oatly holds B Corp certification (score: 93.4/200, above the 80-point qualifying threshold) "
+        "and publishes an annual sustainability report disclosing its carbon footprint at 0.44 kg CO₂e "
+        "per liter — roughly 80% lower than conventional dairy milk. "
+        "The brand's signature ad 'It's like milk, but made for humans' goes viral with 4.2 million "
+        "organic shares. Independent barista forums rate Oatly Barista as the #1 plant-based milk "
+        "for latte art, citing its consistent micro-foam texture. Oatly is widely regarded as the "
+        "most credible and transparent brand in the sustainable food sector."
     ),
     5: (
         "BREAKING: Oatly sold a 10% stake ($200 million) to an investment group led by "
@@ -122,36 +125,46 @@ ENTERPRISE_STRATEGY = {
 
 
 def _generate_profiles_inline(num_agents: int, seed: int) -> list:
-    """内联生成 Agent profiles（不写文件）"""
-    rng_np = np.random.RandomState(seed)
-    rng_py = random_module.Random(seed)
+    """
+    内联生成 Agent profiles（不写文件）。
+    与 generate_data.py 的配额制逻辑保持一致：按 AGENT_QUOTA 比例分配群体，
+    然后随机打乱顺序，保证同 seed 下结果可复现。
+    """
+    from generate_data import AGENT_QUOTA, FORRESTER_2026_CLUSTERS, SOCIAL_MEDIA_ROLES, ROLE_PROBS, SOCIAL_ROLES
 
-    cluster_probs = [c["prob"] for c in FORRESTER_2026_CLUSTERS]
+    rng_random = random_module.Random(seed)
+    rng_np     = np.random.RandomState(seed)
+
+    # 按配额比例计算每个类型的 Agent 数量
+    total_quota = sum(AGENT_QUOTA.values())
+    quota = {k: max(1, round(v / total_quota * num_agents)) for k, v in AGENT_QUOTA.items()}
+    # 误差修正：多余的补到 Dormant_Greens（占比最大，影响最小）
+    quota["Dormant_Greens"] += num_agents - sum(quota.values())
+
+    # 按配额展开为 cluster_id 列表并随机打乱
+    cluster_order = []
+    for cid, count in quota.items():
+        cluster_order.extend([cid] * count)
+    rng_random.shuffle(cluster_order)
+
+    cluster_map = {c["cluster_id"]: c for c in FORRESTER_2026_CLUSTERS}
     profiles = []
 
-    for i in range(num_agents):
-        agent_id = f"Consumer_{i:03d}"
-        role = rng_np.choice(SOCIAL_ROLES, p=ROLE_PROBS)
-        base_cluster = rng_py.choices(FORRESTER_2026_CLUSTERS, weights=cluster_probs, k=1)[0]
-        age = rng_py.randint(18, 60)
+    for i, cluster_id in enumerate(cluster_order):
+        agent_id    = f"Consumer_{i:03d}"
+        base_cluster = cluster_map[cluster_id]
+        role         = rng_np.choice(SOCIAL_ROLES, p=ROLE_PROBS)
 
-        persona_blocks = [
-            f"You are a {age}-year-old consumer.",
-            base_cluster["persona"],
-            SOCIAL_MEDIA_ROLES[role]
-        ]
-        persona_prompt = "\n\n".join(persona_blocks)
+        persona_prompt = base_cluster["persona"] + SOCIAL_MEDIA_ROLES[role]
 
         profiles.append({
-            "id": agent_id,
+            "id":   agent_id,
             "name": agent_id,
-            "demographics": {"age": age, "income": base_cluster["income"]},
             "psychology": {
                 "cluster_type": base_cluster["cluster_id"],
-                "big_five": base_cluster["traits"],
-                "social_role": role
+                "social_role":  role,
             },
-            "persona": persona_prompt
+            "persona": persona_prompt,
         })
 
     return profiles
@@ -177,49 +190,45 @@ async def run_simulation_core(config: ExperimentConfig) -> dict:
     random_module.seed(config.random_seed)
     np.random.seed(config.random_seed)
 
-    # ── 2. 生成 Agent profiles（内联，不写文件） ─────────────────────
+    # ── 2. 生成 Agent profiles 并写入临时文件，让 Builder 正常解析 ──
+    # 这样完全复用框架的 Pydantic 验证路径，避免手工构造 AgentComponentConfig 对象
     profiles = _generate_profiles_inline(config.num_agents, config.random_seed)
 
-    # ── 3. 初始化框架 ────────────────────────────────────────────────
-    builder = Builder(current_dir, resource_maps)
-    builder._load_data_into_config()
+    tmp_profiles_path = os.path.join(current_dir, "data", "agents", "_tmp_profiles.jsonl")
+    os.makedirs(os.path.dirname(tmp_profiles_path), exist_ok=True)
 
-    # 覆盖 agent_configs 为内联生成的 profiles
-    # 需要构造与 Builder 兼容的 agent config 对象
-    from types import SimpleNamespace
-    agent_configs = []
-    for p in profiles:
-        conf = SimpleNamespace()
-        conf.id = p["id"]
-        conf.component_order = ["profile", "state", "perceive", "reflect", "plan", "invoke"]
-        conf.components = {
-            "profile": {"plugin": {"GreenProfilePlugin": {"profile_data": p}}},
-            "state": {"plugin": {"GreenStatePlugin": {}}},
-            "perceive": {"plugin": {"GreenPerceivePlugin": {}}},
-            "reflect": {"plugin": {"GreenCognitionPlugin": {}}},
-            "plan": {"plugin": {"ConsumerPlanPlugin": {}}},
-            "invoke": {"plugin": {"GreenInvokePlugin": {}}},
-        }
-        agent_configs.append(conf)
+    # 备份原始 profiles.jsonl，写入临时数据
+    original_profiles_path = os.path.join(current_dir, "data", "agents", "profiles.jsonl")
+    original_backup_path   = os.path.join(current_dir, "data", "agents", "profiles.jsonl.bak")
+    profiles_swapped = False
+    try:
+        if os.path.exists(original_profiles_path):
+            os.rename(original_profiles_path, original_backup_path)
+        with open(original_profiles_path, "w", encoding="utf-8") as f:
+            for p in profiles:
+                f.write(json.dumps(p, ensure_ascii=False) + "\n")
+        profiles_swapped = True
 
-    # ── 4. 构建环境与网络 ────────────────────────────────────────────
+        # ── 3. Builder 正常解析（走 Pydantic 验证，生成真实 AgentConfig 对象）──
+        builder = Builder(current_dir, resource_maps)
+        builder._load_data_into_config()
+        agent_configs = builder.config.agents
+
+    finally:
+        # 恢复原始 profiles.jsonl
+        if profiles_swapped:
+            if os.path.exists(original_profiles_path):
+                os.remove(original_profiles_path)
+            if os.path.exists(original_backup_path):
+                os.rename(original_backup_path, original_profiles_path)
+
+    # ── 4. 构建环境与网络插件（不在此处建图，延迟到 Agents 初始化后） ──
     env = Environment()
     net_plugin = SocialNetworkPlugin()
     net_comp = EnvironmentComponent()
     net_comp.plugin = net_plugin
     net_comp._plugin = net_plugin
     net_plugin.component = net_comp
-
-    # 构建网络（传入 seed）
-    n = config.num_agents
-    if n < 5:
-        graph = nx.complete_graph(n)
-    else:
-        graph = nx.barabasi_albert_graph(n, m=2, seed=config.random_seed)
-    mapping = {i: f"Consumer_{i:03d}" for i in range(n)}
-    graph = nx.relabel_nodes(graph, mapping)
-    net_plugin.graph = graph
-    net_plugin.agent_registry = {}
 
     # ── 5. 初始化 Agents ─────────────────────────────────────────────
     agents = []
@@ -235,7 +244,9 @@ async def run_simulation_core(config: ExperimentConfig) -> dict:
                 plugin.component = comp
         agents.append(agent)
 
-    net_plugin.agent_registry = {a.agent_id: a for a in agents}
+    # 网络构建：调用 register_agents() 统一走有向 BA 网络逻辑
+    # 与 run_simulation.py 路径行为完全一致
+    net_plugin.register_agents(agents, seed=config.random_seed)
 
     # ── 6. 初始化 LLM Router ────────────────────────────────────────
     try:
@@ -245,8 +256,10 @@ async def run_simulation_core(config: ExperimentConfig) -> dict:
     except Exception:
         class Mock:
             async def chat(self, prompt):
-                # 根据 Prompt 内容区分 Reflect 层和 Plan 层的响应
-                if "System 1" in prompt or "trust_change_affective" in prompt:
+                # Reflect 层特征：含 trust_change_affective 或 hypocrisy_perceived 字段
+                # Plan 层特征：含 is_buying 和 is_posting 字段
+                # 注意：不再用 "System 1" 识别（Prompt 已移除该技术标签）
+                if "trust_change_affective" in prompt or "hypocrisy_perceived" in prompt:
                     return json.dumps({
                         "hypocrisy_perceived": True,
                         "trust_change_affective": -1.5,
@@ -277,6 +290,7 @@ async def run_simulation_core(config: ExperimentConfig) -> dict:
         state_plugin = ag.get_component("state")._plugin
         await state_plugin.set_state("incoming_messages", [])
         await state_plugin.set_state("observations", [])
+        await state_plugin.set_state("last_observations", [])   # Plan 层读取的只读快照
         await state_plugin.set_state("latest_thought", None)
 
         # 根据消费者类型设置差异化初始信任
@@ -290,13 +304,17 @@ async def run_simulation_core(config: ExperimentConfig) -> dict:
 
     # ── 8. 初始化澄清注入器 ─────────────────────────────────────────
     injector = ClarificationInjector(config)
-    target_nodes = select_target_nodes(graph, config.channel_factor, config.budget_k, config.random_seed)
+    target_nodes = select_target_nodes(net_plugin.graph, config.channel_factor, config.budget_k, config.random_seed)
     injector.set_target_nodes(target_nodes)
 
     # ── 9. 仿真主循环 ───────────────────────────────────────────────
     trust_trajectory = []
     conversion_trajectory = []
     cumulative_buyers = set()
+    # 逐 Agent 逐 Tick 详细记录（供后续分析使用）
+    agent_records = []    # List[dict]，每条一个 Agent 在一个 Tick 的完整快照
+    tick_post_counts = [] # 每 Tick 发帖总数（用于社交活跃度分析）
+    tick_buy_counts  = [] # 每 Tick 新增购买数
 
     for tick in range(1, config.total_ticks + 1):
         # 9.1 全局事件注入
@@ -315,7 +333,20 @@ async def run_simulation_core(config: ExperimentConfig) -> dict:
                 await s_plugin.set_state("current_news", "")
 
         # 9.2 企业澄清注入（在 Perceive 之前）
-        await injector.inject(agents, tick)
+        injected_count = await injector.inject(agents, tick)
+        # ── 澄清注入当天：同步更新 current_news，让 Plan 层感知到澄清事件 ──
+        # 否则 Plan 层会把澄清当成"平静日"，quiet_ticks 继续累加，
+        # 遗忘曲线把信任往 baseline 拉，而澄清的正向冲击被抵消
+        if injected_count > 0:
+            clarification_headline = (
+                "[Enterprise Clarification] The brand has issued an official statement "
+                "addressing the controversy. The company responds to the greenwashing allegations."
+            )
+            for ag in agents:
+                if ag.agent_id in injector.target_nodes:
+                    s_plugin = ag.get_component("state")._plugin
+                    # current_news 更新 → Plan 层 is_quiet_day=False → quiet_ticks 不累加
+                    await s_plugin.set_state("current_news", clarification_headline)
 
         # 9.3 认知管线
         for ag in agents:
@@ -333,16 +364,55 @@ async def run_simulation_core(config: ExperimentConfig) -> dict:
         # 9.5 数据结算
         trust_list = []
         tick_buys = 0
+        tick_posts = 0
         for ag in agents:
             s_data = getattr(ag.get_component("state")._plugin, "state_data",
                              getattr(ag.get_component("state")._plugin, "_state_data", {}))
+            p_data = getattr(ag.get_component("profile")._plugin, "_profile_data",
+                             getattr(ag.get_component("profile")._plugin, "profile_data", {}))
             trust = float(s_data.get("trust_score", 5.0))
             trust_list.append(trust)
 
-            plan = s_data.get("plan_result", {})
-            if plan.get("is_buying", False):
+            plan    = s_data.get("plan_result", {}) or {}
+            thought = s_data.get("latest_thought", {}) or {}
+            cluster = p_data.get("psychology", {}).get("cluster_type", "Unknown")
+            role    = p_data.get("psychology", {}).get("social_role", "Unknown")
+            is_buying_flag  = bool(plan.get("is_buying", False))
+            is_posting_flag = bool(plan.get("is_posting", False))
+
+            if is_buying_flag:
                 tick_buys += 1
                 cumulative_buyers.add(ag.agent_id)
+            if is_posting_flag:
+                tick_posts += 1
+
+            # 逐 Agent 详细记录
+            agent_records.append({
+                "exp_id":            config.exp_id,
+                "tick":              tick,
+                "agent_id":          ag.agent_id,
+                "cluster_type":      cluster,
+                "social_role":       role,
+                "trust_score":       round(trust, 4),
+                "baseline_trust":    round(float(s_data.get("baseline_trust", trust)), 4),
+                "trust_after_decay": round(float(plan.get("trust_after_decay", trust)), 4),
+                "affective_change":  round(float(plan.get("affective_change", 0.0)), 4),
+                "shock_anchor":      round(float(plan.get("shock_anchor", trust)), 4),
+                "quiet_ticks":       int(plan.get("quiet_ticks", 0)),
+                "decay_lambda":      float(plan.get("decay_lambda", 0.0)),
+                "is_buying":         is_buying_flag,
+                "is_posting":        is_posting_flag,
+                "post_content":      str(plan.get("post_content", ""))[:200],
+                "hypocrisy_perceived": bool(thought.get("hypocrisy_perceived", False)),
+                "importance":          float(thought.get("importance", 0.0)),
+                "reasoning":           str(thought.get("reasoning", ""))[:300],
+                "has_global_event":    tick in ENTERPRISE_STRATEGY,
+                "has_clarification":   (config.clarification_tick == tick),
+                "cumulative_buyers":   len(cumulative_buyers),
+            })
+
+        tick_post_counts.append(tick_posts)
+        tick_buy_counts.append(tick_buys)
 
         avg_trust = np.mean(trust_list)
         conversion_rate = len(cumulative_buyers) / len(agents)
@@ -373,16 +443,20 @@ async def run_simulation_core(config: ExperimentConfig) -> dict:
             if len(msgs) > 3:
                 await state_plugin.set_state("incoming_messages", msgs[-3:])
 
-    # ── 10. 计算三目标指标 ───────────────────────────────────────────
+    # ── 10. 计算多维指标 ─────────────────────────────────────────────
     metrics = compute_metrics(
         trust_trajectory, conversion_trajectory,
         scandal_tick=config.scandal_tick,
-        total_ticks=config.total_ticks
+        total_ticks=config.total_ticks,
+        clarification_tick=config.clarification_tick,
     )
 
-    print(f"📊 [{config.exp_id}] T80={metrics.t80} | "
+    print(f"📊 [{config.exp_id}] "
+          f"ΔRecovery={metrics.delta_recovery:.3f} | "
+          f"AUC={metrics.auc_post_scandal:.4f} | "
+          f"Speed={metrics.recovery_speed:.4f} | "
           f"Steady={metrics.steady_state_score:.2f} | "
-          f"Recovery={metrics.recovery_rate:.2f}")
+          f"ClarEffect={metrics.clarification_effect:+.3f}")
 
     return {
         "exp_id": config.exp_id,
@@ -390,4 +464,7 @@ async def run_simulation_core(config: ExperimentConfig) -> dict:
         "metrics": metrics,
         "trust_trajectory": trust_trajectory,
         "conversion_trajectory": conversion_trajectory,
+        "agent_records": agent_records,       # 逐 Agent 逐 Tick 详细数据
+        "tick_post_counts": tick_post_counts, # 每 Tick 发帖数
+        "tick_buy_counts":  tick_buy_counts,  # 每 Tick 新增购买数
     }

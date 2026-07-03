@@ -13,20 +13,25 @@ from typing import List
 
 CONTENT_TEMPLATES = {
     "rational-evidence": (
-        "Official Statement from Oatly: We acknowledge the concerns raised about our investment partners. "
-        "Here are the verified facts: (1) Our carbon footprint has been independently audited by Bureau Veritas, "
-        "showing a 73% reduction compared to dairy milk per liter. (2) We have committed $50M to a new "
-        "Sustainability Accountability Fund with quarterly public reporting. (3) Our supply chain is now "
-        "100% certified by the Rainforest Alliance. We invite scrutiny — all audit reports are publicly "
-        "available at oatly.com/transparency. Numbers don't lie. We believe in accountability through data."
+        "[Hypothetical experimental stimulus — not a factual company statement] "
+        "Oatly Official Statement on the Blackstone Investment — Facts and Evidence: "
+        "We are aware that our $200M partnership with Blackstone has raised serious concerns, and we owe you a transparent, factual response. "
+        "Here is what the data shows: "
+        "(1) Blackstone's 10% minority stake gives them zero seats on our board and zero veto rights over our sustainability decisions — confirmed in our SEC filing (Form F-1, July 2020, p.114). "
+        "(2) Since this investment closed, our total oat cultivation area certified under the Rainforest Alliance standard has grown from 12,000 to 31,000 hectares — an increase of 158% over 18 months. "
+        "(3) Our carbon footprint per liter of product has been independently audited by Bureau Veritas and fell from 0.44 kg CO₂e (2019) to 0.38 kg CO₂e (2021), a verified 14% reduction. "
+        "(4) We acknowledge that Blackstone has investments linked to land use change in Brazil. We cannot control their broader portfolio. What we can document is that no Blackstone capital has been directed to Oatly's supply chain in regions with deforestation risk — a commitment monitored quarterly by our Sustainability Council. "
+        "We are publishing the full investor agreement and third-party audit reports at oatly.com/transparency today. If the evidence does not satisfy you, we accept that judgment. We will not ask you to trust us without proof."
     ),
     "emotional-empathy": (
-        "A message from Oatly's team: We hear you. We understand the anger and the feeling of betrayal. "
-        "You trusted us to be different, and we let you down. We are deeply sorry. The truth is, we made "
-        "a difficult choice under financial pressure, and we should have been transparent from day one. "
-        "We are not perfect, but we are committed to earning back your trust — not with words, but with "
-        "actions. Starting today, we are restructuring our investor relationships and publishing monthly "
-        "impact reports. We owe you that honesty. Thank you for holding us accountable."
+        "[Hypothetical experimental stimulus — not a factual company statement] "
+        "A personal message from Oatly's CEO, Toni Petersson: "
+        "I have spent the past week reading your messages, your posts, and your anger — and I want to say clearly: your frustration is completely valid. "
+        "When you chose Oatly, you weren't just buying a drink. You were making a statement about the kind of world you want. The news about our Blackstone investment felt like a betrayal of that statement, and I understand why. "
+        "I want to be honest with you about something I wish we had said sooner: we needed growth capital to build the factories that would let oat milk reach people beyond specialty cafés. We chose a financial partner whose other investments conflict with values we share with you. That was a tension we underestimated, and we got that wrong. "
+        "Here is what we are committing to, not as a PR move, but because we genuinely believe we owe it to the community that built this brand: "
+        "We are establishing an independent Community Trust Board — with three seats appointed by Oatly consumers through a public vote — that has the right to review any future investment partnership before it is signed. "
+        "We know words are cheap right now. We are asking for the chance to earn back what was broken — not by asking you to forget, but by showing you, quarter by quarter, that the values you believed in were never just marketing."
     ),
 }
 
@@ -105,7 +110,7 @@ class ClarificationInjector:
 
 
 if __name__ == "__main__":
-    # 快速验证模板长度
+    # 快速验证模板长度（150-300词为有效范围：内容丰富但不超出Prompt预算）
     for name, template in CONTENT_TEMPLATES.items():
         word_count = len(template.split())
-        print(f"  {name}: {word_count} words ({'✅' if 50 <= word_count <= 200 else '❌'})")
+        print(f"  {name}: {word_count} words ({'✅' if 150 <= word_count <= 300 else '❌'})")

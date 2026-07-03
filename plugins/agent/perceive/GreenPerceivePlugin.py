@@ -37,7 +37,8 @@ class GreenPerceivePlugin(PerceivePlugin):
         state_plugin = self._get_state_plugin()
         if not state_plugin: return
 
-        current_inbox = state_plugin.state_data.get("incoming_messages") or []
+        s_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
+        current_inbox = s_data.get("incoming_messages") or []
         msg_content = getattr(message, "content", str(message))
         sender = getattr(message, "sender_id", "Unknown")
 
@@ -49,11 +50,14 @@ class GreenPerceivePlugin(PerceivePlugin):
         state_plugin = self._get_state_plugin()
         if not state_plugin: return
 
-        new_messages = state_plugin.state_data.get("incoming_messages") or []
-        current_observations = state_plugin.state_data.get("observations") or []
+        s_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
+        new_messages = s_data.get("incoming_messages") or []
 
         if new_messages:
-            current_observations.extend(new_messages)
+            # 替换而非追加：每个 Tick 重新从新消息开始，避免 Reflect 失败后旧消息残留
             await state_plugin.set_state("incoming_messages", [])
-            await state_plugin.set_state("observations", current_observations)
-            # print(f"👀 [Perceive] 感知到 {len(new_messages)} 条新消息。")
+            await state_plugin.set_state("observations", list(new_messages))
+        else:
+            # 无新消息时也必须清空 observations，防止上一 Tick 的观察内容残留
+            # 若不清空，Reflect 层会在平静日重复处理旧事件，产生持续的负向冲击
+            await state_plugin.set_state("observations", [])

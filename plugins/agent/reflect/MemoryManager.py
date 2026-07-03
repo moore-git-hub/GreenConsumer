@@ -19,13 +19,32 @@ class MemoryManager:
         pip install sentence-transformers
     """
 
+    MAX_MEMORY_SIZE = 50   # 最多保留 50 条记忆（超出时淘汰重要性最低且最旧的）
+
     def __init__(self, alpha=1.0, beta=1.0, gamma=1.5):
         self.memory_stream = []
         self.weights = {'alpha': alpha, 'beta': beta, 'gamma': gamma}
 
     def _get_embedding(self, text: str) -> np.ndarray:
-        """获取文本的向量表示。使用 sentence-transformers。"""
-        return _SBERT_MODEL.encode(text, normalize_embeddings=True)
+        """获取文本的向量表示。优先使用 sentence-transformers，回退到 n-gram 哈希向量。"""
+        if _USE_SBERT and _SBERT_MODEL is not None:
+            return _SBERT_MODEL.encode(text, normalize_embeddings=True)
+        # 回退：bigram 计数向量（512 维），比单字符累加有更好的语义区分度
+        # 相同主题的文本（如两条关于 Blackstone 的新闻）会产生更高的余弦相似度
+        dim = 512
+        vec = np.zeros(dim, dtype=np.float32)
+        words = text.lower().split()
+        # unigram
+        for w in words:
+            h = hash(w) % dim
+            vec[abs(h)] += 1.0
+        # bigram
+        for i in range(len(words) - 1):
+            bg = words[i] + "_" + words[i+1]
+            h = hash(bg) % dim
+            vec[abs(h)] += 1.5   # bigram 权重略高
+        norm = np.linalg.norm(vec)
+        return vec / (norm + 1e-9)
 
 
     def add_memory(self, tick: int, content: str, importance: float):
@@ -35,6 +54,10 @@ class MemoryManager:
             "importance": importance,
             "embedding": self._get_embedding(content)
         })
+        # 超出容量时淘汰：按 importance 升序 + tick 升序，删除最旧且最不重要的
+        if len(self.memory_stream) > self.MAX_MEMORY_SIZE:
+            self.memory_stream.sort(key=lambda m: (m["importance"], m["tick"]))
+            self.memory_stream = self.memory_stream[-(self.MAX_MEMORY_SIZE):]
 
     def retrieve(self, current_tick: int, query: str, top_k: int = 3) -> list:
         if not self.memory_stream:

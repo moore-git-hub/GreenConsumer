@@ -115,10 +115,22 @@ class ConsumerPlanPlugin(PlanPlugin):
         product_price = 4.0
         product_name = "Oatly Barista"
 
-        # ── 1. 读取新闻 ──────────────────────────────────────────────────
+        # ── 1. 读取新闻与澄清状态 ────────────────────────────────────────
         current_news = s_data.get("current_news", "")
         news_text = current_news.strip() if current_news.strip() else "Normal peaceful day. No major news."
         is_quiet_day = not current_news.strip()
+
+        # 澄清检测：读 last_observations（Reflect 处理后保存的只读快照）
+        # 执行顺序：perceive → observations; reflect → 消费 observations → 清空 → 保存 last_observations
+        # Plan 执行时 observations 已为空，必须从 last_observations 检测当天的澄清事件
+        last_observations = s_data.get("last_observations", [])
+        has_clarification = any(
+            o.get("source") == "Enterprise_Clarification" or o.get("type") == "clarification"
+            for o in last_observations
+        )
+        # 澄清当天不算平静日
+        if has_clarification:
+            is_quiet_day = False
 
         # ── 2. 平静期计数 ────────────────────────────────────────────────
         quiet_ticks = int(s_data.get("quiet_ticks", 0))
@@ -136,21 +148,19 @@ class ConsumerPlanPlugin(PlanPlugin):
         shock_anchor = float(s_data.get("shock_anchor", baseline_trust))
 
         # ── 5. Step 1：遗忘曲线逻辑 ─────────────────────────────────────
-        # 核心规则：
-        #   - 平静期（无正面信息）：信任保持在 previous_trust（上一 Tick 的值）
-        #   - 收到正面信息时：从 shock_anchor 向 baseline 恢复（遗忘曲线生效）
-        #   - 事件当天：遗忘曲线不执行，情绪冲击直接叠加
-        trust_after_decay = previous_trust  # 默认：保持上一 Tick 的信任值
+        # 规则：
+        #   - 有事件当天（quiet_ticks=0）：遗忘曲线不执行，保持 previous_trust
+        #   - 平静期 OR 正面信息：从 shock_anchor 向 baseline 缓慢回归
+        trust_after_decay = previous_trust  # 默认：有事件当天不回弹
+
+        if quiet_ticks > 0:
+            # 平静期或正面信息日：遗忘曲线生效，从 shock_anchor 向 baseline 回归
+            trust_after_decay = self._forgetting_curve(shock_anchor, baseline_trust, quiet_ticks, lam)
 
         # ── 6. Step 2：叠加 System 1 的情绪冲击（带敏感度系数） ──────────
         raw_affective = float(s_data.get("trust_change_affective", 0.0))
         sensitivity = SENSITIVITY_MULTIPLIER.get(cluster_type, DEFAULT_SENSITIVITY)
         affective_change = round(raw_affective * sensitivity, 3)
-
-        # 如果是正面冲击（affective_change > 0），触发遗忘曲线恢复
-        if affective_change > 0 and quiet_ticks > 0:
-            # 正面信息到来时，允许从 shock_anchor 向 baseline 恢复一部分
-            trust_after_decay = self._forgetting_curve(shock_anchor, baseline_trust, quiet_ticks, lam)
 
         trust_after_shock = trust_after_decay + affective_change
         final_trust = round(max(0.0, min(10.0, trust_after_shock)), 3)
@@ -160,7 +170,7 @@ class ConsumerPlanPlugin(PlanPlugin):
         # 社交传播的负面冲击直接影响当前信任，但不改变遗忘曲线的回归起点
         # 这防止了"级联下探"：多个邻居的帖子不会把 anchor 无限往下拉
         if not is_quiet_day:
-            # 全局事件当天：锚定新的冲击点
+            # 全局事件或澄清当天：锚定新的冲击/恢复点
             await state_plugin.set_state("shock_anchor", final_trust)
         # 正面信息导致信任回升时，也更新 anchor（防止下次遗忘曲线从旧的低点开始）
         elif affective_change > 0 and final_trust > shock_anchor:
@@ -177,38 +187,32 @@ class ConsumerPlanPlugin(PlanPlugin):
         prompt = f"""
         {persona}
 
-        [Environment Context]
-        Current Global News: {news_text}
-        Product available: '{product_name}' (Price: ${product_price}).
-        Market context: Regular dairy milk costs $2.5, other oat milks cost $3.5-4.5.
-        This product is competitively priced for its category.
-        Brand background: Oatly holds B Corp certification and has a published sustainability
-        report — widely regarded as a credible green brand before any scandal.
+        [Current Situation]
+        Today's News: {news_text}
+        Product you are considering: '{product_name}' (Price: ${product_price}).
+        For reference: regular dairy milk costs $2.5, other plant-based milks cost $3.5–4.5.
+        Brand facts you know: Oatly holds B Corp certification (score 93.4) and discloses
+        a carbon footprint of 0.44 kg CO₂e per liter — significantly lower than dairy.
+        It is currently rated the #1 barista plant milk by independent coffee professionals.
 
         [Your Current Mental State]
         Your Trust Score RIGHT NOW: {final_trust:.1f}/10.0
         Your Latest Inner Thought: {thought_str}
-        Days since last major event: {quiet_ticks}
+        Days since last major news event: {quiet_ticks}
 
         [Task — Make Your Decision as This Character]
-        You are living your life as this consumer. Based on who you are, how you feel
-        right now, and what's happening in the world, naturally decide:
+        You are living your daily life as this consumer. Based on who you are, how you feel
+        right now, and what you just read, naturally decide:
 
         1. **Would you buy this product today?**
-           Consider: your trust level, your income, the price, whether you feel good
-           about supporting this brand right now. There's no fixed threshold — it's
-           YOUR personal judgment as this character.
+           Consider your trust level, the price, and whether it aligns with your values.
+           There is no fixed threshold — it is YOUR personal judgment.
 
         2. **Would you post something on social media today?**
-           Consider: is there something worth talking about? Are you still upset or
-           excited enough to share your feelings publicly? Would your character
-           actually bother posting, or would they just scroll past?
+           Only post if there is genuinely something worth saying right now.
+           Posting frequency varies greatly by persona — most people post rarely.
 
-           IMPORTANT — Posting frequency varies GREATLY by persona.
-
-        Stay in character. Make the decision that YOUR persona would naturally make.
-
-        Output JSON ONLY:
+        Stay fully in character. Output JSON ONLY:
         {{
             "is_buying": <boolean>,
             "is_posting": <boolean>,
@@ -224,9 +228,28 @@ class ConsumerPlanPlugin(PlanPlugin):
 
             plan = {}
             if isinstance(response, str):
-                match = re.search(r'\{.*\}', response, re.DOTALL)
+                clean = re.sub(r"```(?:json)?", "", response).replace("```", "").strip()
+                # 规范化 Python 字面量 → JSON 合法值
+                clean = re.sub(r'\bNone\b',  'null',  clean)
+                clean = re.sub(r'\bTrue\b',  'true',  clean)
+                clean = re.sub(r'\bFalse\b', 'false', clean)
+                match = re.search(r'\{.*\}', clean, re.DOTALL)
                 if match:
-                    plan = json.loads(match.group(0))
+                    json_str = match.group(0)
+                    try:
+                        plan = json.loads(json_str)
+                    except json.JSONDecodeError:
+                        import ast
+                        try:
+                            plan = ast.literal_eval(json_str)
+                        except Exception:
+                            # 逐字段正则抽取兜底
+                            plan = {
+                                "is_buying":  bool(re.search(r'"is_buying"\s*:\s*true',  json_str, re.I)),
+                                "is_posting": bool(re.search(r'"is_posting"\s*:\s*true', json_str, re.I)),
+                                "post_content": m.group(1) if (m := re.search(r'"post_content"\s*:\s*"([^"]*)"', json_str)) else "",
+                                "reason":      m.group(1) if (m := re.search(r'"reason"\s*:\s*"([^"]*)"',       json_str)) else "",
+                            }
                 else:
                     raise ValueError(f"No JSON in response: {response[:80]}...")
             elif isinstance(response, list):

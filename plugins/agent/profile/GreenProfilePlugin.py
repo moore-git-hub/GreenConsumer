@@ -37,12 +37,14 @@ class GreenProfilePlugin(ProfilePlugin):
         if p.get("persona"):
             return p["persona"]
 
-        # 回退路径：从结构化字段动态拼接（兼容旧格式数据）
+        # 回退路径：从结构化字段动态拼接（兼容旧格式数据，新数据不走此分支）
+        # 注意：此路径使用了已废弃的人口统计字段和 if-then 规则文本，
+        # 仅在 profiles.jsonl 缺少 persona 字段时生效（正常运行不应触发）
         demos = p.get('demographics', {})
         psych = p.get('psychology', {})
         cluster_type = psych.get('cluster_type', psych.get('environmental_involvement', 'Unknown'))
         big_five = psych.get('big_five', {})
-        social_role = psych.get('social_role', 'Active User')
+        social_role = psych.get('social_role', 'Regular User')
 
         prompt = (
             f"You are {p.get('name', 'Unknown')}, a {demos.get('age', 'N/A')}-year-old consumer.\n"
@@ -55,18 +57,17 @@ class GreenProfilePlugin(ProfilePlugin):
         # 根据消费者类型注入行为指导规则
         guidelines = {
             'Active_Greens': (
-                "You are a true environmental action-taker, extremely sensitive to greenwashing. "
-                "If you detect brand hypocrisy, you will lose trust immediately and aggressively call it out online."
+                "You actively seek information about greener products and are willing to choose them "
+                "even when doing so is less convenient."
             ),
             'Convenient_Greens': (
-                "You care about sustainability in principle, but in practice you prioritize convenience and price. "
-                "You will abandon eco-friendly brands if they are too expensive or inconvenient."
+                "You are interested in greener choices, but price and convenience usually take priority."
             ),
             'Dormant_Greens': (
-                "Your environmental awareness is passive. You rarely seek eco-info, but a shocking scandal can abruptly shift your attitude."
+                "You do not actively seek green information, but you may be open to persuasion when relevant information is made salient."
             ),
             'Non_Greens': (
-                "You have zero concern for the environment. You are strictly driven by the lowest price and maximum convenience."
+                "Environmental considerations are secondary to price, convenience, and functional value in your purchasing decisions."
             ),
             # 旧字段兼容
             'Deep Green': (

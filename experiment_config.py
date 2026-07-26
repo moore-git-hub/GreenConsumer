@@ -23,9 +23,9 @@ class ExperimentConfig:
     timing_factor: str       # "immediate" | "delay-3" | "no-clarification"
 
     # ── 固定参数 ─────────────────────────────────────────────────────
-    budget_k: int = 3        # 每次澄清投放的目标节点数
+    budget_k: int = 3        # 澄清直接投放节点数（20人网络中约15%渗透率）
     random_seed: int = 42
-    num_agents: int = 10     # 快速迭代阶段 10 个，生产阶段可调为 50
+    num_agents: int = 20     # 增加至20人，使网络效应（Hub vs Random差异）显著化
     total_ticks: int = 30
     scandal_tick: int = 5    # 丑闻爆发 Tick（对应 ENTERPRISE_STRATEGY 中的黑石事件）
 
@@ -63,13 +63,13 @@ class ExperimentConfig:
 
         时机定义（相对于丑闻爆发 Tick）：
           - immediate:        丑闻次日（scandal_tick + 1）
-          - delay-3:          丑闻后第 4 天（scandal_tick + 3）
+          - delay-3:          丑闻后第 5 天（scandal_tick + 5），与 immediate 拉开足够间隔
           - no-clarification: 不澄清
         """
         if self.timing_factor == "immediate":
-            return self.scandal_tick + 1   # 次日即刻响应
+            return self.scandal_tick + 1
         elif self.timing_factor == "delay-3":
-            return self.scandal_tick + 3
+            return self.scandal_tick + 5   # 从 +3 改为 +5，增强时机主效应的区分度
         return None
 
     def to_dict(self) -> dict:

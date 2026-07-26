@@ -1,7 +1,13 @@
 """
-plot_pareto.py — 帕累托前沿分析（新三目标：delta_recovery / auc_post_scandal / recovery_speed）
+plot_pareto.py — 帕累托前沿分析
 
-所有目标均越大越好，无 censoring 问题。
+三目标：delta_recovery / auc_post_scandal / steady_state_score
+（用 steady_state_score 替换 recovery_speed：
+  recovery_speed = delta_recovery / 常数，与 delta_recovery 完全线性相关，
+  scatter 图退化为直线，没有信息价值。
+  steady_state_score 是 Tick 30 的最终信任水平，与前两个指标独立。）
+
+所有目标均越大越好。
 """
 import os
 import csv
@@ -14,19 +20,16 @@ plt.rcParams['axes.unicode_minus'] = False
 
 
 def is_dominated(a_metrics, b_metrics) -> bool:
-    """
-    判断 a 是否被 b 支配（三目标均越大越好）。
-    b 支配 a 当且仅当：b 在所有目标上 ≥ a，且至少一个严格 >。
-    """
+    """三目标均越大越好（delta_recovery / auc / steady_state）"""
     better_or_equal = (
-        b_metrics.delta_recovery   >= a_metrics.delta_recovery   and
-        b_metrics.auc_post_scandal >= a_metrics.auc_post_scandal and
-        b_metrics.recovery_speed   >= a_metrics.recovery_speed
+        b_metrics.delta_recovery    >= a_metrics.delta_recovery    and
+        b_metrics.auc_post_scandal  >= a_metrics.auc_post_scandal  and
+        b_metrics.steady_state_score >= a_metrics.steady_state_score
     )
     strictly_better = (
-        b_metrics.delta_recovery   > a_metrics.delta_recovery   or
-        b_metrics.auc_post_scandal > a_metrics.auc_post_scandal or
-        b_metrics.recovery_speed   > a_metrics.recovery_speed
+        b_metrics.delta_recovery    > a_metrics.delta_recovery    or
+        b_metrics.auc_post_scandal  > a_metrics.auc_post_scandal  or
+        b_metrics.steady_state_score > a_metrics.steady_state_score
     )
     return better_or_equal and strictly_better
 
@@ -50,10 +53,10 @@ def analyze_and_plot_pareto(results: list, output_dir: str):
     comparison_dir = os.path.join(output_dir, "comparison")
     os.makedirs(comparison_dir, exist_ok=True)
 
-    exp_ids   = [r["exp_id"] for r in results]
-    deltas    = [r["metrics"].delta_recovery for r in results]
-    aucs      = [r["metrics"].auc_post_scandal for r in results]
-    speeds    = [r["metrics"].recovery_speed for r in results]
+    exp_ids  = [r["exp_id"] for r in results]
+    deltas   = [r["metrics"].delta_recovery for r in results]
+    aucs     = [r["metrics"].auc_post_scandal for r in results]
+    steadys  = [r["metrics"].steady_state_score for r in results]
 
     pareto_indices = find_pareto_front(results)
     is_pareto = [i in pareto_indices for i in range(len(results))]
@@ -62,13 +65,13 @@ def analyze_and_plot_pareto(results: list, output_dir: str):
     for idx in pareto_indices:
         r = results[idx]
         m = r["metrics"]
-        print(f"   ⭐ {r['exp_id']:25s} | Δ={m.delta_recovery:.4f} | AUC={m.auc_post_scandal:.4f} | Speed={m.recovery_speed:.4f}")
+        print(f"   ⭐ {r['exp_id']:25s} | Δ={m.delta_recovery:.4f} | AUC={m.auc_post_scandal:.4f} | Steady={m.steady_state_score:.4f}")
 
     # ── 三个二维投影图 ────────────────────────────────────────────────
     projections = [
-        ("Δ Recovery (↑)", "AUC Post-Scandal (↑)", deltas, aucs,   "pareto_delta_vs_auc.png"),
-        ("Δ Recovery (↑)", "Recovery Speed (↑)",   deltas, speeds, "pareto_delta_vs_speed.png"),
-        ("AUC (↑)",        "Recovery Speed (↑)",   aucs,   speeds, "pareto_auc_vs_speed.png"),
+        ("Δ Recovery (↑)", "AUC Post-Scandal (↑)", deltas, aucs,    "pareto_delta_vs_auc.png"),
+        ("Δ Recovery (↑)", "Steady-State Trust (↑)", deltas, steadys, "pareto_delta_vs_steady.png"),
+        ("AUC (↑)",        "Steady-State Trust (↑)", aucs,   steadys, "pareto_auc_vs_steady.png"),
     ]
 
     for xlabel, ylabel, xdata, ydata, filename in projections:
@@ -123,7 +126,7 @@ if __name__ == "__main__":
     import pandas as pd
     from metrics_calculator import SimulationMetrics
 
-    results_dir = os.path.join(os.path.dirname(__file__), "results", "experiments")
+    results_dir = os.path.join(os.path.dirname(__file__), "results", "experiments", "latest")
     summary_path = os.path.join(results_dir, "summary.csv")
 
     if not os.path.exists(summary_path):

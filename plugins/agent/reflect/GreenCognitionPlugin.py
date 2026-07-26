@@ -127,8 +127,13 @@ Scale for trust_change_affective:
 SOURCE CONTEXT:
   - [Breaking News]: external report — assess severity and credibility of the claims
   - [Social Feed]: a peer's opinion — weigh with moderate skepticism, people exaggerate online
-  - [Brand Statement]: corporate communication — concrete data, named auditors, and verifiable
-    commitments deserve more weight than vague promises; assess what is actually proven vs claimed
+  - [Brand Statement]: this is a clarification issued AFTER a controversy. The company is
+    attempting to address your concerns. Even if the statement reminds you of the original
+    issue, consider whether it provides genuine transparency (specific data, named auditors,
+    verifiable commitments) that partially restores your confidence. A clarification that
+    acknowledges wrongdoing AND provides evidence of corrective action is more credible than
+    one that only deflects. Weigh the net effect: does this make you feel somewhat better
+    or somewhat worse compared to having no statement at all?
 """
         try:
             model = getattr(agent, "model", getattr(agent, "_model", None))
@@ -170,20 +175,10 @@ SOURCE CONTEXT:
                                           result.get("trust_change", 0.0)))
             affective_change = max(-2.0, min(1.5, raw_change))
 
-            # ── 澄清消息差异化保底正向冲击 ──────────────────────────────
-            # 企业澄清至少应产生轻微的信息接收效果，不能被 LLM 完全无视。
-            # 但 Active_Greens 对漂绿高度敏感，看到澄清可能仍不买账，
-            # 因此保底值按人群差异化：积极绿色消费者允许保持怀疑甚至轻微负面。
-            if clarifications:
-                cluster_type_ref = p_data.get("psychology", {}).get("cluster_type", "")
-                clr_floor = {
-                    "Active_Greens":     -0.1,  # 允许怀疑（最低 -0.1）
-                    "Convenient_Greens":  0.1,
-                    "Dormant_Greens":     0.2,
-                    "Non_Greens":         0.3,  # 最不在乎，对澄清接受度最高
-                }.get(cluster_type_ref, 0.1)
-                if affective_change < clr_floor:
-                    affective_change = clr_floor
+            # ── 澄清消息无保底截断，保留 LLM 的真实反应 ───────────────
+            # 移除了保底下限：LLM 看到澄清后仍然输出负值（如回火效应）是真实的
+            # 消费者行为。强制截断为正值会掩盖真实的心理响应，破坏实验的有效性。
+            # 澄清能否起效，完全取决于 LLM 对澄清内容的语义评估。
 
             importance_score = max(1.0, min(10.0, float(result.get("importance", 5.0))))
 

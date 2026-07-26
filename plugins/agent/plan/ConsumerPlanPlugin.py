@@ -28,10 +28,16 @@ from agentkernel_standalone.mas.agent.base.plugin_base import PlanPlugin
 # 注意：遗忘曲线现在只在收到正面信息时才触发回升
 # λ 控制的是"正面信息到来后的恢复速度"，而非"自动回升速度"
 DECAY_LAMBDA = {
-    "Active_Greens":     0.03,   # 即使有正面信息也恢复极慢（记仇）
-    "Convenient_Greens": 0.08,   # 正面信息能缓慢修复
-    "Dormant_Greens":    0.12,   # 正面信息能较快修复
-    "Non_Greens":        0.20,   # 正面信息能快速修复（本来就不在乎）
+    # 值的校准原则：在 25 平静 tick 内，各人群的自然恢复比例应有明显差异，
+    # 且恢复不应在观察窗口内完全完成（否则澄清效果被遗忘曲线覆盖）
+    # Active_Greens: 25 ticks → ~70% 恢复（λ=0.05）
+    # Convenient:    25 ticks → ~83% 恢复（λ=0.07）
+    # Dormant:       25 ticks → ~91% 恢复（λ=0.10）
+    # Non_Greens:    25 ticks → ~96% 恢复（λ=0.14）
+    "Active_Greens":     0.05,
+    "Convenient_Greens": 0.07,
+    "Dormant_Greens":    0.10,
+    "Non_Greens":        0.14,
 }
 DEFAULT_LAMBDA = 0.08
 
@@ -45,7 +51,11 @@ INITIAL_BASELINE_TRUST = {
 DEFAULT_BASELINE = 5.5
 
 # 各消费者类型的情绪冲击敏感度系数
-# LLM 输出的 affective_change 会乘以此系数，控制不同人群的反应幅度
+# 理论依据：Dual Process Theory 框架中，不同消费者人群对环境相关信息的
+# 态度强度（Attitude Strength）存在系统性差异。此系数属于 System 2 的
+# 参数化假设，不是对 LLM 输出的截断——LLM 的 System 1 原始冲击值保持
+# 完整传递，敏感度系数在 System 2 层面对其进行人群差异化缩放。
+# 注意：若希望完全依赖 LLM Persona 产生差异，可将所有系数设为 1.0。
 SENSITIVITY_MULTIPLIER = {
     "Active_Greens":     1.0,    # 全额感受冲击（对漂绿极度敏感）
     "Convenient_Greens": 0.6,    # 中等敏感
@@ -112,7 +122,6 @@ class ConsumerPlanPlugin(PlanPlugin):
         p_data = getattr(profile_plugin, "profile_data",
                          getattr(profile_plugin, "_profile_data", {}))
 
-        product_price = 4.0
         product_name = "Oatly Barista"
 
         # ── 1. 读取新闻与澄清状态 ────────────────────────────────────────
@@ -148,13 +157,16 @@ class ConsumerPlanPlugin(PlanPlugin):
         shock_anchor = float(s_data.get("shock_anchor", baseline_trust))
 
         # ── 5. Step 1：遗忘曲线逻辑 ─────────────────────────────────────
-        # 规则：
-        #   - 有事件当天（quiet_ticks=0）：遗忘曲线不执行，保持 previous_trust
-        #   - 平静期 OR 正面信息：从 shock_anchor 向 baseline 缓慢回归
-        trust_after_decay = previous_trust  # 默认：有事件当天不回弹
+        trust_after_decay = previous_trust
 
-        if quiet_ticks > 0:
-            # 平静期或正面信息日：遗忘曲线生效，从 shock_anchor 向 baseline 回归
+        if has_clarification:
+            # 澄清当天：affective_change 直接叠加，quiet_ticks 重置为 1
+            # quiet_ticks 重置确保后续遗忘曲线从澄清后的新起点（shock_anchor）重新计算，
+            # 而不是沿用丑闻前积累的 quiet_ticks（否则遗忘曲线起点偏移，两组轨迹无差异）
+            trust_after_decay = previous_trust
+            quiet_ticks = 0  # 澄清当天视为事件日，遗忘曲线不执行
+        elif quiet_ticks > 0:
+            # 普通平静期：遗忘曲线生效，从 shock_anchor 向 baseline 回归
             trust_after_decay = self._forgetting_curve(shock_anchor, baseline_trust, quiet_ticks, lam)
 
         # ── 6. Step 2：叠加 System 1 的情绪冲击（带敏感度系数） ──────────
@@ -166,14 +178,29 @@ class ConsumerPlanPlugin(PlanPlugin):
         final_trust = round(max(0.0, min(10.0, trust_after_shock)), 3)
 
         # ── 7. Step 3：更新 shock_anchor ─────────────────────────────────
-        # 核心规则：只有全局事件当天（quiet_ticks=0 且有 current_news）才更新 anchor
-        # 社交传播的负面冲击直接影响当前信任，但不改变遗忘曲线的回归起点
-        # 这防止了"级联下探"：多个邻居的帖子不会把 anchor 无限往下拉
-        if not is_quiet_day:
-            # 全局事件或澄清当天：锚定新的冲击/恢复点
+        if has_clarification:
+            # 澄清当天：将 shock_anchor 向 baseline 方向移动固定比例
+            # 使用固定的人群差异化参数（而非 affective_change 的倍数），
+            # 避免澄清时机（即时 vs 延迟）通过情绪强度差异影响 anchor 提升量，
+            # 确保时机效应只体现在「丑闻积累了多少quiet_ticks后才注入澄清」上
+            # Active_Greens：最难被说服，anchor提升最少（20%）
+            # Non_Greens：本来不关心，anchor几乎全恢复（60%）
+            CLR_ANCHOR_LIFT_RATIO = {
+                "Active_Greens":     0.20,
+                "Convenient_Greens": 0.35,
+                "Dormant_Greens":    0.45,
+                "Non_Greens":        0.60,
+            }
+            lift_ratio = CLR_ANCHOR_LIFT_RATIO.get(cluster_type, 0.35)
+            gap = baseline_trust - shock_anchor          # 丑闻造成的总损害
+            clr_lift = gap * lift_ratio                  # 澄清修复其中的固定比例
+            new_anchor = max(final_trust, shock_anchor + clr_lift)
+            await state_plugin.set_state("shock_anchor", new_anchor)
+        elif not is_quiet_day:
+            # 普通全局事件当天（丑闻等）：锚定新的冲击点
             await state_plugin.set_state("shock_anchor", final_trust)
-        # 正面信息导致信任回升时，也更新 anchor（防止下次遗忘曲线从旧的低点开始）
         elif affective_change > 0 and final_trust > shock_anchor:
+            # 社交正面反馈：信任超过 anchor 时也更新（防止遗忘曲线从过低起点恢复）
             await state_plugin.set_state("shock_anchor", final_trust)
 
         # 写入最终信任分
@@ -189,16 +216,12 @@ class ConsumerPlanPlugin(PlanPlugin):
 
         [Current Situation]
         Today's News: {news_text}
-        Product you are considering: '{product_name}' (Price: ${product_price}).
-        For reference: regular dairy milk costs $2.5, other plant-based milks cost $3.5–4.5.
-        Brand facts you know: Oatly holds B Corp certification (score 93.4) and discloses
-        a carbon footprint of 0.44 kg CO₂e per liter — significantly lower than dairy.
-        It is currently rated the #1 barista plant milk by independent coffee professionals.
+        Product you are considering: '{product_name}'.
 
         [Your Current Mental State]
-        Your Trust Score RIGHT NOW: {final_trust:.1f}/10.0
-        Your Latest Inner Thought: {thought_str}
+        How you feel right now: {thought_str}
         Days since last major news event: {quiet_ticks}
+        (Internal reference only — your emotional state above reflects your current attitude)
 
         [Task — Make Your Decision as This Character]
         You are living your daily life as this consumer. Based on who you are, how you feel
@@ -206,11 +229,14 @@ class ConsumerPlanPlugin(PlanPlugin):
 
         1. **Would you buy this product today?**
            Consider your trust level, the price, and whether it aligns with your values.
-           There is no fixed threshold — it is YOUR personal judgment.
+           IMPORTANT: Most consumers do NOT buy every single day. People typically buy
+           oat milk once every 1-2 weeks. Only decide to buy if you genuinely feel
+           ready to make a purchase TODAY specifically.
 
         2. **Would you post something on social media today?**
-           Only post if there is genuinely something worth saying right now.
-           Posting frequency varies greatly by persona — most people post rarely.
+           Only post if there is genuinely something NEW worth saying right now.
+           Most people post about a brand controversy only once or twice, not every day.
+           If you already expressed your opinion recently, you would probably stay quiet today.
 
         Stay fully in character. Output JSON ONLY:
         {{

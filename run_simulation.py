@@ -86,9 +86,9 @@ async def run():
     print("🚀 [GABM] 绿色消费仿真启动...")
 
     # --- 准备日志文件 ---
-    results_dir = os.path.join(current_dir, "results")
+    timestamp   = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    results_dir = os.path.join(current_dir, "results", "simulations", f"run_{timestamp}")
     os.makedirs(results_dir, exist_ok=True)
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # 1. 基础动作日志（新增双过程分解字段：TrustAfterDecay / AffectiveChange / DecayLambda）
     csv_path = os.path.join(results_dir, f"simulation_log_{timestamp}.csv")

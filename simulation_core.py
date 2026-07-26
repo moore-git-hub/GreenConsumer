@@ -170,12 +170,14 @@ def _generate_profiles_inline(num_agents: int, seed: int) -> list:
     return profiles
 
 
-async def run_simulation_core(config: ExperimentConfig) -> dict:
+async def run_simulation_core(config: ExperimentConfig, override_router=None) -> dict:
     """
     可复用仿真核心函数。
 
     Args:
         config: ExperimentConfig 实例
+        override_router: 可选。若提供，跳过内部 LLM Router 初始化，直接使用此对象。
+                         用于对照实验中的 Recording/Replay Router 注入。
 
     Returns:
         {
@@ -249,31 +251,31 @@ async def run_simulation_core(config: ExperimentConfig) -> dict:
     net_plugin.register_agents(agents, seed=config.random_seed)
 
     # ── 6. 初始化 LLM Router ────────────────────────────────────────
-    try:
-        with open(os.path.join(current_dir, "configs/models_config.yaml"), "r") as f:
-            models_conf = yaml.safe_load(f)
-        router = ModelRouter(AsyncModelRouter(models_conf))
-    except Exception:
-        class Mock:
-            async def chat(self, prompt):
-                # Reflect 层特征：含 trust_change_affective 或 hypocrisy_perceived 字段
-                # Plan 层特征：含 is_buying 和 is_posting 字段
-                # 注意：不再用 "System 1" 识别（Prompt 已移除该技术标签）
-                if "trust_change_affective" in prompt or "hypocrisy_perceived" in prompt:
-                    return json.dumps({
-                        "hypocrisy_perceived": True,
-                        "trust_change_affective": -1.5,
-                        "importance": 7.0,
-                        "reasoning": "Mock: I feel betrayed by this brand."
-                    })
-                else:
-                    return json.dumps({
-                        "is_buying": False,
-                        "is_posting": True,
-                        "post_content": "I can't believe this brand betrayed us!",
-                        "reason": "Mock: Trust is too low to buy."
-                    })
-        router = Mock()
+    if override_router is not None:
+        router = override_router
+    else:
+        try:
+            with open(os.path.join(current_dir, "configs/models_config.yaml"), "r") as f:
+                models_conf = yaml.safe_load(f)
+            router = ModelRouter(AsyncModelRouter(models_conf))
+        except Exception:
+            class Mock:
+                async def chat(self, prompt):
+                    if "trust_change_affective" in prompt or "hypocrisy_perceived" in prompt:
+                        return json.dumps({
+                            "hypocrisy_perceived": True,
+                            "trust_change_affective": -1.5,
+                            "importance": 7.0,
+                            "reasoning": "Mock: I feel betrayed by this brand."
+                        })
+                    else:
+                        return json.dumps({
+                            "is_buying": False,
+                            "is_posting": True,
+                            "post_content": "I can't believe this brand betrayed us!",
+                            "reason": "Mock: Trust is too low to buy."
+                        })
+            router = Mock()
 
     for ag in agents:
         ag._model = router
@@ -317,6 +319,10 @@ async def run_simulation_core(config: ExperimentConfig) -> dict:
     tick_buy_counts  = [] # 每 Tick 新增购买数
 
     for tick in range(1, config.total_ticks + 1):
+        # 通知 router 当前 Tick（用于 Recording/Replay Router 的缓存对齐）
+        if hasattr(router, "set_tick"):
+            router.set_tick(tick)
+
         # 9.1 全局事件注入
         if tick in ENTERPRISE_STRATEGY:
             event_text = ENTERPRISE_STRATEGY[tick]

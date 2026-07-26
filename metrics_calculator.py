@@ -106,20 +106,21 @@ def compute_metrics(
     final_trust = trust_trajectory[-1]
     delta_recovery = round(final_trust - trust_min, 4)
 
-    # ── 4. 核心指标二：auc_post_scandal（丑闻后归一化 AUC） ──────────
-    # 计算 Tick [scandal_tick, 30] 区间的信任面积，归一化到 [0, 1]
-    # AUC 越大 → 整个恢复过程中信任越高 → 策略效果越好
-    post_scandal_segment = trust_trajectory[post_scandal_start:]
-    n_post = len(post_scandal_segment)
-    if n_post > 0:
-        # 梯形积分（相邻 Tick 之间的面积）
+    # ── 4. 核心指标二：auc_post_scandal（从最低点之后的恢复面积） ────
+    # 从 trust_min_tick 之后开始计算，更准确反映恢复阶段的信任质量
+    # AUC 越大 → 恢复过程中信任维持在更高水平 → 策略效果越好
+    recovery_start = trust_min_tick  # 最低点的下一个 Tick（0-indexed = trust_min_tick）
+    recovery_segment = trust_trajectory[recovery_start:]
+    n_rec = len(recovery_segment)
+    if n_rec > 1:
         auc_raw = sum(
-            (post_scandal_segment[i] + post_scandal_segment[i + 1]) / 2.0
-            for i in range(n_post - 1)
+            (recovery_segment[i] + recovery_segment[i + 1]) / 2.0
+            for i in range(n_rec - 1)
         )
-        # 归一化：除以最大可能面积（满分 10.0，共 n_post-1 个区间）
-        max_auc = 10.0 * (n_post - 1) if n_post > 1 else 1.0
+        max_auc = 10.0 * (n_rec - 1)
         auc_post_scandal = round(auc_raw / max_auc, 4)
+    elif n_rec == 1:
+        auc_post_scandal = round(recovery_segment[0] / 10.0, 4)
     else:
         auc_post_scandal = 0.0
 

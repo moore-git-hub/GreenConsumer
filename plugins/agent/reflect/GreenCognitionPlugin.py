@@ -1,17 +1,18 @@
 """
 GreenCognitionPlugin — Reflect 层（System 1：快速直觉评估）
 
-职责：
+修复：无新观察时清空 last_observations 和 latest_thought，
+防止 Plan 层跨 Tick 重复识别旧澄清、行为 Prompt 重复使用旧情绪。
+
+职责（不变）：
   对当前观察到的信息做情绪性认知评估，输出情绪冲击量 trust_change_affective。
   不直接修改 trust_score，将冲击量交给 Plan 层（System 2）的确定性公式处理。
 
-双过程理论（Dual Process Theory）对应：
-  System 1（本层）：快速、情绪性、基于直觉的即时反应
-  System 2（Plan层）：慢速、理性、基于规则的深思熟虑
+审计字段（新增，不影响信任更新）：
+  raw_affective_output / affective_was_clipped / reflect_primary_source / reflect_message_sources
 """
 import json
 import re
-import math
 from agentkernel_standalone.mas.agent.base.plugin_base import ReflectPlugin
 
 
@@ -43,9 +44,17 @@ class GreenCognitionPlugin(ReflectPlugin):
         state_data = getattr(state_plugin, "state_data", getattr(state_plugin, "_state_data", {}))
         observations = state_data.get("observations")
 
-        # ── 无观察时：情绪冲击归零，System 2 将只执行遗忘曲线 ──────────
+        # ── 无观察时：清空本 Tick 临时认知缓存 ─────────────────────────
+        # 仅清除 Reflect 层写入的临时字段；
+        # 不触及 trust_score、baseline_trust、shock_anchor、quiet_ticks、memory。
         if not observations:
             await state_plugin.set_state("trust_change_affective", 0.0)
+            await state_plugin.set_state("raw_affective_output", 0.0)
+            await state_plugin.set_state("affective_was_clipped", False)
+            await state_plugin.set_state("latest_thought", None)
+            await state_plugin.set_state("last_observations", [])
+            await state_plugin.set_state("reflect_primary_source", "None")
+            await state_plugin.set_state("reflect_message_sources", [])
             return
 
         # ── 聚合多条观察（全局新闻优先，企业澄清次之，社交帖子补充） ──
@@ -174,17 +183,18 @@ SOURCE CONTEXT:
             raw_change = float(result.get("trust_change_affective",
                                           result.get("trust_change", 0.0)))
             affective_change = max(-2.0, min(1.5, raw_change))
-
-            # ── 澄清消息无保底截断，保留 LLM 的真实反应 ───────────────
-            # 移除了保底下限：LLM 看到澄清后仍然输出负值（如回火效应）是真实的
-            # 消费者行为。强制截断为正值会掩盖真实的心理响应，破坏实验的有效性。
-            # 澄清能否起效，完全取决于 LLM 对澄清内容的语义评估。
+            was_clipped = abs(raw_change - affective_change) > 1e-12
 
             importance_score = max(1.0, min(10.0, float(result.get("importance", 5.0))))
 
             # ── 写入 state（不修改 trust_score，交给 Plan 层处理） ────────
+            await state_plugin.set_state("raw_affective_output", raw_change)
             await state_plugin.set_state("trust_change_affective", affective_change)
+            await state_plugin.set_state("affective_was_clipped", was_clipped)
             await state_plugin.set_state("latest_thought", result)
+            await state_plugin.set_state("reflect_primary_source", primary_source)
+            await state_plugin.set_state("reflect_message_sources",
+                                         sorted({str(o.get("source", "Unknown")) for o in observations}))
 
             # ── 写入记忆库 ───────────────────────────────────────────────
             memory_entry = (
@@ -201,20 +211,26 @@ SOURCE CONTEXT:
             await state_plugin.set_state("observations", [])
 
             print(f"[Reflect] {agent.agent_id} | "
-                  f"Affective Δ: {affective_change:+.2f} | "
+                  f"Affective raw={raw_change:+.2f}, used={affective_change:+.2f} | "
                   f"Hypocrisy: {result.get('hypocrisy_perceived', False)} | "
                   f"Importance: {importance_score:.1f}")
 
         except Exception as e:
             # 打印原始响应帮助诊断（仅前200字符）
             try:
-                raw = str(response)[:200] if 'response' in dir() else "N/A"
+                raw = str(response)[:200] if "response" in locals() else "N/A"
             except Exception:
                 raw = "N/A"
             print(f"❌ [Cognition Error] {agent.agent_id} Tick {current_tick}: {e}")
-            print(f"   RAW RESPONSE: {repr(raw)}")
-            # 失败时情绪冲击归零，Plan 层仍可正常执行遗忘曲线
+            print(f"   RAW RESPONSE: {raw!r}")
+            # 失败时：清空临时缓存，Plan 层仍可正常执行遗忘曲线
+            await state_plugin.set_state("raw_affective_output", 0.0)
             await state_plugin.set_state("trust_change_affective", 0.0)
+            await state_plugin.set_state("affective_was_clipped", False)
+            await state_plugin.set_state("latest_thought", None)
+            await state_plugin.set_state("reflect_primary_source", primary_source)
+            await state_plugin.set_state("reflect_message_sources",
+                                         sorted({str(o.get("source", "Unknown")) for o in observations}))
             await state_plugin.set_state("last_observations", list(observations))
             await state_plugin.set_state("observations", [])
 

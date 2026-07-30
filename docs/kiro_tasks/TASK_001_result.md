@@ -149,6 +149,7 @@ Prevents Plan layer from repeatedly detecting stale clarification
 messages and stops old emotional reactions from persisting in
 behavior-decision prompts across quiet Ticks.
 
-Acceptance test pending re-run after fixing test script bug
-(timing_factor='delay-5' should be 'delay-3').
+Validation: deterministic lifecycle test passed 66/66 assertions.
+The separate full-GABM harness issue is documented above and does not
+change the TASK_001 acceptance verdict.
 ```

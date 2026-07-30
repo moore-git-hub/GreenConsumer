@@ -3,7 +3,7 @@
 ## Baseline
 
 - Repository: `moore-git-hub/GreenConsumer`
-- Baseline commit: `TO_BE_FILLED_BY_KIRO`
+- Baseline commit: `93c20f34ce84cc24a4beb6bd21e6126334165c71`
 - Local branch: `audit/state-reset-v1`
 - Active task: `TASK_001`
 

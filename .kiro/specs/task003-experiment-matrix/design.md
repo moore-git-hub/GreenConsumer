@@ -61,6 +61,29 @@
 | R-20 | fixture 语义未收边 | 明确：pre-TASK_003 fixture 只证明「TASK_003 实施未改变既有信任更新、`shock_anchor`、`quiet_ticks` 与行为决策机制」。它**不是**旧 12 条件矩阵正确性的证明，**不要求**旧 `ExperimentConfig` 接受 `delayed` 或 `not-applicable` | 新增 §12.6 |
 | R-21 | 标题仍写「第 3 版」；元数据写「唯一可写文件」；洁净检查的措辞把 `design.md` 与测试文件都当作「未提交」；S13 的探测范围与正式验收判定未收边 | 提交前的自洽修正：①标题改为「第 4 版：验收判据定向修正」；②元数据行改为「本次设计提交范围」；③§12.1 / §12.6 明确 `--generate-fixture` 时的四条仓库状态（**design.md 已提交**、测试文件未提交、fixture 未提交且尚不存在、5 个生产文件三类变更均为空），`git_is_dirty == True` 的来源改述为「测试文件按流程尚未提交」；④§12.3.4 增补探测范围**六条硬约束**（含 `obj.__module__ == module.__name__`）与**按运行模式分档**的判定表：正式验收下依赖不可用即 FAIL | 标题、元数据表、§12.1、§12.2 / S13、§12.3.4、§12.6.1、新增 §12.6.1.1 |
 
+### 修订说明补充（第 4 版 · 代码级审查后的四项阻断修复）
+
+测试文件的代码级审查发现四处会**让验收在不该通过时通过**的缺陷。它们的共同性质是「判据存在但不起作用」，因此列为 fixture 冻结前的阻断项。
+
+| # | 阻断缺陷 | 为什么这是阻断级 | 修复 | 影响范围 |
+|---|---|---|---|---|
+| R-22 | **S13 不区分运行模式**：`check_s13_domain_gate(v)` 在依赖不可用时一律 WARN | 正式验收会在「从未验证过分析口径」的情况下报告通过。§12.3.4 已规定分档，但代码未落实 | 改为 `check_s13_domain_gate(v, formal)`：`status == "unavailable"` 时 `formal=False` → WARN，`formal=True` → **FAIL**。并且 `_probe_analysis_gate` 的候选判定改为**两项同时满足**才返回 `ok`：只满足「9 行 → 8 策略行」而反例不抛错的**半成品闸门不得提前返回**，必须继续检查后续候选，最终在 detail 中列出这些半成品 | §12.2 / S13、§12.3.4 |
+| R-23 | **S15 用 `table[key] = value` 静默覆盖重复行** | 「同一 `(exp_id, tick, agent_id)` 出现两行」这种产物缺陷会完全隐形：后写入者胜出，逐值比较照样通过。而重复行意味着某个 Agent 被重复结算，是最危险的情形之一 | 先构造 `key_counts` / `key_to_rows`，断言每个键出现次数**恰好为 1**；任意 `count != 1` 立即 FAIL 并**停止后续逐值比较**（拒绝在键不唯一的数据上给出「对齐通过」的结论）。处理前区间（immediate → Tick 1–5，delayed → Tick 1–9）逐条验证 5 项判据：①键集合与对照完全相等；②无缺失 Agent；③无额外 Agent；④每键恰好一行；⑤5 字段逐字相等。**明确不得**用 S16 的总行数断言替代键唯一性检查——行数正确而键重复（配套某键缺失）完全可能 | §12.2 / S15、新增 §12.5.2 |
+| R-24 | **S16 的退出码只是 WARN** | 产物齐备但批次以退出码 4 结束（存在 Replay 对齐违约）时，报告仍显示通过。靠「人工观察进程退出码」等于没有验收 | 新增 `run_metadata.json` 的两个**机器可读**字段契约 `batch_exit_code` / `run_completed`（语义见 §12.5.1）；正式验收要求 `batch_exit_code == 0` 且 `run_completed is True`。测试中的「退出码仅 WARN」实现已删除，正式模式下缺字段或值不符**必须 FAIL** | §12.2 / S16、新增 §12.5.1 |
+| R-25 | **S18 缺 fixture 时一律 WARN** | 正式验收会在没有任何行为基线的情况下通过，而行为不变性恰恰是 fixture 存在的唯一理由 | 改为 `check_s18_handover_and_invariance(v, formal)`：fixture 不存在或不可读时 `formal=False` → WARN，`formal=True` → **FAIL**。正式模式下七项任一不成立均 FAIL：fixture 存在且可读、`test_harness_sha256` 匹配、`generated_from_commit` 有效且为 HEAD 祖先、`git_is_dirty` 为 bool、`compared_fields` 匹配、TASK_002 冻结哈希匹配、行为轨迹零差异 | §12.2 / S18、§12.4 |
+| — | 报告把「正式模式但验收失败」标记为 full acceptance | `is_full_acceptance` 直接取 `formal`，与 FAIL 数无关 | 改为 `formal and v.n_fail == 0`，并另记 `is_formal_mode` 保留模式信息 | §12.4 |
+| R-26 | **S13 只用 `set(out["exp_id"])` 判定候选** | 集合会把重复行折叠掉。一个返回 16 行（每个策略 exp_id 各两行）的函数，其 exp_id 集合与期望完全相等，因此会被判为「闸门已实现」——而下游的主效应均值会因重复行被算错 | 候选判定改为**六项同时满足**：①`len(out) == 8`；②`exp_id` 列长度 == 8；③`exp_id` 无重复；④集合恰为 `EXPECTED_STRATEGY_EXP_IDS`；⑤不含 `NoClarification-Control`；⑥错标 `not-applicable` 输入必须抛错。集合相等但行数或唯一性不合格的候选记为 **invalid candidate** 并**继续检查后续候选**，不得返回 `ok`；`no_gate` 的 detail 分别列出 invalid 与 filter_only 两类半成品 | §12.2 / S13、§12.3.4 |
+| R-27 | **S15 只能发现 `count > 1`，发现不了 `count == 0`** | 键唯一性检查的期望值来自实际数据自身。若某个 Agent 或某个 Tick 的记录**整体缺失**，期望也跟着缺失，缺失就永远不可见——这恰恰是「某组实验少跑了一个 Agent」的形态 | 新增**绝对预期键空间**（§12.5.3）：由三个**外部**来源的笛卡尔积构造 `expected_keys` —— 9 个 `EXPECTED_EXP_IDS` × `Tick 1..total_ticks`（来自 `run_metadata` 的 `config.total_ticks`）× `network_nodes.csv` 的 `agent_id` 集合。逐值比较**之前**断言六项：`len(network_agent_ids) == num_agents`、`actual_keys == expected_keys`、`missing_keys` 为空、`extra_keys` 为空、每个 `expected_key` 的 `count` 恰为 1、`duplicate_keys` 为空。任一失败立即停止逐值比较。排序异常键时使用**安全 key 函数**（`None` 统一转字符串），避免畸形 CSV 触发 `TypeError` 而丢失整份验收报告。原有的处理前窗口比较保留为**第二层**，不能代替绝对键空间检查 | §12.2 / S15、新增 §12.5.3 |
+| R-28 | **`baseline_file_sha256` 只记录、从不使用** | 三个 Agent 插件直接决定行为轨迹，而 TASK_003 明确不修改它们（§15 第 1–3 项）。只记录不校验等于没有约束：插件被改动后，比对会以「行为差异」的形式失败，但报告无法指出「输入本身变了」这一根因；若改动恰好不影响本组场景，还会完全通过 | S18 新增第 ⑤ 组断言：字段存在且为 dict；键集合恰为 `BASELINE_HASHED_FILES` 三项；每个记录值是 64 位 SHA-256（`"missing:..."` 或空值不得冒充已知哈希）；每个记录值**等于当前文件的 SHA-256**。offline 与 formal 两种模式下，fixture 存在而哈希不符**同样 FAIL**（这不是「不可判定」，而是「证据表明输入已变」） | §12.2 / S18 |
+| R-29 | **只检查工作树 clean，无法锚定「TASK_003 生产 diff 尚未应用」**；且 fixture 可被静默覆盖 | 这是整条基线流程最致命的漏洞：只要有人把 TASK_003 的生产改动**提交**掉，工作树就是干净的，三路检查全部通过，fixture 会被当作 pre 状态记录下来——此后 pre/post 比较变成 post/post 自比，**永远通过**。覆盖一份已冻结的 fixture 同样是不可逆的证据破坏 | 新增 40 位常量 `PRE_TASK003_BASE_COMMIT`（= `git rev-parse c8558d5` = `c8558d57f501dd32d483a2b2d939a06129554365`）与 `assert_pre_task003_generation_state(root)`，**在 `collect_behavior_trace()` 之前**执行，七项全部必须成立（见 §12.6.1.2）。核心是第 6 项：`git diff --quiet PRE_TASK003_BASE_COMMIT..HEAD -- <PRODUCTION_PATHS>`，其语义是**HEAD 与 `PRE_TASK003_BASE_COMMIT` 在 `PRODUCTION_PATHS` 上的树内容完全一致，不存在净文件差异**——**不得仅检查当前工作树是否 clean**。fixture 新增 `production_baseline_commit` 与 `fixture_generation_guard_version = "2.0"`，由 S18 第 ⑥ 组断言校验。最终落盘改为**排他创建** `open(FIXTURE_PATH, "x")`，`FileExistsError` → 明确输出禁止覆盖并退出码 2，原 fixture 不被修改 | 新增 §12.6.1.2、§12.6.1.3、§12.1、§12.2 / S18 |
+| R-30 | **S13 只证明「存在一个正确的过滤函数」，不证明它被调用**；且入口发现按源码字面量筛选会漏检 | 函数存在而无人调用时，主效应与交互照旧把共同对照算进均值——恰恰是 §1.2 要消灭的核心缺陷。「找到一个正确候选即通过」的逻辑对这种情形完全无效。而「源码里直接出现 `content_factor` 等字面量」这一筛选条件会漏掉**通用包装入口**（列名由参数传入）与**间接委托入口**（转调私有函数完成聚合），这两类恰恰是闸门最容易被绕过的地方 | S13 新增**集成验证**（见 §12.3.5）：`_probe_analysis_gate` 返回 `candidate_name`；对 `run_experiments.py` 实际调用的**全部** `plot_experiments` 入口做运行期探测，**不按源码字面量筛选**。每个入口记录①是否调用 candidate 闸门、②是否对含因子列的 DataFrame 执行 `groupby` / `pivot` / `pivot_table`。产生因子聚合的入口必须 candidate 调用次数 > 0 且聚合输入满足五项（`len == 8`、`exp_id` 列长度 == 8、唯一数 == 8、集合恰为 8 个策略 id、不含对照）；未产生因子聚合的入口登记为 `not-factorial-entry` 并在报告中列出，**不静默跳过** | 新增 §12.3.5、§12.2 / S13 |
+| R-31 | **未被探测到的入口可以中性通过 S13** | 第一版把 `not-probeable-signature`（签名不匹配）、`entry-error`（孤立调用抛异常）、以及「运行期没观测到聚合」一律记为 WARN 且不判 FAIL。于是任何**绕过闸门的入口只要在孤立调用中抛个异常**，就能以中性状态逃过验收；而「没观测到聚合」与「不可能聚合」是两件事，前者只是没触发到 | 每个被实际调用的入口必须获得**终局判定**，只有两个合格状态：`factorial-entry-pass`（观测到因子聚合 + candidate 被调用 + 所有聚合输入均为 8 个唯一策略行且不含对照）与 `not-factorial-entry`（**必须有机器证据**：静态可达性证明其调用链内不存在 `groupby` / `pivot` / `pivot_table`，且无 `getattr` 动态派发）。`entry-error`、`unknown-not-proven`、`not-probeable-signature` **一律 FAIL**。探测方式改为**按生产调用序列与数据流重放**（见 §12.3.5），从根上消除孤立调用造成的假 `entry-error`。「至少一个入口正确聚合」**不得**代替「所有实际因子入口均正确」——两条都是必要条件 | §12.2 / S13、§12.3.5 |
+| R-32 | **排他创建成功后写入失败会留下半成品 fixture** | `open(path, "x")` 只保证「创建时文件不存在」。创建成功之后的 `write` 若因磁盘写满、编码错误或 `KeyboardInterrupt` 中断，磁盘上就留下一个**半写的 JSON**。它会让下一次生成因 `FileExistsError` 被拒（fixture 被永久卡死），更糟的是可能被误当作有效基线 | 落盘流程补齐失败清理（见 §12.6.1.3）：①最终文件 `write` → `flush` → `os.fsync`；②写入后**重新 `json.load` 最终文件**；③`FileExistsError` → 退出码 2、原 fixture 不变；④**其它任何异常**（含 `BaseException`）→ 若本次已创建最终文件则立即删除该文件，再删除临时文件，退出码 2；⑤只有全部成功后才删除临时文件并报告生成完成。**绝不让写入异常留下部分 JSON 文件** | §12.6.1.3 |
+
+> **表内的取代关系**：R-31 取代 R-30 关于「未产生因子聚合的入口只登记不判 FAIL」的处置。现行规则以 §12.3.5.2 与 §12.2 / S13 为准：**每个被实际调用的入口都必须达到 `factorial-entry-pass` 或 `not-factorial-entry` 两个合格终局之一**，`not-probeable-signature` / `entry-error` / `unknown-not-proven` 一律 FAIL。R-30 行保留其原文，仅作修订历史。
+
+**本轮只更新设计契约与测试预期，不修改 `run_experiments.py`。** `batch_exit_code` / `run_completed` 的生产实现属 TASK_003 实施阶段（§9 第 2 行的变更清单），在实施完成之前，S16 的这两条断言在正式模式下会 FAIL——这是预期的，符合 §12.1 第 2 步「测试先于实现定稿」。
+
 ---
 
 # Kiro Spec Compatibility Map
@@ -1173,8 +1196,8 @@ legacy  ⟺  run_metadata.json 缺少 "experiment_matrix" 键
 |---|---|---|
 | 1 | **提交 `design.md`** | 设计先于实现落定；fixture 的 `generated_from_commit` 才有一个可解释的设计快照与之对应 |
 | 2 | **创建完整的 `tests/test_task003_experiment_matrix.py`** | 测试文件定义了 fixture 的全部输入（确定性 Router 返回值、场景字面常量、Tick 序列、比较字段），它本身就是输入的一部分。测试未定稿 ⇒ 输入未定稿 ⇒ fixture 无意义 |
-| 3 | **在生产代码无未提交修改时生成 pre-TASK_003 fixture** | 基线必须是某个**已提交代码状态**的可复现快照。脏树或不可判定 ⇒ 快照来源不明 ⇒ 证据作废 |
-| 4 | **fixture 记录**：`generated_from_commit`、`git_branch`、`git_is_dirty`、`test_harness_sha256`、行为轨迹、关键生产文件哈希 | 缺任一项则无法在验证时判定「同输入、同代码史 + TASK_003 diff」这一前提 |
+| 3 | **在 pre-TASK_003 代码状态已被锚定时生成 fixture** | 基线必须是某个**已提交代码状态**的可复现快照。脏树或不可判定 ⇒ 快照来源不明 ⇒ 证据作废。**（R-29）仅工作树 clean 不够**：还必须由 `assert_pre_task003_generation_state()` 验证 fixture 尚不存在、`design.md` 已提交无改动、且 **HEAD 与 `PRE_TASK003_BASE_COMMIT` 在 `PRODUCTION_PATHS` 上的树内容完全一致、不存在净文件差异**（§12.6.1.2）。落盘本身采用排他创建（§12.6.1.3） |
+| 4 | **fixture 记录**：`generated_from_commit`、`git_branch`、`git_is_dirty`、`test_harness_sha256`、`production_baseline_commit`、`fixture_generation_guard_version`、行为轨迹、关键生产文件哈希 | 缺任一项则无法在验证时判定「同输入、同代码史 + TASK_003 diff」这一前提。后两个字段（R-29）用于锚定「生产 diff 尚未应用」与「守卫强度」 |
 | 5 | **单独提交**测试与 fixture | 与生产 diff 混提 ⇒ `generated_from_commit` 指向的提交里已含被测改动 ⇒ 基线自证循环 |
 | 6 | 此后测试与 fixture **冻结** | `test_harness_sha256` 一旦写入即锁定输入定义；改测试 ⇒ 哈希不符 ⇒ 验证必失败（这正是 §10.2.2 中 TASK_002 遇到的锁） |
 | 7 | **才允许**应用生产 diff | 顺序的全部意义所在：基线必须早于被测变更存在 |
@@ -1183,7 +1206,7 @@ legacy  ⟺  run_metadata.json 缺少 "experiment_matrix" 键
 
 | 机制 | TASK_002 实现 | TASK_003 复用要点 |
 |---|---|---|
-| 生产树洁净前置检查 | `assert_clean_production_tree()` + `collect_dirty_production_entries()`；**脏或不可判定 → 退出码 2**（fail-closed：「不知道代码状态」与「代码状态错误」对基线可信度而言后果相同） | 原样复用，`PRODUCTION_PATHS` 需覆盖本任务的 5 个生产文件；**故意排除 `tests/`**，否则第 3 步永远无法执行（测试此时尚未提交，会形成死锁） |
+| 生产树洁净前置检查 | `assert_clean_production_tree()` + `collect_dirty_production_entries()`；**脏或不可判定 → 退出码 2**（fail-closed：「不知道代码状态」与「代码状态错误」对基线可信度而言后果相同） | 原样复用，`PRODUCTION_PATHS` 需覆盖本任务的 5 个生产文件；**故意排除 `tests/`**，否则第 3 步永远无法执行（测试此时尚未提交，会形成死锁）。**TASK_003 新增一道 TASK_002 没有的检查**：`assert_pre_task003_generation_state()` 的树内容锚定（§12.6.1.2 第 6 项），因为 TASK_002 的 fixture 生成时不存在「生产改动已被提交」这一风险面 |
 | `git_is_dirty` 必须为 bool | `assert_provenance_determined()`：`"unknown"` **拒绝生成**（退出码 2）；**`True` 属预期且允许** | 原样复用。`True` 允许的理由：**测试文件按流程尚未提交**（第 2 步产出、第 5 步才提交），因此仓库级 `git_is_dirty` 可以为 `True`；而 **`design.md` 必须已经在第 1 步提交**。仓库级 dirty 与生产路径洁净是两件事 |
 | `test_harness_sha256` | `harness_sha256()` + 验证期断言与 fixture 记录值**完全相同** | 原样复用；这是第 6 步「冻结」的技术实现 |
 | commit 祖先关系 | `check_fixture_commit_ancestry()` 用 `git merge-base --is-ancestor <fixture_commit> HEAD`（退出码 0 = 是祖先或等于 HEAD；1 = 不是；其他 = 不可判定，同样 FAIL） | 原样复用；用于排除分支切换 / rebase / reset 导致的「基线与当前代码不在同一历史线上」 |
@@ -1211,12 +1234,12 @@ legacy  ⟺  run_metadata.json 缺少 "experiment_matrix" 键
 | **S10.1**（S10 的子项，不占新编号） | **窗口内 miss fail-closed（本轮新增，5 项子断言）**：构造回放缓存后**删除一个 Replay 窗口内的缓存键** ⇒ ①`chat()` 抛 `ReplayAlignmentError`；②**真实 Router 没有被调用**（mock inner router 的调用计数断言 `== 0`）；③`miss_count == 1`；④窗口外（`tick >= replay_until`）调用仍正常返回且 `miss_count` 不变；⑤模拟 `main()` 的失败分支后，失败元数据仍保留**完整 `config`**（`config.to_dict()` 的全部键，含 `content_factor` / `channel_factor` / `timing_factor` / `random_seed` / `budget_k`）、`error_type == "ReplayAlignmentError"`、`run_audit` 非空 | 5 项全通过 | 离线（mock inner router，无网络） |
 | S11 | `summary.csv` 列契约：表头含 `is_control`；错误行格数 == 表头格数（D1 修复，用 `len(SUMMARY_FIELDS)` 派生而非字面 16） | 相等 | 离线 |
 | S12 | `analysis/plot_trajectories.py` 与 `plot_experiments.py` 中被 `run_experiments.py` 调用的函数名全部存在（D2 修复，用 `hasattr` 断言） | 全部存在 | 离线 |
-| S13 | **分析层功能闸门**（R-16，**不限定 helper 函数名称或内部组织方式**）：①输入 8 个策略行 + 1 个共同对照；②分析入口实际只返回 / 使用 8 个策略行；③共同对照不进入主效应与交互计算；④若 `is_control=False` 但 content/channel 为 `not-applicable`，必须抛错。已删除「生产代码必须存在名为 `_strategy_rows` 的函数」这一断言。**探测范围六条约束与按模式分档的判定见 §12.3.4**：`--offline-only` 下依赖不可用可 WARN；`--runtime-dir` 正式验收下依赖不可用、无可验证闸门、或无法完成策略行过滤验证一律 **FAIL** | 4 条全通过 | 离线 |
+| S13 | **分析层功能闸门**（R-16，**不限定 helper 函数名称或内部组织方式**）：①输入 8 个策略行 + 1 个共同对照；②分析入口实际只返回 / 使用 8 个策略行；③共同对照不进入主效应与交互计算；④若 `is_control=False` 但 content/channel 为 `not-applicable`，必须抛错。已删除「生产代码必须存在名为 `_strategy_rows` 的函数」这一断言。**探测范围六条约束与按模式分档的判定见 §12.3.4**：`--offline-only` 下依赖不可用可 WARN；`--runtime-dir` 正式验收下依赖不可用、无可验证闸门、或无法完成策略行过滤验证一律 **FAIL**。**候选判定为六项同时满足（R-26）**：`len(out) == 8`、`exp_id` 列长度 == 8、`exp_id` 无重复、集合恰为 8 个策略 id、不含对照、反例必须抛错——**不得只用 `set(out["exp_id"])` 判断**，集合会折叠重复行。**⑤集成验证（R-30，见 §12.3.5）**：对 `run_experiments.py` 实际调用的**全部** `plot_experiments` 入口做运行期探测（**不按源码字面量筛选**）。探测按**生产调用序列与数据流重放**（§12.3.5.1）。**每个被实际调用的入口必须获得终局判定（R-31）**，合格状态只有两个：`factorial-entry-pass`（观测到因子聚合 + candidate 被调用 + 所有聚合输入均为 8 个唯一策略行且不含对照）与 `not-factorial-entry`（有静态可达性**机器证据**证明其调用链不做因子聚合、且无 `getattr` 动态派发）。`factorial-entry-fail` / `entry-error` / `unknown-not-proven` **一律 FAIL**，不得中性放过。另需至少一个入口为 `factorial-entry-pass`——但该条**不得代替**「所有入口均达合格终局」 | 全部入口达合格终局 | 离线 |
 | S14 | 统计口径：对比 2–8 的 (+)∪(−) 恒等于 8 个策略 `exp_id` 集合，且**不含** `CONTROL_EXP_ID`；对比 1 的对照侧恰为 `{CONTROL_EXP_ID}` | 集合相等 | 离线 |
-| S15 | **逐 Agent 处理前路径对齐（主要证据）**：以 `agent_records.csv` 为数据源，按键 `(tick, agent_id)` 逐行对齐后**精确比较 5 个字段**——`trust_score_raw`、`shock_anchor_after_raw`、`quiet_ticks`、`is_buying`、`is_posting`（容差 0）。范围：4 个 `*-Immediate` 组的 **Tick 1–5**、4 个 `*-Delayed` 组的 **Tick 1–9**，各自与共同对照 `NoClarification-Control` 的同键行比较；缺行 / 多行本身即为失败。**明确不比较** `is_clarification_target`、`content_factor`、`channel_factor`、`timing_factor`（按设计本就应当不同，比较即必然失败）。**汇总检查（降级项，不得作为唯一证据）**：`trajectories.csv` 中 `avg_trust[tick 1..5]` 在 9 个 `exp_id` 上逐值相等、`avg_trust[tick 1..9]` 在对照与 4 个 `*-Delayed` 上逐值相等 | 逐 Agent 逐 Tick 精确相等 | **运行期** |
-| S16 | 运行期产物：`run_metadata.json` 含 `experiment_matrix` 块且 `matrix_version=="3.0"` / `condition_count==9`；`experiment_metadata.jsonl` 恰 9 行、18 键；对照行 `clarification_tick == ""` 且 `replay_miss_count == ""`；8 个策略行 `replay_miss_count == 0`；`target_nodes.csv` 中不含对照 `exp_id`；`experiment_matrix.replay_alignment_violated == false`；进程退出码 **0**（若为 4 则本批次存在 Replay 对齐违约，S15/S16 一并判 FAIL） | 全部满足 | **运行期** |
+| S15 | **逐 Agent 处理前路径对齐（主要证据），三层递进（任一层不成立即停止下一层）**：**第一层（R-23，fail-closed）**统计每个 `(exp_id, tick, agent_id)` 的出现次数，必须恰好为 1，绝不用字典赋值静默覆盖重复行；**第二层（R-27）**构造**绝对预期键空间** `9 exp_id × Tick 1..total_ticks × network_nodes.csv 的 agent_id`，断言 `actual_keys == expected_keys`、`missing_keys` / `extra_keys` 为空、每键 `count == 1`（`count == 0` 只能靠这一层发现，见 §12.5.3）；**第三层**在处理前窗口内按键 `(tick, agent_id)` 逐行对齐并**精确比较 5 个字段**——`trust_score_raw`、`shock_anchor_after_raw`、`quiet_ticks`、`is_buying`、`is_posting`（容差 0）。范围：4 个 `*-Immediate` 组的 **Tick 1–5**、4 个 `*-Delayed` 组的 **Tick 1–9**，各自与共同对照 `NoClarification-Control` 的同键行比较；缺行 / 多行本身即为失败。**明确不比较** `is_clarification_target`、`content_factor`、`channel_factor`、`timing_factor`（按设计本就应当不同，比较即必然失败）。**汇总检查（降级项，不得作为唯一证据）**：`trajectories.csv` 中 `avg_trust[tick 1..5]` 在 9 个 `exp_id` 上逐值相等、`avg_trust[tick 1..9]` 在对照与 4 个 `*-Delayed` 上逐值相等 | 逐 Agent 逐 Tick 精确相等 | **运行期** |
+| S16 | 运行期产物：`run_metadata.json` 含 `experiment_matrix` 块且 `matrix_version=="3.0"` / `condition_count==9`；**`batch_exit_code == 0` 且 `run_completed is True`（R-24，机器可读，取代原先「人工观察进程退出码」的 WARN）**；`experiment_metadata.jsonl` 恰 9 行、18 键；对照行 `clarification_tick == ""` 且 `replay_miss_count == ""`；8 个策略行 `replay_miss_count == 0`；`target_nodes.csv` 中不含对照 `exp_id`；`experiment_matrix.replay_alignment_violated == false`；进程退出码 **0**（若为 4 则本批次存在 Replay 对齐违约，S15/S16 一并判 FAIL） | 全部满足 | **运行期** |
 | S17 | legacy 闸门：构造一个缺 `experiment_matrix` 的假 `run_metadata.json` → loader 判 legacy 并拒绝聚合；构造 `matrix_version="3.0"` 但 `condition_count=12` → 同样判 legacy | 双向通过 | 离线 |
-| S18 | **TASK_002 核心契约承接与 pre-TASK_003 行为不变性**：①§10.2.3 的 7 项契约全部由本测试覆盖（归属登记 + 断言执行，其纯 schema 部分与 S7 共用同一份清单）；②读取 `tests/fixtures/task003/pre_task003_behavior_trace.json`，断言 `test_harness_sha256` 与当前测试文件哈希**完全相同**、`git_is_dirty` 为 **bool**、`generated_from_commit` 为 40 位 hex 且为 HEAD 的祖先（或等于 HEAD）；③逐 `(scenario, cluster_type, tick)` 精确比较 5 个字段（与 S15 同一组量，容差 0，比较对象为运行期未舍入内存状态）；④断言 `tests/fixtures/task002/**` 与 `tests/test_task002_observability.py` **未被本任务改动**（哈希与 TASK_002 记录一致），即冻结生效 | 全通过 | 离线 |
+| S18 | **TASK_002 核心契约承接与 pre-TASK_003 行为不变性**：①§10.2.3 的 7 项契约全部由本测试覆盖（归属登记 + 断言执行，其纯 schema 部分与 S7 共用同一份清单）；②读取 `tests/fixtures/task003/pre_task003_behavior_trace.json`，断言 `test_harness_sha256` 与当前测试文件哈希**完全相同**、`git_is_dirty` 为 **bool**、`generated_from_commit` 为 40 位 hex 且为 HEAD 的祖先（或等于 HEAD）；③逐 `(scenario, cluster_type, tick)` 精确比较 5 个字段（与 S15 同一组量，容差 0，比较对象为运行期未舍入内存状态）；④断言 `tests/fixtures/task002/**` 与 `tests/test_task002_observability.py` **未被本任务改动**（哈希与 TASK_002 记录一致），即冻结生效；⑤**`baseline_file_sha256` 逐项校验（R-28）**：字段存在且为 dict、键集合恰为三个 Agent 插件（`ConsumerPlanPlugin.py` / `GreenCognitionPlugin.py` / `GreenInvokePlugin.py`）、每个记录值是 64 位 SHA-256、且**等于当前文件的 SHA-256**。fixture 存在而哈希不符时两种模式**同样 FAIL**；⑥**生产基线锚点（R-29）**：`production_baseline_commit` 为 40 位 SHA、与测试常量 `PRE_TASK003_BASE_COMMIT` 完全相等、且为当前 HEAD 的祖先；`fixture_generation_guard_version == "2.0"`（版本不符 = 该 fixture 由更弱的前置检查生成） | 全通过 | 离线 |
 
 S15 是 §8.6 所述「miss 计数不充分」的补强：`miss_count == 0` 只排除「键不存在」，逐 Agent 比较才能排除「键碰撞返回他人响应」。**两者必须同时成立**（§8.5.4）。
 
@@ -1300,6 +1323,84 @@ legacy 检测逻辑（所在符号名含 `legacy`）中出现该字面量属预�
 
 正式验收不接受「因依赖缺失而无法判定」：一次不能判定分析口径是否正确的验收，不构成验收。离线模式允许 WARN，是因为它已经自我声明 `NOT A FULL ACCEPTANCE`。
 
+#### 12.3.5 集成验证：闸门必须被实际的分析入口调用（R-30）
+
+§12.3.4 的探测只能证明**存在**一个行为正确的过滤函数。这不够。
+
+「函数存在」与「函数被用上」是两件独立的事。一个写得完全正确、但没有任何入口调用的 `_strategy_rows()`，对 §1.2 的缺陷毫无帮助：`plot_main_effects` 照旧 `groupby("content_factor")`，共同对照照旧被算进边际均值，而 S13 会报告「闸门已实现」。这是本轮识别出的第二个阻断项。
+
+**入口的发现方式：只按「是否真的会被调用」筛选，不按源码字面量筛选。**
+
+第一版曾要求入口的源码里直接出现 `content_factor` / `channel_factor` / `timing_factor` 字面量。这个条件会**漏检两类入口**，而它们恰恰是闸门最容易被绕过的地方：
+
+| 漏检类型 | 形态 | 为什么源码筛选看不见 |
+|---|---|---|
+| 通用包装入口 | `def plot_effect(df, factor_col): df.groupby(factor_col)…` | 因子列名由**参数**传入，函数体里没有任何字面量 |
+| 间接委托入口 | `def plot_main_effects(df): _bar_grid(df)` | 自己不聚合，转调另一个函数完成聚合 |
+
+因此发现条件只剩一条：出现在 `run_experiments.py` 的 `_pe.<name>` 调用点（AST 提取，与 S12 同源），且是定义于 `plot_experiments` 自身的模块级函数。**是否涉及因子聚合改由运行期观测判定**——判据是「该入口对一张含任一因子列的 DataFrame 执行了 `groupby` / `pivot` / `pivot_table`」，与源码写法完全无关。
+
+所有由 `run_experiments.py` 实际调用的 `plot_experiments` 入口，均按生产调用序列和数据流重放。无法重放、调用报错或无法证明其为非因子入口的，分别归入 `entry-error` 或 `unknown-not-proven`，并判定 **FAIL**；**不得以 `not-probeable-signature` 作为中性状态放过**。
+
+**两组断言**，对每个**产生因子聚合**的入口执行：
+
+- **A. 入口实际调用了闸门**。把 candidate 临时替换为计数包装器（`setattr(module, name, wrapper)`，Python 在调用时解析全局名，因此模块内的直接调用也会被计入），调用入口后要求计数 > 0。**「存在但从未被调用」必须 FAIL。**
+- **B. 聚合看到的数据恰为 8 个策略行**。临时替换 `pandas.DataFrame.groupby` / `pivot` / `pivot_table`，用**重入深度守卫**只记录分析代码自己发起的最外层调用（pandas 内部的再次调用不计入），因此记录到的就是「分析入口交给聚合的那张表」。对其中每一张含 `exp_id` 列的表断言五项：`len == 8`、`exp_id` 列长度 == 8、唯一数 == 8、集合恰为 `EXPECTED_STRATEGY_EXP_IDS`、不含 `NoClarification-Control`。
+
+若某个因子聚合输入含因子列却**没有** `exp_id` 列，记为 problem 并注明「身份无法验证」——不可判定不得记为通过。
+
+##### 12.3.5.1 探测方式：按生产调用序列与数据流重放（R-31）
+
+孤立地逐个调用入口会造出两类**假象**，而它们恰好给「绕过闸门」提供了藏身处：
+
+| 假象 | 成因 | 后果 |
+|---|---|---|
+| 参数形状不对 → `TypeError` | 生产里 `_pe.load_data()` 无参、`_pe.plot_main_effects(df)` 单参，孤立探测猜错 | 被记为 `entry-error`，中性放过 |
+| 上游派生列缺失 → `KeyError` | `composite` 由 `plot_pareto_frontier` 写入并回填给下游入口 | 同上 |
+
+因此改为**重放生产路径**：
+
+1. `_pe_call_sequence()` 用 AST 从 `run_experiments.py` 提取 `_pe.<name>(…)` 的**有序调用序列**，同时记录每处的**实参个数**与**返回值是否被回填到变量**（对应 `df_exp = _pe.plot_pareto_frontier(df_exp)` 这类数据流）。
+2. 把标准 9 行写成临时目录里的 `summary.csv`，`RESULTS_DIR` / `OUTPUT_DIR` 指向临时目录——于是 `_pe.load_data()` 也走**真实读取路径**，不再因「无参签名」被排除。
+3. 按序列依次调用，把被回填的返回值作为下一个入口的输入。参数形状、调用顺序、上游派生列因此与生产一致。
+4. 在这条完整路径上包装 candidate 并拦截 `groupby` / `pivot` / `pivot_table`。
+
+**完整性闸门**：`run_experiments.py` 引用的每个 `_pe` 函数都必须出现在调用序列中。未出现者说明它以本方法捕获不到的形式被调用 → 判定为 `unknown-not-proven` → **FAIL**。不允许「没抓到就不算」。
+
+##### 12.3.5.2 终局判定：不允许中性状态（R-31）
+
+每个被实际调用的入口必须落在**两个合格终局状态**之一：
+
+| 终局状态 | 条件 | 判定 |
+|---|---|---|
+| `factorial-entry-pass` | 运行期观测到因子聚合；candidate 调用次数 > 0；**所有**聚合输入均为 8 个唯一策略行且不含共同对照 | PASS |
+| `not-factorial-entry` | 运行期未观测到因子聚合，**且有机器证据**：静态可达性分析证明该入口的调用链内不存在 `groupby` / `pivot` / `pivot_table`，也不存在 `getattr` 动态派发 | PASS |
+
+以下状态**一律 FAIL**，不得在正式验收中保持中性：
+
+| 状态 | 含义 |
+|---|---|
+| `factorial-entry-fail` | 聚合了，但没调闸门，或聚合输入不是 8 个唯一策略行 |
+| `entry-error` | 已按生产顺序与生产参数形状重放，仍然抛异常。这正是缺陷 D2 的形态（异常被 `except` 吞掉 ⇒ 图表静默缺失） |
+| `unknown-not-proven` | 未观测到聚合，但静态可达性**无法证明**它不会聚合（可达到聚合调用，或存在 `getattr` 动态派发，或调用图不可用，或该函数未出现在调用序列中） |
+
+**机器证据的具体形态**（`not-factorial-entry` 的依据）：在 `analysis/plot_experiments.py` 内建模块级函数调用图，标记每个函数是否直接含 `.groupby(` / `.pivot(` / `.pivot_table(`，从入口做 DFS。可达集内无聚合调用且无 `getattr` ⇒ 已证明。
+
+诚实标注该证据的局限：静态调用图**不能**跟踪动态派发（`getattr(obj, name)()`、`eval`）与跨模块间接调用。因此可达范围内一旦出现 `getattr`，结论就降级为 `unknown-not-proven` 而**不是**「已证明」——把不确定当成证明是这一整节要避免的错误。
+
+**两条规则都是必要条件，互不替代**：
+
+| # | 规则 | 它排除什么 |
+|---|---|---|
+| 1 | 至少一个入口必须是 `factorial-entry-pass` | 全都不聚合 ⇒ 主效应 / 交互根本没实现，或其实现不被 `run_experiments.py` 调用（D2 类缺陷） |
+| 2 | **每个**入口都必须处于两个合格终局状态之一 | 「有入口绕过闸门」以及「无法判定的入口被中性放过」 |
+
+**不得以规则 1 代替规则 2。** 「至少一个入口正确聚合」与「所有实际因子入口均正确」是两个不同的命题——前者成立而后者不成立，恰恰就是「一个入口用了闸门、另一个入口直接 `groupby` 全部 9 行」这一情形。
+
+**若动态探测不可靠**（例如分析层用了闭包、局部导入或其它使 `setattr` 失效的组织方式，或静态可达性无法给出证据），本设计要求的补救**不是**放宽断言，而是：把过滤函数升级为**明确的公共接口**（模块级、可被 `setattr` 替换的名字），并让每个因子聚合入口都调用它。测试的失败信息里直接写明这条补救路径。**不得保留「存在任一候选即通过」的逻辑，也不得让任何入口以中性状态通过。**
+
+所有替换都在 `try / finally` 中恢复，`OUTPUT_DIR` / `RESULTS_DIR` 重定向到临时目录，因此集成验证不向仓库写入任何文件。
+
 ### 12.4 三种运行模式（R-17）
 
 测试入口必须显式选择模式；**无参数调用一律拒绝执行并以退出码 2 结束**。理由是排除「以为在做正式验收、实际只跑了离线项」这一类误判。
@@ -1307,10 +1408,14 @@ legacy 检测逻辑（所在符号名含 `legacy`）中出现该字面量属预�
 | 模式 | 行为 | 退出码 |
 |---|---|---|
 | `--generate-fixture` | **只**生成 pre-TASK_003 fixture。不运行 S1–S18；**不要求新矩阵已经实施**（fixture 的语义与矩阵是否重构无关，见 §12.6） | 0 = 成功；2 = 生产树不洁净或溯源不可判定 |
-| `--offline-only` | 运行离线项（S1–S14、S17、S18）。S15 / S16 无运行目录时记 **WARN**。报告头尾均明确输出 `NOT A FULL ACCEPTANCE` | 0 = 无 FAIL；1 = 存在 FAIL |
-| `--runtime-dir PATH` | 正式验收。`PATH` 必须是 `matrix_version == "3.0"` 且 `condition_count == 9` 的运行目录。S15 / S16 遇到**缺文件、缺行、版本不符**一律 **FAIL**。**绝不自动回退读取 `results/experiments/latest`** | 0 **仅在** `Failed == 0` 时给出；1 = 存在 FAIL |
+| `--offline-only` | 运行离线项（S1–S14、S17、S18）。S15 / S16 无运行目录、S13 依赖不可用、S18 缺 fixture 时均记 **WARN**。报告头尾均明确输出 `NOT A FULL ACCEPTANCE` | 0 = 无 FAIL；1 = 存在 FAIL |
+| `--runtime-dir PATH` | 正式验收。`PATH` 必须是 `matrix_version == "3.0"` 且 `condition_count == 9` 的运行目录。S15 / S16 遇到**缺文件、缺行、版本不符**一律 **FAIL**；S13 依赖不可用或无可验证闸门 **FAIL**（R-22）；S18 缺 fixture 或 fixture 不可读 **FAIL**（R-25）。**绝不自动回退读取 `results/experiments/latest`** | 0 **仅在** `Failed == 0` 时给出；1 = 存在 FAIL |
 
-`--offline-only` 与 `--runtime-dir` 对「缺运行目录」给出不同结论，是刻意的：**「尚未产出证据」与「证据表明违约」是两件不同的事**，用运行模式区分，而不是用同一档结论掩盖。
+`--offline-only` 与 `--runtime-dir` 对「不可判定」给出不同结论，是刻意的：**「尚未产出证据」与「证据表明违约」是两件不同的事**，用运行模式区分，而不是用同一档结论掩盖。反过来说，**正式模式不接受任何「不可判定」**——一次不能判定的验收不构成验收。
+
+**报告字段口径（R-25 附带修正）**：验收报告的 `is_full_acceptance` 必须取 `formal and Failed == 0`，**不得**直接取 `formal`——否则「正式模式但验收失败」会被错标为完整验收通过。模式信息另由 `is_formal_mode` 保留。
+
+**正式模式下 S18 的七项硬要求**（任一不成立即 FAIL）：①fixture 存在且可读；②`test_harness_sha256` 与当前测试文件哈希完全相同；③`generated_from_commit` 为 40 位 hex 且为 HEAD 的祖先（或等于 HEAD）；④`git_is_dirty` 为 bool；⑤`compared_fields` 与 S15 的 5 字段一致；⑥TASK_002 的测试与 fixture 冻结哈希匹配；⑦行为轨迹零差异。理由：行为不变性是 fixture 存在的唯一目的，正式验收若允许「没有基线」通过，这一项就完全没有被验证过。
 
 ### 12.5 正式验收运行目录的来源要求（R-18）
 
@@ -1327,6 +1432,85 @@ legacy 检测逻辑（所在符号名含 `legacy`）中出现该字面量属预�
 
 诚实标注一处局限：上述检查能证明「产物由生产写入函数在一次完整批次中产出」，**不能**从产物本身证明「Router 是 Mock 而非真实 LLM」——`run_metadata` 的 `llm` 块记录的是配置，不是实际调用路径。这一条依赖运行方式的纪律，不是可自动验证的断言，因此在此显式登记而非伪装成已验证。
 
+#### 12.5.1 批次退出码必须机器可读（R-24）
+
+第 3 版把「进程退出码为 0」写成 S16 的一条 WARN。这等于没有验收：产物齐备但批次以退出码 4 结束时，报告仍会显示通过——而退出码 4 恰恰意味着**至少一组实验的澄清前路径对齐前提已被打破**，那批数据不能用于任何对比。
+
+因此新增 `run_metadata.json` 的两个顶层字段契约：
+
+| 字段 | 类型 | 语义 |
+|---|---|---|
+| `batch_exit_code` | `int` | 批次结束时的退出码。**0** = 正常完成；**3** = 网络一致性契约失败（§7.6 / TASK_002 R10）；**4** = Replay 对齐失败（§8.5） |
+| `run_completed` | `bool` | 批次是否走完全部编排与产物落盘。区分「跑完了」与「中途异常退出但产物已部分落盘」 |
+
+**正式验收要求**：`batch_exit_code == 0` **且** `run_completed is True`。正式模式下缺字段或值不符**必须 FAIL**。
+
+写入时序与既有的退出码原则一致：这两个字段必须在**所有产物与图表落盘之后、抛出 `SystemExit` 之前**写入，否则退出码 3 / 4 的批次将不带这两个字段，反而失去可判定性。
+
+**本轮只登记契约与测试预期，不修改 `run_experiments.py`**；生产实现属 TASK_003 实施阶段（§9 第 2 行第 ③ 项一并完成）。在实施之前，S16 的这两条断言在正式模式下 FAIL 属预期。
+
+#### 12.5.2 agent_records 键唯一性是逐值比较的前置条件（R-23）
+
+S15 的比较必须建立在「键唯一」之上，否则结论无意义。
+
+第 3 版的实现用 `table[key] = {...}` 逐行填表。这在键重复时会**静默覆盖**：后写入的行胜出，逐值比较照样通过，而「同一 `(exp_id, tick, agent_id)` 出现两行」这一产物缺陷完全隐形。它的实际含义是主循环或写盘路径重复结算了某个 Agent——属于必须暴露的严重缺陷。
+
+改为 fail-closed 的两段式：
+
+**第一段（前置闸门）**：构造 `key_counts` 与 `key_to_rows`，对 `agent_records.csv` 的**所有**行验证 `(exp_id, tick, agent_id)` 的出现次数**恰好为 1**。任意 `count != 1` 立即 FAIL，并**停止后续逐值比较**——拒绝在键不唯一的数据上给出「对齐通过」的结论。报告中列出重复键及其行号，便于直接定位。
+
+**第二段（逐区间验证）**：对每个策略条件的处理前区间（`*-Immediate` → Tick 1–5，`*-Delayed` → Tick 1–9）分别验证五项：
+
+| 判据 | 内容 |
+|---|---|
+| 1 | 策略键集合与共同对照的同 Tick 键集合**完全相等** |
+| 2 | 无缺失 Agent（对照有、策略无） |
+| 3 | 无额外 Agent（策略有、对照无） |
+| 4 | 区间内每键恰好一行 |
+| 5 | 5 个字段（`trust_score_raw`、`shock_anchor_after_raw`、`quiet_ticks`、`is_buying`、`is_posting`）逐字相等，容差 0 |
+
+判据 1 的集合相等同时覆盖 2 与 3，但三者分别登记，以便报告能直接指出是哪一类偏差。
+
+**明确禁止**：不得用 S16 的总行数断言（`agent_record_count == num_agents × total_ticks`）替代键唯一性检查。**行数正确而键重复是完全可能的**——一个键出现两次、另一个键缺失，总数不变。两项检查覆盖不同的失效模式，缺一不可。
+
+#### 12.5.3 绝对预期键空间：`count == 0` 需要外部期望才能发现（R-27）
+
+§12.5.2 的键唯一性检查有一个结构性盲区：**它的期望值来自实际数据自身**。`key_counts` 是从 `agent_records.csv` 的行构造的，因此它只能发现 `count > 1`（重复），发现不了 `count == 0`（缺失）——一个从未出现的键不会出现在 `key_counts` 里，也就不会被任何断言碰到。
+
+这个盲区对应的真实失效形态是：某组实验少跑了一个 Agent，或某个 Tick 的记录整体没写出。此时数据完全自洽（无重复、无冲突），逐值比较也会通过，因为参与比较的键在两侧都不存在。
+
+因此必须建立一个**独立于实际数据**的绝对期望集合，由三个外部来源的笛卡尔积构造：
+
+| 维度 | 来源 | 为什么它是外部的 |
+|---|---|---|
+| `exp_id`（9 个） | 测试自带的 `EXPECTED_EXP_IDS` | §12.3 的原则：测试的期望不从被测代码导入，否则退化为同义反复 |
+| `tick`（`1..total_ticks`） | `run_metadata.json` 的 `experiments[0].config.total_ticks` | 来自 run 级元数据，不是从 `agent_records` 的 tick 列推断 |
+| `agent_id` | `network_nodes.csv` 的 `agent_id` 集合 | run 级静态文件，9 个条件共用同一张网络（由 `verify_single_network()` 保证）。它是「本次 run 到底有哪些 Agent」的权威来源 |
+
+```
+expected_keys = {(exp_id, str(tick), agent_id)
+                 for exp_id in EXPECTED_EXP_IDS
+                 for tick in range(1, total_ticks + 1)
+                 for agent_id in network_agent_ids}
+```
+
+**逐值比较之前**必须断言六项，任一失败立即停止：
+
+| # | 断言 |
+|---|---|
+| 1 | `len(network_agent_ids) == num_agents` |
+| 2 | `actual_keys == expected_keys` |
+| 3 | `missing_keys` 为空 |
+| 4 | `extra_keys` 为空 |
+| 5 | 每个 `expected_key` 的 `count` 恰为 1（显式覆盖 `count == 0`） |
+| 6 | `duplicate_keys` 为空 |
+
+第 2 项与第 3、4 项在逻辑上等价，但分别登记：集合不等只给出「不相等」，而 missing / extra 分列能直接指出是缺了还是多了，定位成本差别很大。
+
+**排序必须用安全 key 函数**：畸形 CSV（缺列 → `None`）在 `sorted()` 中混入 `None` 会抛 `TypeError: '<' not supported between 'NoneType' and 'str'`，那会让整份验收报告在写盘之前崩掉——判据本身反而成了新的失效点。因此对键元组排序时统一把 `None` 与非字符串转成字符串。这是 fail-closed 原则的一个具体应用：**判据遇到畸形输入时应当给出 FAIL，而不是崩溃**。
+
+**分层关系**：原有的「策略组与共同对照处理前窗口比较」保留为**第二层**比较，**不能代替**绝对键空间检查。理由是它的期望值取自对照侧的实际数据：若对照与策略组**同时**缺同一个 Agent，第二层完全看不出来，而第一层（绝对键空间）会立刻报 missing。
+
 ### 12.6 洁净检查与 fixture 语义（R-19 / R-20）
 
 #### 12.6.1 生产树洁净检查：三项独立执行
@@ -1341,9 +1525,9 @@ legacy 检测逻辑（所在符号名含 `legacy`）中出现该字面量属预�
 
 生产路径沿用 §12.1 规定的范围。**`tests` / `docs` / `.kiro` / `results` 仍排除**，以避免流程死锁：生成 fixture 时**本测试文件尚未提交**（它在第 5 步才与 fixture 一起提交），把 `tests/` 纳入检查会使第 3 步永远无法执行；**`design.md` 已经提交**（第 1 步），排除 `.kiro/` 与它的提交状态无关，只是因为该目录不属于生产路径。
 
-#### 12.6.1.1 执行 `--generate-fixture` 时的仓库状态（四条同时成立）
+#### 12.6.1.1 执行 `--generate-fixture` 时的仓库状态（五条同时成立）
 
-这是第 3 步的完整前置状态，四条必须同时成立，缺一即拒绝生成：
+这是第 3 步的完整前置状态，五条必须同时成立，缺一即拒绝生成：
 
 | # | 对象 | 要求状态 |
 |---|---|---|
@@ -1351,10 +1535,80 @@ legacy 检测逻辑（所在符号名含 `legacy`）中出现该字面量属预�
 | 2 | `tests/test_task003_experiment_matrix.py` | **尚未提交**（第 2 步已产出，第 5 步才提交） |
 | 3 | `tests/fixtures/task003/pre_task003_behavior_trace.json` | **尚未提交**，且此刻尚不存在（本步才生成） |
 | 4 | 5 个生产文件（`experiment_config.py`、`run_experiments.py`、`simulation_core.py`、`analysis/plot_experiments.py`、`analysis/plot_trajectories.py`） | **无 staged、无 unstaged、无 untracked 变更**（三项独立检查，见上表） |
+| 5 | `HEAD` 与 `PRE_TASK003_BASE_COMMIT` | 在 `PRODUCTION_PATHS` 上的**树内容完全一致，不存在净文件差异**（§12.6.1.2 第 6 项） |
 
-第 2、3 条正是仓库级 `git_is_dirty == True` 的来源，因此 `True` 是**预期值**而非异常。第 4 条是 fixture 可作为证据的唯一硬前提：基线必须是某个已提交生产代码状态的可复现快照。
+第 2、3 条正是仓库级 `git_is_dirty == True` 的来源，因此 `True` 是**预期值**而非异常。第 4、5 条合起来才是 fixture 可作为证据的硬前提：**第 4 条管工作树，第 5 条管已提交状态的树内容**，缺任一条都能让 post 状态伪装成 pre 状态。
 
 无法判定（无 git / 非仓库 / 命令失败）同样拒绝生成——「不知道代码状态」与「代码状态错误」对基线的可信度而言后果相同。
+
+#### 12.6.1.2 代码状态锚定：`assert_pre_task003_generation_state()`（R-29）
+
+三路工作树检查有一个致命盲区：**它只看工作树，不看已提交状态的树内容**。
+
+设想有人把 TASK_003 的生产改动提交掉（无论是有意还是误操作），此时 `git diff`、`git diff --cached`、`git ls-files --others` 三项全部为空，工作树完全干净。fixture 会被生成并标注为「pre-TASK_003 行为基线」——而它记录的其实是 **post**-TASK_003 的行为。此后 S18 的行为不变性比较变成 post/post 自比，**永远通过**，而「TASK_003 未改变既有机制」这一结论从此毫无证据支撑。
+
+因此在 `collect_behavior_trace()` **之前**必须执行 `assert_pre_task003_generation_state(root)`，七项全部成立才允许生成：
+
+| # | 检查 | 手段 | 不成立的后果 |
+|---|---|---|---|
+| 1 | fixture 尚不存在 | `os.path.exists(FIXTURE_PATH)` | 覆盖一份已冻结的基线是不可逆的证据破坏。**退出码 2，禁止覆盖** |
+| 2 | `design.md` 已被 Git 跟踪 | `git ls-files --error-unmatch -- <design.md>` | §12.1 第 1 步未完成，fixture 没有对应的设计快照 |
+| 3 | `design.md` 无 unstaged 变更 | `git diff --quiet -- <design.md>` | 设计尚未定稿 |
+| 4 | `design.md` 无 staged 变更 | `git diff --cached --quiet -- <design.md>` | 同上 |
+| 5 | `PRE_TASK003_BASE_COMMIT` 存在且为 HEAD 祖先 | `git cat-file -e` + `git merge-base --is-ancestor` | 当前分支与基线不在同一历史线上（分支切换 / rebase / reset） |
+| 6 | **HEAD 与 `PRE_TASK003_BASE_COMMIT` 在 `PRODUCTION_PATHS` 上的树内容完全一致，不存在净文件差异** | `git diff --quiet PRE_TASK003_BASE_COMMIT..HEAD -- <PRODUCTION_PATHS>` | **本节要封堵的漏洞本身。** 失败时列出具体差异文件 |
+| 7 | 现有三路工作树洁净检查 | 见上表（unstaged / staged / untracked） | 基线来源不明 |
+
+**第 6 项的证据强度（精确表述，不夸大）**：`git diff A..B -- <paths>` 比较的是**两个提交的树内容**，因此它证明的是「HEAD 与基线在这些路径上最终内容相同、无净文件差异」，**不是**「期间从未出现过修改提交」——改了又改回来同样通过。
+
+这正是所需的语义。pre-TASK_003 代码状态的要求是**最终树内容相同**：只要 HEAD 上的生产代码逐字节等于基线，用它采集的行为轨迹就是合格的 pre 基线，中间经历过什么与结论无关。因此本设计**不附加任何 `git log` 历史禁令**——那会把一个与结论无关的过程约束伪装成正确性要求。
+
+`PRE_TASK003_BASE_COMMIT` 是一个**写死的 40 位常量**，不是运行期推断值：
+
+```
+PRE_TASK003_BASE_COMMIT = "c8558d57f501dd32d483a2b2d939a06129554365"
+  = git rev-parse c8558d5
+  = "docs(observability): finalize TASK_002 records"
+  即 TASK_003 生产改动之前的最后一个提交
+```
+
+写死是刻意的：任何「从当前状态推断基线」的做法都会随当前状态漂移，失去锚定意义。
+
+fixture 相应新增两个字段：
+
+| 字段 | 值 | S18 的校验 |
+|---|---|---|
+| `production_baseline_commit` | `PRE_TASK003_BASE_COMMIT` | 为 40 位 SHA；与测试常量**完全相等**；是当前 HEAD 的祖先 |
+| `fixture_generation_guard_version` | `"2.0"` | 与测试常量相等——版本不符说明该 fixture 是用一套**更弱的**前置检查生成的 |
+
+守卫版本号的作用：守卫规则本身升级时（例如本轮从「三路工作树」升级为「三路 + 树内容锚定」），旧 fixture 必须被识别出来，而不是被当作等效证据继续使用。
+
+#### 12.6.1.3 最终落盘：排他创建 + 失败清理（R-29 第二半 / R-32）
+
+生成前的 `os.path.exists()` 检查（§12.6.1.2 第 1 项）是**先验假设**，而 `open(path, "w")` 会**截断**已存在的文件。两者之间存在时间窗，被覆盖的是一份已冻结的基线——不可逆的证据破坏。
+
+因此落盘规定为两阶段：
+
+| 阶段 | 动作 | 目的 |
+|---|---|---|
+| 1 | 在 **fixture 同目录**创建临时文件（`tempfile.mkstemp(dir=FIXTURE_DIR, …)`），写入完整 JSON，并**回读 `json.load()` 校验** | 同目录保证同一文件系统；完整性在临时文件上确认，异常不会留下半写的 fixture |
+| 2 | `open(FIXTURE_PATH, "x", encoding="utf-8")` **排他创建**并一次性写入 | `"x"` 把「文件不存在」从先验假设变成写入操作**自身的原子前提** |
+
+**排他创建只保证「创建时刻文件不存在」，不保证写入成功（R-32）。** 创建成功之后的 `write` 若因磁盘写满、编码错误或 `KeyboardInterrupt` 中断，磁盘上就会留下一个**半写的 JSON**。它的危害是双重的：下一次生成会因 `FileExistsError` 被拒（fixture 被永久卡死），而这份残片还可能被误当作有效基线。
+
+因此完整落盘契约为五条：
+
+| # | 规定 |
+|---|---|
+| 1 | 最终文件创建后执行 `write` → `flush` → `os.fsync`（确保内容真正落到磁盘，而非停留在缓冲区） |
+| 2 | 写入后**重新 `json.load` 最终文件**，确认它是可解析的完整 JSON |
+| 3 | `FileExistsError` → 退出码 2；**原 fixture 一字不变**；同时删除临时文件 |
+| 4 | **其它任何异常**（捕获 `BaseException`，含 `KeyboardInterrupt`）→ 若本次**已经创建**最终文件则**立即删除该文件**，再删除临时文件，退出码 2 |
+| 5 | 只有全部成功后才删除临时文件并报告 fixture 生成完成 |
+
+第 4 条的关键细节：用一个 `created_final` 标志区分「本次新建的文件」与「早已存在的 fixture」，**只删前者**。否则异常处理本身会变成新的证据破坏路径。
+
+**绝不让写入异常留下部分 JSON 文件。**
 
 #### 12.6.2 pre-TASK_003 fixture 的语义边界
 

@@ -94,7 +94,7 @@ $env:PYTHONIOENCODING="utf-8"; D:\Python\Anaconda\envs\Kernel\python.exe -X utf8
 
 ### Commit
 
-- SHA: (to be filled after git commit)
+- SHA: See the Git commit containing this entry.
 - Message: `fix(reflect): reset transient cognition state on empty observations`
 
 ---
@@ -215,11 +215,11 @@ comparing a tick against a module constant, which proves scheduling but not deli
 
 ### Next steps
 
-1. Run one full 12-experiment end-to-end pass (criterion A4) to confirm the six artifacts,
-   the 60-column header, the 12-line metadata file and `latest/` synchronisation.
-2. Clean up the pre-existing unused imports as a separate task.
+1. Complete TASK_003 to restructure the experiment matrix.
+2. Complete TASK_004 to refactor causal recovery metrics.
+3. Run formal repeated experiments only after TASK_003 and TASK_004 pass validation.
 
 ### Commit
 
-- SHA: See the Git commit containing this entry
-- Message: `feat(observability): add agent_records schema v2.0 audit trail`
+- SHA: See the Git commit containing this entry.
+- Message: `feat(observability): add auditable agent and run records`

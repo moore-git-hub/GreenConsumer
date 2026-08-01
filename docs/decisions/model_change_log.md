@@ -3,7 +3,7 @@
 ## Baseline
 
 - Repository: `moore-git-hub/GreenConsumer`
-- Baseline commit: `TO_BE_FILLED_BY_KIRO`
+- Baseline fixture commit: `70d225c53826e2571867e72e1425177370f62b52`
 - Local branch: `audit/task002-observability`
 - Active task: `TASK_002`
 

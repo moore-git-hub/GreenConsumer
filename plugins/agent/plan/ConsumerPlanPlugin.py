@@ -141,6 +141,16 @@ class ConsumerPlanPlugin(PlanPlugin):
         if has_clarification:
             is_quiet_day = False
 
+        # ── TASK_002 审计：澄清内容类型只从**实际观察到的消息**读取 ──
+        # 禁止从 ExperimentConfig.content_factor 反推：那只代表"配置声称注入了什么"，
+        # 不代表"这个 Agent 这一 Tick 实际观察到了什么"。
+        clarification_content_type = ""
+        if has_clarification:
+            for _o in last_observations:
+                if _o.get("source") == "Enterprise_Clarification" or _o.get("type") == "clarification":
+                    clarification_content_type = str(_o.get("content_factor", "unknown"))
+                    break
+
         # ── 2. 平静期计数 ────────────────────────────────────────────────
         quiet_ticks = int(s_data.get("quiet_ticks", 0))
         quiet_ticks = quiet_ticks + 1 if is_quiet_day else 0
@@ -158,6 +168,7 @@ class ConsumerPlanPlugin(PlanPlugin):
 
         # ── 5. Step 1：遗忘曲线逻辑 ─────────────────────────────────────
         trust_after_decay = previous_trust
+        decay_rate_raw = 0.0    # 纯审计：本 Tick 实际生效的遗忘曲线回归比例
 
         if has_clarification:
             # 澄清当天：affective_change 直接叠加，quiet_ticks 重置为 1
@@ -168,16 +179,27 @@ class ConsumerPlanPlugin(PlanPlugin):
         elif quiet_ticks > 0:
             # 普通平静期：遗忘曲线生效，从 shock_anchor 向 baseline 回归
             trust_after_decay = self._forgetting_curve(shock_anchor, baseline_trust, quiet_ticks, lam)
+            decay_rate_raw = 1.0 - math.exp(-lam * quiet_ticks)
 
         # ── 6. Step 2：叠加 System 1 的情绪冲击（带敏感度系数） ──────────
         raw_affective = float(s_data.get("trust_change_affective", 0.0))
         sensitivity = SENSITIVITY_MULTIPLIER.get(cluster_type, DEFAULT_SENSITIVITY)
+        # 审计用未舍入原值；下游信任计算继续使用 round(...,3) 的 affective_change（行为不变）
+        affective_change_raw = raw_affective * sensitivity
         affective_change = round(raw_affective * sensitivity, 3)
 
         trust_after_shock = trust_after_decay + affective_change
         final_trust = round(max(0.0, min(10.0, trust_after_shock)), 3)
+        # 审计：未舍入的裁剪后信任值 + 是否触及 [0, 10] 边界
+        trust_score_raw = max(0.0, min(10.0, trust_after_shock))
+        trust_clipped_at_bound = (trust_after_shock < 0.0) or (trust_after_shock > 10.0)
 
         # ── 7. Step 3：更新 shock_anchor ─────────────────────────────────
+        # 纯审计变量：记录实际走了哪个 anchor 更新分支及其参数（分支条件本身未改）
+        anchor_update_branch = "none"
+        clr_anchor_lift_ratio = ""
+        clr_lift_raw = ""
+        shock_anchor_after = shock_anchor
         if has_clarification:
             # 澄清当天：将 shock_anchor 向 baseline 方向移动固定比例
             # 使用固定的人群差异化参数（而非 affective_change 的倍数），
@@ -196,12 +218,20 @@ class ConsumerPlanPlugin(PlanPlugin):
             clr_lift = gap * lift_ratio                  # 澄清修复其中的固定比例
             new_anchor = max(final_trust, shock_anchor + clr_lift)
             await state_plugin.set_state("shock_anchor", new_anchor)
+            anchor_update_branch = "clarification"
+            clr_anchor_lift_ratio = lift_ratio
+            clr_lift_raw = clr_lift
+            shock_anchor_after = new_anchor
         elif not is_quiet_day:
             # 普通全局事件当天（丑闻等）：锚定新的冲击点
             await state_plugin.set_state("shock_anchor", final_trust)
+            anchor_update_branch = "global_event"
+            shock_anchor_after = final_trust
         elif affective_change > 0 and final_trust > shock_anchor:
             # 社交正面反馈：信任超过 anchor 时也更新（防止遗忘曲线从过低起点恢复）
             await state_plugin.set_state("shock_anchor", final_trust)
+            anchor_update_branch = "social_positive"
+            shock_anchor_after = final_trust
 
         # 写入最终信任分
         await state_plugin.set_state("trust_score", final_trust)
@@ -294,6 +324,27 @@ class ConsumerPlanPlugin(PlanPlugin):
             plan["shock_anchor"]      = round(shock_anchor, 3)
             plan["decay_lambda"]      = lam
             plan["quiet_ticks"]       = quiet_ticks
+            # ── TASK_002 审计字段：保存**未舍入**原始 float ──
+            # 上面 8 个旧兼容字段的精度（round(…,3)）保持不变，供既有分析脚本使用。
+            plan["previous_trust_raw"]         = previous_trust
+            plan["baseline_trust_raw"]         = baseline_trust
+            plan["trust_after_decay_raw"]      = trust_after_decay
+            plan["affective_change_raw"]       = affective_change_raw
+            plan["trust_score_raw"]            = trust_score_raw
+            plan["shock_anchor_before_raw"]    = shock_anchor
+            plan["shock_anchor_after_raw"]     = shock_anchor_after
+            plan["decay_rate_raw"]             = decay_rate_raw
+            plan["sensitivity_multiplier"]     = sensitivity
+            plan["trust_clipped_at_bound"]     = trust_clipped_at_bound
+            plan["anchor_update_branch"]       = anchor_update_branch
+            plan["clr_anchor_lift_ratio"]      = clr_anchor_lift_ratio
+            plan["clr_lift_raw"]               = clr_lift_raw
+            plan["is_quiet_day"]                   = is_quiet_day
+            # 阶段④：Plan 层**自己**识别到的澄清，也就是实际驱动了行为分支的那个布尔量。
+            # 与记录器独立计算的阶段③ clarification_received 分列落盘，便于交叉核对。
+            plan["clarification_detected_by_plan"] = has_clarification
+            plan["clarification_content_type"]     = clarification_content_type
+            plan["plan_fallback_used"]             = False
 
             await state_plugin.set_state("plan_result", plan)
 
@@ -322,7 +373,27 @@ class ConsumerPlanPlugin(PlanPlugin):
                 "shock_anchor":       round(shock_anchor, 3),
                 "decay_lambda":       lam,
                 "quiet_ticks":        quiet_ticks,
-                "reason": "System parsing error, fell back to silent mode."
+                "reason": "System parsing error, fell back to silent mode.",
+                # ── TASK_002 审计字段（fallback 路径必须同样完整填充）──
+                # 注意：上一行 "reason" 末尾的逗号是必需的，缺失会导致
+                # 字符串隐式拼接 → 字典构造语法/语义错误。
+                "previous_trust_raw":         previous_trust,
+                "baseline_trust_raw":         baseline_trust,
+                "trust_after_decay_raw":      trust_after_decay,
+                "affective_change_raw":       affective_change_raw,
+                "trust_score_raw":            trust_score_raw,
+                "shock_anchor_before_raw":    shock_anchor,
+                "shock_anchor_after_raw":     shock_anchor_after,
+                "decay_rate_raw":             decay_rate_raw,
+                "sensitivity_multiplier":     sensitivity,
+                "trust_clipped_at_bound":     trust_clipped_at_bound,
+                "anchor_update_branch":       anchor_update_branch,
+                "clr_anchor_lift_ratio":      clr_anchor_lift_ratio,
+                "clr_lift_raw":               clr_lift_raw,
+                "is_quiet_day":                   is_quiet_day,
+                "clarification_detected_by_plan": has_clarification,
+                "clarification_content_type":     clarification_content_type,
+                "plan_fallback_used":             True,
             }
             await state_plugin.set_state("plan_result", fallback_plan)
 

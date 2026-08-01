@@ -62,6 +62,10 @@ class ClarificationInjector:
         self.content_factor = config.content_factor
         self.clarification_tick = config.clarification_tick  # None = 不澄清
         self.target_nodes: List[str] = []  # 由外部在网络构建后设置
+        # ── TASK_002 审计回执：最近一次 inject() 实际成功写入 inbox 的 Agent ID ──
+        # 只写不读，不参与任何投放判定；供 agent_records 的
+        # clarification_injected（阶段②）取真实来源。
+        self.last_injected_ids: List[str] = []
 
     def set_target_nodes(self, nodes: List[str]):
         """设置目标投放节点（由 NodeSelector 选出后调用）"""
@@ -74,12 +78,18 @@ class ClarificationInjector:
         return current_tick == self.clarification_tick
 
     def get_message(self) -> dict:
-        """获取澄清消息包"""
+        """获取澄清消息包
+
+        TASK_002 审计增强：消息包内显式携带 content_factor，
+        使下游 Reflect / Plan 层能从**实际被观察到的消息**读取澄清内容类型，
+        不再需要从 ExperimentConfig 反推（避免「配置声称注入」与「实际被观察」不一致）。
+        """
         content = CONTENT_TEMPLATES[self.content_factor]
         return {
             "source": "Enterprise_Clarification",
             "content": content,
-            "type": "clarification"
+            "type": "clarification",
+            "content_factor": self.content_factor,
         }
 
     async def inject(self, agents, current_tick: int) -> int:
@@ -92,12 +102,20 @@ class ClarificationInjector:
 
         Returns:
             实际注入的节点数
+
+        副作用（TASK_002 审计）：
+            self.last_injected_ids 被本次调用**覆盖写**，等于本 Tick 实际成功写入
+            inbox 的 Agent ID 列表；未注入时为空列表。
+            返回值恒等于 len(self.last_injected_ids)。
         """
+        # 无条件重置：避免上一 Tick 的回执泄漏到本 Tick（阶段②误判为 True）
+        self.last_injected_ids = []
+
         if not self.should_inject(current_tick):
             return 0
 
         msg = self.get_message()
-        injected_count = 0
+        injected_ids = []
 
         for ag in agents:
             if ag.agent_id in self.target_nodes:
@@ -106,7 +124,11 @@ class ClarificationInjector:
                                  getattr(state_plugin, "_state_data", {}))
                 inbox = s_data.get("incoming_messages", [])
                 await state_plugin.set_state("incoming_messages", list(inbox) + [msg])
-                injected_count += 1
+                # 只有 set_state 成功返回后才登记，确保回执 == 实际写入
+                injected_ids.append(ag.agent_id)
+
+        self.last_injected_ids = injected_ids
+        injected_count = len(injected_ids)
 
         if injected_count > 0:
             content_short = "Rational" if self.content_factor == "rational-evidence" else "Empathy"

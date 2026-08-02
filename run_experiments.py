@@ -22,6 +22,7 @@ import csv
 import datetime
 import hashlib
 import json
+import math
 import platform
 import subprocess
 import shutil
@@ -48,6 +49,18 @@ from simulation_core import (
     ENTERPRISE_STRATEGY,
     AGENT_RECORDS_FIELDS,
     AGENT_RECORDS_SCHEMA_VERSION,
+)
+from metrics_calculator import (
+    METRICS_SCHEMA_VERSION,
+    LOCAL_WINDOW_TICKS,
+    EARLY_HORIZON_INTERVALS,
+    RANKING_WEIGHT_STEP,
+    NUM_WEIGHT_COMBINATIONS,
+    V4_FIELDS,
+    PRIMARY_OBJECTIVES_V4,
+    compute_relative_metrics_v4,
+    build_control_metrics_v4,
+    compute_ranking_sensitivity_v4,
 )
 
 
@@ -150,19 +163,197 @@ SUMMARY_FIELDS = [
     "steady_state_score", "recovery_rate", "t50", "t80",
     "trust_min", "trust_min_tick", "baseline_trust", "clarification_effect",
     "trust_gain_vs_control",
-]
+] + list(V4_FIELDS)
+
+
+def _build_metrics_metadata_v4() -> dict:
+    return {
+        "schema_version": METRICS_SCHEMA_VERSION,
+        "primary_objectives": list(PRIMARY_OBJECTIVES_V4),
+        "post_scandal_window": {
+            "start": "scandal_tick",
+            "end": "total_ticks",
+            "integration": "trapezoid",
+            "normalization": "divide_by_interval_count",
+        },
+        "local_did": {
+            "pre_ticks": LOCAL_WINDOW_TICKS,
+            "post_ticks": LOCAL_WINDOW_TICKS,
+            "post_includes_clarification_tick": True,
+        },
+        "early_window": {
+            "horizon_intervals": EARLY_HORIZON_INTERVALS,
+            "observations": EARLY_HORIZON_INTERVALS + 1,
+        },
+        "ranking": {
+            "pareto_primary": True,
+            "equal_weight_supplementary": True,
+            "weight_sensitivity_step": RANKING_WEIGHT_STEP,
+            "weight_combination_count": NUM_WEIGHT_COMBINATIONS,
+        },
+    }
+
+
+def _finite_real_sequence(value, name: str, expected_len: int) -> list[float]:
+    if isinstance(value, (str, bytes)) or not isinstance(value, (list, tuple)):
+        raise ValueError(f"{name} must be a numeric list/tuple")
+    if len(value) != expected_len:
+        raise ValueError(f"{name} length {len(value)} != total_ticks {expected_len}")
+    out = []
+    for idx, item in enumerate(value):
+        if isinstance(item, bool) or not isinstance(item, (int, float)):
+            raise ValueError(f"{name}[{idx}] must be a finite real number")
+        number = float(item)
+        if not math.isfinite(number):
+            raise ValueError(f"{name}[{idx}] must be finite")
+        out.append(number)
+    return out
+
+
+def _expected_clarification_tick_from_config(cfg: dict) -> int:
+    generated = ExperimentConfig(
+        content_factor=cfg["content_factor"],
+        channel_factor=cfg["channel_factor"],
+        timing_factor=cfg["timing_factor"],
+        budget_k=cfg.get("budget_k", 3),
+        random_seed=cfg.get("random_seed", 42),
+        num_agents=cfg.get("num_agents", 20),
+        total_ticks=cfg["total_ticks"],
+        scandal_tick=cfg["scandal_tick"],
+    )
+    expected = generated.clarification_tick
+    if expected is None:
+        raise ValueError("strategy clarification_tick rule generated None")
+    return expected
+
+
+def _validate_v4_metric_keys(metrics: dict, exp_id: str) -> None:
+    if not isinstance(metrics, dict):
+        raise ValueError(f"{exp_id} relative_metrics_v4 must be a dict")
+    if set(metrics.keys()) != set(V4_FIELDS):
+        raise ValueError(f"{exp_id} relative_metrics_v4 keys must equal V4_FIELDS")
+
+
+def _validate_control_metrics_v4(metrics: dict) -> None:
+    _validate_v4_metric_keys(metrics, CONTROL_EXP_ID)
+    if metrics["final_trust_gain_vs_control"] != 0:
+        raise ValueError("control final_trust_gain_vs_control must be 0")
+    if metrics["post_scandal_auc_gain_vs_control"] != 0:
+        raise ValueError("control post_scandal_auc_gain_vs_control must be 0")
+    for field in V4_FIELDS[2:]:
+        if metrics[field] is not None:
+            raise ValueError(f"control {field} must be None")
+
+
+def _validate_strategy_metrics_v4(metrics: dict, exp_id: str) -> None:
+    _validate_v4_metric_keys(metrics, exp_id)
+    for field in V4_FIELDS:
+        value = metrics[field]
+        if field == "negative_gain_tick_count":
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(f"{exp_id} {field} must be a non-negative int")
+            continue
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+            raise ValueError(f"{exp_id} {field} must be a finite number")
+
+
+def attach_relative_metrics_v4(results: list) -> None:
+    """Attach TASK_004 relative metrics atomically to the 9 successful batch results."""
+    if not isinstance(results, list):
+        raise ValueError("results must be a list")
+    old_values = []
+    sentinel = object()
+    for result in results:
+        if isinstance(result, dict) and "relative_metrics_v4" in result:
+            old_values.append((result, result["relative_metrics_v4"]))
+        elif isinstance(result, dict):
+            old_values.append((result, sentinel))
+
+    try:
+        if len(results) != 9:
+            raise ValueError(f"results must contain exactly 9 entries, got {len(results)}")
+        for idx, result in enumerate(results):
+            if not isinstance(result, dict):
+                raise ValueError(f"results[{idx}] must be a dict")
+            if "error" in result:
+                raise ValueError(f"{result.get('exp_id', idx)} contains error")
+            if not isinstance(result.get("config"), dict):
+                raise ValueError(f"{result.get('exp_id', idx)} config must be a dict")
+
+        controls = [r for r in results if r["config"].get("is_control") is True]
+        strategies = [r for r in results if r["config"].get("is_control") is False]
+        if len(controls) != 1:
+            raise ValueError(f"expected exactly one control result, got {len(controls)}")
+        if len(strategies) != 8:
+            raise ValueError(f"expected exactly eight strategy results, got {len(strategies)}")
+
+        control = controls[0]
+        control_cfg = control["config"]
+        if control.get("exp_id") != CONTROL_EXP_ID or control_cfg.get("exp_id") != CONTROL_EXP_ID:
+            raise ValueError("control exp_id must be NoClarification-Control")
+        if control_cfg.get("timing_factor") != CONTROL_TIMING:
+            raise ValueError("control timing_factor must be no-clarification")
+        if control_cfg.get("clarification_tick") is not None:
+            raise ValueError("control clarification_tick must be None")
+
+        total_ticks = control_cfg.get("total_ticks")
+        scandal_tick = control_cfg.get("scandal_tick")
+        if isinstance(total_ticks, bool) or not isinstance(total_ticks, int) or total_ticks <= 0:
+            raise ValueError("control total_ticks must be a positive int")
+        if isinstance(scandal_tick, bool) or not isinstance(scandal_tick, int):
+            raise ValueError("control scandal_tick must be an int")
+        control_trust = _finite_real_sequence(control.get("trust_trajectory"), CONTROL_EXP_ID, total_ticks)
+
+        exp_ids = [r.get("exp_id") for r in strategies]
+        if len(set(exp_ids)) != 8 or any(not isinstance(exp_id, str) or not exp_id for exp_id in exp_ids):
+            raise ValueError("strategy exp_id values must be unique non-empty strings")
+
+        pending = {id(control): build_control_metrics_v4()}
+        for result in strategies:
+            cfg = result["config"]
+            exp_id = result.get("exp_id")
+            if cfg.get("exp_id") != exp_id:
+                raise ValueError(f"{exp_id} config exp_id mismatch")
+            if cfg.get("is_control") is not False:
+                raise ValueError(f"{exp_id} is_control must be False")
+            if cfg.get("total_ticks") != total_ticks:
+                raise ValueError(f"{exp_id} total_ticks differs from control")
+            if cfg.get("scandal_tick") != scandal_tick:
+                raise ValueError(f"{exp_id} scandal_tick differs from control")
+            clarification_tick = cfg.get("clarification_tick")
+            if isinstance(clarification_tick, bool) or not isinstance(clarification_tick, int):
+                raise ValueError(f"{exp_id} clarification_tick must be an int")
+            expected_tick = _expected_clarification_tick_from_config(cfg)
+            if clarification_tick != expected_tick:
+                raise ValueError(
+                    f"{exp_id} clarification_tick {clarification_tick} != rule-generated {expected_tick}"
+                )
+            strategy_trust = _finite_real_sequence(result.get("trust_trajectory"), exp_id, total_ticks)
+            pending[id(result)] = compute_relative_metrics_v4(
+                strategy_trust,
+                control_trust,
+                scandal_tick=scandal_tick,
+                clarification_tick=clarification_tick,
+                total_ticks=total_ticks,
+            )
+
+        _validate_control_metrics_v4(pending[id(control)])
+        for result in strategies:
+            _validate_strategy_metrics_v4(pending[id(result)], result["exp_id"])
+
+        for result in results:
+            result["relative_metrics_v4"] = pending[id(result)]
+    except Exception:
+        for result, old_value in old_values:
+            if old_value is sentinel:
+                result.pop("relative_metrics_v4", None)
+            else:
+                result["relative_metrics_v4"] = old_value
+        raise
 
 
 def write_summary_csv(results: list, output_path: str):
     """Write summary.csv with a single common-control baseline."""
-    ctrl_final = None
-    for r in results:
-        if "error" in r:
-            continue
-        if r["config"].get("is_control"):
-            final_trust = r["trust_trajectory"][-1] if r.get("trust_trajectory") else 0.0
-            ctrl_final = round(final_trust, 4)
-
     with open(output_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(SUMMARY_FIELDS)
@@ -172,8 +363,11 @@ def write_summary_csv(results: list, output_path: str):
                 continue
             cfg = r["config"]
             m = r["metrics"]
-            final_trust = r["trust_trajectory"][-1] if r.get("trust_trajectory") else 0.0
-            trust_gain = "" if ctrl_final is None else round(final_trust - ctrl_final, 4)
+            relative = r.get("relative_metrics_v4")
+            if relative is None:
+                raise ValueError(f"{r.get('exp_id', 'unknown')} missing relative_metrics_v4")
+            _validate_v4_metric_keys(relative, r.get("exp_id", "unknown"))
+            trust_gain = relative["final_trust_gain_vs_control"]
             writer.writerow([
                 r["exp_id"], cfg["content_factor"], cfg["channel_factor"],
                 cfg["timing_factor"], cfg.get("is_control", False),
@@ -181,7 +375,100 @@ def write_summary_csv(results: list, output_path: str):
                 m.steady_state_score, m.recovery_rate, m.t50, m.t80,
                 m.trust_min, m.trust_min_tick, m.baseline_trust,
                 m.clarification_effect, trust_gain,
+                *[relative[field] for field in V4_FIELDS],
             ])
+
+
+def _build_v4_analysis_rows(results: list) -> list[dict]:
+    if not isinstance(results, list) or len(results) != 9:
+        raise ValueError("results must be a 9-row list")
+    rows = []
+    for result in results:
+        if "error" in result:
+            raise ValueError(f"{result.get('exp_id', 'unknown')} contains error")
+        cfg = result.get("config")
+        relative = result.get("relative_metrics_v4")
+        if not isinstance(cfg, dict):
+            raise ValueError(f"{result.get('exp_id', 'unknown')} config must be a dict")
+        _validate_v4_metric_keys(relative, result.get("exp_id", "unknown"))
+        row = {
+            "exp_id": result.get("exp_id"),
+            "content_factor": cfg.get("content_factor"),
+            "channel_factor": cfg.get("channel_factor"),
+            "timing_factor": cfg.get("timing_factor"),
+            "is_control": cfg.get("is_control"),
+        }
+        row.update({field: relative[field] for field in V4_FIELDS})
+        rows.append(row)
+    return rows
+
+
+def _finite_csv_number(row: dict, field: str) -> bool:
+    value = row.get(field)
+    return (
+        not isinstance(value, bool)
+        and isinstance(value, (int, float))
+        and math.isfinite(float(value))
+    )
+
+
+def write_ranking_outputs_v4(
+    results: list,
+    sensitivity_path: str,
+    robustness_path: str,
+) -> tuple[list[dict], list[dict]]:
+    rows = _build_v4_analysis_rows(results)
+    sensitivity_rows, robustness_rows = compute_ranking_sensitivity_v4(rows)
+    sensitivity_fields = [
+        "weight_final", "weight_auc", "weight_local", "exp_id",
+        "weighted_score", "rank", "top1_credit",
+    ]
+    robustness_fields = [
+        "exp_id", "top1_share", "mean_rank", "median_rank",
+        "best_rank", "worst_rank",
+    ]
+
+    if len(sensitivity_rows) != 528:
+        raise ValueError(f"ranking_sensitivity must contain 528 rows, got {len(sensitivity_rows)}")
+    if len(robustness_rows) != 8:
+        raise ValueError(f"ranking_robustness must contain 8 rows, got {len(robustness_rows)}")
+    for row in sensitivity_rows:
+        if set(row.keys()) != set(sensitivity_fields):
+            raise ValueError("ranking_sensitivity row keys do not match header")
+        for field in ("weight_final", "weight_auc", "weight_local", "weighted_score", "rank", "top1_credit"):
+            if not _finite_csv_number(row, field):
+                raise ValueError(f"ranking_sensitivity {field} must be finite")
+    for row in robustness_rows:
+        if set(row.keys()) != set(robustness_fields):
+            raise ValueError("ranking_robustness row keys do not match header")
+        for field in ("top1_share", "mean_rank", "median_rank", "best_rank", "worst_rank"):
+            if not _finite_csv_number(row, field):
+                raise ValueError(f"ranking_robustness {field} must be finite")
+
+    by_weight = {}
+    for row in sensitivity_rows:
+        key = (row["weight_final"], row["weight_auc"], row["weight_local"])
+        by_weight.setdefault(key, []).append(row)
+    if len(by_weight) != NUM_WEIGHT_COMBINATIONS:
+        raise ValueError(f"expected {NUM_WEIGHT_COMBINATIONS} weight groups, got {len(by_weight)}")
+    for key, items in by_weight.items():
+        exp_ids = {item["exp_id"] for item in items}
+        if len(items) != 8 or len(exp_ids) != 8:
+            raise ValueError(f"weight group {key} must contain 8 distinct exp_id values")
+        if abs(sum(float(item["top1_credit"]) for item in items) - 1.0) > 1e-9:
+            raise ValueError(f"weight group {key} top1_credit sum must be 1")
+    if len({row["exp_id"] for row in robustness_rows}) != 8:
+        raise ValueError("ranking_robustness exp_id values must be unique")
+
+    with open(sensitivity_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=sensitivity_fields, extrasaction="raise")
+        writer.writeheader()
+        writer.writerows(sensitivity_rows)
+    with open(robustness_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=robustness_fields, extrasaction="raise")
+        writer.writeheader()
+        writer.writerows(robustness_rows)
+    return sensitivity_rows, robustness_rows
 
 def write_trajectories_csv(results: list, output_path: str):
     """将所有实验的逐 Tick 轨迹写入 CSV（供折线图使用）"""
@@ -670,6 +957,7 @@ def write_run_metadata_json(results: list, output_path: str, project_root: str,
             },
             "divergent_recording_enabled": False,
         },
+        "metrics": _build_metrics_metadata_v4(),
         # R8：顶层显式镜像，便于审计脚本直接 grep；值恒等于 git["is_dirty"]
         #     True/False = 已判定，"unknown" = 无法判定（绝不静默当作干净）
         "git_is_dirty": git_info["is_dirty"],
@@ -736,6 +1024,8 @@ def write_run_metadata_json(results: list, output_path: str, project_root: str,
             else:
                 entry["effective_event_timeline"] = []
                 entry["effective_event_timeline_source"] = "unknown: not reported by result"
+            if "relative_metrics_v4" in r:
+                entry["relative_metrics_v4"] = r["relative_metrics_v4"]
         meta["experiments"].append(entry)
 
     # 全部成功实验实际生效的事件 Tick 并集（仅由结果聚合，不引用任何常量）
@@ -756,6 +1046,8 @@ def write_run_metadata_json(results: list, output_path: str, project_root: str,
 
 LATEST_MANAGED_TARGETS = (
     "summary.csv",
+    "ranking_sensitivity.csv",
+    "ranking_robustness.csv",
     "trajectories.csv",
     "agent_records.csv",
     "target_nodes.csv",
@@ -990,12 +1282,32 @@ async def main():
         )
         return code, completed
 
-    summary_path = os.path.join(run_dir, "summary.csv")
+    v4_ready = False
     try:
-        write_summary_csv(results, summary_path)
-        print(f"\nsummary: {summary_path}")
+        attach_relative_metrics_v4(results)
+        v4_ready = True
     except Exception as e:
-        _record_postprocess_error("write summary.csv", e)
+        _record_postprocess_error("attach relative metrics v4", e)
+
+    summary_path = os.path.join(run_dir, "summary.csv")
+    if v4_ready:
+        try:
+            write_summary_csv(results, summary_path)
+            print(f"\nsummary: {summary_path}")
+        except Exception as e:
+            v4_ready = False
+            _record_postprocess_error("write summary.csv", e)
+
+    if v4_ready:
+        try:
+            sensitivity_path = os.path.join(run_dir, "ranking_sensitivity.csv")
+            robustness_path = os.path.join(run_dir, "ranking_robustness.csv")
+            write_ranking_outputs_v4(results, sensitivity_path, robustness_path)
+            print(f"ranking_sensitivity: {sensitivity_path}")
+            print(f"ranking_robustness: {robustness_path}")
+        except Exception as e:
+            v4_ready = False
+            _record_postprocess_error("write ranking outputs v4", e)
 
     trajectories_path = os.path.join(run_dir, "trajectories.csv")
     try:
@@ -1066,7 +1378,7 @@ async def main():
 
     successful = [r for r in results if "error" not in r]
     results_dir = run_dir
-    if successful:
+    if v4_ready and successful:
         # Pareto frontier and ranking are owned by analysis/plot_experiments.py.
         # The legacy plot_pareto.py entry is intentionally not called here.
         analysis_dir = os.path.join(current_dir, "analysis")
@@ -1075,7 +1387,6 @@ async def main():
         try:
             import plot_experiments as _pe
             import plot_trajectories as _pt_traj
-            import pandas as _pd
             run_figures_dir = os.path.join(run_dir, "figures")
             os.makedirs(run_figures_dir, exist_ok=True)
             _pe.OUTPUT_DIR = run_figures_dir
@@ -1083,12 +1394,13 @@ async def main():
             _pt_traj.OUTPUT_DIR = run_figures_dir
             _pt_traj.RESULTS_DIR = run_dir
             print("\ngenerating experiment figures...")
-            df_exp = _pd.read_csv(summary_path)
+            df_exp = _pe.load_data(require_v4=True)
             _pe.plot_main_effects(df_exp)
             _pe.plot_heatmap_interactions(df_exp)
-            df_exp = _pe.plot_pareto_frontier(df_exp)
+            _pe.plot_pareto_frontier(df_exp)
             _pe.plot_strategy_ranking(df_exp)
             _pe.plot_clarification_diagnosis(df_exp)
+            _pe.plot_ranking_sensitivity_v4(df_exp)
             df_traj = _pt_traj.load_trajectories()
             _pt_traj.plot_timing_comparison(df_traj)
             _pt_traj.plot_content_channel_comparison(df_traj)

@@ -1,108 +1,157 @@
-"""
-experiment_config.py — 实验配置定义模块
+"""Experiment matrix configuration for TASK_003."""
 
-定义三因子实验空间（内容×渠道×时机），生成 2×2×3=12 个实验配置。
-"""
-from dataclasses import dataclass, field, asdict
-from typing import List, Optional
+from dataclasses import asdict, dataclass
 from itertools import product
+from typing import List, Optional
 
-# 合法因子水平
-VALID_CONTENT_FACTORS = {"rational-evidence", "emotional-empathy"}
-VALID_CHANNEL_FACTORS = {"hub", "random"}
-VALID_TIMING_FACTORS  = {"immediate", "delay-3", "no-clarification"}
+
+EXPERIMENT_MATRIX_VERSION = "3.0"
+
+NOT_APPLICABLE = "not-applicable"
+
+CONTENT_LEVELS = ("rational-evidence", "emotional-empathy")
+CHANNEL_LEVELS = ("hub", "random")
+STRATEGY_TIMING_LEVELS = ("immediate", "delayed")
+CONTROL_TIMING = "no-clarification"
+CONTROL_EXP_ID = "NoClarification-Control"
+
+VALID_CONTENT_FACTORS = set(CONTENT_LEVELS) | {NOT_APPLICABLE}
+VALID_CHANNEL_FACTORS = set(CHANNEL_LEVELS) | {NOT_APPLICABLE}
+VALID_TIMING_FACTORS = set(STRATEGY_TIMING_LEVELS) | {CONTROL_TIMING}
+
+IMMEDIATE_OFFSET_TICKS = 1
+DELAYED_OFFSET_TICKS = 5
+
+CONTENT_ID_TOKEN = {
+    "rational-evidence": "Rational",
+    "emotional-empathy": "Empathy",
+}
+CHANNEL_ID_TOKEN = {
+    "hub": "Hub",
+    "random": "Random",
+}
+TIMING_ID_TOKEN = {
+    "immediate": "Immediate",
+    "delayed": "Delayed",
+}
+
+assert all(not any(ch.isdigit() for ch in lv) for lv in STRATEGY_TIMING_LEVELS)
+assert NOT_APPLICABLE == "not-applicable" and "_" not in NOT_APPLICABLE
+assert NOT_APPLICABLE not in (
+    set(CONTENT_LEVELS) | set(CHANNEL_LEVELS) | set(STRATEGY_TIMING_LEVELS) | {CONTROL_TIMING}
+)
+assert not any(tok in CONTROL_EXP_ID for tok in ("Rational", "Empathy", "Hub", "Random"))
 
 
 @dataclass(frozen=True)
 class ExperimentConfig:
-    """单次实验运行的完整配置（不可变）"""
+    """Immutable configuration for one matrix condition."""
 
-    # ── 因子水平 ─────────────────────────────────────────────────────
-    content_factor: str      # "rational-evidence" | "emotional-empathy"
-    channel_factor: str      # "hub" | "random"
-    timing_factor: str       # "immediate" | "delay-3" | "no-clarification"
+    content_factor: str
+    channel_factor: str
+    timing_factor: str
 
-    # ── 固定参数 ─────────────────────────────────────────────────────
-    budget_k: int = 3        # 澄清直接投放节点数（20人网络中约15%渗透率）
+    budget_k: int = 3
     random_seed: int = 42
-    num_agents: int = 20     # 增加至20人，使网络效应（Hub vs Random差异）显著化
+    num_agents: int = 20
     total_ticks: int = 30
-    scandal_tick: int = 5    # 丑闻爆发 Tick（对应 ENTERPRISE_STRATEGY 中的黑石事件）
+    scandal_tick: int = 5
 
     def __post_init__(self):
-        """字段验证"""
         if self.content_factor not in VALID_CONTENT_FACTORS:
             raise ValueError(
-                f"content_factor must be one of {VALID_CONTENT_FACTORS}, got '{self.content_factor}'"
+                f"content_factor must be one of {VALID_CONTENT_FACTORS}, got {self.content_factor!r}"
             )
         if self.channel_factor not in VALID_CHANNEL_FACTORS:
             raise ValueError(
-                f"channel_factor must be one of {VALID_CHANNEL_FACTORS}, got '{self.channel_factor}'"
+                f"channel_factor must be one of {VALID_CHANNEL_FACTORS}, got {self.channel_factor!r}"
             )
         if self.timing_factor not in VALID_TIMING_FACTORS:
             raise ValueError(
-                f"timing_factor must be one of {VALID_TIMING_FACTORS}, got '{self.timing_factor}'"
+                f"timing_factor must be one of {VALID_TIMING_FACTORS}, got {self.timing_factor!r}"
             )
         if self.num_agents <= 0:
             raise ValueError(f"num_agents must be > 0, got {self.num_agents}")
         if self.total_ticks <= 0:
             raise ValueError(f"total_ticks must be > 0, got {self.total_ticks}")
+        if self.budget_k < 0:
+            raise ValueError(f"budget_k must be >= 0, got {self.budget_k}")
+
+        if self.is_control:
+            if self.content_factor != NOT_APPLICABLE:
+                raise ValueError("control content_factor must be not-applicable")
+            if self.channel_factor != NOT_APPLICABLE:
+                raise ValueError("control channel_factor must be not-applicable")
+            if self.budget_k != 0:
+                raise ValueError("control budget_k must be 0")
+        else:
+            if self.content_factor not in CONTENT_LEVELS:
+                raise ValueError("strategy content_factor must be a real content level")
+            if self.channel_factor not in CHANNEL_LEVELS:
+                raise ValueError("strategy channel_factor must be a real channel level")
+            if self.budget_k <= 0:
+                raise ValueError("strategy budget_k must be > 0")
+
+        if self.clarification_tick is not None:
+            if not (self.scandal_tick < self.clarification_tick <= self.total_ticks):
+                raise ValueError(
+                    "clarification_tick must be after scandal_tick and within total_ticks"
+                )
+
+    @property
+    def is_control(self) -> bool:
+        return self.timing_factor == CONTROL_TIMING
 
     @property
     def exp_id(self) -> str:
-        """唯一实验标识符，如 'Rational-Hub-Imm'"""
-        content_short = "Rational" if self.content_factor == "rational-evidence" else "Empathy"
-        channel_short = "Hub" if self.channel_factor == "hub" else "Random"
-        timing_map = {"immediate": "Imm", "delay-3": "D3", "no-clarification": "NoClr"}
-        timing_short = timing_map[self.timing_factor]
-        return f"{content_short}-{channel_short}-{timing_short}"
+        if self.is_control:
+            return CONTROL_EXP_ID
+        return (
+            f"{CONTENT_ID_TOKEN[self.content_factor]}-"
+            f"{CHANNEL_ID_TOKEN[self.channel_factor]}-"
+            f"{TIMING_ID_TOKEN[self.timing_factor]}"
+        )
 
     @property
     def clarification_tick(self) -> Optional[int]:
-        """澄清注入的 Tick，None 表示不澄清
-
-        时机定义（相对于丑闻爆发 Tick）：
-          - immediate:        丑闻次日（scandal_tick + 1）
-          - delay-3:          丑闻后第 5 天（scandal_tick + 5），与 immediate 拉开足够间隔
-          - no-clarification: 不澄清
-        """
         if self.timing_factor == "immediate":
-            return self.scandal_tick + 1
-        elif self.timing_factor == "delay-3":
-            return self.scandal_tick + 5   # 从 +3 改为 +5，增强时机主效应的区分度
+            return self.scandal_tick + IMMEDIATE_OFFSET_TICKS
+        if self.timing_factor == "delayed":
+            return self.scandal_tick + DELAYED_OFFSET_TICKS
         return None
 
     def to_dict(self) -> dict:
-        """序列化为字典（用于 JSON 存档）"""
         d = asdict(self)
         d["exp_id"] = self.exp_id
+        d["is_control"] = self.is_control
         d["clarification_tick"] = self.clarification_tick
         return d
 
 
 def generate_experiment_matrix() -> List[ExperimentConfig]:
-    """
-    生成完整的因子实验矩阵。
-
-    2（内容）× 2（渠道）× 3（时机）= 12 个配置。
-    """
-    content_levels = ["rational-evidence", "emotional-empathy"]
-    channel_levels = ["hub", "random"]
-    timing_levels  = ["immediate", "delay-3", "no-clarification"]
-
-    configs = []
-    for content, channel, timing in product(content_levels, channel_levels, timing_levels):
-        configs.append(ExperimentConfig(
-            content_factor=content,
-            channel_factor=channel,
-            timing_factor=timing,
-        ))
+    """Generate the 8 strategy conditions plus the single common control."""
+    configs = [
+        ExperimentConfig(content_factor=content, channel_factor=channel, timing_factor=timing)
+        for content, channel, timing in product(
+            CONTENT_LEVELS, CHANNEL_LEVELS, STRATEGY_TIMING_LEVELS
+        )
+    ]
+    configs.append(
+        ExperimentConfig(
+            content_factor=NOT_APPLICABLE,
+            channel_factor=NOT_APPLICABLE,
+            timing_factor=CONTROL_TIMING,
+            budget_k=0,
+        )
+    )
+    assert len(configs) == 9
+    assert len({c.exp_id for c in configs}) == 9
+    assert sum(1 for c in configs if c.is_control) == 1
     return configs
 
 
 if __name__ == "__main__":
-    # 快速验证
     matrix = generate_experiment_matrix()
-    print(f"实验矩阵共 {len(matrix)} 组：")
+    print(f"Experiment matrix v{EXPERIMENT_MATRIX_VERSION}: {len(matrix)} conditions")
     for i, cfg in enumerate(matrix, 1):
-        print(f"  [{i:2d}] {cfg.exp_id:20s} | clarification_tick={cfg.clarification_tick}")
+        print(f"  [{i:2d}] {cfg.exp_id:30s} | clarification_tick={cfg.clarification_tick}")

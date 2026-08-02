@@ -2,13 +2,13 @@
 run_experiments.py — 实验批量调度入口
 
 观测目标：单一漂绿事件（Blackstone 丑闻，Tick 5）后，
-         12 种企业澄清策略（2×内容 × 2×渠道 × 3×时机）的信任恢复差异。
+         8 clarification strategies + 1 unique common control.
 
 设计原则：
   1. 单事件控制  — 临时 patch ENTERPRISE_STRATEGY 为仅含 Tick 5 的漂绿事件，
                    屏蔽 Tick 10/15 的后续事件，确保策略效果归因干净。
   2. 路径对齐   — 先跑 no-clarification 对照组并缓存 LLM 响应（RecordingRouter），
-                   其余 11 组在澄清 Tick 之前 Replay 同一份缓存，
+                   8 strategy conditions replay the same cache before clarification_tick,
                    保证 Tick 1~(clarification_tick-1) 的信任轨迹完全一致。
   3. 真实 LLM   — 澄清 Tick 当天及之后走真实 LLM，差异完全由策略内容决定。
 
@@ -24,12 +24,25 @@ import hashlib
 import json
 import platform
 import subprocess
+import shutil
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
-from experiment_config import generate_experiment_matrix, ExperimentConfig
+from experiment_config import (
+    CHANNEL_LEVELS,
+    CONTENT_LEVELS,
+    CONTROL_EXP_ID,
+    CONTROL_TIMING,
+    DELAYED_OFFSET_TICKS,
+    EXPERIMENT_MATRIX_VERSION,
+    IMMEDIATE_OFFSET_TICKS,
+    NOT_APPLICABLE,
+    STRATEGY_TIMING_LEVELS,
+    generate_experiment_matrix,
+    ExperimentConfig,
+)
 from simulation_core import (
     run_simulation_core,
     ENTERPRISE_STRATEGY,
@@ -78,13 +91,28 @@ class RecordingRouter:
         return self._cache
 
 
-class ReplayRouter:
-    """在 replay_until_tick 之前回放缓存，之后走真实 LLM"""
+class ReplayAlignmentError(RuntimeError):
+    """Raised when a replay-window cache miss breaks alignment."""
 
-    def __init__(self, inner_router, cache: dict, replay_until_tick: int):
+    def __init__(self, exp_id: str, tick: int, replay_until: int, miss_count: int):
+        self.exp_id = exp_id
+        self.tick = tick
+        self.replay_until = replay_until
+        self.miss_count = miss_count
+        super().__init__(
+            f"Replay alignment miss exp_id={exp_id} tick={tick} "
+            f"replay_until={replay_until} miss_count={miss_count}"
+        )
+
+
+class ReplayRouter:
+    """Replay cached calls before replay_until_tick; fail closed on window misses."""
+
+    def __init__(self, inner_router, cache: dict, replay_until_tick: int, exp_id: str = ""):
         self._inner = inner_router
         self._cache = cache
         self._replay_until = replay_until_tick
+        self._exp_id = exp_id
         self._current_tick: int = 0
         self._call_counts: dict = {}
         self.miss_count: int = 0
@@ -103,8 +131,12 @@ class ReplayRouter:
             if key in self._cache:
                 return self._cache[key]
             self.miss_count += 1
-            if self.miss_count <= 3:
-                print(f"  ⚠️  [ReplayRouter] cache miss tick={self._current_tick}")
+            raise ReplayAlignmentError(
+                exp_id=self._exp_id,
+                tick=self._current_tick,
+                replay_until=self._replay_until,
+                miss_count=self.miss_count,
+            )
         return await self._inner.chat(prompt)
 
 
@@ -112,58 +144,51 @@ class ReplayRouter:
 # CSV 写入函数
 # ══════════════════════════════════════════════════════════════════════
 
-def write_summary_csv(results: list, output_path: str):
-    """将所有实验结果写入汇总 CSV（含高区分度指标 + 相对对照组的增益）"""
+SUMMARY_FIELDS = [
+    "exp_id", "content_factor", "channel_factor", "timing_factor", "is_control",
+    "delta_recovery", "auc_post_scandal", "recovery_speed",
+    "steady_state_score", "recovery_rate", "t50", "t80",
+    "trust_min", "trust_min_tick", "baseline_trust", "clarification_effect",
+    "trust_gain_vs_control",
+]
 
-    # 预计算对照组（no-clarification）的基线信任，用于计算相对增益
-    # 按渠道分组取对应的 no-clr 基线（hub vs random 的基线不同）
-    ctrl_baseline: dict = {}   # channel → final_trust
+
+def write_summary_csv(results: list, output_path: str):
+    """Write summary.csv with a single common-control baseline."""
+    ctrl_final = None
     for r in results:
         if "error" in r:
             continue
-        if r["config"].get("timing_factor") == "no-clarification":
-            channel = r["config"].get("channel_factor", "hub")
+        if r["config"].get("is_control"):
             final_trust = r["trust_trajectory"][-1] if r.get("trust_trajectory") else 0.0
-            ctrl_baseline[channel] = round(final_trust, 4)
+            ctrl_final = round(final_trust, 4)
 
     with open(output_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow([
-            "exp_id", "content_factor", "channel_factor", "timing_factor",
-            "delta_recovery", "auc_post_scandal", "recovery_speed",
-            "steady_state_score", "recovery_rate", "t50", "t80",
-            "trust_min", "trust_min_tick", "baseline_trust", "clarification_effect",
-            # 新增：相对对照组的净信任增益（同渠道 no-clr 为基线）
-            "trust_gain_vs_control",
-        ])
+        writer.writerow(SUMMARY_FIELDS)
         for r in results:
             if "error" in r:
-                writer.writerow([r["exp_id"]] + ["ERROR"] * 16)
+                writer.writerow([r["exp_id"]] + ["ERROR"] * (len(SUMMARY_FIELDS) - 1))
                 continue
             cfg = r["config"]
-            m   = r["metrics"]
-
-            # 计算相对对照组的净增益
-            channel = cfg["channel_factor"]
+            m = r["metrics"]
             final_trust = r["trust_trajectory"][-1] if r.get("trust_trajectory") else 0.0
-            ctrl_final  = ctrl_baseline.get(channel, final_trust)
-            trust_gain  = round(final_trust - ctrl_final, 4)
-
+            trust_gain = "" if ctrl_final is None else round(final_trust - ctrl_final, 4)
             writer.writerow([
-                r["exp_id"], cfg["content_factor"], cfg["channel_factor"], cfg["timing_factor"],
+                r["exp_id"], cfg["content_factor"], cfg["channel_factor"],
+                cfg["timing_factor"], cfg.get("is_control", False),
                 m.delta_recovery, m.auc_post_scandal, m.recovery_speed,
                 m.steady_state_score, m.recovery_rate, m.t50, m.t80,
-                m.trust_min, m.trust_min_tick, m.baseline_trust, m.clarification_effect,
-                trust_gain,
+                m.trust_min, m.trust_min_tick, m.baseline_trust,
+                m.clarification_effect, trust_gain,
             ])
-
 
 def write_trajectories_csv(results: list, output_path: str):
     """将所有实验的逐 Tick 轨迹写入 CSV（供折线图使用）"""
     with open(output_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow([
-            "exp_id", "content_factor", "channel_factor", "timing_factor",
+            "exp_id", "content_factor", "channel_factor", "timing_factor", "is_control",
             "tick", "avg_trust", "conversion_rate",
         ])
         for r in results:
@@ -174,7 +199,8 @@ def write_trajectories_csv(results: list, output_path: str):
             conv_traj  = r.get("conversion_trajectory", [])
             for tick_idx, (trust, conv) in enumerate(zip(trust_traj, conv_traj), start=1):
                 writer.writerow([
-                    r["exp_id"], cfg["content_factor"], cfg["channel_factor"], cfg["timing_factor"],
+                    r["exp_id"], cfg["content_factor"], cfg["channel_factor"],
+                    cfg["timing_factor"], cfg.get("is_control", False),
                     tick_idx, round(trust, 4), round(conv, 4),
                 ])
 
@@ -230,7 +256,7 @@ def verify_single_network(results: list) -> dict:
 
     network_nodes.csv / network_edges.csv 是 run 级静态文件（全 run 一份、无 exp_id），
     其成立条件是所有成功实验的拓扑完全相同。该条件由 (num_agents, random_seed) 决定，
-    12 组配置当前都是 (20, 42)，但**必须验证**——一旦有人改了某组的 seed，
+    9 conditions currently share (20, 42), but this must be verified; if a seed changes,
     静默写出"某一组"的拓扑会让全部网络分析结论失去归属。
 
     Returns:
@@ -584,7 +610,9 @@ _PERSONA_SOURCES = {
 
 
 def write_run_metadata_json(results: list, output_path: str, project_root: str,
-                            run_id: str = "", network_verification: dict = None) -> dict:
+                            run_id: str = "", network_verification: dict = None,
+                            batch_exit_code: int = 0,
+                            run_completed: bool = True) -> dict:
     """写入运行级元数据（schema v2.0 的补充证据）。
 
     Args:
@@ -610,6 +638,38 @@ def write_run_metadata_json(results: list, output_path: str, project_root: str,
         "python_version": sys.version.split()[0],
         "platform": platform.platform(),
         "git": git_info,
+        "batch_exit_code": batch_exit_code,
+        "run_completed": run_completed,
+        "experiment_matrix": {
+            "matrix_version": EXPERIMENT_MATRIX_VERSION,
+            "condition_count": 9,
+            "strategy_condition_count": 8,
+            "control_condition_count": 1,
+            "control_exp_id": CONTROL_EXP_ID,
+            "content_levels": list(CONTENT_LEVELS),
+            "channel_levels": list(CHANNEL_LEVELS),
+            "timing_levels": list(STRATEGY_TIMING_LEVELS),
+            "control_timing": CONTROL_TIMING,
+            "not_applicable_value": NOT_APPLICABLE,
+            "immediate_offset_ticks": IMMEDIATE_OFFSET_TICKS,
+            "delayed_offset_ticks": DELAYED_OFFSET_TICKS,
+            "recording_exp_id": CONTROL_EXP_ID,
+            "replay_until_by_exp_id": {
+                r.get("exp_id", ""): (r.get("config") or {}).get("clarification_tick")
+                for r in results
+                if not (r.get("config") or {}).get("is_control", False)
+            },
+            "replay_alignment_violated": any(
+                (r.get("run_audit") or {}).get("replay_miss_count") not in ("", 0, "0")
+                for r in results
+            ),
+            "replay_miss_by_exp_id": {
+                r.get("exp_id", ""): (r.get("run_audit") or {}).get("replay_miss_count")
+                for r in results
+                if (r.get("run_audit") or {}).get("replay_miss_count") not in ("", 0, "0")
+            },
+            "divergent_recording_enabled": False,
+        },
         # R8：顶层显式镜像，便于审计脚本直接 grep；值恒等于 git["is_dirty"]
         #     True/False = 已判定，"unknown" = 无法判定（绝不静默当作干净）
         "git_is_dirty": git_info["is_dirty"],
@@ -685,9 +745,57 @@ def write_run_metadata_json(results: list, output_path: str, project_root: str,
         for e in entry.get("effective_event_timeline", [])
     })
 
-    with open(output_path, "w", encoding="utf-8") as f:
+    tmp_path = output_path + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2, ensure_ascii=False)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp_path, output_path)
     return meta
+
+
+LATEST_MANAGED_TARGETS = (
+    "summary.csv",
+    "trajectories.csv",
+    "agent_records.csv",
+    "target_nodes.csv",
+    "network_nodes.csv",
+    "network_edges.csv",
+    "experiment_metadata.jsonl",
+    "run_metadata.json",
+    "network_inconsistency_report.json",
+    "errors.log",
+    "run_info.txt",
+    "figures",
+)
+
+
+def sync_latest_snapshot(run_dir: str, latest_dir: str, run_id: str,
+                         results: list, total: int) -> None:
+    """Refresh only files managed by this batch runner in latest/."""
+    os.makedirs(latest_dir, exist_ok=True)
+    for name in LATEST_MANAGED_TARGETS:
+        target = os.path.join(latest_dir, name)
+        if os.path.isdir(target):
+            shutil.rmtree(target)
+        elif os.path.exists(target):
+            os.remove(target)
+
+    for name in LATEST_MANAGED_TARGETS:
+        if name == "run_info.txt":
+            continue
+        src = os.path.join(run_dir, name)
+        dst = os.path.join(latest_dir, name)
+        if os.path.isdir(src):
+            shutil.copytree(src, dst)
+        elif os.path.exists(src):
+            shutil.copy2(src, dst)
+
+    with open(os.path.join(latest_dir, "run_info.txt"), "w", encoding="utf-8") as f:
+        f.write(f"run_id   : {run_id}\n")
+        f.write(f"run_dir  : {run_dir}\n")
+        f.write(f"generated: {datetime.datetime.now()}\n")
+        f.write(f"success  : {len([r for r in results if 'error' not in r])}/{total}\n")
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -716,29 +824,19 @@ async def _run_with_patch(config: ExperimentConfig, override_router=None) -> dic
 
 async def main():
     print("=" * 65)
-    print("🧪 GABM 批量实验 — 单一漂绿事件 × 12 种澄清策略")
-    print("   Scandal : Tick 5 (Blackstone 丑闻，其余事件屏蔽)")
-    print("   矩阵    : 2(内容) × 2(渠道) × 3(时机) = 12 组")
-    print("   对齐    : 澄清前路径 Replay 对照组 LLM 响应，消除采样噪声")
+    print("GABM batch experiment - 8 clarification strategies + 1 common control")
+    print("   Scandal : Tick 5 (single-event patch)")
+    print("   Matrix  : 2(content) x 2(channel) x 2(timing) = 8 + common control = 9")
+    print("   Replay  : common control records; strategies replay before clarification_tick")
     print("=" * 65)
 
     configs = generate_experiment_matrix()
-    total   = len(configs)
+    total = len(configs)
+    control_config = next(c for c in configs if c.is_control)
+    strategy_configs = sorted((c for c in configs if not c.is_control), key=lambda c: c.exp_id)
+    assert len(strategy_configs) == 8
+    ordered_configs = [control_config] + strategy_configs
 
-    # ── 执行顺序设计 ─────────────────────────────────────────────────
-    # 1. 先跑单一 no-clarification 基线（hub+rational），录制全局 LLM 缓存
-    # 2. 其余 11 组（含另外 3 个 no-clr）全部 replay 该缓存到 clarification_tick 前，
-    #    保证所有实验在澄清注入前路径完全一致，差异仅来自策略本身
-    baseline_config = next(
-        c for c in configs
-        if c.timing_factor == "no-clarification"
-        and c.channel_factor == "hub"
-        and c.content_factor == "rational-evidence"
-    )
-    other_configs = [c for c in configs if c != baseline_config]
-    ordered_configs = [baseline_config] + other_configs
-
-    # ── 获取真实 Router ───────────────────────────────────────────────
     import yaml
     try:
         with open(os.path.join(current_dir, "configs/models_config.yaml"), "r") as f:
@@ -765,15 +863,14 @@ async def main():
     llm_cache: dict = {}   # 对照组建立后填入
 
     for i, config in enumerate(ordered_configs, 1):
-        is_baseline = (config == baseline_config)
+        is_recording = config.is_control
+        role_label = ("[RECORDING control]" if is_recording
+                      else f"[REPLAY until T{config.clarification_tick}]")
 
         print(f"\n{'─'*65}")
         print(f"  [{i}/{total}] 🚀 {config.exp_id}")
         print(f"    Content={config.content_factor} | Channel={config.channel_factor} "
-              f"| Timing={config.timing_factor}"
-              + (" [RECORDING — baseline]" if is_baseline else
-                 f" [REPLAY until T{config.clarification_tick}]" if config.clarification_tick
-                 else f" [REPLAY full — no clarification]"))
+              f"| Timing={config.timing_factor} {role_label}")
         print(f"{'─'*65}")
 
         # ── TASK_002 审计插桩：计时点位于 _run_with_patch 之外，不进入仿真 ──
@@ -782,10 +879,11 @@ async def main():
             "finished_at": "",
             "recording_cache_size": "",   # "" = 不适用；录制组=产出规模，回放组=消费规模
             "replay_miss_count": "",      # "" = 不适用（录制组无 ReplayRouter）；0 = 回放零 miss
-            "router_role": "recording" if is_baseline else "replay",
+            "router_role": "recording" if is_recording else "replay",
         }
+        rp_router = None
         try:
-            if is_baseline:
+            if is_recording:
                 # ── 唯一的录制组：建立全局 LLM 缓存 ────────────────────
                 rec_router = RecordingRouter(_real_router)
                 result = await _run_with_patch(config, override_router=rec_router)
@@ -795,13 +893,14 @@ async def main():
                 run_audit["recording_cache_size"] = len(rec_router.cache)
                 # 录制组不存在 ReplayRouter → replay_miss_count 保持 ""，不写 0
             else:
-                # ── 其余 11 组（含另外 3 个 NoClr）：全程 Replay 到 clr_tick 前 ──
-                # no-clarification 组没有澄清，replay_until_tick=total_ticks+1 意味着全程回放
-                clr_tick = config.clarification_tick if config.clarification_tick else config.total_ticks + 1
-                rp_router = ReplayRouter(_real_router, llm_cache, replay_until_tick=clr_tick)
+                assert config.clarification_tick is not None
+                clr_tick = config.clarification_tick
+                rp_router = ReplayRouter(
+                    _real_router, llm_cache,
+                    replay_until_tick=clr_tick,
+                    exp_id=config.exp_id,
+                )
                 result = await _run_with_patch(config, override_router=rp_router)
-                if rp_router.miss_count > 0:
-                    print(f"  ⚠️  ReplayRouter cache miss: {rp_router.miss_count} 次")
                 # 真实来源：该组实际消费的缓存规模 + ReplayRouter.miss_count
                 run_audit["recording_cache_size"] = len(llm_cache)
                 run_audit["replay_miss_count"] = rp_router.miss_count
@@ -810,6 +909,20 @@ async def main():
             result["run_audit"] = run_audit
             results.append(result)
 
+        except ReplayAlignmentError as e:
+            error_msg = f"{config.exp_id}: {type(e).__name__}: {e}"
+            print(f"  FAILED: {error_msg}")
+            errors.append(error_msg)
+            run_audit["finished_at"] = datetime.datetime.now().isoformat(timespec="seconds")
+            run_audit["recording_cache_size"] = len(llm_cache)
+            run_audit["replay_miss_count"] = e.miss_count
+            results.append({"exp_id": config.exp_id,
+                            "config": config.to_dict(),
+                            "error": str(e),
+                            "error_type": type(e).__name__,
+                            "run_audit": run_audit})
+            continue
+
         except Exception as e:
             import traceback
             error_msg = f"{config.exp_id}: {type(e).__name__}: {e}"
@@ -817,6 +930,9 @@ async def main():
             traceback.print_exc()
             errors.append(error_msg)
             run_audit["finished_at"] = datetime.datetime.now().isoformat(timespec="seconds")
+            if not is_recording:
+                run_audit["recording_cache_size"] = len(llm_cache)
+                run_audit["replay_miss_count"] = getattr(rp_router, "miss_count", 0)
             # R12：异常分支必须一并写入 config —— 只保存 exp_id + error 会丢掉
             #      "哪一组因子 / 什么 seed / 预算多少"，而失败实验恰恰最需要复现。
             #      ExperimentConfig.to_dict() 已核实存在，返回 asdict + exp_id + clarification_tick。
@@ -836,149 +952,222 @@ async def main():
     os.makedirs(run_dir,    exist_ok=True)
     os.makedirs(latest_dir, exist_ok=True)
 
+    postprocess_errors = []
+
+    def _record_postprocess_error(stage: str, exc: Exception) -> None:
+        msg = f"{stage}: {type(exc).__name__}: {exc}"
+        postprocess_errors.append(msg)
+        print(f"WARNING: {msg}")
+
+    def _has_replay_miss(value) -> bool:
+        return value not in ("", 0, "0", None)
+
+    def _compute_final_status() -> tuple[int, bool]:
+        replay_alignment_violated_now = any(
+            _has_replay_miss((r.get("run_audit") or {}).get("replay_miss_count"))
+            for r in results
+        )
+        successful_count_now = len([r for r in results if "error" not in r])
+        ordinary_failure = (
+            len(results) != total
+            or successful_count_now != total
+            or bool(errors)
+            or bool(postprocess_errors)
+        )
+        if replay_alignment_violated_now:
+            code = 4
+        elif net_verification.get("status") != "consistent":
+            code = 3
+        elif ordinary_failure:
+            code = 1
+        else:
+            code = 0
+        completed = (
+            code == 0
+            and successful_count_now == 9
+            and not errors
+            and not postprocess_errors
+        )
+        return code, completed
+
     summary_path = os.path.join(run_dir, "summary.csv")
-    write_summary_csv(results, summary_path)
-    print(f"\n📄 汇总表: {summary_path}")
+    try:
+        write_summary_csv(results, summary_path)
+        print(f"\nsummary: {summary_path}")
+    except Exception as e:
+        _record_postprocess_error("write summary.csv", e)
 
     trajectories_path = os.path.join(run_dir, "trajectories.csv")
-    write_trajectories_csv(results, trajectories_path)
-    print(f"📈 轨迹数据: {trajectories_path}")
+    try:
+        write_trajectories_csv(results, trajectories_path)
+        print(f"trajectories: {trajectories_path}")
+    except Exception as e:
+        _record_postprocess_error("write trajectories.csv", e)
 
     agent_records_path = os.path.join(run_dir, "agent_records.csv")
-    write_agent_records_csv(results, agent_records_path)
-    print(f"🧬 逐Agent记录: {agent_records_path}")
+    try:
+        write_agent_records_csv(results, agent_records_path)
+        print(f"agent_records: {agent_records_path}")
+    except Exception as e:
+        _record_postprocess_error("write agent_records.csv", e)
 
     target_nodes_path = os.path.join(run_dir, "target_nodes.csv")
-    write_target_nodes_csv(results, target_nodes_path)
-    print(f"🎯 目标节点审计: {target_nodes_path}")
+    try:
+        write_target_nodes_csv(results, target_nodes_path)
+        print(f"target_nodes: {target_nodes_path}")
+    except Exception as e:
+        _record_postprocess_error("write target_nodes.csv", e)
 
-    # ── R10：run 级网络文件。写出前先验证"整个 run 只有一张网络" ──
-    net_verification = verify_single_network(results)
-    network_nodes_path = os.path.join(run_dir, "network_nodes.csv")
-    network_edges_path = os.path.join(run_dir, "network_edges.csv")
-    if net_verification["status"] == "consistent":
-        write_network_nodes_csv(results, network_nodes_path, net_verification)
-        write_network_edges_csv(results, network_edges_path, net_verification)
-        print(f"🕸️ 网络节点表 (run 级): {network_nodes_path}")
-        print(f"🕸️ 网络边表   (run 级): {network_edges_path}")
-        print(f"   网络指纹: {net_verification['network_hash'][:12]} "
-              f"(代表实验: {net_verification['source_exp_id']}, "
-              f"已核对 {net_verification['checked_experiments']} 组一致)")
-    else:
-        # 拒绝写出：缺失文件是"响亮且无法误读"的信号，远优于写出一份归属不明的网络
-        report_path = os.path.join(run_dir, "network_inconsistency_report.json")
-        write_network_inconsistency_report(net_verification, report_path)
-        msg = (f"NETWORK CONSISTENCY {net_verification['status'].upper()}: "
-               f"{net_verification['reason']}; refused to write "
-               f"network_nodes.csv / network_edges.csv; see {report_path}")
-        print("=" * 65)
-        print(f"  ❌ {msg}")
-        print(f"     指纹分组: {net_verification['hash_groups']}")
-        print("=" * 65)
-        errors.append(msg)
+    net_verification = {"status": "unavailable", "reason": "verify_single_network() failed before assignment"}
+    try:
+        net_verification = verify_single_network(results)
+        network_nodes_path = os.path.join(run_dir, "network_nodes.csv")
+        network_edges_path = os.path.join(run_dir, "network_edges.csv")
+        if net_verification["status"] == "consistent":
+            write_network_nodes_csv(results, network_nodes_path, net_verification)
+            write_network_edges_csv(results, network_edges_path, net_verification)
+            print(f"network_nodes: {network_nodes_path}")
+            print(f"network_edges: {network_edges_path}")
+            print(f"   network_hash: {net_verification['network_hash'][:12]} "
+                  f"(source: {net_verification['source_exp_id']}, "
+                  f"checked {net_verification['checked_experiments']} conditions)")
+        else:
+            report_path = os.path.join(run_dir, "network_inconsistency_report.json")
+            write_network_inconsistency_report(net_verification, report_path)
+            msg = (f"NETWORK CONSISTENCY {net_verification['status'].upper()}: "
+                   f"{net_verification['reason']}; refused to write "
+                   f"network_nodes.csv / network_edges.csv; see {report_path}")
+            print("=" * 65)
+            print(f"  FAIL: {msg}")
+            print(f"     hash_groups: {net_verification.get('hash_groups', {})}")
+            print("=" * 65)
+            errors.append(msg)
+    except Exception as e:
+        net_verification = {"status": "unavailable", "reason": f"{type(e).__name__}: {e}"}
+        _record_postprocess_error("verify/write network artifacts", e)
 
     exp_meta_path = os.path.join(run_dir, "experiment_metadata.jsonl")
-    write_experiment_metadata_jsonl(results, exp_meta_path)
-    print(f"🗂️ 实验级元数据: {exp_meta_path}")
+    try:
+        write_experiment_metadata_jsonl(results, exp_meta_path)
+        print(f"experiment_metadata: {exp_meta_path}")
+    except Exception as e:
+        _record_postprocess_error("write experiment_metadata.jsonl", e)
 
     metadata_path = os.path.join(run_dir, "run_metadata.json")
-    write_run_metadata_json(results, metadata_path,
-                            project_root=current_dir, run_id=timestamp,
-                            network_verification=net_verification)
-    print(f"🧾 运行元数据: {metadata_path}")
+    try:
+        write_run_metadata_json(results, metadata_path,
+                                project_root=current_dir, run_id=timestamp,
+                                network_verification=net_verification,
+                                batch_exit_code=1,
+                                run_completed=False)
+        print(f"run_metadata temporary: {metadata_path}")
+    except Exception as e:
+        _record_postprocess_error("write temporary run_metadata.json", e)
 
-    # ── 写入错误日志 ─────────────────────────────────────────────────
-    if errors:
-        error_path = os.path.join(run_dir, "errors.log")
-        with open(error_path, "w", encoding="utf-8") as f:
-            f.write(f"Experiment Errors — {datetime.datetime.now()}\n")
-            f.write("=" * 50 + "\n")
-            for err in errors:
-                f.write(f"  {err}\n")
-        print(f"⚠️ {len(errors)} 次运行失败，详见: {error_path}")
-
-    # ── 更新 latest/ 目录 ────────────────────────────────────────────
-    import shutil
-    # network_nodes.csv / network_edges.csv 在 R10 拒绝写出时不存在，
-    # network_inconsistency_report.json 只在拒绝时存在；下面的 os.path.exists 守卫
-    # 使两种情况都能正确同步（缺失即缺失，不创建占位文件）。
-    for fname in ("summary.csv", "trajectories.csv", "agent_records.csv",
-                  "target_nodes.csv", "network_nodes.csv", "network_edges.csv",
-                  "experiment_metadata.jsonl", "run_metadata.json",
-                  "network_inconsistency_report.json"):
-        src = os.path.join(run_dir, fname)
-        if os.path.exists(src):
-            shutil.copy2(src, os.path.join(latest_dir, fname))
-    with open(os.path.join(latest_dir, "run_info.txt"), "w", encoding="utf-8") as f:
-        f.write(f"run_id   : {timestamp}\n")
-        f.write(f"run_dir  : {run_dir}\n")
-        f.write(f"generated: {datetime.datetime.now()}\n")
-        f.write(f"success  : {len([r for r in results if 'error' not in r])}/{total}\n")
-    print(f"📁 本次结果目录 : {run_dir}")
-    print(f"🔗 最新结果快照 : {latest_dir}  (可视化脚本读此目录)")
-
-    # results_dir 供后续可视化使用（指向 latest）
-    results_dir = latest_dir
-
-    # ── 可视化 ────────────────────────────────────────────────────────
     successful = [r for r in results if "error" not in r]
+    results_dir = run_dir
     if successful:
-        try:
-            from plot_pareto import analyze_and_plot_pareto
-            analyze_and_plot_pareto(successful, results_dir)
-        except Exception as e:
-            print(f"⚠️ 帕累托分析失败: {e}")
-
+        # Pareto frontier and ranking are owned by analysis/plot_experiments.py.
+        # The legacy plot_pareto.py entry is intentionally not called here.
         analysis_dir = os.path.join(current_dir, "analysis")
         if analysis_dir not in sys.path:
             sys.path.insert(0, analysis_dir)
         try:
             import plot_experiments as _pe
             import plot_trajectories as _pt_traj
-            import shutil as _shutil
-            # 图像输出到本次 run_dir（带时间戳），历史图像永久保留
+            import pandas as _pd
             run_figures_dir = os.path.join(run_dir, "figures")
             os.makedirs(run_figures_dir, exist_ok=True)
-            _pe.OUTPUT_DIR     = run_figures_dir
-            _pe.RESULTS_DIR    = run_dir
-            _pt_traj.OUTPUT_DIR  = run_figures_dir
+            _pe.OUTPUT_DIR = run_figures_dir
+            _pe.RESULTS_DIR = run_dir
+            _pt_traj.OUTPUT_DIR = run_figures_dir
             _pt_traj.RESULTS_DIR = run_dir
-            print("\n🎨 生成实验结果图表...")
-            df_exp = _pe.load_data()
+            print("\ngenerating experiment figures...")
+            df_exp = _pd.read_csv(summary_path)
             _pe.plot_main_effects(df_exp)
             _pe.plot_heatmap_interactions(df_exp)
             df_exp = _pe.plot_pareto_frontier(df_exp)
             _pe.plot_strategy_ranking(df_exp)
             _pe.plot_clarification_diagnosis(df_exp)
             df_traj = _pt_traj.load_trajectories()
-            _pt_traj.plot_timing_effect(df_traj)
-            _pt_traj.plot_content_channel(df_traj)
-            _pt_traj.plot_all_12_strategies(df_traj)
+            _pt_traj.plot_timing_comparison(df_traj)
+            _pt_traj.plot_content_channel_comparison(df_traj)
+            _pt_traj.plot_all_9_conditions(df_traj)
             _pt_traj.plot_trust_recovery_zoom(df_traj)
-            # 同步到 latest/figures/（方便快速查看最新图像，但历史图在 run_dir 里永久保存）
-            latest_figures = os.path.join(latest_dir, "figures")
-            if os.path.exists(latest_figures):
-                _shutil.rmtree(latest_figures)
-            _shutil.copytree(run_figures_dir, latest_figures)
-            print(f"  → 本次图表: {run_figures_dir}")
-            print(f"  → 最新快照: {latest_figures}")
+            print(f"  figures: {run_figures_dir}")
         except Exception as e:
-            print(f"⚠️ 实验图表生成失败（{type(e).__name__}）: {e}")
+            _record_postprocess_error("plot experiment figures", e)
 
-    # ── 最终汇总 ─────────────────────────────────────────────────────
+    def _write_errors_log() -> None:
+        combined_errors = list(errors) + list(postprocess_errors)
+        if not combined_errors:
+            return
+        error_path = os.path.join(run_dir, "errors.log")
+        with open(error_path, "w", encoding="utf-8") as f:
+            f.write(f"Experiment Errors - {datetime.datetime.now()}\n")
+            f.write("=" * 50 + "\n")
+            for err in combined_errors:
+                f.write(f"  {err}\n")
+        print(f"warnings/errors logged: {error_path}")
+
+    try:
+        _write_errors_log()
+    except Exception as e:
+        _record_postprocess_error("write errors.log", e)
+
+    batch_exit_code, run_completed = _compute_final_status()
+    try:
+        write_run_metadata_json(results, metadata_path,
+                                project_root=current_dir, run_id=timestamp,
+                                network_verification=net_verification,
+                                batch_exit_code=batch_exit_code,
+                                run_completed=run_completed)
+        print(f"run_metadata final: {metadata_path}")
+    except Exception as e:
+        _record_postprocess_error("write final run_metadata.json", e)
+        batch_exit_code, run_completed = _compute_final_status()
+
+    try:
+        sync_latest_snapshot(run_dir, latest_dir, timestamp, results, total)
+        print(f"run_dir: {run_dir}")
+        print(f"latest snapshot: {latest_dir}")
+    except Exception as e:
+        _record_postprocess_error("sync latest snapshot", e)
+        batch_exit_code, run_completed = _compute_final_status()
+        try:
+            _write_errors_log()
+            write_run_metadata_json(results, metadata_path,
+                                    project_root=current_dir, run_id=timestamp,
+                                    network_verification=net_verification,
+                                    batch_exit_code=batch_exit_code,
+                                    run_completed=run_completed)
+        except Exception as final_e:
+            print(f"WARNING: final failure state could not be persisted: {type(final_e).__name__}: {final_e}")
+
+    replay_alignment_violated = any(
+        _has_replay_miss((r.get("run_audit") or {}).get("replay_miss_count"))
+        for r in results
+    )
+    successful = [r for r in results if "error" not in r]
     print(f"\n{'='*65}")
-    print(f"✅ 实验完成: {len(successful)}/{total} 成功, {len(errors)}/{total} 失败")
-    print(f"   结果目录: {results_dir}")
+    print(f"batch finished: {len(successful)}/{total} succeeded, {len(errors)}/{total} experiment errors, "
+          f"{len(postprocess_errors)} postprocess errors")
+    print(f"   result dir: {run_dir}")
+    print(f"   batch_exit_code: {batch_exit_code}")
+    print(f"   run_completed: {run_completed}")
     print(f"{'='*65}")
 
-    # ── R10 fail-closed：网络一致性契约被违反时以退出码 3 结束 ──
-    #    刻意放在最后：所有其他产物与图表都已安全落盘，不因审计契约问题丢失实验证据。
-    if net_verification["status"] != "consistent":
-        print(f"❌ FAIL: run 级网络文件未写出（{net_verification['status']}: "
-              f"{net_verification['reason']}）")
-        print(f"   诊断报告: {os.path.join(run_dir, 'network_inconsistency_report.json')}")
-        print(f"   退出码 3 = 网络一致性契约违反（与正常结束的 0 区分）")
-        raise SystemExit(3)
+    if batch_exit_code != 0:
+        if batch_exit_code == 4:
+            print("FAIL: replay alignment violated; exit code 4")
+            raise SystemExit(4)
+        elif batch_exit_code == 3:
+            print(f"FAIL: network consistency violation ({net_verification.get('status')}): "
+                  f"{net_verification.get('reason')}")
+            raise SystemExit(3)
+        else:
+            print("FAIL: one or more experiments/artifacts/plots failed; exit code 1")
+            raise SystemExit(1)
 
 
 if __name__ == "__main__":

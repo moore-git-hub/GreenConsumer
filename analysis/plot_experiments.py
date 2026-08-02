@@ -1,22 +1,21 @@
 """
-analysis/plot_experiments.py — 三因子实验结果可视化（高区分度指标版）
+analysis/plot_experiments.py - TASK_003 v3.0 experiment result visualizations.
 
-核心三目标（无 censoring 问题）：
-  - delta_recovery:  净信任恢复量 = Tick30 信任 - 最低点信任
-  - auc_post_scandal: 丑闻后信任曲线面积（归一化），衡量整体恢复质量
-  - recovery_speed:  恢复速度（信任分/天）
+Core objectives:
+  - Δ Recovery
+  - AUC Post-Scandal
+  - Steady-State Trust
 
-辅助指标：steady_state_score, recovery_rate, t50
-
-生成图表：
-  1. 三目标主效应条形图
-  2. 交互效应热力图
-  3. 帕累托前沿散点图
-  4. 策略综合排名
-  5. 澄清效果诊断图（新增）
+Generated figures:
+  1. Main effects for the three objectives
+  2. Interaction heatmaps
+  3. Pareto frontier
+  4. Strategy composite ranking
+  5. Clarification effect diagnosis
 """
 import os
 import sys
+import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -32,59 +31,133 @@ plt.rcParams['axes.unicode_minus'] = False
 
 CONTENT_COLORS = {"rational-evidence": "#2166ac", "emotional-empathy": "#d6604d"}
 CHANNEL_COLORS = {"hub": "#4dac26", "random": "#b8e186"}
-TIMING_COLORS  = {"immediate": "#fc8d59", "delay-3": "#fdcc8a", "no-clarification": "#91bfdb"}
+TIMING_COLORS  = {"immediate": "#fc8d59", "delayed": "#fdcc8a"}
 
 CONTENT_LABELS = {"rational-evidence": "Rational", "emotional-empathy": "Empathy"}
 CHANNEL_LABELS = {"hub": "Hub", "random": "Random"}
-TIMING_LABELS  = {"immediate": "Immediate", "delay-3": "Delay-3d", "no-clarification": "No-Clr"}
+TIMING_LABELS  = {"immediate": "Immediate", "delayed": "Delayed"}
+
+CONTROL_EXP_ID = "NoClarification-Control"
+
+
+def _parse_is_control_value(value) -> bool:
+    """Parse explicit bool values only; reject empty/ERROR/unknown tokens."""
+    if isinstance(value, (bool, np.bool_)):
+        return bool(value)
+    if isinstance(value, str):
+        if value == "True":
+            return True
+        if value == "False":
+            return False
+    raise AssertionError(f"invalid is_control value: {value!r}")
+
+
+def _with_control_flags(df: pd.DataFrame) -> pd.DataFrame:
+    if "is_control" not in df.columns:
+        raise AssertionError("summary.csv must contain is_control")
+    rows = df.copy()
+    rows["_is_control_bool"] = rows["is_control"].map(_parse_is_control_value)
+    return rows
+
+
+def _strategy_rows(df: pd.DataFrame) -> pd.DataFrame:
+    """Return strategy rows only; fail if not-applicable leaks into strategies."""
+    checked = _with_control_flags(df)
+    rows = checked[~checked["_is_control_bool"]].copy()
+    if len(rows) != 8:
+        raise AssertionError(f"expected 8 strategy rows, found {len(rows)}")
+    for col in ("content_factor", "channel_factor"):
+        if "not-applicable" in set(rows[col]):
+            raise AssertionError(
+                "'not-applicable' leaked into strategy rows via %s: is_control filter failed"
+                % col
+            )
+    return rows.drop(columns=["_is_control_bool"], errors="ignore")
+
+
+def _control_row(df: pd.DataFrame) -> pd.Series:
+    checked = _with_control_flags(df)
+    controls = checked[checked["_is_control_bool"]].copy()
+    if len(controls) != 1:
+        raise AssertionError(f"expected 1 common control row, found {len(controls)}")
+    row = controls.iloc[0]
+    if row.get("exp_id") != CONTROL_EXP_ID:
+        raise AssertionError(f"common control exp_id must be {CONTROL_EXP_ID}")
+    expected = {
+        "content_factor": "not-applicable",
+        "channel_factor": "not-applicable",
+        "timing_factor": "no-clarification",
+    }
+    for col, expected_value in expected.items():
+        if row.get(col) != expected_value:
+            raise AssertionError(
+                f"common control {col} must be {expected_value}, got {row.get(col)!r}"
+            )
+    return row.drop(labels=["_is_control_bool"], errors="ignore")
+
+
+def _assert_v3_metadata() -> None:
+    metadata_path = os.path.join(RESULTS_DIR, "run_metadata.json")
+    if not os.path.exists(metadata_path):
+        raise FileNotFoundError(f"run_metadata.json is required: {metadata_path}")
+    with open(metadata_path, encoding="utf-8") as f:
+        meta = json.load(f)
+    matrix = meta.get("experiment_matrix", {})
+    if matrix.get("matrix_version") != "3.0" or matrix.get("condition_count") != 9:
+        raise ValueError("legacy experiment_matrix metadata cannot be analyzed as v3.0")
 
 
 def load_data() -> pd.DataFrame:
     path = os.path.join(RESULTS_DIR, "summary.csv")
+    _assert_v3_metadata()
     if not os.path.exists(path):
-        print(f"❌ 未找到 {path}"); sys.exit(1)
+        raise FileNotFoundError(f"summary.csv is required: {path}")
+
     df = pd.read_csv(path)
+    required_cols = [
+        "exp_id",
+        "content_factor",
+        "channel_factor",
+        "timing_factor",
+        "is_control",
+        "delta_recovery",
+        "auc_post_scandal",
+        "steady_state_score",
+        "trust_gain_vs_control",
+    ]
+    missing = [col for col in required_cols if col not in df.columns]
+    if missing:
+        raise AssertionError(f"summary.csv missing required columns: {missing}")
 
-    # ── 兼容旧版 CSV（无新字段时，用代理指标估算）─────────────────────
-    numeric_cols = ['delta_recovery', 'auc_post_scandal', 'recovery_speed',
-                    'steady_state_score', 'recovery_rate', 't50', 't80',
-                    'trust_min', 'baseline_trust', 'clarification_effect']
-    for col in numeric_cols:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
+    checked = _with_control_flags(df)
+    metric_cols = [
+        "delta_recovery",
+        "auc_post_scandal",
+        "steady_state_score",
+        "trust_gain_vs_control",
+    ]
+    for col in metric_cols:
+        try:
+            checked[col] = pd.to_numeric(checked[col], errors="raise")
+        except Exception as e:
+            raise AssertionError(f"summary.csv column {col} must be numeric") from e
 
-    if 'delta_recovery' not in df.columns:
-        print("⚠️  旧版 CSV 检测到：缺少 delta_recovery / auc_post_scandal / recovery_speed")
-        print("    使用代理指标临时估算（请重跑 run_experiments.py 获取精确值）")
-        # 代理估算：用 steady - trust_min 近似 delta_recovery
-        df['delta_recovery'] = df['steady_state_score'] - df['trust_min'].fillna(df['steady_state_score'] * 0.6)
-        # auc 用 steady 归一化代理
-        df['auc_post_scandal'] = df['steady_state_score'] / 10.0
-        # speed 用 1/t80 代理（t80=30时取0.01）
-        if 't80' in df.columns:
-            df['recovery_speed'] = 1.0 / df['t80'].replace(0, np.nan).fillna(30)
-        else:
-            df['recovery_speed'] = df['delta_recovery'] / 25.0
-        if 't50' not in df.columns:
-            df['t50'] = df.get('t80', 30)
-        if 'clarification_effect' not in df.columns:
-            df['clarification_effect'] = 0.0
+    strategy = checked[~checked["_is_control_bool"]]
+    for col in metric_cols:
+        values = strategy[col].to_numpy(dtype=float)
+        if strategy[col].isna().any() or not np.isfinite(values).all():
+            raise AssertionError(f"strategy rows contain invalid numeric values in {col}")
 
-    # 过滤错误行
-    df = df[pd.to_numeric(df['delta_recovery'], errors='coerce').notna()].copy()
+    control = checked[checked["_is_control_bool"]]
+    for col in ("auc_post_scandal", "steady_state_score", "trust_gain_vs_control"):
+        values = control[col].to_numpy(dtype=float)
+        if control[col].isna().any() or not np.isfinite(values).all():
+            raise AssertionError(f"control row contains invalid numeric values in {col}")
 
-    # 标准化（归一化到 0-1，用于综合排名）
-    # 注意：用 steady_state_score 替换 recovery_speed 作为第三目标，
-    # 因为 recovery_speed = delta_recovery / 常数，与 delta_recovery 完全线性相关
-    for col, higher_better in [
-        ('delta_recovery', True), ('auc_post_scandal', True), ('steady_state_score', True)
-    ]:
-        r = df[col].max() - df[col].min()
-        df[f'{col}_norm'] = (df[col] - df[col].min()) / (r + 1e-9) if r > 0 else 0.5
-
-    df['composite'] = (df['delta_recovery_norm'] + df['auc_post_scandal_norm'] + df['steady_state_score_norm']) / 3.0
-    return df
-
+    checked = checked.drop(columns=["_is_control_bool"], errors="ignore")
+    _strategy_rows(checked)
+    _control_row(checked)
+    return checked
 
 def _bar_group(ax, df, factor_col, metric_col, labels_map, colors_map,
                ylabel, higher_better=True, zoom=True):
@@ -123,6 +196,7 @@ def _bar_group(ax, df, factor_col, metric_col, labels_map, colors_map,
 
 def plot_main_effects(df: pd.DataFrame):
     """图1：三核心目标 × 三因子 = 9格主效应图"""
+    df = _rankable_strategy_rows(df)
     fig, axes = plt.subplots(3, 3, figsize=(15, 12))
     fig.suptitle('Main Effects: 3 Factors × 3 Metrics (High-Discriminability)', fontsize=14, fontweight='bold')
 
@@ -156,6 +230,7 @@ def plot_main_effects(df: pd.DataFrame):
 
 def plot_heatmap_interactions(df: pd.DataFrame):
     """图2：交互效应热力图"""
+    df = _rankable_strategy_rows(df)
     fig, axes = plt.subplots(1, 3, figsize=(16, 5))
     fig.suptitle('Interaction Effects Heatmap (delta_recovery)', fontsize=14, fontweight='bold')
 
@@ -214,13 +289,25 @@ def is_pareto_dominated(row, df: pd.DataFrame) -> bool:
     return False
 
 
+def _rankable_strategy_rows(df: pd.DataFrame) -> pd.DataFrame:
+    rows = _strategy_rows(df)
+    for col in ('delta_recovery', 'auc_post_scandal', 'steady_state_score'):
+        r = rows[col].max() - rows[col].min()
+        rows[f'{col}_norm'] = (rows[col] - rows[col].min()) / (r + 1e-9) if r > 0 else 0.5
+    rows['composite'] = (
+        rows['delta_recovery_norm'] + rows['auc_post_scandal_norm'] + rows['steady_state_score_norm']
+    ) / 3.0
+    return rows
+
+
 def plot_pareto_frontier(df: pd.DataFrame):
-    """图3：帕累托前沿散点图（三组二维投影）"""
-    df = df.copy()
+    """Plot the Pareto frontier for the 8 clarification strategies."""
+    original_df = df
+    df = _rankable_strategy_rows(df)
     df['is_pareto'] = ~df.apply(lambda r: is_pareto_dominated(r, df), axis=1)
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-    fig.suptitle('Pareto Frontier (3 Objectives: Δ Recovery / AUC / Speed)', fontsize=14, fontweight='bold')
+    fig.suptitle('Pareto Frontier (3 Objectives: Δ Recovery / AUC Post-Scandal / Steady-State Trust)', fontsize=14, fontweight='bold')
 
     projections = [
         ('delta_recovery',   'auc_post_scandal',   'Δ Recovery (↑)',     'AUC Post-Scandal (↑)'),
@@ -255,23 +342,24 @@ def plot_pareto_frontier(df: pd.DataFrame):
     out = os.path.join(OUTPUT_DIR, "fig3_pareto.png")
     plt.savefig(out, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"  ✅ 图3 已保存: {out}")
+    print(f"  saved fig3: {out}")
 
     pareto_df = df[df['is_pareto']].sort_values('delta_recovery', ascending=False)
-    print(f"\n  🏆 Pareto最优解 ({len(pareto_df)} 个):")
-    print(f"  {'exp_id':<25} {'ΔRecov':>8} {'AUC':>8} {'Speed':>8}")
-    print(f"  {'─'*55}")
+    print(f"\n  Pareto optimal ({len(pareto_df)}):")
+    print(f"  {'exp_id':<25} {'Δ Recovery':>12} {'AUC Post-Scandal':>17} {'Steady-State Trust':>18}")
+    print(f"  {'-'*55}")
     for _, r in pareto_df.iterrows():
-        print(f"  {r['exp_id']:<25} {r['delta_recovery']:>8.4f} {r['auc_post_scandal']:>8.4f} {r['steady_state_score']:>8.4f}")
-    return df
+        print(f"  {r['exp_id']:<25} {r['delta_recovery']:>12.4f} {r['auc_post_scandal']:>17.4f} {r['steady_state_score']:>18.4f}")
+    return original_df
 
 
 def plot_strategy_ranking(df: pd.DataFrame):
-    """图4：策略综合排名（基于三核心目标的等权综合得分）"""
+    """Plot the composite ranking for the 8 clarification strategies."""
+    df = _rankable_strategy_rows(df)
     df_sorted = df.sort_values('composite', ascending=True)
 
     fig, ax = plt.subplots(figsize=(11, 7))
-    ax.set_title('Strategy Composite Ranking (Equal Weight: ΔRecovery + AUC + Speed)',
+    ax.set_title('Strategy Composite Ranking (Equal Weight: Δ Recovery + AUC Post-Scandal + Steady-State Trust)',
                  fontsize=13, fontweight='bold')
 
     colors = [TIMING_COLORS.get(t, '#888') for t in df_sorted['timing_factor']]
@@ -291,83 +379,66 @@ def plot_strategy_ranking(df: pd.DataFrame):
     out = os.path.join(OUTPUT_DIR, "fig4_ranking.png")
     plt.savefig(out, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"  ✅ 图4 已保存: {out}")
+    print(f"  saved fig4: {out}")
 
 
 def plot_clarification_diagnosis(df: pd.DataFrame):
-    """图5：澄清效果诊断图
+    """Plot clarification effects against the common control."""
+    strategy = _strategy_rows(df)
+    control = _control_row(df)
 
-    使用三个互补指标衡量澄清效果：
-    - trust_gain_vs_control: 澄清组最终信任 vs NoClr 最终信任的净增益（直接衡量策略价值）
-    - auc_post_scandal:      丑闻后恢复期信任曲线面积（衡量整体恢复质量）
-    - steady_state_score:    Tick 30 最终信任水平（衡量长期恢复效果）
-
-    注意：不用 delta_recovery（最终信任 - 最低点），因为澄清当天可能产生
-    额外的负向情绪（回火效应），导致 trust_min 更低，掩盖了澄清的净正效果。
-    """
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-    fig.suptitle('Clarification Effect Diagnosis: With vs Without Clarification',
+    fig.suptitle('Clarification Effect Diagnosis: Strategies vs Common Control',
                  fontsize=14, fontweight='bold')
 
-    df_copy = df.copy()
-    df_copy['has_clarification'] = df_copy['timing_factor'].apply(
-        lambda x: 'With Clarification' if x != 'no-clarification' else 'No Clarification'
-    )
-
-    # 使用 trust_gain_vs_control 替代 delta_recovery 作为主指标
     metrics = [
-        ('trust_gain_vs_control' if 'trust_gain_vs_control' in df.columns else 'delta_recovery',
-         'Trust Gain vs Control (↑)\n(final trust − noClr final trust)', True),
-        ('auc_post_scandal', 'AUC Post-Scandal (↑)', True),
-        ('steady_state_score', 'Steady-State Trust (↑)', True),
+        ('trust_gain_vs_control', 'Trust Gain vs Control (↑)', 0.0),
+        ('auc_post_scandal', 'AUC Post-Scandal (↑)', float(control['auc_post_scandal'])),
+        ('steady_state_score', 'Steady-State Trust (↑)', float(control['steady_state_score'])),
     ]
-    colors_clr = {'With Clarification': '#2166ac', 'No Clarification': '#d6604d'}
+    levels = ['Strategies', 'Common Control']
+    colors_clr = ['#2166ac', '#d6604d']
 
-    for ax, (metric_col, ylabel, higher_better) in zip(axes, metrics):
-        if metric_col not in df_copy.columns:
-            ax.text(0.5, 0.5, f'字段 {metric_col} 不存在\n请重跑 run_experiments.py',
-                    ha='center', va='center', transform=ax.transAxes)
-            continue
+    for ax, (metric_col, ylabel, control_value) in zip(axes, metrics):
+        if metric_col not in strategy.columns:
+            raise AssertionError(f"summary.csv must contain {metric_col}")
+        values = pd.to_numeric(strategy[metric_col], errors='raise')
+        strategy_mean = float(values.mean())
+        strategy_std = float(values.std()) if len(values) > 1 else 0.0
+        means = [strategy_mean, control_value]
+        stds = [strategy_std, 0.0]
 
-        grouped = df_copy.groupby('has_clarification')[metric_col].agg(['mean', 'std'])
-        levels  = ['With Clarification', 'No Clarification']
-        means   = [grouped.loc[l, 'mean'] if l in grouped.index else 0 for l in levels]
-        stds    = [grouped.loc[l, 'std']  if l in grouped.index else 0 for l in levels]
-        bar_colors = [colors_clr[l] for l in levels]
-
-        bars = ax.bar(levels, means, color=bar_colors, alpha=0.85, edgecolor='white',
+        bars = ax.bar(levels, means, color=colors_clr, alpha=0.85, edgecolor='white',
                       linewidth=1.5, yerr=stds, capsize=6, width=0.45)
-
-        if ax.get_ylim()[1] > 0:
-            for bar, val in zip(bars, means):
-                ax.text(bar.get_x() + bar.get_width()/2,
-                        bar.get_height() + max(abs(s) for s in stds) * 0.15,
-                        f'{val:.4f}', ha='center', va='bottom', fontsize=11, fontweight='bold')
-
-        diff = means[0] - means[1]
-        sign = "↑" if diff > 0 else "↓"
-        ax.set_title(f'{ylabel.split(chr(10))[0]}\nDiff: {diff:+.4f} {sign}', fontsize=11)
-        ax.set_ylabel(ylabel, fontsize=9)
-        ax.grid(axis='y', linestyle=':', alpha=0.4)
         span = max(means) - min(means) if max(means) != min(means) else 0.01
         ax.set_ylim(min(means) - span*1.5, max(means) + span*3)
+        for bar, val in zip(bars, means):
+            ylim = ax.get_ylim()
+            ax.text(bar.get_x() + bar.get_width()/2,
+                    bar.get_height() + (ylim[1] - ylim[0]) * 0.02,
+                    f'{val:.4f}', ha='center', va='bottom', fontsize=11, fontweight='bold')
+
+        diff = means[0] - means[1]
+        sign = "↑" if diff > 0 else ("↓" if diff < 0 else "=")
+        ax.set_title(f'{ylabel}\nDiff: {diff:+.4f} {sign}', fontsize=11)
+        ax.set_ylabel(ylabel, fontsize=9)
+        ax.grid(axis='y', linestyle=':', alpha=0.4)
         ax.tick_params(axis='x', labelsize=10)
 
     plt.tight_layout()
     out = os.path.join(OUTPUT_DIR, "fig5_clarification_diagnosis.png")
     plt.savefig(out, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"  ✅ 图5 已保存: {out}")
-
+    print(f"  saved fig5: {out}")
 
 def print_summary_table(df: pd.DataFrame):
-    """终端打印结果汇总（新三目标）"""
-    print(f"\n{'═'*90}")
-    print("📊 实验结果汇总（核心三目标 — 无 censoring）")
-    print(f"{'═'*90}")
+    """Print the three-objective TASK_003 summary table."""
+    print(f"\n{'='*100}")
+    print("Experiment Summary: Δ Recovery / AUC Post-Scandal / Steady-State Trust")
+    print(f"{'='*100}")
     print(f"{'Strategy':<25} {'Content':<10} {'Channel':<8} {'Timing':<10} "
-          f"{'ΔRecov':>8} {'AUC':>8} {'Speed':>8} {'Steady':>8}")
-    print(f"{'─'*85}")
+          f"{'Δ Recovery':>12} {'AUC Post-Scandal':>17} {'Steady-State Trust':>18}")
+    print(f"{'-'*100}")
 
     df_sorted = df.sort_values('delta_recovery', ascending=False)
     for _, r in df_sorted.iterrows():
@@ -375,22 +446,27 @@ def print_summary_table(df: pd.DataFrame):
               f"{CONTENT_LABELS.get(r['content_factor'], r['content_factor']):<10} "
               f"{CHANNEL_LABELS.get(r['channel_factor'], r['channel_factor']):<8} "
               f"{TIMING_LABELS.get(r['timing_factor'], r['timing_factor']):<10} "
-              f"{r['delta_recovery']:>8.4f} {r['auc_post_scandal']:>8.4f} "
-              f"{r['recovery_speed']:>8.4f} {r['steady_state_score']:>8.3f}")
-    print(f"{'─'*85}")
+              f"{r['delta_recovery']:>12.4f} {r['auc_post_scandal']:>17.4f} "
+              f"{r['steady_state_score']:>18.3f}")
+    print(f"{'-'*100}")
 
-    # 澄清效果摘要
-    with_clr = df[df['timing_factor'] != 'no-clarification']
-    no_clr   = df[df['timing_factor'] == 'no-clarification']
-    print(f"\n📌 澄清效果摘要 (With Clarification vs No Clarification):")
-    for col, label in [('delta_recovery','ΔRecovery'), ('auc_post_scandal','AUC'), ('steady_state_score','Steady')]:
-        diff = with_clr[col].mean() - no_clr[col].mean()
-        print(f"   {label:>15}: with={with_clr[col].mean():.4f} | no={no_clr[col].mean():.4f} | Δ={diff:+.4f}")
-
+    strategy = _strategy_rows(df)
+    control = _control_row(df)
+    print("\nClarification effect summary: Strategies vs Common Control")
+    comparisons = [
+        ('trust_gain_vs_control', 'Trust Gain vs Control', 0.0),
+        ('auc_post_scandal', 'AUC Post-Scandal', float(control['auc_post_scandal'])),
+        ('steady_state_score', 'Steady-State Trust', float(control['steady_state_score'])),
+    ]
+    for col, label, control_value in comparisons:
+        strategy_mean = strategy[col].mean()
+        diff = strategy_mean - control_value
+        print(f"   {label:>22}: strategies={strategy_mean:.4f} | control={control_value:.4f} | Δ={diff:+.4f}")
 
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     print(f"📂 读取数据: {os.path.join(RESULTS_DIR, 'summary.csv')}")
+    _assert_v3_metadata()
     df = load_data()
     print(f"   共 {len(df)} 组实验结果")
 

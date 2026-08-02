@@ -285,7 +285,7 @@ def build_network_nodes_meta(net_plugin, agents) -> list:
       · exp_id：拓扑由 (num_agents, random_seed) 唯一决定，全 run 相同，按实验重复即冗余；
       · is_clarification_target：随 channel_factor 变化，属实验级事实，
         唯一落点是 target_nodes.csv（以及 agent_records.csv 的同名列）。
-        若把它留在 run 级文件里，12 组不同的目标集合会互相覆盖，结果只取决于写入顺序。
+        Keeping it in run-level files would mix the 8 strategy target sets by write order.
 
     度数取自 SocialNetworkPlugin.export_node_degrees()（真实图），
     人群与社交角色取自各 Agent 的 profile 插件真实数据，不做任何猜测。
@@ -635,14 +635,19 @@ async def run_simulation_core(config: ExperimentConfig, override_router=None) ->
 
     # ── 8. 初始化澄清注入器 ─────────────────────────────────────────
     injector = ClarificationInjector(config)
-    target_nodes = select_target_nodes(net_plugin.graph, config.channel_factor, config.budget_k, config.random_seed)
+    if config.is_control:
+        target_nodes = []
+    else:
+        target_nodes = select_target_nodes(
+            net_plugin.graph, config.channel_factor, config.budget_k, config.random_seed
+        )
     injector.set_target_nodes(target_nodes)
 
     # ── 8b. 网络 / 目标节点审计元数据（TASK_002，只读，不改变任何选点或建图逻辑）──
     network_meta      = build_network_meta(net_plugin, config)
     target_nodes_meta = build_target_nodes_meta(net_plugin.graph, config, target_nodes)
     # R10：run 级拓扑事实，构造时不带 config / target_nodes。
-    #      仍逐实验返回，供运行层交叉验证"12 组拓扑确实相同"后再写出唯一一份文件。
+    #      Returned per experiment so the runner can verify the 8 strategies + 1 common control share one topology.
     network_nodes     = build_network_nodes_meta(net_plugin, agents)
     network_edges     = build_network_edges_meta(net_plugin)
     _is_dir           = net_plugin.graph.is_directed()

@@ -17,7 +17,9 @@ run_experiments.py — 实验批量调度入口
 """
 import sys
 import os
+import argparse
 import asyncio
+import copy
 import csv
 import datetime
 import hashlib
@@ -26,6 +28,8 @@ import math
 import platform
 import subprocess
 import shutil
+from dataclasses import replace
+from pathlib import Path
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
@@ -61,6 +65,16 @@ from metrics_calculator import (
     compute_relative_metrics_v4,
     build_control_metrics_v4,
     compute_ranking_sensitivity_v4,
+)
+from replication_config import (
+    CACHE_SCOPE as REPLICATION_CACHE_SCOPE,
+    EXECUTION_MODE as REPLICATION_EXECUTION_MODE,
+    EXECUTION_ORDER as REPLICATION_EXECUTION_ORDER,
+    LATEST_POLICY as REPLICATION_LATEST_POLICY,
+    LLM_SEED_SUPPORTED_VALUES,
+    REPLICATION_SCHEMA_VERSION,
+    SEED_MAX,
+    SEED_MIN,
 )
 
 
@@ -862,6 +876,35 @@ def _read_llm_config(project_root: str) -> dict:
     return meta
 
 
+def _is_deterministic_mock_context(replication_context: dict | None) -> bool:
+    return (
+        replication_context is not None
+        and replication_context.get("llm_mode") == "deterministic-mock"
+    )
+
+
+def _build_llm_metadata(project_root: str, replication_context: dict | None) -> dict:
+    if _is_deterministic_mock_context(replication_context):
+        return {
+            "mode": "deterministic-mock",
+            "config_read": False,
+            "config_file": "not-read",
+            "config_sha256": "not-read",
+            "api_key_present": "not-read",
+            "requested_llm_seed": replication_context["requested_llm_seed"],
+            "engineering_acceptance_only": True,
+        }
+
+    meta = _read_llm_config(project_root)
+    if replication_context is not None:
+        meta["mode"] = "real"
+        meta["requested_llm_seed"] = replication_context["requested_llm_seed"]
+        meta["seed"] = replication_context["requested_llm_seed"]
+        meta["llm_seed_supported"] = replication_context["llm_seed_supported"]
+        meta["engineering_acceptance_only"] = False
+    return meta
+
+
 # 元数据中登记哈希的源文件（相对 project_root）
 _HASHED_SOURCES = [
     "run_experiments.py",
@@ -882,6 +925,16 @@ _HASHED_SOURCES = [
     "configs/models_config.yaml",
 ]
 
+
+def _source_file_hashes(project_root: str, replication_context: dict | None) -> dict:
+    hashes = {}
+    for rel in _HASHED_SOURCES:
+        if _is_deterministic_mock_context(replication_context) and rel == "configs/models_config.yaml":
+            hashes[rel] = "not-read: deterministic-mock"
+        else:
+            hashes[rel] = _sha256_file(os.path.join(project_root, *rel.split("/")))
+    return hashes
+
 # Prompt / Persona 的权威来源文件。路径**必须**由 project_root 解析，
 # 禁止从 output_path 推导（输出目录是 results/experiments/run_*，与源码目录无结构关系）。
 _PROMPT_SOURCES = {
@@ -899,7 +952,9 @@ _PERSONA_SOURCES = {
 def write_run_metadata_json(results: list, output_path: str, project_root: str,
                             run_id: str = "", network_verification: dict = None,
                             batch_exit_code: int = 0,
-                            run_completed: bool = True) -> dict:
+                            run_completed: bool = True,
+                            *,
+                            replication_context: dict | None = None) -> dict:
     """写入运行级元数据（schema v2.0 的补充证据）。
 
     Args:
@@ -961,7 +1016,7 @@ def write_run_metadata_json(results: list, output_path: str, project_root: str,
         # R8：顶层显式镜像，便于审计脚本直接 grep；值恒等于 git["is_dirty"]
         #     True/False = 已判定，"unknown" = 无法判定（绝不静默当作干净）
         "git_is_dirty": git_info["is_dirty"],
-        "llm": _read_llm_config(project_root),
+        "llm": _build_llm_metadata(project_root, replication_context),
         # R10：run 级网络文件的前提是否被验证通过。唯一的运行级元数据文件
         #      自身即可判定：status != "consistent" 时两个网络 CSV 必然不存在。
         "network_consistency": (dict(network_verification)
@@ -970,10 +1025,7 @@ def write_run_metadata_json(results: list, output_path: str, project_root: str,
                                       "reason": "verify_single_network() was not called",
                                       "refused_outputs": ["network_nodes.csv",
                                                           "network_edges.csv"]}),
-        "source_file_hashes": {
-            rel: _sha256_file(os.path.join(project_root, *rel.split("/")))
-            for rel in _HASHED_SOURCES
-        },
+        "source_file_hashes": _source_file_hashes(project_root, replication_context),
         "prompt_sources": {
             key: {"path": rel,
                   "sha256": _sha256_file(os.path.join(project_root, *rel.split("/")))}
@@ -997,6 +1049,11 @@ def write_run_metadata_json(results: list, output_path: str, project_root: str,
         #     且与 patch 的恢复顺序耦合。改为从实验结果读取真实生效的时间线（见下）。
         "experiments": [],
     }
+    if replication_context is not None:
+        meta["replication"] = {
+            field: replication_context[field]
+            for field in REPLICATION_METADATA_FIELDS
+        }
 
     for r in results:
         entry = {"exp_id": r.get("exp_id", "unknown")}
@@ -1090,6 +1147,269 @@ def sync_latest_snapshot(run_dir: str, latest_dir: str, run_id: str,
         f.write(f"success  : {len([r for r in results if 'error' not in r])}/{total}\n")
 
 
+REPLICATION_CLI_ARGS = (
+    "replication_id",
+    "replicate_id",
+    "replicate_index",
+    "simulation_seed",
+    "requested_llm_seed",
+    "llm_seed_supported",
+    "python_hash_seed",
+    "output_dir",
+    "no_latest",
+    "llm_mode",
+)
+
+LLM_MODES = ("real", "deterministic-mock")
+
+REPLICATION_METADATA_FIELDS = (
+    "schema_version",
+    "replication_id",
+    "replicate_id",
+    "replicate_index",
+    "simulation_seed",
+    "requested_llm_seed",
+    "llm_seed_supported",
+    "python_hash_seed",
+    "cache_scope",
+    "execution_mode",
+    "latest_policy",
+    "engineering_acceptance_only",
+)
+
+
+class ReplicationStartupError(ValueError):
+    """Raised for TASK_005 child-mode pre-simulation contract failures."""
+
+
+def parse_cli_args(argv=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--replication-id", dest="replication_id", default=None)
+    parser.add_argument("--replicate-id", dest="replicate_id", default=None)
+    parser.add_argument("--replicate-index", dest="replicate_index", type=int, default=None)
+    parser.add_argument("--simulation-seed", dest="simulation_seed", type=int, default=None)
+    parser.add_argument("--requested-llm-seed", dest="requested_llm_seed", type=int, default=None)
+    parser.add_argument("--llm-seed-supported", dest="llm_seed_supported",
+                        choices=LLM_SEED_SUPPORTED_VALUES, default=None)
+    parser.add_argument("--python-hash-seed", dest="python_hash_seed", type=int, default=None)
+    parser.add_argument("--output-dir", dest="output_dir", default=None)
+    parser.add_argument("--no-latest", dest="no_latest", action="store_true", default=False)
+    parser.add_argument("--llm-mode", dest="llm_mode", choices=LLM_MODES, default=None)
+    return parser.parse_args(argv)
+
+
+def _replication_argument_was_supplied(name, value) -> bool:
+    if name == "no_latest":
+        return value is True
+    return value is not None
+
+
+def build_replication_context(args) -> dict | None:
+    values = {name: getattr(args, name, None) for name in REPLICATION_CLI_ARGS}
+    child_requested = any(
+        _replication_argument_was_supplied(name, value)
+        for name, value in values.items()
+    )
+    if not child_requested:
+        return None
+
+    missing = [
+        name for name, value in values.items()
+        if value is None or (name == "no_latest" and value is not True)
+    ]
+    if missing:
+        raise ReplicationStartupError(
+            "replication child mode requires all replication arguments"
+        )
+
+    replication_id = _require_non_empty_string(values["replication_id"], "replication_id")
+    replicate_index = _require_non_bool_int(values["replicate_index"], "replicate_index")
+    if replicate_index < 1:
+        raise ReplicationStartupError("replicate_index must be >= 1")
+    replicate_id = _require_non_empty_string(values["replicate_id"], "replicate_id")
+    expected_replicate_id = f"R{replicate_index:03d}"
+    if replicate_id != expected_replicate_id:
+        raise ReplicationStartupError(
+            f"replicate_id must equal {expected_replicate_id}"
+        )
+    simulation_seed = _require_seed(values["simulation_seed"], "simulation_seed")
+    requested_llm_seed = _require_seed(
+        values["requested_llm_seed"],
+        "requested_llm_seed",
+    )
+    python_hash_seed = _require_seed(values["python_hash_seed"], "python_hash_seed")
+    llm_seed_supported = values["llm_seed_supported"]
+    if llm_seed_supported not in LLM_SEED_SUPPORTED_VALUES:
+        raise ReplicationStartupError("llm_seed_supported is invalid")
+    output_dir = _require_non_empty_string(values["output_dir"], "output_dir")
+    llm_mode = values["llm_mode"]
+    if llm_mode not in LLM_MODES:
+        raise ReplicationStartupError("llm_mode is invalid")
+
+    return {
+        "schema_version": REPLICATION_SCHEMA_VERSION,
+        "replication_id": replication_id,
+        "replicate_id": replicate_id,
+        "replicate_index": replicate_index,
+        "simulation_seed": simulation_seed,
+        "requested_llm_seed": requested_llm_seed,
+        "llm_seed_supported": llm_seed_supported,
+        "python_hash_seed": python_hash_seed,
+        "cache_scope": REPLICATION_CACHE_SCOPE,
+        "execution_mode": REPLICATION_EXECUTION_MODE,
+        "latest_policy": REPLICATION_LATEST_POLICY,
+        "engineering_acceptance_only": llm_mode == "deterministic-mock",
+        "output_dir": output_dir,
+        "llm_mode": llm_mode,
+    }
+
+
+def _require_non_empty_string(value, name: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise ReplicationStartupError(f"{name} must be a non-empty string")
+    return value
+
+
+def _require_non_bool_int(value, name: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ReplicationStartupError(f"{name} must be a non-boolean integer")
+    return value
+
+
+def _require_seed(value, name: str) -> int:
+    seed = _require_non_bool_int(value, name)
+    if not (SEED_MIN <= seed <= SEED_MAX):
+        raise ReplicationStartupError(f"{name} must be in [{SEED_MIN}, {SEED_MAX}]")
+    return seed
+
+
+def _validate_python_hash_seed(replication_context: dict, environ=None) -> None:
+    env = os.environ if environ is None else environ
+    expected = str(replication_context["python_hash_seed"])
+    actual = env.get("PYTHONHASHSEED")
+    if actual != expected:
+        raise ReplicationStartupError("PYTHONHASHSEED must match ledger python_hash_seed")
+
+
+def _preflight_replication_output_dir(replication_context: dict) -> Path:
+    run_dir = Path(replication_context["output_dir"]).resolve()
+    if not str(run_dir):
+        raise ReplicationStartupError("output_dir must be non-empty")
+    if run_dir.exists() and (not run_dir.is_dir() or any(run_dir.iterdir())):
+        raise ReplicationStartupError("output_dir must be absent or empty")
+    return run_dir
+
+
+def _create_replication_run_dir(replication_context: dict) -> str:
+    run_dir = _preflight_replication_output_dir(replication_context)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    return str(run_dir)
+
+
+def _ordered_experiment_configs(replication_context: dict | None = None) -> list[ExperimentConfig]:
+    base_configs = generate_experiment_matrix()
+    if replication_context is None:
+        control_config = next(c for c in base_configs if c.is_control)
+        strategy_configs = sorted((c for c in base_configs if not c.is_control), key=lambda c: c.exp_id)
+        assert len(strategy_configs) == 8
+        return [control_config] + strategy_configs
+
+    simulation_seed = replication_context["simulation_seed"]
+    configs = [replace(config, random_seed=simulation_seed) for config in base_configs]
+    by_exp_id = {config.exp_id: config for config in configs}
+    if len(configs) != 9 or set(by_exp_id) != set(REPLICATION_EXECUTION_ORDER):
+        raise ReplicationStartupError("replication matrix exp_id set mismatch")
+    ordered = [by_exp_id[exp_id] for exp_id in REPLICATION_EXECUTION_ORDER]
+    if any(config.random_seed != simulation_seed for config in ordered):
+        raise ReplicationStartupError("replication simulation_seed injection failed")
+    if sum(1 for config in ordered if config.is_control) != 1:
+        raise ReplicationStartupError("replication matrix must contain one control")
+    if sum(1 for config in ordered if not config.is_control) != 8:
+        raise ReplicationStartupError("replication matrix must contain eight strategies")
+    return ordered
+
+
+class _DeterministicMockRouter:
+    async def chat(self, prompt: str) -> str:
+        if "trust_change_affective" in prompt or "hypocrisy_perceived" in prompt:
+            return json.dumps({
+                "hypocrisy_perceived": True,
+                "trust_change_affective": -1.5,
+                "importance": 7.0,
+                "reasoning": "Mock: betrayed.",
+            })
+        return json.dumps({
+            "is_buying": False,
+            "is_posting": True,
+            "post_content": "Upset about this.",
+            "reason": "Mock.",
+        })
+
+
+def _build_deterministic_mock_router():
+    return _DeterministicMockRouter()
+
+
+def _is_chat_capable_model_entry(entry) -> bool:
+    if not isinstance(entry, dict):
+        return False
+    capabilities = entry.get("capabilities")
+    if not isinstance(capabilities, (list, tuple, set)):
+        return False
+    return "chat" in capabilities
+
+
+def _config_with_requested_llm_seed(models_conf, requested_llm_seed: int):
+    conf_copy = copy.deepcopy(models_conf)
+    entries = conf_copy if isinstance(conf_copy, list) else [conf_copy]
+    updated_count = 0
+    for entry in entries:
+        if _is_chat_capable_model_entry(entry):
+            entry["seed"] = requested_llm_seed
+            updated_count += 1
+    if updated_count == 0:
+        raise ReplicationStartupError(
+            "no chat-capable model configuration accepted requested_llm_seed"
+        )
+    return conf_copy
+
+
+def _build_real_router(requested_llm_seed: int | None = None):
+    import yaml
+    with open(os.path.join(current_dir, "configs/models_config.yaml"), "r", encoding="utf-8") as f:
+        models_conf = yaml.safe_load(f)
+    if requested_llm_seed is not None:
+        models_conf = _config_with_requested_llm_seed(models_conf, requested_llm_seed)
+    from agentkernel_standalone.toolkit.models.router import ModelRouter, AsyncModelRouter
+    return ModelRouter(AsyncModelRouter(models_conf))
+
+
+def _build_router_for_mode(replication_context: dict | None = None):
+    if replication_context is None:
+        try:
+            router = _build_real_router()
+            print("🧠 LLM 引擎已就绪")
+            return router
+        except Exception:
+            router = _build_deterministic_mock_router()
+            print("⚠️  使用 Mock Router")
+            return router
+
+    if replication_context["llm_mode"] == "deterministic-mock":
+        print("⚠️  使用 deterministic Mock Router")
+        return _build_deterministic_mock_router()
+    if replication_context["llm_mode"] == "real":
+        try:
+            router = _build_real_router(replication_context["requested_llm_seed"])
+        except Exception as exc:
+            raise ReplicationStartupError(
+                f"real Router initialization failed: {type(exc).__name__}"
+            ) from exc
+        print("🧠 replication real LLM 引擎已就绪")
+        return router
+    raise ReplicationStartupError("llm_mode is invalid")
+
+
 # ══════════════════════════════════════════════════════════════════════
 # 主入口
 # ══════════════════════════════════════════════════════════════════════
@@ -1114,7 +1434,12 @@ async def _run_with_patch(config: ExperimentConfig, override_router=None) -> dic
         _sc.ENTERPRISE_STRATEGY.update(original)
 
 
-async def main():
+async def main(args=None):
+    replication_context = build_replication_context(args) if args is not None else None
+    if replication_context is not None:
+        _validate_python_hash_seed(replication_context)
+        _preflight_replication_output_dir(replication_context)
+
     print("=" * 65)
     print("GABM batch experiment - 8 clarification strategies + 1 common control")
     print("   Scandal : Tick 5 (single-event patch)")
@@ -1122,33 +1447,10 @@ async def main():
     print("   Replay  : common control records; strategies replay before clarification_tick")
     print("=" * 65)
 
-    configs = generate_experiment_matrix()
+    ordered_configs = _ordered_experiment_configs(replication_context)
+    configs = ordered_configs
     total = len(configs)
-    control_config = next(c for c in configs if c.is_control)
-    strategy_configs = sorted((c for c in configs if not c.is_control), key=lambda c: c.exp_id)
-    assert len(strategy_configs) == 8
-    ordered_configs = [control_config] + strategy_configs
-
-    import yaml
-    try:
-        with open(os.path.join(current_dir, "configs/models_config.yaml"), "r") as f:
-            _models_conf = yaml.safe_load(f)
-        from agentkernel_standalone.toolkit.models.router import ModelRouter, AsyncModelRouter
-        _real_router = ModelRouter(AsyncModelRouter(_models_conf))
-        print("🧠 LLM 引擎已就绪")
-    except Exception:
-        import json as _json
-        class _MockInner:
-            async def chat(self, prompt: str) -> str:
-                if "trust_change_affective" in prompt or "hypocrisy_perceived" in prompt:
-                    return _json.dumps({"hypocrisy_perceived": True,
-                                        "trust_change_affective": -1.5,
-                                        "importance": 7.0,
-                                        "reasoning": "Mock: betrayed."})
-                return _json.dumps({"is_buying": False, "is_posting": True,
-                                    "post_content": "Upset about this.", "reason": "Mock."})
-        _real_router = _MockInner()
-        print("⚠️  使用 Mock Router")
+    _real_router = _build_router_for_mode(replication_context)
 
     results = []
     errors  = []
@@ -1235,14 +1537,20 @@ async def main():
                             "run_audit": run_audit})
 
     # ── 写入输出文件 ─────────────────────────────────────────────────
-    # 每次运行创建独立的带时间戳子目录，避免覆盖历史结果
-    # latest/ 目录始终指向最新一次运行，供可视化脚本直接读取
+    # legacy creates run_<timestamp> and refreshes latest/; replication-child
+    # writes directly into the parent runner's output_dir and disables latest.
     timestamp  = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    base_dir   = os.path.join(current_dir, "results", "experiments")
-    run_dir    = os.path.join(base_dir, f"run_{timestamp}")
-    latest_dir = os.path.join(base_dir, "latest")
-    os.makedirs(run_dir,    exist_ok=True)
-    os.makedirs(latest_dir, exist_ok=True)
+    if replication_context is None:
+        run_id = timestamp
+        base_dir   = os.path.join(current_dir, "results", "experiments")
+        run_dir    = os.path.join(base_dir, f"run_{timestamp}")
+        latest_dir = os.path.join(base_dir, "latest")
+        os.makedirs(run_dir,    exist_ok=True)
+        os.makedirs(latest_dir, exist_ok=True)
+    else:
+        run_id = f"{replication_context['replication_id']}-{replication_context['replicate_id']}"
+        run_dir = _create_replication_run_dir(replication_context)
+        latest_dir = None
 
     postprocess_errors = []
 
@@ -1368,10 +1676,11 @@ async def main():
     metadata_path = os.path.join(run_dir, "run_metadata.json")
     try:
         write_run_metadata_json(results, metadata_path,
-                                project_root=current_dir, run_id=timestamp,
+                                project_root=current_dir, run_id=run_id,
                                 network_verification=net_verification,
                                 batch_exit_code=1,
-                                run_completed=False)
+                                run_completed=False,
+                                replication_context=replication_context)
         print(f"run_metadata temporary: {metadata_path}")
     except Exception as e:
         _record_postprocess_error("write temporary run_metadata.json", e)
@@ -1430,31 +1739,36 @@ async def main():
     batch_exit_code, run_completed = _compute_final_status()
     try:
         write_run_metadata_json(results, metadata_path,
-                                project_root=current_dir, run_id=timestamp,
+                                project_root=current_dir, run_id=run_id,
                                 network_verification=net_verification,
                                 batch_exit_code=batch_exit_code,
-                                run_completed=run_completed)
+                                run_completed=run_completed,
+                                replication_context=replication_context)
         print(f"run_metadata final: {metadata_path}")
     except Exception as e:
         _record_postprocess_error("write final run_metadata.json", e)
         batch_exit_code, run_completed = _compute_final_status()
 
-    try:
-        sync_latest_snapshot(run_dir, latest_dir, timestamp, results, total)
-        print(f"run_dir: {run_dir}")
-        print(f"latest snapshot: {latest_dir}")
-    except Exception as e:
-        _record_postprocess_error("sync latest snapshot", e)
-        batch_exit_code, run_completed = _compute_final_status()
+    if replication_context is None:
         try:
-            _write_errors_log()
-            write_run_metadata_json(results, metadata_path,
-                                    project_root=current_dir, run_id=timestamp,
-                                    network_verification=net_verification,
-                                    batch_exit_code=batch_exit_code,
-                                    run_completed=run_completed)
-        except Exception as final_e:
-            print(f"WARNING: final failure state could not be persisted: {type(final_e).__name__}: {final_e}")
+            sync_latest_snapshot(run_dir, latest_dir, run_id, results, total)
+            print(f"run_dir: {run_dir}")
+            print(f"latest snapshot: {latest_dir}")
+        except Exception as e:
+            _record_postprocess_error("sync latest snapshot", e)
+            batch_exit_code, run_completed = _compute_final_status()
+            try:
+                _write_errors_log()
+                write_run_metadata_json(results, metadata_path,
+                                        project_root=current_dir, run_id=run_id,
+                                        network_verification=net_verification,
+                                        batch_exit_code=batch_exit_code,
+                                        run_completed=run_completed,
+                                        replication_context=replication_context)
+            except Exception as final_e:
+                print(f"WARNING: final failure state could not be persisted: {type(final_e).__name__}: {final_e}")
+    else:
+        print(f"run_dir: {run_dir}")
 
     replay_alignment_violated = any(
         _has_replay_miss((r.get("run_audit") or {}).get("replay_miss_count"))
@@ -1483,4 +1797,8 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main(parse_cli_args()))
+    except ReplicationStartupError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        raise SystemExit(2) from exc

@@ -1,0 +1,78 @@
+{
+  "fixture_schema_version": "1.0",
+  "canonical_case": {
+    "master_seed": 20260802,
+    "num_replicates": 3,
+    "replicates": [
+      {
+        "replicate_index": 1,
+        "replicate_id": "R001",
+        "simulation_seed": 2054889395,
+        "requested_llm_seed": 1403096098,
+        "python_hash_seed": 1948440462
+      },
+      {
+        "replicate_index": 2,
+        "replicate_id": "R002",
+        "simulation_seed": 2501312439,
+        "requested_llm_seed": 269099072,
+        "python_hash_seed": 4123444394
+      },
+      {
+        "replicate_index": 3,
+        "replicate_id": "R003",
+        "simulation_seed": 3592391985,
+        "requested_llm_seed": 3996138357,
+        "python_hash_seed": 2321646447
+      }
+    ]
+  },
+  "execution_order": [
+    "NoClarification-Control",
+    "Empathy-Hub-Delayed",
+    "Empathy-Hub-Immediate",
+    "Empathy-Random-Delayed",
+    "Empathy-Random-Immediate",
+    "Rational-Hub-Delayed",
+    "Rational-Hub-Immediate",
+    "Rational-Random-Delayed",
+    "Rational-Random-Immediate"
+  ],
+  "invalid_cases": [
+    {"case_id": "bool_master_seed", "category": "derive_seed"},
+    {"case_id": "negative_master_seed", "category": "derive_seed"},
+    {"case_id": "replicate_index_zero", "category": "derive_seed"},
+    {"case_id": "empty_namespace", "category": "derive_seed"},
+    {"case_id": "num_replicates_zero", "category": "build_seed_ledger"},
+    {"case_id": "duplicate_replicate_id", "category": "validate_seed_ledger"},
+    {"case_id": "duplicate_simulation_seed", "category": "validate_seed_ledger"},
+    {"case_id": "wrong_derived_seed", "category": "validate_seed_ledger"},
+    {"case_id": "missing_ledger_field", "category": "validate_seed_ledger"},
+    {"case_id": "extra_ledger_field", "category": "validate_seed_ledger"},
+    {"case_id": "wrong_execution_order", "category": "validate_seed_ledger"},
+    {"case_id": "wrong_cache_scope", "category": "validate_seed_ledger"},
+    {"case_id": "profile_seed_not_simulation_seed", "category": "validate_seed_ledger"},
+    {"case_id": "seed_out_of_range", "category": "validate_seed_ledger"},
+    {"case_id": "bool_seed", "category": "validate_seed_ledger"},
+    {"case_id": "invalid_llm_seed_supported", "category": "validate_seed_ledger"},
+    {"case_id": "wrong_matrix_version", "category": "validate_seed_ledger"},
+    {"case_id": "wrong_metrics_version", "category": "validate_seed_ledger"},
+    {"case_id": "condition_count_not_9", "category": "validate_seed_ledger"},
+    {"case_id": "wrong_control_exp_id", "category": "validate_seed_ledger"},
+    {"case_id": "rows_not_list", "category": "validate_seed_ledger"},
+    {"case_id": "empty_ledger", "category": "validate_seed_ledger"},
+    {"case_id": "row_not_mapping", "category": "validate_seed_ledger"},
+    {"case_id": "mixed_master_seed", "category": "validate_seed_ledger"},
+    {"case_id": "replicate_index_gap", "category": "validate_seed_ledger"},
+    {"case_id": "replicate_id_index_mismatch", "category": "validate_seed_ledger"},
+    {"case_id": "duplicate_requested_llm_seed", "category": "validate_seed_ledger"},
+    {"case_id": "duplicate_python_hash_seed", "category": "validate_seed_ledger"},
+    {"case_id": "network_seed_not_simulation_seed", "category": "validate_seed_ledger"},
+    {"case_id": "target_seed_not_simulation_seed", "category": "validate_seed_ledger"},
+    {"case_id": "provider_model_not_string", "category": "validate_seed_ledger"},
+    {"case_id": "provider_system_fingerprint_not_string", "category": "validate_seed_ledger"},
+    {"case_id": "bool_replicate_index", "category": "validate_seed_ledger"},
+    {"case_id": "bool_num_replicates", "category": "build_seed_ledger"},
+    {"case_id": "duplicate_replicate_index", "category": "validate_seed_ledger"}
+  ]
+}

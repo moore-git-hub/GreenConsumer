@@ -28,6 +28,7 @@ import math
 import platform
 import subprocess
 import shutil
+import inspect
 from dataclasses import replace
 from pathlib import Path
 
@@ -1330,6 +1331,8 @@ def _ordered_experiment_configs(replication_context: dict | None = None) -> list
 
 
 class _DeterministicMockRouter:
+    _task005_router_close_noop = True
+
     async def chat(self, prompt: str) -> str:
         if "trust_change_affective" in prompt or "hypocrisy_perceived" in prompt:
             return json.dumps({
@@ -1381,7 +1384,38 @@ def _build_real_router(requested_llm_seed: int | None = None):
     if requested_llm_seed is not None:
         models_conf = _config_with_requested_llm_seed(models_conf, requested_llm_seed)
     from agentkernel_standalone.toolkit.models.router import ModelRouter, AsyncModelRouter
-    return ModelRouter(AsyncModelRouter(models_conf))
+    async_router = AsyncModelRouter(models_conf)
+    router = ModelRouter(async_router)
+    router._task005_async_router = async_router
+    return router
+
+
+async def _close_router_resource(router) -> None:
+    if router is None or getattr(router, "_task005_router_close_noop", False):
+        return
+
+    if getattr(router, "_task005_router_close_attempted", False):
+        return
+
+    close_method = None
+    for name in ("close", "aclose", "shutdown"):
+        candidate = getattr(router, name, None)
+        if callable(candidate):
+            close_method = candidate
+            break
+    if close_method is None:
+        inner = getattr(router, "_task005_async_router", None)
+        candidate = getattr(inner, "close", None)
+        if callable(candidate):
+            close_method = candidate
+
+    if close_method is None:
+        raise AttributeError("router has no supported close/aclose/shutdown API")
+
+    setattr(router, "_task005_router_close_attempted", True)
+    result = close_method()
+    if inspect.isawaitable(result):
+        await result
 
 
 def _build_router_for_mode(replication_context: dict | None = None):
@@ -1455,86 +1489,108 @@ async def main(args=None):
     results = []
     errors  = []
     llm_cache: dict = {}   # 对照组建立后填入
+    router_close_error: BaseException | None = None
 
-    for i, config in enumerate(ordered_configs, 1):
-        is_recording = config.is_control
-        role_label = ("[RECORDING control]" if is_recording
-                      else f"[REPLAY until T{config.clarification_tick}]")
+    loop_exception = None
+    try:
+        for i, config in enumerate(ordered_configs, 1):
+            is_recording = config.is_control
+            role_label = ("[RECORDING control]" if is_recording
+                          else f"[REPLAY until T{config.clarification_tick}]")
 
-        print(f"\n{'─'*65}")
-        print(f"  [{i}/{total}] 🚀 {config.exp_id}")
-        print(f"    Content={config.content_factor} | Channel={config.channel_factor} "
-              f"| Timing={config.timing_factor} {role_label}")
-        print(f"{'─'*65}")
+            print(f"\n{'─'*65}")
+            print(f"  [{i}/{total}] 🚀 {config.exp_id}")
+            print(f"    Content={config.content_factor} | Channel={config.channel_factor} "
+                  f"| Timing={config.timing_factor} {role_label}")
+            print(f"{'─'*65}")
 
-        # ── TASK_002 审计插桩：计时点位于 _run_with_patch 之外，不进入仿真 ──
-        run_audit = {
-            "started_at": datetime.datetime.now().isoformat(timespec="seconds"),
-            "finished_at": "",
-            "recording_cache_size": "",   # "" = 不适用；录制组=产出规模，回放组=消费规模
-            "replay_miss_count": "",      # "" = 不适用（录制组无 ReplayRouter）；0 = 回放零 miss
-            "router_role": "recording" if is_recording else "replay",
-        }
-        rp_router = None
+            # ── TASK_002 审计插桩：计时点位于 _run_with_patch 之外，不进入仿真 ──
+            run_audit = {
+                "started_at": datetime.datetime.now().isoformat(timespec="seconds"),
+                "finished_at": "",
+                "recording_cache_size": "",   # "" = 不适用；录制组=产出规模，回放组=消费规模
+                "replay_miss_count": "",      # "" = 不适用（录制组无 ReplayRouter）；0 = 回放零 miss
+                "router_role": "recording" if is_recording else "replay",
+            }
+            rp_router = None
+            try:
+                if is_recording:
+                    # ── 唯一的录制组：建立全局 LLM 缓存 ────────────────────
+                    rec_router = RecordingRouter(_real_router)
+                    result = await _run_with_patch(config, override_router=rec_router)
+                    llm_cache.update(rec_router.cache)
+                    print(f"  📼 全局缓存已建立: {len(llm_cache)} 条 LLM 响应")
+                    # 真实来源：RecordingRouter._cache（由 .cache 属性暴露）
+                    run_audit["recording_cache_size"] = len(rec_router.cache)
+                    # 录制组不存在 ReplayRouter → replay_miss_count 保持 ""，不写 0
+                else:
+                    assert config.clarification_tick is not None
+                    clr_tick = config.clarification_tick
+                    rp_router = ReplayRouter(
+                        _real_router, llm_cache,
+                        replay_until_tick=clr_tick,
+                        exp_id=config.exp_id,
+                    )
+                    result = await _run_with_patch(config, override_router=rp_router)
+                    # 真实来源：该组实际消费的缓存规模 + ReplayRouter.miss_count
+                    run_audit["recording_cache_size"] = len(llm_cache)
+                    run_audit["replay_miss_count"] = rp_router.miss_count
+
+                run_audit["finished_at"] = datetime.datetime.now().isoformat(timespec="seconds")
+                result["run_audit"] = run_audit
+                results.append(result)
+
+            except ReplayAlignmentError as e:
+                error_msg = f"{config.exp_id}: {type(e).__name__}: {e}"
+                print(f"  FAILED: {error_msg}")
+                errors.append(error_msg)
+                run_audit["finished_at"] = datetime.datetime.now().isoformat(timespec="seconds")
+                run_audit["recording_cache_size"] = len(llm_cache)
+                run_audit["replay_miss_count"] = e.miss_count
+                results.append({"exp_id": config.exp_id,
+                                "config": config.to_dict(),
+                                "error": str(e),
+                                "error_type": type(e).__name__,
+                                "run_audit": run_audit})
+                continue
+
+            except Exception as e:
+                import traceback
+                error_msg = f"{config.exp_id}: {type(e).__name__}: {e}"
+                print(f"  ❌ FAILED: {error_msg}")
+                traceback.print_exc()
+                errors.append(error_msg)
+                run_audit["finished_at"] = datetime.datetime.now().isoformat(timespec="seconds")
+                if not is_recording:
+                    run_audit["recording_cache_size"] = len(llm_cache)
+                    run_audit["replay_miss_count"] = getattr(rp_router, "miss_count", 0)
+                # R12：异常分支必须一并写入 config —— 只保存 exp_id + error 会丢掉
+                #      "哪一组因子 / 什么 seed / 预算多少"，而失败实验恰恰最需要复现。
+                #      ExperimentConfig.to_dict() 已核实存在，返回 asdict + exp_id + clarification_tick。
+                results.append({"exp_id": config.exp_id,
+                                "config": config.to_dict(),
+                                "error": str(e),
+                                "error_type": type(e).__name__,
+                                "run_audit": run_audit})
+
+    except BaseException as exc:
+        loop_exception = exc
+    finally:
         try:
-            if is_recording:
-                # ── 唯一的录制组：建立全局 LLM 缓存 ────────────────────
-                rec_router = RecordingRouter(_real_router)
-                result = await _run_with_patch(config, override_router=rec_router)
-                llm_cache.update(rec_router.cache)
-                print(f"  📼 全局缓存已建立: {len(llm_cache)} 条 LLM 响应")
-                # 真实来源：RecordingRouter._cache（由 .cache 属性暴露）
-                run_audit["recording_cache_size"] = len(rec_router.cache)
-                # 录制组不存在 ReplayRouter → replay_miss_count 保持 ""，不写 0
-            else:
-                assert config.clarification_tick is not None
-                clr_tick = config.clarification_tick
-                rp_router = ReplayRouter(
-                    _real_router, llm_cache,
-                    replay_until_tick=clr_tick,
-                    exp_id=config.exp_id,
-                )
-                result = await _run_with_patch(config, override_router=rp_router)
-                # 真实来源：该组实际消费的缓存规模 + ReplayRouter.miss_count
-                run_audit["recording_cache_size"] = len(llm_cache)
-                run_audit["replay_miss_count"] = rp_router.miss_count
+            await _close_router_resource(_real_router)
+        except BaseException as exc:
+            router_close_error = exc
 
-            run_audit["finished_at"] = datetime.datetime.now().isoformat(timespec="seconds")
-            result["run_audit"] = run_audit
-            results.append(result)
+    if loop_exception is not None:
+        if router_close_error is not None:
+            print(
+                "WARNING: router close also failed: "
+                f"{type(router_close_error).__name__}"
+            )
+        raise loop_exception
 
-        except ReplayAlignmentError as e:
-            error_msg = f"{config.exp_id}: {type(e).__name__}: {e}"
-            print(f"  FAILED: {error_msg}")
-            errors.append(error_msg)
-            run_audit["finished_at"] = datetime.datetime.now().isoformat(timespec="seconds")
-            run_audit["recording_cache_size"] = len(llm_cache)
-            run_audit["replay_miss_count"] = e.miss_count
-            results.append({"exp_id": config.exp_id,
-                            "config": config.to_dict(),
-                            "error": str(e),
-                            "error_type": type(e).__name__,
-                            "run_audit": run_audit})
-            continue
-
-        except Exception as e:
-            import traceback
-            error_msg = f"{config.exp_id}: {type(e).__name__}: {e}"
-            print(f"  ❌ FAILED: {error_msg}")
-            traceback.print_exc()
-            errors.append(error_msg)
-            run_audit["finished_at"] = datetime.datetime.now().isoformat(timespec="seconds")
-            if not is_recording:
-                run_audit["recording_cache_size"] = len(llm_cache)
-                run_audit["replay_miss_count"] = getattr(rp_router, "miss_count", 0)
-            # R12：异常分支必须一并写入 config —— 只保存 exp_id + error 会丢掉
-            #      "哪一组因子 / 什么 seed / 预算多少"，而失败实验恰恰最需要复现。
-            #      ExperimentConfig.to_dict() 已核实存在，返回 asdict + exp_id + clarification_tick。
-            results.append({"exp_id": config.exp_id,
-                            "config": config.to_dict(),
-                            "error": str(e),
-                            "error_type": type(e).__name__,
-                            "run_audit": run_audit})
+    if router_close_error is not None and not isinstance(router_close_error, Exception):
+        raise router_close_error
 
     # ── 写入输出文件 ─────────────────────────────────────────────────
     # legacy creates run_<timestamp> and refreshes latest/; replication-child
@@ -1558,6 +1614,10 @@ async def main(args=None):
         msg = f"{stage}: {type(exc).__name__}: {exc}"
         postprocess_errors.append(msg)
         print(f"WARNING: {msg}")
+
+    if router_close_error is not None:
+        safe_close_error = RuntimeError(type(router_close_error).__name__)
+        _record_postprocess_error("close router resource", safe_close_error)
 
     def _has_replay_miss(value) -> bool:
         return value not in ("", 0, "0", None)

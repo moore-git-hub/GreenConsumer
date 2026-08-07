@@ -422,7 +422,7 @@ def check_per_child_revalidation(v: Reporter) -> None:
 
         def drift_after_ten(**kwargs):
             calls["count"] += 1
-            if calls["count"] > 11:
+            if calls["count"] == 12:
                 raise launch.FormalLaunchGateError("synthetic model drift")
             return original(**kwargs)
 
@@ -432,7 +432,7 @@ def check_per_child_revalidation(v: Reporter) -> None:
             code = run_fake_batch(root / "out", auth, started)
         finally:
             launch.validate_current_formal_model_config = original
-        v.check("M model drift stops next child", code == 1 and started == [f"R{i:03d}" for i in range(1, 11)], "R001-R010", started)
+        v.check("M transient model drift is terminal", code == 2 and started == [f"R{i:03d}" for i in range(1, 11)], "exit 2 / R001-R010", (code, started))
 
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -442,7 +442,7 @@ def check_per_child_revalidation(v: Reporter) -> None:
 
         def source_drift(*args, **kwargs):
             calls["count"] += 1
-            if calls["count"] > 2:
+            if calls["count"] == 3:
                 raise launch.FormalLaunchGateError("synthetic source drift")
             return original(*args, **kwargs)
 
@@ -452,7 +452,7 @@ def check_per_child_revalidation(v: Reporter) -> None:
             code = run_fake_batch(root / "out", auth, started)
         finally:
             launch._validate_activation_source_hashes = original
-        v.check("N source drift stops next child", code == 1 and started == ["R001"], "R001 only", started)
+        v.check("N transient source drift is terminal", code == 2 and started == ["R001"], "exit 2 / R001 only", (code, started))
 
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -472,7 +472,7 @@ def check_per_child_revalidation(v: Reporter) -> None:
             code = run_fake_batch(root / "out", auth, started)
         finally:
             launch._assert_sha = original
-        v.check("O seed ledger drift stops next child", code == 1 and len(started) < 24, "<24", started)
+        v.check("O seed ledger drift stops next child", code == 2 and len(started) < 24, "exit 2 / <24", (code, started))
 
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)

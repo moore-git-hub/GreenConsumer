@@ -46,7 +46,7 @@ ACTIVATION_CONTRACT_PATH = Path(
 )
 AUTHORIZATION_PATH = Path(
     ".kiro/specs/task005-replication-inference/"
-    "formal_execution_authorization1.0.json"
+    "formal_execution_authorization1.1.json"
 )
 MODELS_CONFIG_PATH = Path("configs/models_config.yaml")
 EXPECTED_LAUNCH_CONTRACT_SHA = (
@@ -57,6 +57,13 @@ EXPECTED_SEED_LEDGER_SHA = (
 )
 EXPECTED_MODEL_SANITIZED_SHA = (
     "8311d2f5758009e1620d3cc10f588cb789fe2d0c801878854d19a79bf0900a61"
+)
+SUPERSEDED_AUTHORIZATION_SHA = (
+    "1c3f54d29de53636fb0532bc67d4ac8e2271824a02263378a46e2c56b54b655c"
+)
+ACTIVATION_INCIDENT_NOTE_PATH = Path(
+    ".kiro/specs/task005-replication-inference/"
+    "formal_activation_incident_note1.0.json"
 )
 EXPECTED_FORMAL_CONTRACTS = (
     ".kiro/specs/task005-replication-inference/formal_n_freeze1.0.json",
@@ -71,6 +78,10 @@ AUTHORIZATION_DIFF_ALLOWLIST = (
     "formal_execution_authorization1.0.json",
     ".kiro/specs/task005-replication-inference/"
     "formal_execution_authorization1.0.md",
+    ".kiro/specs/task005-replication-inference/"
+    "formal_execution_authorization1.1.json",
+    ".kiro/specs/task005-replication-inference/"
+    "formal_execution_authorization1.1.md",
 )
 
 
@@ -326,6 +337,29 @@ def _validate_activation_source_hashes(
             raise FormalLaunchGateError(f"activation source SHA mismatch: {rel}")
 
 
+def _validate_execution_source_hashes(
+    root: Path,
+    launch_contract: Mapping[str, Any],
+    authorization: Mapping[str, Any],
+) -> None:
+    """Validate 5A frozen sources, overlaying files intentionally changed by activation."""
+    frozen = launch_contract.get("source_identities", {}).get("sha256", {})
+    activation = authorization.get("activation_source_sha256")
+    if not isinstance(frozen, dict) or not frozen:
+        raise FormalLaunchGateError("5A frozen source hashes missing")
+    if not isinstance(activation, dict) or not activation:
+        raise FormalLaunchGateError("activation source hashes missing")
+    expected = dict(frozen)
+    expected.update(activation)
+    expected.pop("configs/models_config.yaml", None)
+    for rel, digest in expected.items():
+        p = root / rel
+        if not p.exists():
+            raise FormalLaunchGateError(f"execution source missing: {rel}")
+        if _sha256_file(p).lower() != str(digest).lower():
+            raise FormalLaunchGateError(f"execution source SHA mismatch: {rel}")
+
+
 def current_commit_info(root: Path | str = Path(".")) -> dict:
     base = Path(root)
     head = _git(["rev-parse", "HEAD"], root=base)
@@ -371,8 +405,12 @@ def validate_authorization_artifact(
     if not path.exists():
         raise FormalLaunchGateError("human authorization artifact missing")
     authorization = _read_json_object(path)
+    if path.name == AUTHORIZATION_PATH.name:
+        if authorization.get("schema_version") != "1.1":
+            raise FormalLaunchGateError("authorization schema_version mismatch")
+    elif authorization.get("schema_version") not in {"1.0", "1.1"}:
+        raise FormalLaunchGateError("authorization schema_version invalid")
     expected_pairs = {
-        "schema_version": "1.0",
         "status": "frozen",
         "authorization_scope": "initial_formal_cohort_execution",
         "human_cost_time_authorized": True,
@@ -402,6 +440,28 @@ def validate_authorization_artifact(
     activation_contract_sha = authorization.get("formal_activation_gate_contract_sha256")
     if activation_contract_sha != _sha256_file(base / ACTIVATION_CONTRACT_PATH):
         raise FormalLaunchGateError("authorization activation contract SHA mismatch")
+
+    if authorization.get("schema_version") == "1.1":
+        if authorization.get("supersedes_authorization_sha256") != SUPERSEDED_AUTHORIZATION_SHA:
+            raise FormalLaunchGateError("authorization superseded SHA mismatch")
+        if authorization.get("activation_incident_note_path") != ACTIVATION_INCIDENT_NOTE_PATH.as_posix():
+            raise FormalLaunchGateError("authorization incident note path mismatch")
+        incident = base / ACTIVATION_INCIDENT_NOTE_PATH
+        if not incident.is_file():
+            raise FormalLaunchGateError("activation incident note missing")
+        if authorization.get("activation_incident_note_sha256") != _sha256_file(incident):
+            raise FormalLaunchGateError("authorization incident note SHA mismatch")
+        disclosure = {
+            "unintended_nonformal_network_access_disclosed": True,
+            "real_llm_calls_during_drafting_and_validation": 0,
+            "formal_output_created_during_drafting_and_validation": False,
+            "formal_data_produced_during_drafting_and_validation": False,
+            "network_calls_in_final_validated_runs": 0,
+        }
+        for key, expected in disclosure.items():
+            if authorization.get(key) != expected:
+                raise FormalLaunchGateError(f"authorization disclosure mismatch: {key}")
+
     auth_sha = _sha256_file(path)
     commit_info = _validate_authorization_commit_structure(
         authorization,
@@ -478,18 +538,28 @@ def _formal_request(output_root: Path, python_executable: str) -> dict:
 def _child_revalidation_gate(
     *,
     root: Path,
+    launch_contract: Mapping[str, Any],
     authorization_path: Path,
     authorization_artifact_sha256: str,
     authorization: Mapping[str, Any],
     git_state_provider: Callable[[], Mapping[str, Any]] | None,
+    commit_info_provider: Callable[[], Mapping[str, Any]] | None,
 ):
     def _gate(**_kwargs) -> None:
-        validate_current_formal_model_config(root=root)
-        _validate_activation_source_hashes(root, authorization)
-        validate_git_gate(git_state_provider)
-        _assert_sha(root / SEED_LEDGER_PATH, EXPECTED_SEED_LEDGER_SHA)
         if _sha256_file(authorization_path) != authorization_artifact_sha256:
             raise FormalLaunchGateError("authorization artifact SHA changed")
+        _assert_sha(
+            root / ACTIVATION_CONTRACT_PATH,
+            str(authorization["formal_activation_gate_contract_sha256"]),
+        )
+        _validate_authorization_commit_structure(
+            authorization, commit_info_provider=commit_info_provider
+        )
+        _validate_activation_source_hashes(root, authorization)
+        _validate_execution_source_hashes(root, launch_contract, authorization)
+        validate_current_formal_model_config(root=root)
+        validate_git_gate(git_state_provider)
+        _assert_sha(root / SEED_LEDGER_PATH, EXPECTED_SEED_LEDGER_SHA)
 
     return _gate
 
@@ -516,6 +586,7 @@ def run_authorized_formal_replication_batch(
         commit_info_provider=commit_info_provider,
     )
     _validate_formal_seed_ledger(base, launch_contract)
+    _validate_execution_source_hashes(base, launch_contract, auth["authorization"])
     validate_current_formal_model_config(root=base)
     validate_per_block_requested_seed_override(root=base)
     validate_git_gate(git_state_provider)
@@ -524,10 +595,12 @@ def run_authorized_formal_replication_batch(
         raise FormalLaunchGateError("formal output path already exists")
     before_child_start = _child_revalidation_gate(
         root=base,
+        launch_contract=launch_contract,
         authorization_path=base / Path(authorization_path),
         authorization_artifact_sha256=auth["authorization_artifact_sha256"],
         authorization=auth["authorization"],
         git_state_provider=git_state_provider,
+        commit_info_provider=commit_info_provider,
     )
     request = _formal_request(base / Path(output_root), python_executable)
     return run_replications.run_replication_batch(
@@ -537,6 +610,9 @@ def run_authorized_formal_replication_batch(
         block_validator=block_validator,
         formal_activation_context={
             "authorization_artifact_sha256": auth["authorization_artifact_sha256"],
+            "authorization_artifact_path": str(
+                (base / Path(authorization_path)).resolve()
+            ),
             "activation_code_head": auth["activation_code_head"],
             "launch_contract_sha256": EXPECTED_LAUNCH_CONTRACT_SHA,
             "seed_ledger_sha256": EXPECTED_SEED_LEDGER_SHA,

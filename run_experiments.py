@@ -1165,6 +1165,12 @@ LLM_MODES = ("real", "deterministic-mock")
 FORMAL_CHILD_AUTH_ENV = (
     "TASK005_FORMAL_AUTHORIZATION_SHA256",
     "TASK005_FORMAL_ACTIVATION_CODE_HEAD",
+    "TASK005_FORMAL_AUTHORIZATION_PATH",
+    "TASK005_FORMAL_LAUNCH_CONTRACT_SHA256",
+)
+FORMAL_EXECUTION_AUTH_REL = Path(
+    ".kiro/specs/task005-replication-inference/"
+    "formal_execution_authorization1.1.json"
 )
 
 REPLICATION_METADATA_FIELDS = (
@@ -1284,14 +1290,45 @@ def _validate_formal_child_authorization(
             raise ReplicationStartupError(
                 "formal real child requires dedicated authorization provenance"
             )
-    auth_sha = env["TASK005_FORMAL_AUTHORIZATION_SHA256"]
-    if len(auth_sha) != 64 or any(ch not in "0123456789abcdefABCDEF" for ch in auth_sha):
+    auth_sha = str(env["TASK005_FORMAL_AUTHORIZATION_SHA256"])
+    activation_head = str(env["TASK005_FORMAL_ACTIVATION_CODE_HEAD"])
+    launch_sha = str(env["TASK005_FORMAL_LAUNCH_CONTRACT_SHA256"])
+    if len(auth_sha)!=64 or any(c not in "0123456789abcdefABCDEF" for c in auth_sha):
         raise ReplicationStartupError("formal authorization SHA is invalid")
-    activation_head = env["TASK005_FORMAL_ACTIVATION_CODE_HEAD"]
-    if len(activation_head) != 40 or any(
-        ch not in "0123456789abcdefABCDEF" for ch in activation_head
-    ):
+    if len(activation_head)!=40 or any(c not in "0123456789abcdefABCDEF" for c in activation_head):
         raise ReplicationStartupError("formal activation code head is invalid")
+    if len(launch_sha)!=64 or any(c not in "0123456789abcdefABCDEF" for c in launch_sha):
+        raise ReplicationStartupError("formal launch contract SHA is invalid")
+
+    expected = (Path(current_dir) / FORMAL_EXECUTION_AUTH_REL).resolve()
+    try:
+        auth_path = Path(env["TASK005_FORMAL_AUTHORIZATION_PATH"]).resolve()
+    except Exception as exc:
+        raise ReplicationStartupError("formal authorization path is invalid") from exc
+    if auth_path != expected or not auth_path.is_file():
+        raise ReplicationStartupError("formal authorization path mismatch")
+    if hashlib.sha256(auth_path.read_bytes()).hexdigest().lower() != auth_sha.lower():
+        raise ReplicationStartupError("formal authorization artifact SHA mismatch")
+    try:
+        authorization = json.loads(auth_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise ReplicationStartupError("formal authorization artifact is invalid") from exc
+    if not isinstance(authorization, dict):
+        raise ReplicationStartupError("formal authorization artifact must be an object")
+    expected_pairs = {
+        "schema_version": "1.1",
+        "status": "frozen",
+        "formal_batch_id": replication_id,
+        "human_cost_time_authorized": True,
+        "human_real_execution_authorized": True,
+        "activation_code_head": activation_head,
+        "formal_launch_contract_sha256": launch_sha,
+    }
+    for key, expected_value in expected_pairs.items():
+        if authorization.get(key) != expected_value:
+            raise ReplicationStartupError(
+                f"formal authorization provenance mismatch: {key}"
+            )
 
 
 def _require_non_empty_string(value, name: str) -> str:

@@ -389,6 +389,12 @@ def build_child_env(
             env["TASK005_FORMAL_ACTIVATION_CODE_HEAD"] = str(
                 formal_activation_context["activation_code_head"]
             )
+            env["TASK005_FORMAL_AUTHORIZATION_PATH"] = str(
+                formal_activation_context["authorization_artifact_path"]
+            )
+            env["TASK005_FORMAL_LAUNCH_CONTRACT_SHA256"] = str(
+                formal_activation_context["launch_contract_sha256"]
+            )
     else:
         raise RunnerStartupError("llm_mode is invalid")
     return env
@@ -641,12 +647,20 @@ def _run_batch_state(request: Mapping[str, Any], state: Mapping[str, Any]) -> in
 
             before_child_start = request.get("_before_child_start")
             if before_child_start is not None:
-                before_child_start(
-                    request=request,
-                    batch_dir=batch_dir,
-                    manifest_row=manifest_row,
-                    ledger_row=ledger_row,
-                )
+                try:
+                    before_child_start(
+                        request=request,
+                        batch_dir=batch_dir,
+                        manifest_row=manifest_row,
+                        ledger_row=ledger_row,
+                    )
+                except RunnerStartupError:
+                    raise
+                except Exception as exc:
+                    raise RunnerStartupError(
+                        "before_child_start gate failed: "
+                        f"{type(exc).__name__}"
+                    ) from exc
 
             result_status = _run_one_attempt(
                 request,

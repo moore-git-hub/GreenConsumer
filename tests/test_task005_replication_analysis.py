@@ -358,6 +358,8 @@ def write_synthetic_batch(
     *,
     mutation: str | None = None,
     replication_id: str | None = None,
+    engineering_replicate_id: str | None = None,
+    metadata_replicate_id_override: str | None = None,
 ) -> Path:
     case = copy.deepcopy(fixture["canonical_case"])
     batch_id = replication_id or case["replication_id"]
@@ -378,8 +380,10 @@ def write_synthetic_batch(
 
     manifest_rows: list[dict[str, Any]] = []
 
-    for block in case["blocks"]:
+    for block_number, block in enumerate(case["blocks"], start=1):
         rid = block["replicate_id"]
+        if block_number == 1 and engineering_replicate_id is not None:
+            rid = engineering_replicate_id
         rows = copy.deepcopy(block["conditions"])
 
         if mutation == "missing_strategy" and rid == "R002":
@@ -443,7 +447,12 @@ def write_synthetic_batch(
         metadata = {
             "replication": {
                 "replication_id": batch_id,
-                "replicate_id": rid,
+                "replicate_id": (
+                    metadata_replicate_id_override
+                    if block_number == 1
+                    and metadata_replicate_id_override is not None
+                    else rid
+                ),
                 "replicate_index": block["replicate_index"],
                 "attempt_index": 1,
             },
@@ -936,6 +945,66 @@ def check_a3(v: Reporter, module, fixture: dict[str, Any]) -> None:
                     "ValueError",
                     "no exception",
                 )
+
+    for engineering_id in ENGINEERING_BLOCK_IDS_FORBIDDEN_IN_FORMAL:
+        with tempfile.TemporaryDirectory() as temp:
+            batch = write_synthetic_batch(
+                fixture,
+                Path(temp),
+                engineering_replicate_id=engineering_id,
+            )
+            result = fn(batch, make_preregistration())
+            valid, excluded, counts = get_loader_parts(result)
+            v.check(
+                group,
+                f"{engineering_id} block excluded from valid formal blocks",
+                len(valid) == 23 and len(excluded) == 1,
+                "23 valid / 1 excluded",
+                f"{len(valid)} valid / {len(excluded)} excluded",
+            )
+            v.check(
+                group,
+                f"{engineering_id} block makes formal incomplete",
+                result.get("formal_complete") is False
+                and result.get("formal_inference_permitted") is False,
+                "formal_complete=false and inference=false",
+                {
+                    "formal_complete": result.get("formal_complete"),
+                    "formal_inference_permitted":
+                        result.get("formal_inference_permitted"),
+                    "counts": counts,
+                },
+            )
+            v.check(
+                group,
+                f"{engineering_id} excluded reason names hard gate",
+                engineering_id in str(excluded[0].get("reason", "")),
+                engineering_id,
+                excluded,
+            )
+
+    with tempfile.TemporaryDirectory() as temp:
+        batch = write_synthetic_batch(
+            fixture,
+            Path(temp),
+            metadata_replicate_id_override="P001",
+        )
+        result = fn(batch, make_preregistration())
+        valid, excluded, _counts = get_loader_parts(result)
+        v.check(
+            group,
+            "run_metadata engineering replicate_id excluded",
+            len(valid) == 23 and len(excluded) == 1,
+            "23 valid / 1 excluded",
+            f"{len(valid)} valid / {len(excluded)} excluded",
+        )
+        v.check(
+            group,
+            "run_metadata engineering replicate_id reason explicit",
+            "P001" in str(excluded[0].get("reason", "")),
+            "P001 in reason",
+            excluded,
+        )
 
 
 def _canonical_pipeline(module, fixture: dict[str, Any]):

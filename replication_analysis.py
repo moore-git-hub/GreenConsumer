@@ -409,6 +409,10 @@ def load_valid_replication_blocks(
         rid = str(manifest["replicate_id"]).strip()
         reasons: list[str] = []
         try:
+            if rid in set(ENGINEERING_BLOCK_IDS_FORBIDDEN_IN_FORMAL):
+                raise ValueError(
+                    f"forbidden engineering replicate_id: {rid}"
+                )
             if str(manifest.get("replication_id", "")).strip() != batch_id:
                 raise ValueError("manifest replication_id mismatch")
             if str(manifest.get("status", "")).strip() != "succeeded":
@@ -462,7 +466,13 @@ def load_valid_replication_blocks(
             )
             if str(replication.get("replication_id", "")).strip() != batch_id:
                 raise ValueError("run metadata replication_id mismatch")
-            if str(replication.get("replicate_id", "")).strip() != rid:
+            metadata_rid = str(replication.get("replicate_id", "")).strip()
+            if metadata_rid in set(ENGINEERING_BLOCK_IDS_FORBIDDEN_IN_FORMAL):
+                raise ValueError(
+                    f"forbidden engineering run metadata replicate_id: "
+                    f"{metadata_rid}"
+                )
+            if metadata_rid != rid:
                 raise ValueError("run metadata replicate_id mismatch")
             replicate_index = _int(
                 replication.get("replicate_index"), "replicate_index"

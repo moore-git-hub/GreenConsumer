@@ -261,6 +261,10 @@ def parse_runner_args(argv=None):
 
 
 def build_runner_request(args) -> dict:
+    return _build_runner_request(args, allow_formal_real=False)
+
+
+def _build_runner_request(args, *, allow_formal_real: bool) -> dict:
     replication_id = _validate_replication_id(args.replication_id)
     master_seed = _require_non_bool_int("master_seed", args.master_seed, minimum=0)
     num_replicates = _require_non_bool_int(
@@ -273,6 +277,14 @@ def build_runner_request(args) -> dict:
         raise RunnerStartupError("max_parallel must be exactly 1")
     if args.llm_mode not in LLM_MODES:
         raise RunnerStartupError("llm_mode is invalid")
+    if (
+        replication_id.startswith("task005-formal-")
+        and args.llm_mode == "real"
+        and not allow_formal_real
+    ):
+        raise RunnerStartupError(
+            "formal real execution requires dedicated authorized launcher"
+        )
     if args.llm_seed_supported not in LLM_SEED_SUPPORTED_VALUES:
         raise RunnerStartupError("llm_seed_supported is invalid")
     if not isinstance(args.provider_model, str):
@@ -350,6 +362,7 @@ def build_child_env(
     *,
     llm_mode,
     base_env=None,
+    formal_activation_context: Mapping[str, Any] | None = None,
 ) -> dict[str, str]:
     env = dict(os.environ if base_env is None else base_env)
     env.update({
@@ -369,14 +382,39 @@ def build_child_env(
     elif llm_mode == "real":
         for key in OFFLINE_ENV_KEYS:
             env.pop(key, None)
+        if formal_activation_context is not None:
+            env["TASK005_FORMAL_AUTHORIZATION_SHA256"] = str(
+                formal_activation_context["authorization_artifact_sha256"]
+            )
+            env["TASK005_FORMAL_ACTIVATION_CODE_HEAD"] = str(
+                formal_activation_context["activation_code_head"]
+            )
     else:
         raise RunnerStartupError("llm_mode is invalid")
     return env
 
 
-def run_replication_batch(request: dict) -> int:
+def run_replication_batch(
+    request: dict,
+    *,
+    before_child_start=None,
+    child_runner=None,
+    block_validator=None,
+    formal_activation_context: Mapping[str, Any] | None = None,
+) -> int:
     try:
-        req = _validate_runner_request_dict(request)
+        req = _validate_runner_request_dict(
+            request,
+            allow_formal_real=formal_activation_context is not None,
+        )
+        if before_child_start is not None:
+            req["_before_child_start"] = before_child_start
+        if child_runner is not None:
+            req["_child_runner"] = child_runner
+        if block_validator is not None:
+            req["_block_validator"] = block_validator
+        if formal_activation_context is not None:
+            req["_formal_activation_context"] = dict(formal_activation_context)
         batch_dir = Path(req["output_root"]) / req["replication_id"]
         state = _load_or_initialize_batch(req, batch_dir)
         return _run_batch_state(req, state)
@@ -428,7 +466,11 @@ def _require_non_bool_int(name: str, value, *, minimum: int | None = None) -> in
     return value
 
 
-def _validate_runner_request_dict(request: Mapping[str, Any]) -> dict:
+def _validate_runner_request_dict(
+    request: Mapping[str, Any],
+    *,
+    allow_formal_real: bool = False,
+) -> dict:
     if not isinstance(request, Mapping):
         raise RunnerStartupError("request must be a mapping")
     args = argparse.Namespace(**dict(request))
@@ -441,7 +483,7 @@ def _validate_runner_request_dict(request: Mapping[str, Any]) -> dict:
             raise RunnerStartupError(f"request missing {name}")
     if not hasattr(args, "retry_failed"):
         args.retry_failed = False
-    return build_runner_request(args)
+    return _build_runner_request(args, allow_formal_real=allow_formal_real)
 
 
 def _utc_now() -> str:
@@ -597,6 +639,15 @@ def _run_batch_state(request: Mapping[str, Any], state: Mapping[str, Any]) -> in
             elif status != "planned":
                 raise RunnerStartupError(f"invalid manifest status for {replicate_id}")
 
+            before_child_start = request.get("_before_child_start")
+            if before_child_start is not None:
+                before_child_start(
+                    request=request,
+                    batch_dir=batch_dir,
+                    manifest_row=manifest_row,
+                    ledger_row=ledger_row,
+                )
+
             result_status = _run_one_attempt(
                 request,
                 batch_dir,
@@ -639,7 +690,8 @@ def _handle_succeeded_resume(
     exit_code = _parse_manifest_int(manifest_row, "subprocess_exit_code")
     if exit_code != 0:
         raise RunnerStartupError("succeeded block subprocess_exit_code must be 0")
-    validation = validate_block_artifacts(
+    block_validator = request.get("_block_validator", validate_block_artifacts)
+    validation = block_validator(
         block_dir,
         ledger_row,
         subprocess_exit_code=exit_code,
@@ -752,8 +804,13 @@ def _run_one_attempt(
         output_dir=work_dir,
         llm_mode=request["llm_mode"],
     )
-    env = build_child_env(ledger_row, llm_mode=request["llm_mode"])
-    completed = subprocess.run(
+    env = build_child_env(
+        ledger_row,
+        llm_mode=request["llm_mode"],
+        formal_activation_context=request.get("_formal_activation_context"),
+    )
+    child_runner = request.get("_child_runner", subprocess.run)
+    completed = child_runner(
         argv,
         cwd=str(request["project_root"]),
         env=env,
@@ -766,7 +823,8 @@ def _run_one_attempt(
     _write_text_file(work_dir / "child_stdout.log", _sanitize_text(completed.stdout, limit=None))
     _write_text_file(work_dir / "child_stderr.log", _sanitize_text(completed.stderr, limit=None))
 
-    validation = validate_block_artifacts(
+    block_validator = request.get("_block_validator", validate_block_artifacts)
+    validation = block_validator(
         work_dir,
         ledger_row,
         subprocess_exit_code=completed.returncode,

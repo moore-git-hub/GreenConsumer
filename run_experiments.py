@@ -1162,6 +1162,10 @@ REPLICATION_CLI_ARGS = (
 )
 
 LLM_MODES = ("real", "deterministic-mock")
+FORMAL_CHILD_AUTH_ENV = (
+    "TASK005_FORMAL_AUTHORIZATION_SHA256",
+    "TASK005_FORMAL_ACTIVATION_CODE_HEAD",
+)
 
 REPLICATION_METADATA_FIELDS = (
     "schema_version",
@@ -1246,6 +1250,7 @@ def build_replication_context(args) -> dict | None:
     llm_mode = values["llm_mode"]
     if llm_mode not in LLM_MODES:
         raise ReplicationStartupError("llm_mode is invalid")
+    _validate_formal_child_authorization(replication_id, llm_mode)
 
     return {
         "schema_version": REPLICATION_SCHEMA_VERSION,
@@ -1263,6 +1268,30 @@ def build_replication_context(args) -> dict | None:
         "output_dir": output_dir,
         "llm_mode": llm_mode,
     }
+
+
+def _validate_formal_child_authorization(
+    replication_id: str,
+    llm_mode: str,
+    environ=None,
+) -> None:
+    if not replication_id.startswith("task005-formal-") or llm_mode != "real":
+        return
+    env = os.environ if environ is None else environ
+    for key in FORMAL_CHILD_AUTH_ENV:
+        value = env.get(key)
+        if not isinstance(value, str) or not value:
+            raise ReplicationStartupError(
+                "formal real child requires dedicated authorization provenance"
+            )
+    auth_sha = env["TASK005_FORMAL_AUTHORIZATION_SHA256"]
+    if len(auth_sha) != 64 or any(ch not in "0123456789abcdefABCDEF" for ch in auth_sha):
+        raise ReplicationStartupError("formal authorization SHA is invalid")
+    activation_head = env["TASK005_FORMAL_ACTIVATION_CODE_HEAD"]
+    if len(activation_head) != 40 or any(
+        ch not in "0123456789abcdefABCDEF" for ch in activation_head
+    ):
+        raise ReplicationStartupError("formal activation code head is invalid")
 
 
 def _require_non_empty_string(value, name: str) -> str:

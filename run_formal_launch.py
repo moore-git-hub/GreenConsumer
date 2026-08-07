@@ -1,7 +1,7 @@
 """TASK_005 formal launch preauthorization gate.
 
-This module provides preflight-only checks for the frozen formal launch
-contract. Real formal execution remains unreachable in Stage I.5C-5B-0.
+This module provides formal launch gates. Real formal execution requires a
+separate frozen authorization artifact plus the exact runtime intent token.
 """
 
 from __future__ import annotations
@@ -18,14 +18,17 @@ from typing import Any, Callable, Mapping
 
 import yaml
 
+import run_replications
 from replication_config import build_seed_ledger, read_seed_ledger_csv
 
 
 STAGE = "I.5C-5B-0"
+ACTIVATION_STAGE = "I.5C-5B-1A"
 FORMAL_BATCH_ID = "task005-formal-v1"
 FORMAL_N = 24
 MASTER_SEED = 2026080801
 LLM_SEED_SUPPORTED = "unknown"
+RUNTIME_TOKEN = "I5C5B1_TASK005_FORMAL_V1_INITIAL_N24_2026080801"
 FORMAL_OUTPUT_PATH = Path("results/replications/task005-formal-v1")
 CONTRACT_PATH = Path(
     ".kiro/specs/task005-replication-inference/formal_launch_contract1.0.json"
@@ -40,6 +43,10 @@ MODEL_SANITIZED_PATH = Path(
 ACTIVATION_CONTRACT_PATH = Path(
     ".kiro/specs/task005-replication-inference/"
     "formal_activation_gate_contract1.0.json"
+)
+AUTHORIZATION_PATH = Path(
+    ".kiro/specs/task005-replication-inference/"
+    "formal_execution_authorization1.0.json"
 )
 MODELS_CONFIG_PATH = Path("configs/models_config.yaml")
 EXPECTED_LAUNCH_CONTRACT_SHA = (
@@ -59,6 +66,12 @@ EXPECTED_FORMAL_CONTRACTS = (
 )
 FORBIDDEN_ENGINEERING_IDS = {"P001", "P002", "P003", "P004", "P005"}
 REQUIRED_BRANCH = "refactor/task005-replication-inference"
+AUTHORIZATION_DIFF_ALLOWLIST = (
+    ".kiro/specs/task005-replication-inference/"
+    "formal_execution_authorization1.0.json",
+    ".kiro/specs/task005-replication-inference/"
+    "formal_execution_authorization1.0.md",
+)
 
 
 class FormalLaunchGateError(RuntimeError):
@@ -298,6 +311,112 @@ def _validate_source_hashes(root: Path, launch_contract: Mapping[str, Any]) -> N
             raise FormalLaunchGateError(f"frozen source SHA mismatch: {rel}")
 
 
+def _validate_activation_source_hashes(
+    root: Path,
+    authorization: Mapping[str, Any],
+) -> None:
+    hashes = authorization.get("activation_source_sha256")
+    if not isinstance(hashes, dict) or not hashes:
+        raise FormalLaunchGateError("authorization activation source hashes missing")
+    for rel, expected in hashes.items():
+        path = root / rel
+        if not path.exists():
+            raise FormalLaunchGateError(f"activation source missing: {rel}")
+        if _sha256_file(path).lower() != str(expected).lower():
+            raise FormalLaunchGateError(f"activation source SHA mismatch: {rel}")
+
+
+def current_commit_info(root: Path | str = Path(".")) -> dict:
+    base = Path(root)
+    head = _git(["rev-parse", "HEAD"], root=base)
+    parent = _git(["rev-parse", "HEAD^"], root=base)
+    diff_names = _git(["diff", "--name-only", f"{parent}..{head}"], root=base)
+    return {
+        "head": head,
+        "parent": parent,
+        "diff_names": tuple(
+            line.strip().replace("\\", "/")
+            for line in diff_names.splitlines()
+            if line.strip()
+        ),
+    }
+
+
+def _validate_authorization_commit_structure(
+    authorization: Mapping[str, Any],
+    *,
+    commit_info_provider: Callable[[], Mapping[str, Any]] | None = None,
+) -> dict:
+    info = dict(commit_info_provider() if commit_info_provider else current_commit_info())
+    activation_head = authorization.get("activation_code_head")
+    if info.get("parent") != activation_head:
+        raise FormalLaunchGateError("authorization commit parent mismatch")
+    diff_names = tuple(str(item).replace("\\", "/") for item in info.get("diff_names", ()))
+    if not diff_names or any(name not in AUTHORIZATION_DIFF_ALLOWLIST for name in diff_names):
+        raise FormalLaunchGateError("authorization commit contains non-authorization changes")
+    return info
+
+
+def validate_authorization_artifact(
+    *,
+    root: Path | str = Path("."),
+    authorization_path: Path | str = AUTHORIZATION_PATH,
+    runtime_token: str | None,
+    commit_info_provider: Callable[[], Mapping[str, Any]] | None = None,
+) -> dict:
+    base = Path(root)
+    if runtime_token != RUNTIME_TOKEN:
+        raise FormalLaunchGateError("runtime authorization token mismatch")
+    path = base / Path(authorization_path)
+    if not path.exists():
+        raise FormalLaunchGateError("human authorization artifact missing")
+    authorization = _read_json_object(path)
+    expected_pairs = {
+        "schema_version": "1.0",
+        "status": "frozen",
+        "authorization_scope": "initial_formal_cohort_execution",
+        "human_cost_time_authorized": True,
+        "human_real_execution_authorized": True,
+        "formal_batch_id": FORMAL_BATCH_ID,
+        "formal_n": FORMAL_N,
+        "sample_size_semantics": "exact",
+        "sampling_design": "fixed_predeclared_cohort",
+        "master_seed": MASTER_SEED,
+        "replacement_blocks_permitted": False,
+        "automatic_retry_authorized": False,
+        "retry_requires_explicit_later_invocation": True,
+        "formal_launch_contract_sha256": EXPECTED_LAUNCH_CONTRACT_SHA,
+        "formal_seed_ledger_sha256": EXPECTED_SEED_LEDGER_SHA,
+        "formal_model_config_sanitized_sha256": EXPECTED_MODEL_SANITIZED_SHA,
+        "runtime_token": RUNTIME_TOKEN,
+    }
+    for key, expected in expected_pairs.items():
+        if authorization.get(key) != expected:
+            raise FormalLaunchGateError(f"authorization {key} mismatch")
+    planned = authorization.get("planned_replicate_ids")
+    if planned != [f"R{index:03d}" for index in range(1, FORMAL_N + 1)]:
+        raise FormalLaunchGateError("authorization planned replicate IDs mismatch")
+    activation_head = authorization.get("activation_code_head")
+    if not isinstance(activation_head, str) or len(activation_head) != 40:
+        raise FormalLaunchGateError("authorization activation_code_head invalid")
+    activation_contract_sha = authorization.get("formal_activation_gate_contract_sha256")
+    if activation_contract_sha != _sha256_file(base / ACTIVATION_CONTRACT_PATH):
+        raise FormalLaunchGateError("authorization activation contract SHA mismatch")
+    auth_sha = _sha256_file(path)
+    commit_info = _validate_authorization_commit_structure(
+        authorization,
+        commit_info_provider=commit_info_provider,
+    )
+    _validate_activation_source_hashes(base, authorization)
+    return {
+        "authorization": authorization,
+        "authorization_artifact_sha256": auth_sha,
+        "authorization_path": str(path),
+        "activation_code_head": activation_head,
+        "commit_info": commit_info,
+    }
+
+
 def run_preauthorization_preflight(
     *,
     root: Path | str = Path("."),
@@ -310,7 +429,6 @@ def run_preauthorization_preflight(
     _validate_formal_seed_ledger(base, launch_contract)
     model_result = validate_current_formal_model_config(root=base)
     seed_overrides = validate_per_block_requested_seed_override(root=base)
-    _validate_source_hashes(base, launch_contract)
     target = base / Path(output_path)
     if target.exists():
         raise FormalLaunchGateError("formal output path already exists")
@@ -341,16 +459,102 @@ def run_preauthorization_preflight(
     }
 
 
+def _formal_request(output_root: Path, python_executable: str) -> dict:
+    return {
+        "replication_id": FORMAL_BATCH_ID,
+        "master_seed": MASTER_SEED,
+        "num_replicates": FORMAL_N,
+        "llm_mode": "real",
+        "llm_seed_supported": LLM_SEED_SUPPORTED,
+        "provider_model": "OpenAIProvider:qwen-plus",
+        "provider_system_fingerprint": "unavailable-prelaunch",
+        "output_root": str(output_root),
+        "python_executable": python_executable,
+        "max_parallel": 1,
+        "retry_failed": False,
+    }
+
+
+def _child_revalidation_gate(
+    *,
+    root: Path,
+    authorization_path: Path,
+    authorization_artifact_sha256: str,
+    authorization: Mapping[str, Any],
+    git_state_provider: Callable[[], Mapping[str, Any]] | None,
+):
+    def _gate(**_kwargs) -> None:
+        validate_current_formal_model_config(root=root)
+        _validate_activation_source_hashes(root, authorization)
+        validate_git_gate(git_state_provider)
+        _assert_sha(root / SEED_LEDGER_PATH, EXPECTED_SEED_LEDGER_SHA)
+        if _sha256_file(authorization_path) != authorization_artifact_sha256:
+            raise FormalLaunchGateError("authorization artifact SHA changed")
+
+    return _gate
+
+
+def run_authorized_formal_replication_batch(
+    *,
+    root: Path | str = Path("."),
+    authorization_path: Path | str = AUTHORIZATION_PATH,
+    runtime_token: str | None,
+    output_root: Path | str = Path("results/replications"),
+    python_executable: str = sys.executable,
+    child_runner=None,
+    block_validator=None,
+    git_state_provider: Callable[[], Mapping[str, Any]] | None = None,
+    commit_info_provider: Callable[[], Mapping[str, Any]] | None = None,
+    allow_existing_output: bool = False,
+) -> int:
+    base = Path(root)
+    launch_contract, _ = _load_contracts(base)
+    auth = validate_authorization_artifact(
+        root=base,
+        authorization_path=authorization_path,
+        runtime_token=runtime_token,
+        commit_info_provider=commit_info_provider,
+    )
+    _validate_formal_seed_ledger(base, launch_contract)
+    validate_current_formal_model_config(root=base)
+    validate_per_block_requested_seed_override(root=base)
+    validate_git_gate(git_state_provider)
+    target = base / Path(output_root) / FORMAL_BATCH_ID
+    if target.exists() and not allow_existing_output:
+        raise FormalLaunchGateError("formal output path already exists")
+    before_child_start = _child_revalidation_gate(
+        root=base,
+        authorization_path=base / Path(authorization_path),
+        authorization_artifact_sha256=auth["authorization_artifact_sha256"],
+        authorization=auth["authorization"],
+        git_state_provider=git_state_provider,
+    )
+    request = _formal_request(base / Path(output_root), python_executable)
+    return run_replications.run_replication_batch(
+        request,
+        before_child_start=before_child_start,
+        child_runner=child_runner,
+        block_validator=block_validator,
+        formal_activation_context={
+            "authorization_artifact_sha256": auth["authorization_artifact_sha256"],
+            "activation_code_head": auth["activation_code_head"],
+            "launch_contract_sha256": EXPECTED_LAUNCH_CONTRACT_SHA,
+            "seed_ledger_sha256": EXPECTED_SEED_LEDGER_SHA,
+            "runtime_token_validated": True,
+        },
+    )
+
+
 def run_execute_request(*, root: Path | str = Path("."), runtime_token: str | None = None) -> int:
-    """Fail closed before batch creation; Stage I.5C-5B-0 cannot execute real runs."""
+    """Run the formal launcher only after all authorization gates pass."""
     try:
         base = Path(root)
-        _load_contracts(base)
-        target = base / FORMAL_OUTPUT_PATH
-        if target.exists():
-            raise FormalLaunchGateError("formal output path already exists")
-        raise FormalLaunchGateError(
-            "human authorization artifact missing; activation not frozen"
+        return run_authorized_formal_replication_batch(
+            root=base,
+            authorization_path=AUTHORIZATION_PATH,
+            runtime_token=runtime_token,
+            output_root=Path("results/replications"),
+            python_executable=sys.executable,
         )
     except FormalLaunchGateError as exc:
         print(f"ERROR: {str(exc)}")

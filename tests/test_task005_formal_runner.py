@@ -66,6 +66,23 @@ def make_request(root: Path, *, retry_failed: bool = False) -> dict:
     )
 
 
+def formal_cli_args(root: Path, *, llm_mode: str = "deterministic-mock") -> list[str]:
+    return [
+        "--replication-id",
+        FORMAL_ID,
+        "--master-seed",
+        "20260807",
+        "--llm-mode",
+        llm_mode,
+        "--llm-seed-supported",
+        "unknown",
+        "--output-root",
+        str(root),
+        "--python-executable",
+        PYTHON,
+    ]
+
+
 def success_result() -> dict:
     return {
         "validation_passed": True,
@@ -266,12 +283,37 @@ def check_attacks(v: Reporter) -> None:
         v.check("CASE G no child starts", len(patched.calls) == 0, 0, len(patched.calls))
 
 
+def check_real_mode_rejected(v: Reporter) -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        with PatchRunner() as patched:
+            exit_code = formal.main(formal_cli_args(root, llm_mode="real"))
+        batch = root / FORMAL_ID
+        v.check("CASE I CLI real rejected", exit_code == 2, 2, exit_code)
+        v.check("CASE I no batch directory", not batch.exists(), "absent", batch)
+        v.check("CASE I no seed ledger", not (batch / "seed_ledger.csv").exists(), "absent", "present")
+        v.check("CASE I no child starts", len(patched.calls) == 0, 0, len(patched.calls))
+
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        request = make_request(root)
+        request["llm_mode"] = "real"
+        with PatchRunner() as patched:
+            exit_code = formal.run_formal_replication_batch(request)
+        batch = root / FORMAL_ID
+        v.check("CASE J programmatic real rejected", exit_code == 2, 2, exit_code)
+        v.check("CASE J no batch directory", not batch.exists(), "absent", batch)
+        v.check("CASE J no seed ledger", not (batch / "seed_ledger.csv").exists(), "absent", "present")
+        v.check("CASE J no child starts", len(patched.calls) == 0, 0, len(patched.calls))
+
+
 def main() -> int:
     v = Reporter()
     check_exact_plan(v)
     check_24_success(v)
     check_failure_and_retry(v)
     check_attacks(v)
+    check_real_mode_rejected(v)
     return v.summary()
 
 

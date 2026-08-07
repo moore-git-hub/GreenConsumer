@@ -56,6 +56,7 @@ def parse_formal_args(argv=None):
 
 def build_formal_request(args) -> dict:
     replication_id = _validate_formal_replication_id(args.replication_id)
+    _reject_real_llm_mode(args.llm_mode)
     request = _runner.build_runner_request(
         argparse.Namespace(
             replication_id=replication_id,
@@ -98,6 +99,7 @@ def _validate_formal_request_dict(request: Mapping[str, Any]) -> dict:
         req["replication_id"]
     )
     _assert_formal_request(req)
+    _reject_real_llm_mode(req["llm_mode"])
     return req
 
 
@@ -123,6 +125,14 @@ def _assert_formal_request(request: Mapping[str, Any]) -> None:
         raise FormalRunnerError("formal num_replicates must be exactly 24")
     if request.get("max_parallel") != 1:
         raise FormalRunnerError("formal max_parallel must be exactly 1")
+
+
+def _reject_real_llm_mode(llm_mode: Any) -> None:
+    if llm_mode == "real":
+        raise FormalRunnerError(
+            "real formal LLM execution is not authorized; "
+            "formal launch contract is not active"
+        )
 
 
 def _assert_formal_state(state: Mapping[str, Any], request: Mapping[str, Any]) -> None:
@@ -160,9 +170,13 @@ def _is_r025_or_later(value: str) -> bool:
 
 
 def main(argv=None) -> int:
-    args = parse_formal_args(argv)
-    request = build_formal_request(args)
-    return run_formal_replication_batch(request)
+    try:
+        args = parse_formal_args(argv)
+        request = build_formal_request(args)
+        return run_formal_replication_batch(request)
+    except (_runner.RunnerStartupError, FormalRunnerError, ValueError) as exc:
+        print(f"ERROR: {_runner._sanitize_text(str(exc))}")
+        return 2
 
 
 if __name__ == "__main__":

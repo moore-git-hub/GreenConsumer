@@ -30,12 +30,19 @@ except ImportError as exc:  # fail closed: exact frozen tests require Student-t
     raise ImportError("replication_analysis requires scipy") from exc
 
 
-ANALYSIS_SCHEMA_VERSION = "1.0"
-PRIMARY_METRICS = (
+ANALYSIS_SCHEMA_VERSION = "1.1"
+CONFIRMATORY_PRIMARY_METRICS = (
     "final_trust_gain_vs_control",
     "post_scandal_auc_gain_vs_control",
+)
+EXPLORATORY_MECHANISM_METRICS = (
     "local_trust_effect_did_3",
 )
+ALL_ANALYSIS_METRICS = (
+    *CONFIRMATORY_PRIMARY_METRICS,
+    *EXPLORATORY_MECHANISM_METRICS,
+)
+PRIMARY_METRICS = CONFIRMATORY_PRIMARY_METRICS
 CONTROL_EXP_ID = "NoClarification-Control"
 STRATEGY_EXP_IDS = (
     "Empathy-Hub-Delayed",
@@ -59,6 +66,14 @@ FACTORIAL_CONTRASTS = (
 CONFIRMATORY_CONTRASTS = FACTORIAL_CONTRASTS[:6]
 DEFAULT_BOOTSTRAP_ITERATIONS = 20000
 PARETO_TOLERANCE = 1e-12
+FORMAL_TARGET_VALID_BLOCKS = 24
+ENGINEERING_BLOCK_IDS_FORBIDDEN_IN_FORMAL = (
+    "P001",
+    "P002",
+    "P003",
+    "P004",
+    "P005",
+)
 
 _OUTPUT_FILES = (
     "replicate_runs.csv",
@@ -204,12 +219,19 @@ def _normalise_preregistration(preregistration: Mapping[str, Any]) -> dict[str, 
 
     target = _int(config.get("target_valid_blocks"), "target_valid_blocks")
     maximum = _int(config.get("max_attempted_blocks"), "max_attempted_blocks")
-    if target < 1 or maximum < target:
+    if target != FORMAL_TARGET_VALID_BLOCKS:
+        raise ValueError(
+            f"target_valid_blocks must be exactly {FORMAL_TARGET_VALID_BLOCKS}"
+        )
+    if maximum < target:
         raise ValueError("invalid target/max block counts")
 
     metrics = tuple(config.get("primary_metrics", ()))
-    if metrics != PRIMARY_METRICS:
+    if metrics != CONFIRMATORY_PRIMARY_METRICS:
         raise ValueError("primary_metrics do not match the frozen contract")
+    exploratory_metrics = tuple(config.get("exploratory_metrics", ()))
+    if exploratory_metrics != EXPLORATORY_MECHANISM_METRICS:
+        raise ValueError("exploratory_metrics do not match the frozen contract")
 
     control = str(config.get("control_exp_id", "")).strip()
     if control != CONTROL_EXP_ID:
@@ -239,7 +261,9 @@ def _normalise_preregistration(preregistration: Mapping[str, Any]) -> dict[str, 
             "formal_replication_id": formal_id,
             "target_valid_blocks": target,
             "max_attempted_blocks": maximum,
-            "primary_metrics": list(PRIMARY_METRICS),
+            "primary_metrics": list(CONFIRMATORY_PRIMARY_METRICS),
+            "exploratory_metrics": list(EXPLORATORY_MECHANISM_METRICS),
+            "all_analysis_metrics": list(ALL_ANALYSIS_METRICS),
             "control_exp_id": CONTROL_EXP_ID,
             "strategy_exp_ids": list(STRATEGY_EXP_IDS),
             "alpha": alpha,
@@ -283,15 +307,16 @@ def _validate_condition_rows(
 
     by_id = {str(row["exp_id"]).strip(): row for row in copied}
     control = by_id[CONTROL_EXP_ID]
-    for metric in PRIMARY_METRICS[:2]:
+    for metric in CONFIRMATORY_PRIMARY_METRICS:
         control[metric] = _finite_float(
             control.get(metric), f"{replicate_id}/{CONTROL_EXP_ID}/{metric}"
         )
-    if not _is_blank(control.get(PRIMARY_METRICS[2])):
+    local_metric = EXPLORATORY_MECHANISM_METRICS[0]
+    if not _is_blank(control.get(local_metric)):
         raise ValueError(
             f"{replicate_id}: control local DID must be structurally blank"
         )
-    control[PRIMARY_METRICS[2]] = None
+    control[local_metric] = None
     control["is_control"] = True
 
     for exp_id in STRATEGY_EXP_IDS:
@@ -299,7 +324,7 @@ def _validate_condition_rows(
         if _bool(row.get("is_control", False), "is_control"):
             raise ValueError(f"{replicate_id}/{exp_id}: strategy marked control")
         row["is_control"] = False
-        for metric in PRIMARY_METRICS:
+        for metric in ALL_ANALYSIS_METRICS:
             row[metric] = _finite_float(
                 row.get(metric), f"{replicate_id}/{exp_id}/{metric}"
             )
@@ -336,6 +361,8 @@ def load_valid_replication_blocks(
     batch_id = str(metadata.get("replication_id", "")).strip()
     if not batch_id:
         raise ValueError("replication metadata lacks replication_id")
+    if batch_id in set(ENGINEERING_BLOCK_IDS_FORBIDDEN_IN_FORMAL):
+        raise ValueError(f"forbidden engineering batch: {batch_id}")
     if batch_id in set(config["excluded_replication_ids"]):
         raise ValueError(f"excluded engineering batch: {batch_id}")
     if batch_id != config["formal_replication_id"]:
@@ -570,7 +597,7 @@ def build_replicate_runs(
                 "channel": row.get("channel", ""),
                 "timing": row.get("timing", ""),
             }
-            for metric in PRIMARY_METRICS:
+            for metric in ALL_ANALYSIS_METRICS:
                 output_row[metric] = row.get(metric)
             output.append(output_row)
 
@@ -630,7 +657,7 @@ def build_paired_effects(
                 "channel": row["channel"],
                 "timing": row["timing"],
             }
-            for metric in PRIMARY_METRICS:
+            for metric in ALL_ANALYSIS_METRICS:
                 output_row[metric] = _finite_float(
                     row[metric], f"{rid}/{exp_id}/{metric}"
                 )
@@ -690,7 +717,7 @@ def compute_factorial_contrasts(
             raise ValueError(f"{rid}: inconsistent replicate_index")
         index = next(iter(indices))
 
-        for metric in PRIMARY_METRICS:
+        for metric in ALL_ANALYSIS_METRICS:
             values = {
                 exp_id: _finite_float(
                     by_id[exp_id].get(metric), f"{rid}/{exp_id}/{metric}"
@@ -709,8 +736,10 @@ def compute_factorial_contrasts(
                         "metric": metric,
                         "contrast_name": contrast_name,
                         "contrast_value": value,
-                        "confirmatory": contrast_name
-                        in CONFIRMATORY_CONTRASTS,
+                        "confirmatory": (
+                            metric in CONFIRMATORY_PRIMARY_METRICS
+                            and contrast_name in CONFIRMATORY_CONTRASTS
+                        ),
                     }
                 )
 
@@ -718,7 +747,7 @@ def compute_factorial_contrasts(
         key=lambda row: (
             int(row["replicate_index"]),
             str(row["replicate_id"]),
-            PRIMARY_METRICS.index(str(row["metric"])),
+            ALL_ANALYSIS_METRICS.index(str(row["metric"])),
             FACTORIAL_CONTRASTS.index(str(row["contrast_name"])),
         )
     )
@@ -842,7 +871,7 @@ def aggregate_strategy_estimands(
     output: list[dict[str, Any]] = []
 
     for exp_id in STRATEGY_EXP_IDS:
-        for metric in PRIMARY_METRICS:
+        for metric in ALL_ANALYSIS_METRICS:
             values = [
                 _finite_float(row.get(metric), f"{exp_id}/{metric}")
                 for row in rows
@@ -855,25 +884,44 @@ def aggregate_strategy_estimands(
                 ci_level=config["ci_level"],
                 target_valid_blocks=config["target_valid_blocks"],
             )
+            if metric in CONFIRMATORY_PRIMARY_METRICS:
+                analysis_tier = "confirmatory_primary"
+                confirmatory = True
+                reporting = True
+                family = "strategy_primary_16"
+            else:
+                analysis_tier = "exploratory_mechanistic"
+                confirmatory = False
+                reporting = False
+                family = None
+                summary["raw_p_value"] = None
             output.append(
                 {
                     "exp_id": exp_id,
                     "metric": metric,
+                    "analysis_tier": analysis_tier,
+                    "confirmatory": confirmatory,
+                    "p_value_reporting_permitted": reporting,
                     "n_planned_blocks": config["target_valid_blocks"],
                     "n_attempted_blocks": len(block_ids),
                     "n_valid_blocks": summary["n_valid_blocks"],
                     "n_failed_blocks": max(0, len(block_ids) - summary["n_valid_blocks"]),
                     **summary,
                     "holm_p_value": None,
-                    "multiplicity_family": "strategy_primary_24",
+                    "multiplicity_family": family,
                 }
             )
 
-    raw = [row["raw_p_value"] for row in output]
+    confirmatory_positions = [
+        index
+        for index, row in enumerate(output)
+        if row["multiplicity_family"] == "strategy_primary_16"
+    ]
+    raw = [output[index]["raw_p_value"] for index in confirmatory_positions]
     if all(value is not None for value in raw):
         adjusted = holm_adjust(raw)
-        for row, value in zip(output, adjusted):
-            row["holm_p_value"] = value
+        for index, value in zip(confirmatory_positions, adjusted):
+            output[index]["holm_p_value"] = value
     return output
 
 
@@ -886,7 +934,7 @@ def aggregate_factorial_estimands(
     block_ids = sorted({str(row.get("replicate_id", "")) for row in rows})
     output: list[dict[str, Any]] = []
 
-    for metric in PRIMARY_METRICS:
+    for metric in ALL_ANALYSIS_METRICS:
         for contrast_name in FACTORIAL_CONTRASTS:
             values = [
                 _finite_float(row.get("contrast_value"), "contrast_value")
@@ -903,16 +951,29 @@ def aggregate_factorial_estimands(
                 ci_level=config["ci_level"],
                 target_valid_blocks=config["target_valid_blocks"],
             )
-            family = (
-                "factorial_confirmatory_18"
-                if contrast_name in CONFIRMATORY_CONTRASTS
-                else "factorial_three_way_3"
-            )
+            if metric in EXPLORATORY_MECHANISM_METRICS:
+                analysis_tier = "exploratory_mechanistic"
+                confirmatory = False
+                reporting = False
+                family = None
+                summary["raw_p_value"] = None
+            elif contrast_name in CONFIRMATORY_CONTRASTS:
+                analysis_tier = "confirmatory_primary"
+                confirmatory = True
+                reporting = True
+                family = "factorial_confirmatory_12"
+            else:
+                analysis_tier = "exploratory_secondary"
+                confirmatory = False
+                reporting = True
+                family = "factorial_three_way_2"
             output.append(
                 {
                     "metric": metric,
                     "contrast_name": contrast_name,
-                    "confirmatory": contrast_name in CONFIRMATORY_CONTRASTS,
+                    "analysis_tier": analysis_tier,
+                    "confirmatory": confirmatory,
+                    "p_value_reporting_permitted": reporting,
                     "n_planned_blocks": config["target_valid_blocks"],
                     "n_attempted_blocks": len(block_ids),
                     "n_valid_blocks": summary["n_valid_blocks"],
@@ -923,7 +984,7 @@ def aggregate_factorial_estimands(
                 }
             )
 
-    for family in ("factorial_confirmatory_18", "factorial_three_way_3"):
+    for family in ("factorial_confirmatory_12", "factorial_three_way_2"):
         positions = [
             index
             for index, row in enumerate(output)
@@ -950,7 +1011,11 @@ def compute_formal_pareto(
     for row in rows:
         exp_id = str(row.get("exp_id", "")).strip()
         metric = str(row.get("metric", "")).strip()
-        if not exp_id or metric not in PRIMARY_METRICS:
+        if not exp_id:
+            raise ValueError("invalid Pareto row identity")
+        if metric in EXPLORATORY_MECHANISM_METRICS:
+            continue
+        if metric not in CONFIRMATORY_PRIMARY_METRICS:
             raise ValueError("invalid Pareto row identity")
         if metric in values[exp_id]:
             raise ValueError("duplicate Pareto strategy/metric key")
@@ -959,7 +1024,7 @@ def compute_formal_pareto(
     if not values:
         raise ValueError("no strategies for Pareto analysis")
     for exp_id, metric_values in values.items():
-        if set(metric_values) != set(PRIMARY_METRICS):
+        if set(metric_values) != set(CONFIRMATORY_PRIMARY_METRICS):
             raise ValueError(f"{exp_id}: incomplete Pareto metric vector")
 
     output: list[dict[str, Any]] = []
@@ -971,11 +1036,11 @@ def compute_formal_pareto(
                 continue
             weakly_better = all(
                 other[metric] >= target[metric] - tol
-                for metric in PRIMARY_METRICS
+                for metric in CONFIRMATORY_PRIMARY_METRICS
             )
             strictly_better = any(
                 other[metric] > target[metric] + tol
-                for metric in PRIMARY_METRICS
+                for metric in CONFIRMATORY_PRIMARY_METRICS
             )
             if weakly_better and strictly_better:
                 dominated_by.append(other_id)
@@ -985,8 +1050,10 @@ def compute_formal_pareto(
             "dominated_by_count": len(dominated_by),
             "dominated_by": ",".join(sorted(dominated_by)),
             "pareto_tolerance": tol,
+            "analysis_tier": "exploratory_secondary",
+            "metric_basis": ",".join(CONFIRMATORY_PRIMARY_METRICS),
         }
-        for metric in PRIMARY_METRICS:
+        for metric in CONFIRMATORY_PRIMARY_METRICS:
             row[metric] = target[metric]
         output.append(row)
     return output
@@ -1027,8 +1094,8 @@ def bootstrap_rank_stability(
     if iterations < 1:
         raise ValueError("bootstrap_iterations must be positive")
     seed = _int(config.get("bootstrap_seed", 0), "bootstrap_seed")
-    metrics = tuple(config.get("primary_metrics", PRIMARY_METRICS))
-    if metrics != PRIMARY_METRICS:
+    metrics = tuple(config.get("primary_metrics", CONFIRMATORY_PRIMARY_METRICS))
+    if metrics != CONFIRMATORY_PRIMARY_METRICS:
         raise ValueError("bootstrap primary metric set mismatch")
     tolerance = _finite_float(
         config.get("pareto_tolerance", PARETO_TOLERANCE),
@@ -1036,7 +1103,7 @@ def bootstrap_rank_stability(
     )
 
     rows = [dict(_require_mapping(row, "paired effect")) for row in _require_sequence(paired_effects, "paired_effects")]
-    by_block: dict[str, dict[str, tuple[float, float, float]]] = defaultdict(dict)
+    by_block: dict[str, dict[str, tuple[float, float]]] = defaultdict(dict)
     for row in rows:
         rid = str(row.get("replicate_id", "")).strip()
         exp_id = str(row.get("exp_id", "")).strip()
@@ -1046,7 +1113,7 @@ def bootstrap_rank_stability(
             raise ValueError("duplicate bootstrap block/strategy key")
         by_block[rid][exp_id] = tuple(
             _finite_float(row.get(metric), f"{rid}/{exp_id}/{metric}")
-            for metric in PRIMARY_METRICS
+            for metric in CONFIRMATORY_PRIMARY_METRICS
         )
 
     block_ids = sorted(by_block)
@@ -1070,7 +1137,7 @@ def bootstrap_rank_stability(
         means: dict[str, dict[str, float]] = {
             exp_id: {} for exp_id in strategies
         }
-        for metric_index, metric in enumerate(PRIMARY_METRICS):
+        for metric_index, metric in enumerate(CONFIRMATORY_PRIMARY_METRICS):
             for exp_id in strategies:
                 means[exp_id][metric] = statistics.fmean(
                     by_block[rid][exp_id][metric_index] for rid in sampled
@@ -1078,7 +1145,7 @@ def bootstrap_rank_stability(
 
         pareto_rows = []
         for exp_id in strategies:
-            for metric in PRIMARY_METRICS:
+            for metric in CONFIRMATORY_PRIMARY_METRICS:
                 pareto_rows.append(
                     {
                         "exp_id": exp_id,
@@ -1094,7 +1161,7 @@ def bootstrap_rank_stability(
                 pareto_counts[row["exp_id"]] += 1.0
 
         normalised = {exp_id: [] for exp_id in strategies}
-        for metric in PRIMARY_METRICS:
+        for metric in CONFIRMATORY_PRIMARY_METRICS:
             metric_values = [means[exp_id][metric] for exp_id in strategies]
             low = min(metric_values)
             high = max(metric_values)
@@ -1137,6 +1204,8 @@ def bootstrap_rank_stability(
                 "rank_interval_high": _quantile(ranks, 0.975),
                 "top1_credit_sum": top1_credit[exp_id],
                 "bootstrap_iterations": iterations,
+                "analysis_tier": "exploratory_secondary",
+                "metric_basis": ",".join(CONFIRMATORY_PRIMARY_METRICS),
             }
         )
     return output
@@ -1268,7 +1337,7 @@ def run_replication_analysis(
         {
             "bootstrap_iterations": config["bootstrap_iterations"],
             "bootstrap_seed": config["bootstrap_seed"],
-            "primary_metrics": list(PRIMARY_METRICS),
+            "primary_metrics": list(CONFIRMATORY_PRIMARY_METRICS),
             "pareto_tolerance": float(
                 config.get("pareto_tolerance", PARETO_TOLERANCE)
             ),
@@ -1288,10 +1357,28 @@ def run_replication_analysis(
         "python_version": platform.python_version(),
         "python_implementation": platform.python_implementation(),
         "scipy_version": _scipy.__version__,
-        "primary_metrics": list(PRIMARY_METRICS),
+        "primary_metrics": list(CONFIRMATORY_PRIMARY_METRICS),
+        "confirmatory_primary_metrics": list(CONFIRMATORY_PRIMARY_METRICS),
+        "exploratory_mechanism_metrics": list(EXPLORATORY_MECHANISM_METRICS),
+        "all_analysis_metrics": list(ALL_ANALYSIS_METRICS),
+        "formal_target_valid_blocks": FORMAL_TARGET_VALID_BLOCKS,
         "control_exp_id": CONTROL_EXP_ID,
         "strategy_exp_ids": list(STRATEGY_EXP_IDS),
         "factorial_contrasts": list(FACTORIAL_CONTRASTS),
+        "confirmatory_holm_families": {
+            "strategy_primary_16": 16,
+            "factorial_confirmatory_12": 12,
+        },
+        "exploratory_holm_families": {
+            "factorial_three_way_2": 2,
+        },
+        "local_did_confirmatory": False,
+        "engineering_blocks_forbidden_in_formal": list(
+            ENGINEERING_BLOCK_IDS_FORBIDDEN_IN_FORMAL
+        ),
+        "pareto_ranking_analysis_tier": "exploratory_secondary",
+        "pareto_ranking_metric_basis": list(CONFIRMATORY_PRIMARY_METRICS),
+        "formal_llm_launch_permitted": False,
         "alpha": config["alpha"],
         "ci_level": config["ci_level"],
         "bootstrap_iterations": config["bootstrap_iterations"],
@@ -1324,6 +1411,18 @@ def run_replication_analysis(
     validation = {
         "analysis_schema_version": ANALYSIS_SCHEMA_VERSION,
         "formal_replication_id": loaded["formal_replication_id"],
+        "confirmatory_primary_metrics": list(CONFIRMATORY_PRIMARY_METRICS),
+        "exploratory_mechanism_metrics": list(EXPLORATORY_MECHANISM_METRICS),
+        "confirmatory_holm_families": {
+            "strategy_primary_16": 16,
+            "factorial_confirmatory_12": 12,
+        },
+        "exploratory_holm_families": {
+            "factorial_three_way_2": 2,
+        },
+        "local_did_confirmatory": False,
+        "pareto_rank_local_did": False,
+        "formal_llm_launch_permitted": False,
         "formal_complete": formal_complete,
         "formal_inference_permitted": formal_complete,
         "target_valid_blocks": config["target_valid_blocks"],

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""TASK_005 Stage I.2 frozen replication-analysis acceptance baseline.
+"""TASK_005 Stage I.5C-4B frozen replication-analysis acceptance baseline.
 
 The harness is intentionally executable without pytest. Before
 ``replication_analysis.py`` exists, production-facing groups fail while the
@@ -31,14 +31,14 @@ DESIGN = (
     / ".kiro"
     / "specs"
     / "task005-replication-inference"
-    / "analysis_design1.0.md"
+    / "production_analysis_scope_update_contract1.0.md"
 )
 CONTRACT = (
     ROOT
     / ".kiro"
     / "specs"
     / "task005-replication-inference"
-    / "analysis_contract1.0.json"
+    / "production_analysis_scope_update_contract1.0.json"
 )
 FIXTURE = (
     ROOT
@@ -50,22 +50,29 @@ FIXTURE = (
 MODULE_PATH = ROOT / "replication_analysis.py"
 
 EXPECTED_FIXTURE_SHA256 = (
-    "CD5B65C60739C7A81B8AEC6F5393805362FA35D55B6DC543879EA3B91D6F9D5A"
+    "CEED70ACBE97B543C0E0EE7B852BCE8B27AF165FBCCE76583586F3A5153D22E0"
 )
 EXPECTED_DESIGN_SHA256 = (
-    "D5372589D65E5DFB888EE80A27D80FF014DB13EDDD3B7D052BB8588BC36FE02A"
+    "6A863FC35D7902005257E51E46D842A240E2047B57231275BF0D490202D05EB5"
 )
 EXPECTED_CONTRACT_SHA256 = (
-    "7801618FCE0E987F3F3439CA19CD624CDEC0F6D776BD466FBCAAB0F12F3BF6D8"
+    "0045F8B8671B25DCC68E1E00130C27660A6EAC3BE6671BCE776B07CEB6587407"
 )
 
-ANALYSIS_SCHEMA_VERSION = "1.0"
+ANALYSIS_SCHEMA_VERSION = "1.1"
 CONTROL_EXP_ID = "NoClarification-Control"
-PRIMARY_METRICS = (
+CONFIRMATORY_PRIMARY_METRICS = (
     "final_trust_gain_vs_control",
     "post_scandal_auc_gain_vs_control",
+)
+EXPLORATORY_MECHANISM_METRICS = (
     "local_trust_effect_did_3",
 )
+ALL_ANALYSIS_METRICS = (
+    *CONFIRMATORY_PRIMARY_METRICS,
+    *EXPLORATORY_MECHANISM_METRICS,
+)
+PRIMARY_METRICS = CONFIRMATORY_PRIMARY_METRICS
 STRATEGY_EXP_IDS = (
     "Empathy-Hub-Delayed",
     "Empathy-Hub-Immediate",
@@ -88,6 +95,14 @@ FACTORIAL_CONTRASTS = (
 CONFIRMATORY_CONTRASTS = FACTORIAL_CONTRASTS[:6]
 DEFAULT_BOOTSTRAP_ITERATIONS = 20000
 PARETO_TOLERANCE = 1e-12
+FORMAL_TARGET_VALID_BLOCKS = 24
+ENGINEERING_BLOCK_IDS_FORBIDDEN_IN_FORMAL = (
+    "P001",
+    "P002",
+    "P003",
+    "P004",
+    "P005",
+)
 
 REQUIRED_FUNCTIONS = (
     "load_valid_replication_blocks",
@@ -193,7 +208,7 @@ class Reporter:
             by_group[group][status] += 1
 
         print("=" * 80)
-        print("TASK_005 STAGE I.2 REPLICATION ANALYSIS ACCEPTANCE RESULTS")
+        print("TASK_005 STAGE I.5C-4B REPLICATION ANALYSIS ACCEPTANCE RESULTS")
         print("=" * 80)
         for group in GROUP_ORDER:
             counts = by_group[group]
@@ -288,14 +303,15 @@ def close(a: Any, b: Any, tolerance: float = 1e-10) -> bool:
 
 def make_preregistration(
     replication_id: str = "task005-synthetic-formal-v1",
-    target_valid_blocks: int = 4,
+    target_valid_blocks: int = FORMAL_TARGET_VALID_BLOCKS,
 ) -> dict[str, Any]:
     return {
         "analysis_schema_version": ANALYSIS_SCHEMA_VERSION,
         "formal_replication_id": replication_id,
         "target_valid_blocks": target_valid_blocks,
-        "max_attempted_blocks": 8,
-        "primary_metrics": list(PRIMARY_METRICS),
+        "max_attempted_blocks": FORMAL_TARGET_VALID_BLOCKS,
+        "primary_metrics": list(CONFIRMATORY_PRIMARY_METRICS),
+        "exploratory_metrics": list(EXPLORATORY_MECHANISM_METRICS),
         "control_exp_id": CONTROL_EXP_ID,
         "strategy_exp_ids": list(STRATEGY_EXP_IDS),
         "alpha": 0.05,
@@ -413,7 +429,7 @@ def write_synthetic_batch(
             "content",
             "channel",
             "timing",
-            *PRIMARY_METRICS,
+            *ALL_ANALYSIS_METRICS,
         ]
         with summary_path.open(
             "w", encoding="utf-8", newline=""
@@ -485,7 +501,7 @@ def write_synthetic_batch(
             {
                 "schema_version": "1.0",
                 "replication_id": batch_id,
-                "num_replicates": 4,
+                "num_replicates": FORMAL_TARGET_VALID_BLOCKS,
             },
             indent=2,
         )
@@ -589,9 +605,18 @@ def check_a1(v: Reporter, fixture: dict[str, Any]) -> None:
     v.check(
         group,
         "primary metrics exact",
-        tuple(fixture.get("primary_metrics", [])) == PRIMARY_METRICS,
-        PRIMARY_METRICS,
+        tuple(fixture.get("primary_metrics", []))
+        == CONFIRMATORY_PRIMARY_METRICS,
+        CONFIRMATORY_PRIMARY_METRICS,
         fixture.get("primary_metrics"),
+    )
+    v.check(
+        group,
+        "exploratory metrics exact",
+        tuple(fixture.get("exploratory_metrics", []))
+        == EXPLORATORY_MECHANISM_METRICS,
+        EXPLORATORY_MECHANISM_METRICS,
+        fixture.get("exploratory_metrics"),
     )
     v.check(
         group,
@@ -610,7 +635,13 @@ def check_a1(v: Reporter, fixture: dict[str, Any]) -> None:
 
     case = fixture.get("canonical_case", {})
     blocks = case.get("blocks", [])
-    v.check(group, "four canonical blocks", len(blocks) == 4, 4, len(blocks))
+    v.check(
+        group,
+        "24 canonical blocks",
+        len(blocks) == FORMAL_TARGET_VALID_BLOCKS,
+        FORMAL_TARGET_VALID_BLOCKS,
+        len(blocks),
+    )
     for block in blocks:
         rid = block.get("replicate_id")
         rows = block.get("conditions", [])
@@ -643,7 +674,7 @@ def check_a1(v: Reporter, fixture: dict[str, Any]) -> None:
         finite_ok = all(
             finite_number(row.get(metric))
             for row in strategies
-            for metric in PRIMARY_METRICS
+            for metric in ALL_ANALYSIS_METRICS
         )
         v.check(
             group,
@@ -656,9 +687,9 @@ def check_a1(v: Reporter, fixture: dict[str, Any]) -> None:
     expected_contrasts = case.get("expected_factorial_contrasts", [])
     v.check(
         group,
-        "84 expected factorial rows",
-        len(expected_contrasts) == 84,
-        84,
+        "504 expected factorial rows",
+        len(expected_contrasts) == 504,
+        504,
         len(expected_contrasts),
     )
     expected_descriptives = case.get(
@@ -715,6 +746,9 @@ def check_a2(v: Reporter, module) -> None:
 
     constants = {
         "ANALYSIS_SCHEMA_VERSION": ANALYSIS_SCHEMA_VERSION,
+        "CONFIRMATORY_PRIMARY_METRICS": CONFIRMATORY_PRIMARY_METRICS,
+        "EXPLORATORY_MECHANISM_METRICS": EXPLORATORY_MECHANISM_METRICS,
+        "ALL_ANALYSIS_METRICS": ALL_ANALYSIS_METRICS,
         "PRIMARY_METRICS": PRIMARY_METRICS,
         "CONTROL_EXP_ID": CONTROL_EXP_ID,
         "STRATEGY_EXP_IDS": STRATEGY_EXP_IDS,
@@ -722,6 +756,9 @@ def check_a2(v: Reporter, module) -> None:
         "CONFIRMATORY_CONTRASTS": CONFIRMATORY_CONTRASTS,
         "DEFAULT_BOOTSTRAP_ITERATIONS": DEFAULT_BOOTSTRAP_ITERATIONS,
         "PARETO_TOLERANCE": PARETO_TOLERANCE,
+        "FORMAL_TARGET_VALID_BLOCKS": FORMAL_TARGET_VALID_BLOCKS,
+        "ENGINEERING_BLOCK_IDS_FORBIDDEN_IN_FORMAL":
+            ENGINEERING_BLOCK_IDS_FORBIDDEN_IN_FORMAL,
     }
     for name, expected in constants.items():
         actual = getattr(module, name, None)
@@ -745,11 +782,55 @@ def check_a3(v: Reporter, module, fixture: dict[str, Any]) -> None:
     with tempfile.TemporaryDirectory() as temp:
         temp_root = Path(temp)
         batch = write_synthetic_batch(fixture, temp_root)
+        bad_schema = make_preregistration()
+        bad_schema["analysis_schema_version"] = "1.0"
+        try:
+            fn(batch, bad_schema)
+        except ValueError:
+            v.check(group, "old schema 1.0 preregistration rejected", True)
+        except Exception as exc:
+            v.check(
+                group,
+                "old schema 1.0 preregistration rejected",
+                False,
+                "ValueError",
+                f"{type(exc).__name__}: {exc}",
+            )
+        else:
+            v.check(
+                group,
+                "old schema 1.0 preregistration rejected",
+                False,
+                "ValueError",
+                "no exception",
+            )
+        bad_target = make_preregistration()
+        bad_target["target_valid_blocks"] = 23
+        try:
+            fn(batch, bad_target)
+        except ValueError:
+            v.check(group, "target_valid_blocks not 24 rejected", True)
+        except Exception as exc:
+            v.check(
+                group,
+                "target_valid_blocks not 24 rejected",
+                False,
+                "ValueError",
+                f"{type(exc).__name__}: {exc}",
+            )
+        else:
+            v.check(
+                group,
+                "target_valid_blocks not 24 rejected",
+                False,
+                "ValueError",
+                "no exception",
+            )
         result = fn(batch, make_preregistration())
         valid, excluded, counts = get_loader_parts(result)
-        v.check(group, "canonical valid blocks", len(valid) == 4, 4, len(valid))
+        v.check(group, "canonical valid blocks", len(valid) == 24, 24, len(valid))
         v.check(group, "canonical excluded blocks", len(excluded) == 0, 0, len(excluded))
-        v.check(group, "canonical valid count", int(counts.get("valid", -1)) == 4, 4, counts)
+        v.check(group, "canonical valid count", int(counts.get("valid", -1)) == 24, 24, counts)
         v.check(
             group,
             "canonical formal complete",
@@ -758,7 +839,8 @@ def check_a3(v: Reporter, module, fixture: dict[str, Any]) -> None:
             result.get("formal_complete"),
         )
         ids = [row.get("replicate_id") for row in valid]
-        v.check(group, "valid IDs ordered", ids == ["R001", "R002", "R003", "R004"], ["R001", "R002", "R003", "R004"], ids)
+        expected_ids = [f"R{index:03d}" for index in range(1, 25)]
+        v.check(group, "valid IDs ordered", ids == expected_ids, expected_ids, ids)
 
     mutations = (
         "missing_strategy",
@@ -778,8 +860,8 @@ def check_a3(v: Reporter, module, fixture: dict[str, Any]) -> None:
             v.check(
                 group,
                 f"{mutation} excludes exactly one block",
-                len(valid) == 3 and len(excluded) == 1,
-                "3 valid / 1 excluded",
+                len(valid) == 23 and len(excluded) == 1,
+                "23 valid / 1 excluded",
                 f"{len(valid)} valid / {len(excluded)} excluded",
             )
             v.check(
@@ -799,8 +881,8 @@ def check_a3(v: Reporter, module, fixture: dict[str, Any]) -> None:
         v.check(
             group,
             "row order permutation remains valid",
-            len(valid) == 4 and len(excluded) == 0,
-            "4 valid / 0 excluded",
+            len(valid) == 24 and len(excluded) == 0,
+            "24 valid / 0 excluded",
             f"{len(valid)} valid / {len(excluded)} excluded",
         )
 
@@ -829,6 +911,32 @@ def check_a3(v: Reporter, module, fixture: dict[str, Any]) -> None:
                     f"{len(valid)} valid / {len(excluded)} excluded",
                 )
 
+    for batch_id in ENGINEERING_BLOCK_IDS_FORBIDDEN_IN_FORMAL:
+        with tempfile.TemporaryDirectory() as temp:
+            batch = write_synthetic_batch(
+                fixture, Path(temp), replication_id=batch_id
+            )
+            try:
+                fn(batch, make_preregistration(replication_id=batch_id))
+            except ValueError:
+                v.check(group, f"{batch_id} hard-forbidden as formal", True)
+            except Exception as exc:
+                v.check(
+                    group,
+                    f"{batch_id} hard-forbidden as formal",
+                    False,
+                    "ValueError",
+                    f"{type(exc).__name__}: {exc}",
+                )
+            else:
+                v.check(
+                    group,
+                    f"{batch_id} hard-forbidden as formal",
+                    False,
+                    "ValueError",
+                    "no exception",
+                )
+
 
 def _canonical_pipeline(module, fixture: dict[str, Any]):
     with tempfile.TemporaryDirectory() as temp:
@@ -855,8 +963,8 @@ def check_a4(v: Reporter, module, fixture: dict[str, Any]) -> None:
         return
 
     runs, paired, _contrasts = _canonical_pipeline(module, fixture)
-    v.check(group, "replicate runs row count", len(runs) == 36, 36, len(runs))
-    v.check(group, "paired effects row count", len(paired) == 32, 32, len(paired))
+    v.check(group, "replicate runs row count", len(runs) == 216, 216, len(runs))
+    v.check(group, "paired effects row count", len(paired) == 192, 192, len(paired))
     run_keys = [(row.get("replicate_id"), row.get("exp_id")) for row in runs]
     paired_keys = [(row.get("replicate_id"), row.get("exp_id")) for row in paired]
     v.check(group, "replicate run keys unique", len(run_keys) == len(set(run_keys)), "unique", len(run_keys) - len(set(run_keys)))
@@ -871,7 +979,7 @@ def check_a4(v: Reporter, module, fixture: dict[str, Any]) -> None:
     finite_ok = all(
         finite_number(row.get(metric))
         for row in paired
-        for metric in PRIMARY_METRICS
+        for metric in ALL_ANALYSIS_METRICS
     )
     v.check(group, "paired primary metrics finite", finite_ok, True, finite_ok)
 
@@ -891,7 +999,7 @@ def check_a4(v: Reporter, module, fixture: dict[str, Any]) -> None:
             (
                 row["replicate_id"],
                 row["exp_id"],
-                *[float(row[m]) for m in PRIMARY_METRICS],
+                *[float(row[m]) for m in ALL_ANALYSIS_METRICS],
             )
             for row in rows
         )
@@ -917,7 +1025,7 @@ def check_a5(v: Reporter, module, fixture: dict[str, Any]) -> None:
         return
 
     _runs, _paired, contrasts = _canonical_pipeline(module, fixture)
-    v.check(group, "factorial contrast row count", len(contrasts) == 84, 84, len(contrasts))
+    v.check(group, "factorial contrast row count", len(contrasts) == 504, 504, len(contrasts))
     keys = [
         (row.get("replicate_id"), row.get("metric"), row.get("contrast_name"))
         for row in contrasts
@@ -939,11 +1047,14 @@ def check_a5(v: Reporter, module, fixture: dict[str, Any]) -> None:
         )
         if key not in actual or not close(actual[key], row["contrast_value"]):
             mismatches.append((key, row["contrast_value"], actual.get(key)))
-    v.check(group, "all 84 contrast values exact", not mismatches, "no mismatches", mismatches[:5])
+    v.check(group, "all 504 contrast values exact", not mismatches, "no mismatches", mismatches[:5])
 
     confirmatory_ok = all(
         bool(row.get("confirmatory"))
-        == (row.get("contrast_name") in CONFIRMATORY_CONTRASTS)
+        == (
+            row.get("metric") in CONFIRMATORY_PRIMARY_METRICS
+            and row.get("contrast_name") in CONFIRMATORY_CONTRASTS
+        )
         for row in contrasts
     )
     v.check(group, "confirmatory flags exact", confirmatory_ok, True, confirmatory_ok)
@@ -987,8 +1098,8 @@ def check_a6(v: Reporter, module, fixture: dict[str, Any]) -> None:
                 mismatches.append(
                     (key, field, expected[field], row.get(field))
                 )
-        if int(row.get("n_valid_blocks", -1)) != 4:
-            mismatches.append((key, "n_valid_blocks", 4, row.get("n_valid_blocks")))
+        if int(row.get("n_valid_blocks", -1)) != 24:
+            mismatches.append((key, "n_valid_blocks", 24, row.get("n_valid_blocks")))
     v.check(group, "strategy descriptives exact", not mismatches, "no mismatches", mismatches[:5])
 
     required_fields = {
@@ -1007,40 +1118,109 @@ def check_a6(v: Reporter, module, fixture: dict[str, Any]) -> None:
         "raw_p_value",
         "holm_p_value",
         "multiplicity_family",
+        "analysis_tier",
+        "confirmatory",
+        "p_value_reporting_permitted",
         "estimand_status",
     }
     fields_ok = all(required_fields <= set(row) for row in strategy)
     v.check(group, "strategy output fields present", fields_ok, required_fields, set(strategy[0]) if strategy else set())
 
-    family_ok = all(
-        row.get("multiplicity_family") == "strategy_primary_24"
+    confirmatory_strategy = [
+        row
         for row in strategy
+        if row.get("metric") in CONFIRMATORY_PRIMARY_METRICS
+    ]
+    local_strategy = [
+        row
+        for row in strategy
+        if row.get("metric") in EXPLORATORY_MECHANISM_METRICS
+    ]
+    family_ok = (
+        len(confirmatory_strategy) == 16
+        and all(
+            row.get("multiplicity_family") == "strategy_primary_16"
+            and row.get("analysis_tier") == "confirmatory_primary"
+            and row.get("confirmatory") is True
+            and row.get("p_value_reporting_permitted") is True
+            and row.get("raw_p_value") is not None
+            and row.get("holm_p_value") is not None
+            for row in confirmatory_strategy
+        )
+        and len(local_strategy) == 8
+        and all(
+            row.get("multiplicity_family") in {None, ""}
+            and row.get("analysis_tier") == "exploratory_mechanistic"
+            and row.get("confirmatory") is False
+            and row.get("p_value_reporting_permitted") is False
+            and row.get("raw_p_value") is None
+            and row.get("holm_p_value") is None
+            for row in local_strategy
+        )
     )
-    v.check(group, "strategy Holm family exact", family_ok, "strategy_primary_24", {row.get("multiplicity_family") for row in strategy})
+    v.check(group, "strategy Holm family exact", family_ok, "16 confirmatory / 8 exploratory", {row.get("multiplicity_family") for row in strategy})
 
-    factorial_family_ok = all(
-        (
-            row.get("contrast_name") in CONFIRMATORY_CONTRASTS
-            and row.get("multiplicity_family") == "factorial_confirmatory_18"
-        )
-        or (
-            row.get("contrast_name") == "Content_x_Channel_x_Timing"
-            and row.get("multiplicity_family") == "factorial_three_way_3"
-        )
+    confirmatory_factorial = [
+        row
         for row in factorial
+        if row.get("metric") in CONFIRMATORY_PRIMARY_METRICS
+        and row.get("contrast_name") in CONFIRMATORY_CONTRASTS
+    ]
+    three_way_factorial = [
+        row
+        for row in factorial
+        if row.get("metric") in CONFIRMATORY_PRIMARY_METRICS
+        and row.get("contrast_name") == "Content_x_Channel_x_Timing"
+    ]
+    local_factorial = [
+        row
+        for row in factorial
+        if row.get("metric") in EXPLORATORY_MECHANISM_METRICS
+    ]
+    factorial_family_ok = (
+        len(confirmatory_factorial) == 12
+        and all(
+            row.get("multiplicity_family") == "factorial_confirmatory_12"
+            and row.get("analysis_tier") == "confirmatory_primary"
+            and row.get("confirmatory") is True
+            and row.get("p_value_reporting_permitted") is True
+            and row.get("raw_p_value") is not None
+            and row.get("holm_p_value") is not None
+            for row in confirmatory_factorial
+        )
+        and len(three_way_factorial) == 2
+        and all(
+            row.get("multiplicity_family") == "factorial_three_way_2"
+            and row.get("analysis_tier") == "exploratory_secondary"
+            and row.get("confirmatory") is False
+            and row.get("p_value_reporting_permitted") is True
+            and row.get("raw_p_value") is not None
+            and row.get("holm_p_value") is not None
+            for row in three_way_factorial
+        )
+        and len(local_factorial) == 7
+        and all(
+            row.get("multiplicity_family") in {None, ""}
+            and row.get("analysis_tier") == "exploratory_mechanistic"
+            and row.get("confirmatory") is False
+            and row.get("p_value_reporting_permitted") is False
+            and row.get("raw_p_value") is None
+            and row.get("holm_p_value") is None
+            for row in local_factorial
+        )
     )
     v.check(group, "factorial family labels exact", factorial_family_ok, True, factorial_family_ok)
 
-    # One CI identity check for n=4 (t_0.975,3).
+    # One CI identity check for n=24 (t_0.975,23).
     row = strategy_by_key[
         ("Empathy-Hub-Delayed", "final_trust_gain_vs_control")
     ]
-    tcrit_df3 = 3.182446305284263
-    expected_half = tcrit_df3 * float(row["sample_sd"]) / 2.0
+    tcrit_df23 = 2.0686576104190406
+    expected_half = tcrit_df23 * float(row["sample_sd"]) / math.sqrt(24.0)
     ci_ok = close(row["ci_low"], float(row["mean"]) - expected_half) and close(
         row["ci_high"], float(row["mean"]) + expected_half
     )
-    v.check(group, "Student-t CI for n=4", ci_ok, expected_half, (row.get("ci_low"), row.get("ci_high")))
+    v.check(group, "Student-t CI for n=24", ci_ok, expected_half, (row.get("ci_low"), row.get("ci_high")))
 
 
 def check_a7(v: Reporter, module, fixture: dict[str, Any]) -> None:
@@ -1091,7 +1271,7 @@ def check_a7(v: Reporter, module, fixture: dict[str, Any]) -> None:
 def pareto_input(case: dict[str, Any]) -> list[dict[str, Any]]:
     rows = []
     for exp_id, values in case["strategy_means"].items():
-        for metric, value in zip(PRIMARY_METRICS, values):
+        for metric, value in zip(ALL_ANALYSIS_METRICS, values):
             rows.append(
                 {
                     "exp_id": exp_id,
@@ -1130,6 +1310,19 @@ def check_a8(v: Reporter, module, fixture: dict[str, Any]) -> None:
             len(case["strategy_means"]),
             len(result),
         )
+        local_absent = all(
+            "local_trust_effect_did_3" not in row
+            and row.get("metric_basis") == ",".join(CONFIRMATORY_PRIMARY_METRICS)
+            and row.get("analysis_tier") == "exploratory_secondary"
+            for row in result
+        )
+        v.check(
+            group,
+            f"{case['case_id']} Pareto excludes local DID",
+            local_absent,
+            True,
+            result,
+        )
 
 
 def tie_case_paired(fixture: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1142,7 +1335,7 @@ def tie_case_paired(fixture: dict[str, Any]) -> list[dict[str, Any]]:
                 "replicate_index": index,
                 "exp_id": exp_id,
             }
-            row.update(dict(zip(PRIMARY_METRICS, values)))
+            row.update(dict(zip(ALL_ANALYSIS_METRICS, values)))
             rows.append(row)
     return rows
 
@@ -1157,7 +1350,8 @@ def check_a9(v: Reporter, module, fixture: dict[str, Any]) -> None:
     config = {
         "bootstrap_iterations": case["iterations"],
         "bootstrap_seed": case["seed"],
-        "primary_metrics": list(PRIMARY_METRICS),
+        "primary_metrics": list(CONFIRMATORY_PRIMARY_METRICS),
+        "exploratory_metrics": list(EXPLORATORY_MECHANISM_METRICS),
         "pareto_tolerance": PARETO_TOLERANCE,
     }
     input_rows = tie_case_paired(fixture)
@@ -1189,9 +1383,17 @@ def check_a9(v: Reporter, module, fixture: dict[str, Any]) -> None:
         "rank_interval_high",
         "top1_credit_sum",
         "bootstrap_iterations",
+        "analysis_tier",
+        "metric_basis",
     }
     fields_ok = all(required_fields <= set(row) for row in first)
     v.check(group, "bootstrap output fields present", fields_ok, required_fields, set(first[0]) if first else set())
+    basis_ok = all(
+        row.get("analysis_tier") == "exploratory_secondary"
+        and row.get("metric_basis") == ",".join(CONFIRMATORY_PRIMARY_METRICS)
+        for row in first
+    )
+    v.check(group, "bootstrap excludes local DID basis", basis_ok, True, first)
 
 
 def check_a10(v: Reporter, module, fixture: dict[str, Any]) -> None:
@@ -1279,9 +1481,20 @@ def check_a11(v: Reporter, module, fixture: dict[str, Any]) -> None:
             (output / "analysis_metadata.json").read_text(encoding="utf-8")
         )
         v.check(group, "formal complete true", validation.get("formal_complete") is True, True, validation.get("formal_complete"))
-        v.check(group, "valid block count four", int(validation.get("valid_blocks", -1)) == 4, 4, validation.get("valid_blocks"))
+        v.check(group, "valid block count 24", int(validation.get("valid_blocks", -1)) == 24, 24, validation.get("valid_blocks"))
         v.check(group, "metadata excludes pilot", metadata.get("pilot_included") is False, False, metadata.get("pilot_included"))
         v.check(group, "metadata excludes smoke", metadata.get("smoke_included") is False, False, metadata.get("smoke_included"))
+        v.check(group, "metadata schema 1.1", metadata.get("analysis_schema_version") == "1.1", "1.1", metadata.get("analysis_schema_version"))
+        v.check(group, "metadata formal N 24", int(metadata.get("formal_target_valid_blocks", -1)) == 24, 24, metadata.get("formal_target_valid_blocks"))
+        v.check(
+            group,
+            "metadata local DID exploratory",
+            metadata.get("local_did_confirmatory") is False
+            and metadata.get("pareto_ranking_metric_basis")
+            == list(CONFIRMATORY_PRIMARY_METRICS),
+            "local_did_confirmatory false and Pareto basis confirmatory",
+            metadata,
+        )
 
         try:
             fn(batch, output, make_preregistration())
@@ -1294,13 +1507,11 @@ def check_a11(v: Reporter, module, fixture: dict[str, Any]) -> None:
 
     with tempfile.TemporaryDirectory() as temp:
         root = Path(temp)
-        batch = write_synthetic_batch(fixture, root)
-        output = root / "incomplete-output"
-        result = fn(
-            batch,
-            output,
-            make_preregistration(target_valid_blocks=5),
+        batch = write_synthetic_batch(
+            fixture, root, mutation="missing_strategy"
         )
+        output = root / "incomplete-output"
+        result = fn(batch, output, make_preregistration())
         validation = json.loads(
             (output / "analysis_validation.json").read_text(encoding="utf-8")
         )

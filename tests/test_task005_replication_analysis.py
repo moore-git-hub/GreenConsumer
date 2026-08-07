@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""TASK_005 Stage I.5C-4B frozen replication-analysis acceptance baseline.
+"""TASK_005 Stage I.5C-4C frozen replication-analysis acceptance baseline.
 
 The harness is intentionally executable without pytest. Before
 ``replication_analysis.py`` exists, production-facing groups fail while the
@@ -208,7 +208,7 @@ class Reporter:
             by_group[group][status] += 1
 
         print("=" * 80)
-        print("TASK_005 STAGE I.5C-4B REPLICATION ANALYSIS ACCEPTANCE RESULTS")
+        print("TASK_005 STAGE I.5C-4C REPLICATION ANALYSIS ACCEPTANCE RESULTS")
         print("=" * 80)
         for group in GROUP_ORDER:
             counts = by_group[group]
@@ -360,8 +360,16 @@ def write_synthetic_batch(
     replication_id: str | None = None,
     engineering_replicate_id: str | None = None,
     metadata_replicate_id_override: str | None = None,
+    extra_valid_blocks: int = 0,
 ) -> Path:
     case = copy.deepcopy(fixture["canonical_case"])
+    if extra_valid_blocks < 0:
+        raise ValueError("extra_valid_blocks must be nonnegative")
+    for offset in range(extra_valid_blocks):
+        block = copy.deepcopy(case["blocks"][offset % len(case["blocks"])])
+        block["replicate_index"] = len(case["blocks"]) + 1
+        block["replicate_id"] = f"R{block['replicate_index']:03d}"
+        case["blocks"].append(block)
     batch_id = replication_id or case["replication_id"]
     batch_root = root / batch_id
     blocks_root = batch_root / "blocks"
@@ -847,6 +855,17 @@ def check_a3(v: Reporter, module, fixture: dict[str, Any]) -> None:
             True,
             result.get("formal_complete"),
         )
+        v.check(
+            group,
+            "canonical exact sample status",
+            result.get("formal_sample_status") == "exact_complete"
+            and result.get("surplus_valid_blocks") == 0,
+            "exact_complete / surplus 0",
+            {
+                "formal_sample_status": result.get("formal_sample_status"),
+                "surplus_valid_blocks": result.get("surplus_valid_blocks"),
+            },
+        )
         ids = [row.get("replicate_id") for row in valid]
         expected_ids = [f"R{index:03d}" for index in range(1, 25)]
         v.check(group, "valid IDs ordered", ids == expected_ids, expected_ids, ids)
@@ -880,6 +899,55 @@ def check_a3(v: Reporter, module, fixture: dict[str, Any]) -> None:
                 False,
                 result.get("formal_complete"),
             )
+            v.check(
+                group,
+                f"{mutation} sample status incomplete",
+                result.get("formal_sample_status") == "incomplete"
+                and result.get("formal_inference_permitted") is False,
+                "incomplete / inference false",
+                {
+                    "formal_sample_status": result.get("formal_sample_status"),
+                    "formal_inference_permitted":
+                        result.get("formal_inference_permitted"),
+                },
+            )
+
+    with tempfile.TemporaryDirectory() as temp:
+        batch = write_synthetic_batch(
+            fixture,
+            Path(temp),
+            extra_valid_blocks=1,
+        )
+        result = fn(batch, make_preregistration())
+        valid, excluded, counts = get_loader_parts(result)
+        v.check(
+            group,
+            "25 valid blocks are overcomplete",
+            len(valid) == 25
+            and len(excluded) == 0
+            and result.get("formal_sample_status") == "overcomplete"
+            and result.get("surplus_valid_blocks") == 1,
+            "25 valid / overcomplete / surplus 1",
+            {
+                "valid": len(valid),
+                "excluded": len(excluded),
+                "counts": counts,
+                "formal_sample_status": result.get("formal_sample_status"),
+                "surplus_valid_blocks": result.get("surplus_valid_blocks"),
+            },
+        )
+        v.check(
+            group,
+            "25 valid blocks prohibit inference",
+            result.get("formal_complete") is False
+            and result.get("formal_inference_permitted") is False,
+            "formal_complete=false and inference=false",
+            {
+                "formal_complete": result.get("formal_complete"),
+                "formal_inference_permitted":
+                    result.get("formal_inference_permitted"),
+            },
+        )
 
     with tempfile.TemporaryDirectory() as temp:
         batch = write_synthetic_batch(
@@ -1551,6 +1619,15 @@ def check_a11(v: Reporter, module, fixture: dict[str, Any]) -> None:
         )
         v.check(group, "formal complete true", validation.get("formal_complete") is True, True, validation.get("formal_complete"))
         v.check(group, "valid block count 24", int(validation.get("valid_blocks", -1)) == 24, 24, validation.get("valid_blocks"))
+        v.check(
+            group,
+            "validation exact sample status",
+            validation.get("formal_sample_status") == "exact_complete"
+            and int(validation.get("surplus_valid_blocks", -1)) == 0
+            and validation.get("formal_inference_permitted") is True,
+            "exact_complete / surplus 0 / inference true",
+            validation,
+        )
         v.check(group, "metadata excludes pilot", metadata.get("pilot_included") is False, False, metadata.get("pilot_included"))
         v.check(group, "metadata excludes smoke", metadata.get("smoke_included") is False, False, metadata.get("smoke_included"))
         v.check(group, "metadata schema 1.1", metadata.get("analysis_schema_version") == "1.1", "1.1", metadata.get("analysis_schema_version"))
@@ -1563,6 +1640,25 @@ def check_a11(v: Reporter, module, fixture: dict[str, Any]) -> None:
             == list(CONFIRMATORY_PRIMARY_METRICS),
             "local_did_confirmatory false and Pareto basis confirmatory",
             metadata,
+        )
+        rows = list(
+            csv.DictReader(
+                (output / "strategy_estimates.csv").open(
+                    "r", encoding="utf-8-sig", newline=""
+                )
+            )
+        )
+        confirmatory_rows = [
+            row for row in rows if row.get("metric") in CONFIRMATORY_PRIMARY_METRICS
+        ]
+        v.check(
+            group,
+            "N24 confirmatory p-values present",
+            len(confirmatory_rows) == 16
+            and all(row.get("raw_p_value") for row in confirmatory_rows)
+            and all(row.get("holm_p_value") for row in confirmatory_rows),
+            "16 rows with raw/Holm p",
+            confirmatory_rows[:2],
         )
 
         try:
@@ -1595,6 +1691,75 @@ def check_a11(v: Reporter, module, fixture: dict[str, Any]) -> None:
         )
         statuses = {row.get("estimand_status") for row in rows}
         v.check(group, "incomplete statuses explicit", statuses == {"formal_incomplete"}, {"formal_incomplete"}, statuses)
+        confirmatory_rows = [
+            row for row in rows if row.get("metric") in CONFIRMATORY_PRIMARY_METRICS
+        ]
+        v.check(
+            group,
+            "N23 confirmatory p-values blank",
+            len(confirmatory_rows) == 16
+            and all(row.get("raw_p_value", "") == "" for row in confirmatory_rows)
+            and all(row.get("holm_p_value", "") == "" for row in confirmatory_rows),
+            "16 rows with blank raw/Holm p",
+            confirmatory_rows[:2],
+        )
+
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        batch = write_synthetic_batch(
+            fixture,
+            root,
+            extra_valid_blocks=1,
+        )
+        output = root / "overcomplete-output"
+        result = fn(batch, output, make_preregistration())
+        validation = json.loads(
+            (output / "analysis_validation.json").read_text(encoding="utf-8")
+        )
+        v.check(
+            group,
+            "formal overcomplete gate false",
+            validation.get("formal_sample_status") == "overcomplete"
+            and validation.get("formal_complete") is False
+            and validation.get("formal_inference_permitted") is False
+            and int(validation.get("surplus_valid_blocks", -1)) == 1,
+            "overcomplete / surplus 1 / inference false",
+            validation,
+        )
+        rows = list(
+            csv.DictReader(
+                (output / "strategy_estimates.csv").open(
+                    "r", encoding="utf-8-sig", newline=""
+                )
+            )
+        )
+        statuses = {row.get("estimand_status") for row in rows}
+        confirmatory_rows = [
+            row for row in rows if row.get("metric") in CONFIRMATORY_PRIMARY_METRICS
+        ]
+        v.check(
+            group,
+            "N25 not truncated to N24",
+            {row.get("n_valid_blocks") for row in rows} == {"25"},
+            {"25"},
+            {row.get("n_valid_blocks") for row in rows},
+        )
+        v.check(
+            group,
+            "overcomplete statuses explicit",
+            statuses == {"formal_overcomplete"},
+            {"formal_overcomplete"},
+            statuses,
+        )
+        v.check(
+            group,
+            "N25 confirmatory p-values blank",
+            len(confirmatory_rows) == 16
+            and all(row.get("raw_p_value", "") == "" for row in confirmatory_rows)
+            and all(row.get("holm_p_value", "") == "" for row in confirmatory_rows),
+            "16 rows with blank raw/Holm p",
+            confirmatory_rows[:2],
+        )
 
 
 def check_a12(v: Reporter, module) -> None:

@@ -561,16 +561,22 @@ def load_valid_replication_blocks(
             for row in final_manifest_rows
         ),
     }
-    formal_complete = (
-        counts["valid"] >= config["target_valid_blocks"]
-        and counts["attempted"] <= config["max_attempted_blocks"]
-    )
+    if counts["valid"] < config["target_valid_blocks"]:
+        formal_sample_status = "incomplete"
+    elif counts["valid"] == config["target_valid_blocks"]:
+        formal_sample_status = "exact_complete"
+    else:
+        formal_sample_status = "overcomplete"
+    surplus_valid_blocks = max(0, counts["valid"] - config["target_valid_blocks"])
+    formal_complete = counts["valid"] == config["target_valid_blocks"]
     return {
         "formal_replication_id": batch_id,
         "preregistration": config,
         "valid_blocks": valid_blocks,
         "excluded_blocks": excluded_blocks,
         "counts": counts,
+        "formal_sample_status": formal_sample_status,
+        "surplus_valid_blocks": surplus_valid_blocks,
         "formal_complete": formal_complete,
         "formal_inference_permitted": formal_complete,
     }
@@ -819,6 +825,11 @@ def _inferential_summary(
     }
 
     if n < 2:
+        status = (
+            "formal_incomplete"
+            if n < target_valid_blocks
+            else "formal_overcomplete"
+        )
         result.update(
             {
                 "sample_sd": None,
@@ -827,7 +838,7 @@ def _inferential_summary(
                 "ci_low": None,
                 "ci_high": None,
                 "raw_p_value": None,
-                "estimand_status": "insufficient_n",
+                "estimand_status": status,
             }
         )
         return result
@@ -852,11 +863,14 @@ def _inferential_summary(
         )
         base_status = "complete"
 
-    status = (
-        "formal_incomplete"
-        if n < target_valid_blocks
-        else base_status
-    )
+    if n < target_valid_blocks:
+        status = "formal_incomplete"
+        raw_p = None
+    elif n > target_valid_blocks:
+        status = "formal_overcomplete"
+        raw_p = None
+    else:
+        status = base_status
     result.update(
         {
             "sample_sd": sample_sd,
@@ -1356,6 +1370,8 @@ def run_replication_analysis(
 
     counts = dict(loaded["counts"])
     formal_complete = bool(loaded["formal_complete"])
+    formal_sample_status = str(loaded["formal_sample_status"])
+    surplus_valid_blocks = int(loaded["surplus_valid_blocks"])
     source_path = Path(__file__).resolve()
     metadata = {
         "analysis_schema_version": ANALYSIS_SCHEMA_VERSION,
@@ -1371,7 +1387,6 @@ def run_replication_analysis(
         "confirmatory_primary_metrics": list(CONFIRMATORY_PRIMARY_METRICS),
         "exploratory_mechanism_metrics": list(EXPLORATORY_MECHANISM_METRICS),
         "all_analysis_metrics": list(ALL_ANALYSIS_METRICS),
-        "formal_target_valid_blocks": FORMAL_TARGET_VALID_BLOCKS,
         "control_exp_id": CONTROL_EXP_ID,
         "strategy_exp_ids": list(STRATEGY_EXP_IDS),
         "factorial_contrasts": list(FACTORIAL_CONTRASTS),
@@ -1394,6 +1409,9 @@ def run_replication_analysis(
         "bootstrap_iterations": config["bootstrap_iterations"],
         "bootstrap_seed": config["bootstrap_seed"],
         "planned_blocks": config["target_valid_blocks"],
+        "formal_target_valid_blocks": config["target_valid_blocks"],
+        "formal_sample_status": formal_sample_status,
+        "surplus_valid_blocks": surplus_valid_blocks,
         "attempted_blocks": counts["attempted"],
         "valid_blocks": counts["valid"],
         "failed_blocks": counts["failed"],
@@ -1436,6 +1454,9 @@ def run_replication_analysis(
         "formal_complete": formal_complete,
         "formal_inference_permitted": formal_complete,
         "target_valid_blocks": config["target_valid_blocks"],
+        "formal_target_valid_blocks": config["target_valid_blocks"],
+        "formal_sample_status": formal_sample_status,
+        "surplus_valid_blocks": surplus_valid_blocks,
         "attempted_blocks": counts["attempted"],
         "valid_blocks": counts["valid"],
         "excluded_blocks": counts["excluded"],

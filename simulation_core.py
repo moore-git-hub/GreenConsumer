@@ -81,7 +81,10 @@ resource_maps = {
     "environment_components": {}, "action_components": {}, "controller": None
 }
 
-# Oatly 真实事件时间轴（基于公开报道）
+# Legacy scenario table.
+# Tick 1/10/15 are LEGACY / NOT AUTHORIZED FOR TASK005 MECHANISM-V2 INFERENCE.
+# The authorized TASK_005 mechanism-v2 path is run_experiments._run_with_patch,
+# which uses only the fictional VerdantCo crisis at Tick 5.
 ENTERPRISE_STRATEGY = {
     1: (
         "Oatly's Barista Edition oat milk is expanding rapidly across the US. "
@@ -95,15 +98,18 @@ ENTERPRISE_STRATEGY = {
         "most credible and transparent brand in the sustainable food sector."
     ),
     5: (
-        "BREAKING: Oatly sold a 10% stake ($200 million) to an investment group led by "
-        "Blackstone Group in July 2020. Blackstone is the world's largest private equity "
-        "firm, directly linked to Amazon deforestation in Brazil, and its CEO Stephen "
-        "Schwarzman is a major donor to Trump's political campaigns opposing climate policy. "
-        "Activists on Twitter are trending #BoycottOatly, calling this a 'sell-out' and "
-        "'enabling Blackstone to greenwash its climate-damaging portfolio.' "
-        "Critics say Oatly has 'sold its soul for growth capital.' "
-        "Oatly defended the deal, saying the investment would help them scale sustainably — "
-        "but many long-time fans feel profoundly betrayed."
+        "VerdantCo is a fictional sustainability-oriented consumer brand created solely for this experiment. "
+        "In this fictional scenario, VerdantCo has promoted a sustainability-oriented brand identity "
+        "and has asked consumers to see its everyday products as aligned with environmental values. "
+        "A new hypothetical controversy reports that VerdantCo accepted a minority equity investment "
+        "from a fictional investment group that is criticized within the scenario for holding "
+        "environmentally controversial assets. The investor is described as having no majority ownership "
+        "and no board control over VerdantCo's sustainability policy, but critics argue that the partnership "
+        "still raises questions about value consistency, greenwashing, and mission drift. "
+        "Long-time supporters say the brand did not explain the relationship clearly enough, and some "
+        "consumers now wonder whether VerdantCo's sustainability claims are more like marketing than a "
+        "durable commitment. This is a hypothetical experimental vignette and does not refer to any real "
+        "company, investor, regulator, auditor, person, stock ticker, report, or public event."
     ),
     10: (
         "HEALTH BACKLASH: A popular nutrition blogger's post exposing Oatly's ingredient "

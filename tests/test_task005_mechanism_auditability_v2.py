@@ -25,7 +25,6 @@ PROTECTED_SOURCES = (
     "mechanism_v2.py",
     "plugins/agent/reflect/GreenCognitionPlugin.py",
     "plugins/agent/plan/ConsumerPlanPlugin.py",
-    "clarification_injector.py",
     "node_selector.py",
     "experiment_config.py",
 )

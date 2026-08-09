@@ -49,6 +49,42 @@ def _row(agent_id, evidence, credibility, empathy, arousal, valence, topic=0.9):
     }
 
 
+def _semantic_response(**overrides):
+    payload = {
+        "valence": 0.1,
+        "arousal": 0.4,
+        "credibility": 0.7,
+        "evidence_strength": 0.8,
+        "topic_relevance": 0.9,
+        "perceived_empathy": 0.6,
+        "hypocrisy_perceived": False,
+        "importance": 5,
+        "reasoning": "The statement is relevant and understandable.",
+    }
+    payload.update(overrides)
+    return json.dumps(payload)
+
+
+def _reflect_prompt():
+    return (
+        "Return JSON only. Do NOT decide buying or posting: "
+        '{"valence": <float>, "arousal": <float>, "credibility": <float>, '
+        '"evidence_strength": <float>, "topic_relevance": <float>, '
+        '"perceived_empathy": <float>, "hypocrisy_perceived": <boolean>, '
+        '"importance": <float>, "reasoning": <string>}'
+    )
+
+
+class _FakeInnerRouter:
+    def __init__(self, response):
+        self.response = response
+        self.calls = 0
+
+    async def chat(self, prompt):
+        self.calls += 1
+        return self.response
+
+
 def test_identity_and_contract() -> None:
     ledger = pilot.build_pilot_seed_ledger()
     check("pilot id v2", pilot.PILOT_ID == "task005-real-manipulation-pilot-v2", pilot.PILOT_ID)
@@ -107,6 +143,73 @@ def test_range_validation_and_no_zip_truncation() -> None:
         check("matched reach mismatch fails", False)
 
 
+def test_raw_semantic_validator() -> None:
+    invalid_cases = []
+    missing = json.loads(_semantic_response())
+    missing.pop("perceived_empathy")
+    invalid_cases.append(("missing perceived_empathy", json.dumps(missing)))
+    invalid_cases.extend(
+        [
+            ("perceived empathy high", _semantic_response(perceived_empathy=1.5)),
+            ("perceived empathy low", _semantic_response(perceived_empathy=-0.1)),
+            ("nan fails", _semantic_response(perceived_empathy=float("nan"))),
+            ("infinity fails", _semantic_response(arousal=float("inf"))),
+            ("hypocrisy string fails", _semantic_response(hypocrisy_perceived="false")),
+            ("importance high fails", _semantic_response(importance=11)),
+        ]
+    )
+    for label, response in invalid_cases:
+        try:
+            pilot.validate_raw_semantic_response(response)
+        except pilot.PilotSemanticValidationError:
+            check(label, True)
+        else:
+            check(label, False)
+
+    valid = _semantic_response(perceived_empathy=0.333333, importance=10)
+    parsed = pilot.validate_raw_semantic_response(valid)
+    check("valid raw semantic passes", parsed["perceived_empathy"] == 0.333333, parsed)
+
+
+def test_validated_router_raw_response_contract() -> None:
+    with tempfile.TemporaryDirectory(prefix="task005_pilot_v2_router_") as tmp:
+        call_log = Path(tmp) / "calls.jsonl"
+        lifecycle = Path(tmp) / "lifecycle.jsonl"
+        response = _semantic_response(perceived_empathy=0.42)
+        router = pilot.ValidatedAuditedRealRouter(
+            _FakeInnerRouter(response),
+            pilot_id=pilot.PILOT_ID,
+            replicate_id="R001",
+            requested_llm_seed=123,
+            call_log_path=call_log,
+            lifecycle_path=lifecycle,
+        )
+        returned = asyncio.run(router.chat(_reflect_prompt()))
+        check("valid response unchanged", returned == response, returned)
+        rows = [json.loads(line) for line in call_log.read_text(encoding="utf-8").splitlines()]
+        check("audit semantic ok", rows[0]["semantic_schema_ok"] is True, rows)
+        check("first chat lifecycle", "FIRST_CHAT_STARTED" in lifecycle.read_text(encoding="utf-8"))
+
+    with tempfile.TemporaryDirectory(prefix="task005_pilot_v2_router_bad_") as tmp:
+        call_log = Path(tmp) / "calls.jsonl"
+        router = pilot.ValidatedAuditedRealRouter(
+            _FakeInnerRouter(_semantic_response(perceived_empathy=1.5)),
+            pilot_id=pilot.PILOT_ID,
+            replicate_id="R001",
+            requested_llm_seed=123,
+            call_log_path=call_log,
+        )
+        try:
+            asyncio.run(router.chat(_reflect_prompt()))
+        except pilot.PilotSemanticValidationError:
+            check("invalid router raises", True)
+        else:
+            check("invalid router raises", False)
+        rows = [json.loads(line) for line in call_log.read_text(encoding="utf-8").splitlines()]
+        check("audit semantic fail", rows[0]["semantic_schema_ok"] is False, rows)
+        check("audit validation error type", rows[0]["validation_error_type"] == "PilotSemanticValidationError", rows)
+
+
 def test_child_pre_chat_failure_artifacts() -> None:
     with tempfile.TemporaryDirectory(prefix="task005_pilot_v2_") as tmp:
         root = Path(tmp)
@@ -162,12 +265,49 @@ def test_cli_no_real_and_dry_run() -> None:
         check("dry manifest 2x3", len(rows) == 6, len(rows))
 
 
+def test_offline_import_network_tripwire() -> None:
+    with tempfile.TemporaryDirectory(prefix="task005_pilot_v2_tripwire_") as tmp:
+        tripwire = Path(tmp) / "sitecustomize.py"
+        tripwire.write_text(
+            "import socket\n"
+            "def _fail(*args, **kwargs):\n"
+            "    raise RuntimeError('NETWORK_TRIPWIRE')\n"
+            "socket.socket.connect = _fail\n"
+            "socket.create_connection = _fail\n",
+            encoding="utf-8",
+        )
+        env = dict(os.environ)
+        for key in ("HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE", "HF_DATASETS_OFFLINE"):
+            env.pop(key, None)
+        env["PYTHONPATH"] = tmp + os.pathsep + env.get("PYTHONPATH", "")
+        proc = subprocess.run(
+            [
+                sys.executable,
+                "-X",
+                "utf8",
+                "run_task005_real_manipulation_pilot_v2.py",
+                "--offline-test",
+            ],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=60,
+        )
+        combined = proc.stdout + proc.stderr
+        check("network tripwire passes", proc.returncode == 0, combined)
+        check("network tripwire no attempt", "NETWORK_TRIPWIRE" not in combined, combined)
+
+
 def main() -> int:
     test_identity_and_contract()
     test_v2_manipulation_gates()
     test_range_validation_and_no_zip_truncation()
+    test_raw_semantic_validator()
+    test_validated_router_raw_response_contract()
     test_child_pre_chat_failure_artifacts()
     test_cli_no_real_and_dry_run()
+    test_offline_import_network_tripwire()
     print("Passed:", P)
     print("Failed:", F)
     return 1 if F else 0

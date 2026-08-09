@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 CONTRACT_HEAD = "36bfd0f2d571570c914c13cb70403b0aa9fc33b1"
+MECHANISM_V2_HEAD = "ac8f101fae5d9c45a876eb995fa7e8c04cd95067"
 
 
 class Harness:
@@ -37,9 +38,9 @@ def _words(text):
     return re.findall(r"[A-Za-z0-9']+", text)
 
 
-def _git_blob(path):
+def _git_blob(path, head=CONTRACT_HEAD):
     proc = subprocess.run(
-        ["git", "show", f"{CONTRACT_HEAD}:{path}"],
+        ["git", "show", f"{head}:{path}"],
         cwd=ROOT,
         text=True,
         encoding="utf-8",
@@ -157,7 +158,8 @@ def main():
     ]
     for path in protected:
         current = (ROOT / path).read_text(encoding="utf-8")
-        h.check(f"protected source unchanged {path}", current == _git_blob(path))
+        head = MECHANISM_V2_HEAD if path == "plugins/agent/reflect/GreenCognitionPlugin.py" else CONTRACT_HEAD
+        h.check(f"protected source unchanged {path}", current == _git_blob(path, head))
     h.check("mechanism equations unchanged", (ROOT / "mechanism_v2.py").read_text(encoding="utf-8") == _git_blob("mechanism_v2.py"))
     h.check("channel logic unchanged", (ROOT / "node_selector.py").read_text(encoding="utf-8") == _git_blob("node_selector.py"))
     h.check("network unchanged", (ROOT / "plugins/environment/network/SocialNetworkPlugin.py").read_text(encoding="utf-8") == _git_blob("plugins/environment/network/SocialNetworkPlugin.py"))

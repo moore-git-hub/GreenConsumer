@@ -22,7 +22,7 @@ RESULT_PATH = (
     / ".kiro"
     / "specs"
     / "task005-replication-inference"
-    / "production_path_fake_model_smoke_v2_result1.0.json"
+    / "production_path_fake_model_smoke_v4_result1.0.json"
 )
 DIAGNOSTIC_SEED = 4301
 EXPECTED_ROWS = 30 * 20

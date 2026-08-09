@@ -1,0 +1,99 @@
+{
+  "artifact": "task005_estimand_contract1.0",
+  "task": "TASK_005",
+  "stage": "variance-pilot estimand freeze",
+  "frozen_before_variance_data": true,
+  "independent_unit": "replication_block",
+  "agent_level_n_used_for_power": false,
+  "agent_count_per_condition": 20,
+  "condition_metrics": {
+    "source": "mechanism_records.csv schema 1.2",
+    "MeanTrust_bct": "mean trust_final across 20 agents for block b, condition c, tick t",
+    "POST_TRUST_AUC_bc": {
+      "window": "Tick6-Tick30",
+      "method": "trapezoidal integral of MeanTrust_bc(t)",
+      "normalization_intervals": 24,
+      "unit": "trust points"
+    },
+    "EARLY_TRUST_AUC_bc": {
+      "window": "Tick6-Tick10",
+      "method": "trapezoidal integral of MeanTrust_bc(t)",
+      "normalization_intervals": 4,
+      "unit": "trust points",
+      "tick10_includes_delayed_clarification_state": true
+    },
+    "PURCHASE_RATE_T30_bc": {
+      "definition": "unique agents with is_buying true at least once during Tick1-Tick30 divided by 20",
+      "repeated_tick_rows_count_once": true
+    },
+    "REACH_RATE_bc": {
+      "strategy_definition": "unique reached agents in clarification exposure audit divided by 20",
+      "control_value": null,
+      "control_zero_forbidden": true
+    }
+  },
+  "primary_estimands": {
+    "P1_OVERALL_CLARIFICATION_POST_TRUST": "mean over 8 strategy POST_TRUST_AUC minus control POST_TRUST_AUC",
+    "P2_CONTENT_POST_TRUST": "mean 4 Rational strategy POST_TRUST_AUC minus mean 4 Empathy strategy POST_TRUST_AUC",
+    "P3_TIMING_EARLY_TRUST": "mean 4 Immediate strategy EARLY_TRUST_AUC minus mean 4 Delayed strategy EARLY_TRUST_AUC",
+    "P4_CHANNEL_REACH": "mean 4 Hub strategy REACH_RATE minus mean 4 Random strategy REACH_RATE",
+    "P5_OVERALL_CLARIFICATION_PURCHASE": "mean over 8 strategy PURCHASE_RATE_T30 minus control PURCHASE_RATE_T30"
+  },
+  "planned_secondary_estimands": [
+    "CONTENT_PURCHASE_T30",
+    "CHANNEL_PURCHASE_T30",
+    "TIMING_PURCHASE_T30",
+    "CHANNEL_POST_TRUST",
+    "TIMING_POST_TRUST",
+    "CONTENT_EARLY_TRUST",
+    "FINAL_TRUST_T30_overall",
+    "FINAL_TRUST_T30_content",
+    "FINAL_TRUST_T30_channel",
+    "FINAL_TRUST_T30_timing",
+    "PURCHASE_TRAJECTORY_AUC_if_raw_records_support_it",
+    "CONTENT_x_CHANNEL_POST_TRUST_AUC",
+    "CONTENT_x_TIMING_POST_TRUST_AUC",
+    "CHANNEL_x_TIMING_POST_TRUST_AUC",
+    "CONTENT_x_CHANNEL_x_TIMING_POST_TRUST_AUC",
+    "CONTENT_x_CHANNEL_PURCHASE_RATE_T30",
+    "CONTENT_x_TIMING_PURCHASE_RATE_T30",
+    "CHANNEL_x_TIMING_PURCHASE_RATE_T30",
+    "CONTENT_x_CHANNEL_x_TIMING_PURCHASE_RATE_T30"
+  ],
+  "interaction_contrast_definition": {
+    "method": "standard equal-weight factorial contrast",
+    "example_content_x_timing": "[mean(Rational Immediate)-mean(Rational Delayed)]-[mean(Empathy Immediate)-mean(Empathy Delayed)], equal-weight averaged over channel"
+  },
+  "variance_summary": {
+    "primary_fields": [
+      "P1_OVERALL_CLARIFICATION_POST_TRUST",
+      "P2_CONTENT_POST_TRUST",
+      "P3_TIMING_EARLY_TRUST",
+      "P4_CHANNEL_REACH",
+      "P5_OVERALL_CLARIFICATION_PURCHASE"
+    ],
+    "ddof": 1,
+    "statistics": [
+      "sample_variance",
+      "sample_sd",
+      "median",
+      "IQR",
+      "min",
+      "max",
+      "leave_one_block_out_sd_range",
+      "5x5 covariance matrix",
+      "5x5 correlation matrix"
+    ]
+  },
+  "firewalls": {
+    "p_values_computed": false,
+    "power_calculation": false,
+    "sample_size_recommendation": false,
+    "mde_selected": false,
+    "future_managerial_MDE_must_not_be_selected_from": "observed variance-pilot mean treatment effect",
+    "strategy_winner_selection": false,
+    "mechanism_coefficient_calibration": false,
+    "stimulus_rewriting": false,
+    "primary_estimand_change_after_variance": false
+  }
+}

@@ -23,6 +23,7 @@ class ConsumerPlanPlugin(PlanPlugin):
         sd=getattr(st,"state_data",getattr(st,"_state_data",{}))
         obs=sd.get("last_observations") or []; had=bool(obs)
         has_clr=any(isinstance(o,dict) and (o.get("source")=="Enterprise_Clarification" or o.get("type")=="clarification") for o in obs)
+        enterprise_clarification_observed=any(isinstance(o,dict) and o.get("source")=="Enterprise_Clarification" for o in obs)
         clr_type=""
         for o in obs:
             if isinstance(o,dict) and (o.get("source")=="Enterprise_Clarification" or o.get("type")=="clarification"):
@@ -39,7 +40,9 @@ class ConsumerPlanPlugin(PlanPlugin):
           credibility=float(sd.get("semantic_credibility",.5)),
           evidence_strength=float(sd.get("semantic_evidence_strength",0)),
           topic_relevance=float(sd.get("semantic_topic_relevance",0)),had_observation=had,
-          social_observation_count=int(sd.get("semantic_social_observation_count",0)))
+          social_observation_count=int(sd.get("semantic_social_observation_count",0)),
+          perceived_empathy=float(sd.get("semantic_perceived_empathy",0)),
+          enterprise_clarification_observed=enterprise_clarification_observed)
         last=sd.get("last_post_tick",None)
         since=None if last in (None,"") else current_tick-int(last)
         bp,pp=behavior_probabilities(purchase_intention=state["purchase_intention"],
@@ -79,6 +82,10 @@ class ConsumerPlanPlugin(PlanPlugin):
           "emotion_valence":state["emotion_valence"],"emotion_arousal":state["emotion_arousal"],
           "crisis_memory_before":state["crisis_memory_before"],"repair_memory_before":state["repair_memory_before"],
           "crisis_memory":state["crisis_memory"],"repair_memory":state["repair_memory"],
+          "enterprise_clarification_observed":enterprise_clarification_observed,
+          "relational_repair_signal":state["relational_repair_signal"],
+          "relational_repair_increment":state["relational_repair_increment"],
+          "empathy_repair_weight":state["empathy_repair_weight"],
           "purchase_intention":state["purchase_intention"],"posting_intention":state["posting_intention"],
           "buy_probability":bp,"post_probability":pp,"buy_draw":bd,"post_draw":pd,
           "semantic_valence":float(sd.get("semantic_valence",0)),

@@ -91,7 +91,7 @@ def test_identity_and_contract() -> None:
     check("master seed v2", pilot.MASTER_SEED == 2026080903, pilot.MASTER_SEED)
     check("replicates exact", tuple(row["replicate_id"] for row in ledger) == ("R001", "R002"), ledger)
     check("conditions exact", tuple(cfg.exp_id for cfg in pilot.select_pilot_conditions()) == pilot.PILOT_CONDITION_IDS)
-    check("schema 1.1", simulation_core.MECHANISM_RECORDS_SCHEMA_VERSION == "1.1")
+    check("schema 1.2", simulation_core.MECHANISM_RECORDS_SCHEMA_VERSION == "1.2")
     check("perceived empathy persisted", "semantic_perceived_empathy" in simulation_core.MECHANISM_RECORDS_FIELDS)
     contract = (
         ROOT

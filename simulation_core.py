@@ -190,7 +190,7 @@ assert len(AGENT_RECORDS_FIELDS) == len(set(AGENT_RECORDS_FIELDS)), \
     "agent_records schema v2.0 存在重复字段"
 
 
-MECHANISM_RECORDS_SCHEMA_VERSION = "1.1"
+MECHANISM_RECORDS_SCHEMA_VERSION = "1.2"
 MECHANISM_RECORDS_FIELDS = [
     "schema_version",
     "exp_id", "tick", "agent_id",
@@ -207,6 +207,9 @@ MECHANISM_RECORDS_FIELDS = [
     "emotion_valence", "emotion_arousal",
     "crisis_memory_before", "repair_memory_before",
     "crisis_memory", "repair_memory",
+    "enterprise_clarification_observed",
+    "relational_repair_signal", "relational_repair_increment",
+    "empathy_repair_weight",
     "purchase_intention", "posting_intention",
     "buy_probability", "post_probability",
     "buy_draw", "post_draw",
@@ -216,7 +219,7 @@ MECHANISM_RECORDS_FIELDS = [
 ]
 
 assert len(MECHANISM_RECORDS_FIELDS) == len(set(MECHANISM_RECORDS_FIELDS)), \
-    "mechanism_records schema v1.1 存在重复字段"
+    "mechanism_records schema v1.2 存在重复字段"
 
 
 def _audit_float(value, digits: int = 12):
@@ -546,6 +549,18 @@ def build_mechanism_record(*, config, tick, agent_id, s_data, plan, thought) -> 
         "repair_memory_before": _audit_float(plan.get("repair_memory_before", "")),
         "crisis_memory": _audit_float(plan.get("crisis_memory", "")),
         "repair_memory": _audit_float(plan.get("repair_memory", "")),
+        "enterprise_clarification_observed": bool(
+            plan.get("enterprise_clarification_observed", False)
+        ),
+        "relational_repair_signal": _audit_float(
+            plan.get("relational_repair_signal", 0.0)
+        ),
+        "relational_repair_increment": _audit_float(
+            plan.get("relational_repair_increment", 0.0)
+        ),
+        "empathy_repair_weight": _audit_float(
+            plan.get("empathy_repair_weight", "")
+        ),
         "purchase_intention": _audit_float(plan.get("purchase_intention", "")),
         "posting_intention": _audit_float(plan.get("posting_intention", "")),
         "buy_probability": _audit_float(plan.get("buy_probability", "")),
@@ -561,7 +576,7 @@ def build_mechanism_record(*, config, tick, agent_id, s_data, plan, thought) -> 
         "clarification_content_type": str(plan.get("clarification_content_type", "")),
     }
     assert set(record.keys()) == set(MECHANISM_RECORDS_FIELDS), \
-        "mechanism_records 记录字段与 schema v1.1 不一致"
+        "mechanism_records 记录字段与 schema v1.2 不一致"
     return record
 
 

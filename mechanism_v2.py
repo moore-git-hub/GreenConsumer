@@ -10,6 +10,7 @@ ATTITUDE_UPDATE_RATE=0.25
 SUBJECTIVE_NORM_UPDATE_RATE=0.20
 TRUST_CRISIS_WEIGHT=1.0
 TRUST_REPAIR_WEIGHT=1.0
+EMPATHY_REPAIR_WEIGHT=0.50
 PURCHASE_OPPORTUNITY_RATE=0.10
 POSTING_OPPORTUNITY_RATE=0.45
 POSTING_COOLDOWN_TICKS=2
@@ -34,7 +35,8 @@ def deterministic_uniform(seed,agent_id,tick,action):
 def update_psychological_state(*,baseline_trust,previous_trust,attitude_att,
     subjective_norm_sn,pbc,crisis_memory,repair_memory,valence,arousal,
     credibility,evidence_strength,topic_relevance,had_observation,
-    social_observation_count):
+    social_observation_count,perceived_empathy=0.0,
+    enterprise_clarification_observed=False,empathy_repair_weight=None):
     base=clip(baseline_trust,0,10); prev=clip(previous_trust,0,10)
     att=clip01(attitude_att); sn=clip01(subjective_norm_sn); pbc=clip01(pbc)
     cb=max(0,float(crisis_memory))*MEMORY_RETENTION
@@ -42,12 +44,19 @@ def update_psychological_state(*,baseline_trust,previous_trust,attitude_att,
     before=clip(base+TRUST_REPAIR_WEIGHT*rb-TRUST_CRISIS_WEIGHT*cb,0,10)
     v=clip(valence,-1,1); a=clip01(arousal); c=clip01(credibility)
     e=clip01(evidence_strength); r=clip01(topic_relevance)
+    pe=clip01(perceived_empathy)
+    ew=clip01(EMPATHY_REPAIR_WEIGHT if empathy_repair_weight is None else empathy_repair_weight)
     ca,ra=cb,rb; affect=0.0
+    repair_signal=0.0; repair_increment=0.0
     if had_observation:
         affect=semantic_to_affective(v,a,c)
         iw=(0.5+0.5*c)*(0.5+0.5*r)
         if affect<0: ca+=(-affect)*iw
         elif affect>0: ra+=affect*iw*(0.5+0.5*e)
+        if bool(enterprise_clarification_observed):
+            repair_signal=pe*iw
+            repair_increment=ew*repair_signal
+            ra+=repair_increment
         v01=(v+1)/2
         signal=clip01(0.45*v01+0.25*c+0.20*e+0.10*r)
         att=clip01((1-ATTITUDE_UPDATE_RATE)*att+ATTITUDE_UPDATE_RATE*signal)
@@ -62,7 +71,8 @@ def update_psychological_state(*,baseline_trust,previous_trust,attitude_att,
         emotion_arousal=a if had_observation else 0.0,crisis_memory_before=cb,
         repair_memory_before=rb,crisis_memory=ca,repair_memory=ra,
         affective_change=affect,purchase_intention=ibuy,posting_intention=ipost,
-        trust_delta=trust-prev)
+        trust_delta=trust-prev,relational_repair_signal=repair_signal,
+        relational_repair_increment=repair_increment,empathy_repair_weight=ew)
 
 def behavior_probabilities(*,purchase_intention,posting_intention,had_observation,
     already_purchased,ticks_since_last_post):

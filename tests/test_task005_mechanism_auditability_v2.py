@@ -22,8 +22,6 @@ from experiment_config import ExperimentConfig
 
 START_HEAD = "29cb4e49fb67a7902ae8773929d671b793f4dac1"
 PROTECTED_SOURCES = (
-    "mechanism_v2.py",
-    "plugins/agent/plan/ConsumerPlanPlugin.py",
     "node_selector.py",
     "experiment_config.py",
 )
@@ -122,6 +120,10 @@ def _snapshot():
         "repair_memory_before": 0.222222222222,
         "crisis_memory": 1.077777777777,
         "repair_memory": 0.888888888888,
+        "enterprise_clarification_observed": True,
+        "relational_repair_signal": 0.726750000001,
+        "relational_repair_increment": 0.363375000001,
+        "empathy_repair_weight": 0.5,
         "purchase_intention": 0.712345678912,
         "posting_intention": 0.312345678912,
         "buy_probability": 0.071234567891,
@@ -169,13 +171,16 @@ def main() -> int:
         "attitude_att", "subjective_norm_sn", "pbc",
         "emotion_valence", "emotion_arousal", "crisis_memory_before",
         "repair_memory_before", "crisis_memory", "repair_memory",
+        "enterprise_clarification_observed",
+        "relational_repair_signal", "relational_repair_increment",
+        "empathy_repair_weight",
         "purchase_intention", "posting_intention", "buy_probability",
         "post_probability", "buy_draw", "post_draw", "is_buying",
         "is_posting", "plan_fallback_used", "clarification_detected_by_plan",
         "clarification_content_type",
     }
     fields = list(simulation_core.MECHANISM_RECORDS_FIELDS)
-    check("mechanism schema version", simulation_core.MECHANISM_RECORDS_SCHEMA_VERSION == "1.1")
+    check("mechanism schema version", simulation_core.MECHANISM_RECORDS_SCHEMA_VERSION == "1.2")
     check("mechanism schema unique", len(fields) == len(set(fields)), fields)
     check("mechanism required fields present", required <= set(fields), sorted(required - set(fields)))
     check("runner imports same mechanism schema", run_experiments.MECHANISM_RECORDS_FIELDS == fields)
@@ -227,6 +232,9 @@ def main() -> int:
     check("perceived empathy persistence", mechanism_record["semantic_perceived_empathy"] == audit(s_data["semantic_perceived_empathy"]))
     check("TPB persistence", mechanism_record["attitude_att"] == audit(plan["attitude_att"]))
     check("memory persistence", mechanism_record["crisis_memory"] == audit(plan["crisis_memory"]) and mechanism_record["repair_memory"] == audit(plan["repair_memory"]))
+    check("enterprise source gate persistence", mechanism_record["enterprise_clarification_observed"] is True)
+    check("relational repair persistence", mechanism_record["relational_repair_signal"] == audit(plan["relational_repair_signal"]) and mechanism_record["relational_repair_increment"] == audit(plan["relational_repair_increment"]))
+    check("empathy weight persistence", mechanism_record["empathy_repair_weight"] == audit(plan["empathy_repair_weight"]))
     check("intention persistence", mechanism_record["purchase_intention"] == audit(plan["purchase_intention"]))
     check("behavior probability persistence", mechanism_record["buy_probability"] == audit(plan["buy_probability"]))
     check("RNG draw persistence", mechanism_record["buy_draw"] == audit(plan["buy_draw"]))
@@ -332,14 +340,20 @@ def main() -> int:
         if isinstance(node, ast.FunctionDef)
         and node.name in {"update_psychological_state", "behavior_probabilities"}
     )
-    check("perceived empathy absent from transition equations", "perceived_empathy" not in transition_src)
+    forbidden_labels = (
+        "Rational", "Empathy", "rational-evidence", "emotional-empathy",
+        "Hub", "Random", "Immediate", "Delayed",
+        "content_factor", "channel_factor", "timing_factor",
+    )
+    check("transition equations avoid treatment labels", not any(x in transition_src for x in forbidden_labels))
+    check("perceived empathy source gated", "enterprise_clarification_observed" in transition_src and "perceived_empathy" in transition_src)
 
     contract = (
         ROOT
         / ".kiro/specs/task005-replication-inference/"
-        / "mechanism_auditability_schema_amendment1.1.json"
+        / "mechanism_auditability_schema_amendment1.2.json"
     ).read_text(encoding="utf-8")
-    check("contract says no behavior change", '"behavioral_mechanism_changed": false' in contract)
+    check("contract says source gate", '"enterprise_clarification_observed"' in contract)
     check("contract names perceived empathy", '"semantic_perceived_empathy"' in contract)
 
     print("\nTASK_005 MECHANISM AUDITABILITY V2")

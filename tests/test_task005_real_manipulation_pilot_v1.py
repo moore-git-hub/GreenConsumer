@@ -198,13 +198,116 @@ def test_credential_preflight_and_real_rejection() -> None:
         check("dummy key absent from preflight output", "dummy-pilot-key" not in text)
     finally:
         os.environ.pop(pilot.TASK005_LLM_API_KEY_ENV, None)
-    args = type("Args", (), {"execute_real": True})()
+    args = type("Args", (), {"execute_real": True, "activation_token": ""})()
     try:
         pilot.assert_real_execution_authorized(args)
     except pilot.PilotContractError as exc:
-        check("real execution without authorization fails", pilot.REAL_MODE_REJECTION in str(exc), str(exc))
+        check("real execution missing token fails", pilot.REAL_MODE_REJECTION in str(exc), str(exc))
     else:
-        check("real execution without authorization fails", False)
+        check("real execution missing token fails", False)
+    args = type("Args", (), {"execute_real": True, "activation_token": "wrong"})()
+    try:
+        pilot.assert_real_execution_authorized(args)
+    except pilot.PilotContractError as exc:
+        check("real execution wrong token fails", pilot.REAL_MODE_REJECTION in str(exc), str(exc))
+    else:
+        check("real execution wrong token fails", False)
+    args = type("Args", (), {"execute_real": True, "activation_token": pilot.ACTIVATION_TOKEN})()
+    try:
+        pilot.assert_real_execution_authorized(args)
+    except pilot.PilotContractError as exc:
+        check("real execution correct token passes auth boundary", False, str(exc))
+    else:
+        check("real execution correct token passes auth boundary", True)
+
+
+def _activation_payload(source_hashes=None) -> dict:
+    return {
+        "pilot_id": pilot.PILOT_ID,
+        "activation_token": pilot.ACTIVATION_TOKEN,
+        "master_seed": pilot.MASTER_SEED,
+        "replicates": list(pilot.ALLOWED_REPLICATE_IDS),
+        "conditions": list(pilot.PILOT_CONDITION_IDS),
+        "conditions_per_block": 3,
+        "provider": pilot.PROVIDER,
+        "model": pilot.MODEL,
+        "temperature": pilot.TEMPERATURE,
+        "credential": "environment only",
+        "authorized_timeline": "Tick5 crisis only",
+        "clarification_tick": 6,
+        "formal_inference": False,
+        "p_values": False,
+        "optional_stopping": False,
+        "replacement_replicates": False,
+        "auto_retry": False,
+        "provider_seed_determinism": "UNKNOWN_NOT_GUARANTEED",
+        "content_interpretation": "composite message archetypes",
+        "source_sha256": source_hashes if source_hashes is not None else pilot.current_source_hashes(),
+    }
+
+
+def test_activation_gate_negative_cases() -> None:
+    old_artifact = pilot.ACTIVATION_ARTIFACT
+    old_clean = pilot._assert_clean_tree
+    old_process = pilot._assert_no_pilot_python_process
+    old_key = os.environ.get(pilot.TASK005_LLM_API_KEY_ENV)
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifact = root / "activation.json"
+            artifact.write_text(json.dumps(_activation_payload(), sort_keys=True), encoding="utf-8")
+            pilot.ACTIVATION_ARTIFACT = artifact
+            pilot._assert_clean_tree = lambda: None
+            pilot._assert_no_pilot_python_process = lambda: None
+            os.environ.pop(pilot.TASK005_LLM_API_KEY_ENV, None)
+            try:
+                pilot.assert_activation_ready(pilot.ACTIVATION_TOKEN, root / "out1")
+            except pilot.PilotContractError as exc:
+                check("missing credential blocked", "missing credential" in str(exc), str(exc))
+            else:
+                check("missing credential blocked", False)
+
+            os.environ[pilot.TASK005_LLM_API_KEY_ENV] = "dummy-pilot-key"
+            bad_hashes = pilot.current_source_hashes()
+            first_key = next(iter(bad_hashes))
+            bad_hashes[first_key] = "0" * 64
+            artifact.write_text(json.dumps(_activation_payload(bad_hashes), sort_keys=True), encoding="utf-8")
+            try:
+                pilot.assert_activation_ready(pilot.ACTIVATION_TOKEN, root / "out2")
+            except pilot.PilotContractError as exc:
+                check("source mismatch blocked", "SOURCE_FREEZE_MISMATCH" in str(exc), str(exc))
+            else:
+                check("source mismatch blocked", False)
+
+            artifact.write_text(json.dumps(_activation_payload(), sort_keys=True), encoding="utf-8")
+            nonempty = root / "nonempty"
+            nonempty.mkdir()
+            (nonempty / "x.txt").write_text("x", encoding="utf-8")
+            try:
+                pilot.assert_activation_ready(pilot.ACTIVATION_TOKEN, nonempty)
+            except pilot.PilotContractError as exc:
+                check("nonempty output blocked", "non-empty" in str(exc), str(exc))
+            else:
+                check("nonempty output blocked", False)
+
+            def dirty():
+                raise pilot.PilotContractError("tracked diff must be clean")
+
+            pilot._assert_clean_tree = dirty
+            try:
+                pilot.assert_activation_ready(pilot.ACTIVATION_TOKEN, root / "out3")
+            except pilot.PilotContractError as exc:
+                check("dirty tracked tree blocked", "tracked diff" in str(exc), str(exc))
+            else:
+                check("dirty tracked tree blocked", False)
+    finally:
+        pilot.ACTIVATION_ARTIFACT = old_artifact
+        pilot._assert_clean_tree = old_clean
+        pilot._assert_no_pilot_python_process = old_process
+        if old_key is None:
+            os.environ.pop(pilot.TASK005_LLM_API_KEY_ENV, None)
+        else:
+            os.environ[pilot.TASK005_LLM_API_KEY_ENV] = old_key
 
 
 def test_dry_run_artifacts_are_sanitized() -> None:
@@ -246,6 +349,32 @@ def test_cli_modes() -> None:
     proc = subprocess.run(cmd, cwd=ROOT, env=env, text=True, capture_output=True, timeout=60)
     check("cli real rejected exit 2", proc.returncode == 2, proc.returncode)
     check("cli real rejected label", pilot.REAL_MODE_REJECTION in proc.stdout, proc.stdout)
+    cmd = [
+        sys.executable,
+        "-X",
+        "utf8",
+        "run_task005_real_manipulation_pilot_v1.py",
+        "--execute-real",
+        "--activation-token",
+        "wrong",
+    ]
+    proc = subprocess.run(cmd, cwd=ROOT, env=env, text=True, capture_output=True, timeout=60)
+    check("cli wrong token rejected", proc.returncode == 2 and pilot.REAL_MODE_REJECTION in proc.stdout, proc.stdout)
+    cmd = [sys.executable, "-X", "utf8", "run_task005_real_manipulation_pilot_v1.py", "--retry"]
+    proc = subprocess.run(cmd, cwd=ROOT, env=env, text=True, capture_output=True, timeout=60)
+    check("retry argument impossible", proc.returncode == 2, proc.returncode)
+    cmd = [
+        sys.executable,
+        "-X",
+        "utf8",
+        "run_task005_real_manipulation_pilot_v1.py",
+        "--_run-replicate",
+        "R003",
+        "--activation-token",
+        pilot.ACTIVATION_TOKEN,
+    ]
+    proc = subprocess.run(cmd, cwd=ROOT, env=env, text=True, capture_output=True, timeout=60)
+    check("R003 child entry impossible", proc.returncode == 2, proc.stdout)
     cmd = [sys.executable, "-X", "utf8", "run_task005_real_manipulation_pilot_v1.py", "--offline-test"]
     proc = subprocess.run(cmd, cwd=ROOT, env=env, text=True, capture_output=True, timeout=60)
     check("cli offline-test passes", proc.returncode == 0, proc.stdout + proc.stderr)
@@ -294,6 +423,7 @@ def main() -> int:
     test_replay_miss_and_matched_exposure_gates()
     test_floor_topic_and_fallback_logic()
     test_credential_preflight_and_real_rejection()
+    test_activation_gate_negative_cases()
     test_dry_run_artifacts_are_sanitized()
     test_no_pvalue_imports_or_formal_reuse()
     test_cli_modes()

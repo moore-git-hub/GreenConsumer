@@ -1,20 +1,26 @@
-"""TASK_005 real-LLM manipulation-check pilot preparation.
+"""TASK_005 real-LLM manipulation-check pilot runner.
 
-This module freezes the pilot cohort, condition subset, offline artifact
-contracts, and manipulation-check calculations. It deliberately does not
-authorize or run real LLM calls in this stage.
+This module freezes the pilot cohort, condition subset, activation gates,
+real-pilot execution boundary, and manipulation-check calculations. It only
+authorizes real LLM calls when the frozen activation token, source hashes, clean
+tree, credential, and output directory gates all pass.
 """
 
 from __future__ import annotations
 
 import argparse
+import asyncio
 import csv
+import datetime
 import hashlib
 import json
+import math
 import os
 import statistics
+import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Iterable, Mapping
 
@@ -35,10 +41,19 @@ from replication_config import (
     write_seed_ledger_csv,
 )
 from run_experiments import (
+    RecordingRouter,
     ReplicationStartupError,
+    ReplayRouter,
     TASK005_LLM_API_KEY_ENV,
     TASK005_LLM_API_KEY_PLACEHOLDER,
+    _build_real_router,
+    _close_router_resource,
     _is_placeholder_secret,
+    _run_with_patch,
+    write_agent_records_csv,
+    write_clarification_exposure_csv,
+    write_mechanism_records_csv,
+    write_trajectories_csv,
 )
 from simulation_core import MECHANISM_RECORDS_FIELDS
 
@@ -58,6 +73,27 @@ TEMPERATURE = 0.3
 ENGINEERING_SEPARATION_FLOOR = 0.05
 TOPIC_RELEVANCE_WARNING_THRESHOLD = 0.10
 REAL_MODE_REJECTION = "PILOT_EXECUTION_NOT_AUTHORIZED"
+ACTIVATION_TOKEN = "TASK005_REAL_MANIPULATION_V1_ACTIVATE_20260809_01"
+EXPECTED_BRANCH = "redesign/task005-mechanism-v2"
+PILOT_OUTPUT_ROOT = Path("results") / "pilots" / PILOT_ID
+ACTIVATION_ARTIFACT = (
+    Path(".kiro")
+    / "specs"
+    / "task005-replication-inference"
+    / "real_llm_manipulation_pilot_activation1.0.json"
+)
+SOURCE_FREEZE_FILES = (
+    "run_task005_real_manipulation_pilot_v1.py",
+    "run_experiments.py",
+    "simulation_core.py",
+    "mechanism_v2.py",
+    "clarification_injector.py",
+    "experiment_config.py",
+    "replication_config.py",
+    ".kiro/specs/task005-replication-inference/real_llm_manipulation_check_pilot_contract1.0.json",
+    ".kiro/specs/task005-replication-inference/stimulus_integrity_amendment1.0.json",
+    ".kiro/specs/task005-replication-inference/mechanism_auditability_schema_amendment1.0.json",
+)
 
 PRIMARY_DIMENSIONS = (
     "semantic_evidence_strength",
@@ -81,6 +117,136 @@ class PilotContractError(RuntimeError):
 
 def _sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _git_stdout(args: list[str]) -> str:
+    proc = subprocess.run(
+        ["git", *args],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise PilotContractError(f"git command failed: {' '.join(args)}")
+    return proc.stdout.strip()
+
+
+def _assert_clean_tree() -> None:
+    if _git_stdout(["branch", "--show-current"]) != EXPECTED_BRANCH:
+        raise PilotContractError("branch mismatch")
+    if _git_stdout(["diff", "--name-only"]):
+        raise PilotContractError("tracked diff must be clean")
+    if _git_stdout(["diff", "--cached", "--name-only"]):
+        raise PilotContractError("staged diff must be clean")
+
+
+def _assert_no_pilot_python_process() -> None:
+    current_pid = os.getpid()
+    try:
+        proc = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                (
+                    "Get-CimInstance Win32_Process | "
+                    "Where-Object { "
+                    "($_.Name -match '^python') -and "
+                    "($_.CommandLine -match 'task005-real-manipulation-pilot-v1|run_experiments.py') "
+                    "} | "
+                    "Select-Object ProcessId,CommandLine | ConvertTo-Json -Compress"
+                ),
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=20,
+        )
+    except Exception:
+        return
+    if proc.returncode != 0 or not proc.stdout.strip():
+        return
+    try:
+        payload = json.loads(proc.stdout)
+    except Exception:
+        return
+    rows = payload if isinstance(payload, list) else [payload]
+    for row in rows:
+        pid = int(row.get("ProcessId", -1))
+        if pid != current_pid:
+            raise PilotContractError("existing pilot or real-mode Python process detected")
+
+
+def current_source_hashes() -> dict[str, str]:
+    hashes = {}
+    for rel in SOURCE_FREEZE_FILES:
+        path = Path(rel)
+        if not path.exists():
+            raise PilotContractError(f"source freeze file missing: {rel}")
+        hashes[rel] = _sha256_file(path)
+    return hashes
+
+
+def load_activation_artifact() -> dict:
+    if not ACTIVATION_ARTIFACT.exists():
+        raise PilotContractError("activation artifact missing")
+    try:
+        artifact = json.loads(ACTIVATION_ARTIFACT.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise PilotContractError("activation artifact is invalid JSON") from exc
+    if not isinstance(artifact, dict):
+        raise PilotContractError("activation artifact must be an object")
+    return artifact
+
+
+def validate_activation_artifact(artifact: Mapping) -> None:
+    if artifact.get("pilot_id") != PILOT_ID:
+        raise PilotContractError("activation pilot_id mismatch")
+    if artifact.get("activation_token") != ACTIVATION_TOKEN:
+        raise PilotContractError("activation token artifact mismatch")
+    if artifact.get("master_seed") != MASTER_SEED:
+        raise PilotContractError("activation master_seed mismatch")
+    if tuple(artifact.get("replicates", [])) != ALLOWED_REPLICATE_IDS:
+        raise PilotContractError("activation replicate set mismatch")
+    if tuple(artifact.get("conditions", [])) != PILOT_CONDITION_IDS:
+        raise PilotContractError("activation condition set mismatch")
+    if artifact.get("model") != MODEL or artifact.get("temperature") != TEMPERATURE:
+        raise PilotContractError("activation model configuration mismatch")
+    if artifact.get("formal_inference") is not False or artifact.get("p_values") is not False:
+        raise PilotContractError("activation scientific flags mismatch")
+    expected_hashes = artifact.get("source_sha256")
+    if not isinstance(expected_hashes, dict):
+        raise PilotContractError("activation source hashes missing")
+    if current_source_hashes() != expected_hashes:
+        raise PilotContractError("SOURCE_FREEZE_MISMATCH")
+
+
+def assert_output_dir_available(output_dir: Path) -> None:
+    if output_dir.exists() and any(output_dir.iterdir()):
+        raise PilotContractError("pilot output directory exists and is non-empty")
+    if output_dir == PILOT_OUTPUT_ROOT and output_dir.exists():
+        raise PilotContractError("current pilot output directory already exists")
+
+
+def assert_activation_ready(token: str | None, output_dir: Path) -> dict:
+    if token != ACTIVATION_TOKEN:
+        raise PilotContractError(REAL_MODE_REJECTION)
+    _assert_clean_tree()
+    _assert_no_pilot_python_process()
+    require_pilot_credential()
+    assert_output_dir_available(output_dir)
+    artifact = load_activation_artifact()
+    validate_activation_artifact(artifact)
+    return {
+        "REAL_LLM_CALLS": 0,
+        "READY_TO_EXECUTE": True,
+        "pilot_id": PILOT_ID,
+        "output_dir": str(output_dir),
+    }
 
 
 def require_pilot_credential() -> str:
@@ -203,6 +369,113 @@ def _write_csv(path: Path, rows: list[Mapping]) -> None:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
+
+
+class AuditedRealRouter:
+    def __init__(
+        self,
+        inner,
+        *,
+        pilot_id: str,
+        replicate_id: str,
+        requested_llm_seed: int,
+        call_log_path: Path,
+    ):
+        self._inner = inner
+        self._pilot_id = pilot_id
+        self._replicate_id = replicate_id
+        self._requested_llm_seed = requested_llm_seed
+        self._call_log_path = call_log_path
+        self._condition = ""
+        self._tick = -1
+        self.call_count = 0
+
+    def set_context(self, *, condition: str, tick: int) -> None:
+        self._condition = condition
+        self._tick = tick
+
+    async def chat(self, prompt: str) -> str:
+        self.call_count += 1
+        call_index = self.call_count
+        started = time.perf_counter()
+        response = ""
+        error_type = ""
+        parse_ok = False
+        try:
+            response = await self._inner.chat(prompt)
+            parse_ok = _looks_like_json_object(response)
+            return response
+        except Exception as exc:
+            error_type = type(exc).__name__
+            raise
+        finally:
+            latency_ms = round((time.perf_counter() - started) * 1000.0, 3)
+            row = {
+                "pilot_id": self._pilot_id,
+                "replicate_id": self._replicate_id,
+                "condition": self._condition,
+                "tick": self._tick,
+                "call_index": call_index,
+                "prompt_sha256": _sha256_text(prompt),
+                "response_sha256": _sha256_text(response),
+                "response_parse_ok": parse_ok,
+                "prompt_category": _prompt_category(prompt),
+                "latency_ms": latency_ms,
+                "error_type": error_type,
+                "requested_llm_seed": self._requested_llm_seed,
+                "model": MODEL,
+                "temperature": TEMPERATURE,
+            }
+            with self._call_log_path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(row, sort_keys=True) + "\n")
+
+
+class PilotRecordingRouter(RecordingRouter):
+    def __init__(self, inner_router: AuditedRealRouter, condition: str):
+        super().__init__(inner_router)
+        self._audited_inner = inner_router
+        self._condition = condition
+
+    def set_tick(self, tick: int):
+        self._audited_inner.set_context(condition=self._condition, tick=tick)
+        super().set_tick(tick)
+
+
+class PilotReplayRouter(ReplayRouter):
+    def __init__(
+        self,
+        inner_router: AuditedRealRouter,
+        cache: dict,
+        replay_until_tick: int,
+        exp_id: str,
+    ):
+        super().__init__(inner_router, cache, replay_until_tick, exp_id=exp_id)
+        self._audited_inner = inner_router
+        self._condition = exp_id
+
+    def set_tick(self, tick: int):
+        self._audited_inner.set_context(condition=self._condition, tick=tick)
+        super().set_tick(tick)
+
+
+def _looks_like_json_object(response: str) -> bool:
+    try:
+        return isinstance(json.loads(response), dict)
+    except Exception:
+        return False
+
+
+def _prompt_category(prompt: str) -> str:
+    text = prompt.lower()
+    if "breaking news" in text or "controversy" in text:
+        return "crisis"
+    if "structured evidence" in text or "evidence" in text:
+        return "rational"
+    if "responsibility" in text or "relationship" in text or "empathy" in text:
+        return "empathy"
+    if "social" in text or "post" in text:
+        return "social"
+    return "unknown"
 
 
 def validate_record_replay_order(manifest_rows: list[Mapping]) -> bool:
@@ -392,6 +665,320 @@ def fallback_counts_pass(rows: Iterable[Mapping]) -> bool:
     return True
 
 
+async def execute_real_pilot(output_dir: Path, activation_token: str | None) -> dict:
+    readiness = assert_activation_ready(activation_token, output_dir)
+    output_dir.mkdir(parents=True, exist_ok=False)
+    ledger = build_pilot_seed_ledger()
+    manifest_rows = build_pilot_manifest_rows(ledger)
+    write_seed_ledger_csv(ledger, output_dir / "seed_ledger.csv")
+    _write_csv(output_dir / "pilot_manifest.csv", manifest_rows)
+    (output_dir / "sanitized_model_config.json").write_text(
+        json.dumps(sanitized_model_config(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    all_pairs: list[dict] = []
+    replicate_summaries = []
+    total_calls = 0
+    status = "PASS"
+    for ledger_row in ledger:
+        block_summary = _execute_replicate_child(output_dir, ledger_row, activation_token)
+        total_calls += int(block_summary.get("real_llm_calls", 0))
+        replicate_summaries.append(block_summary)
+        if block_summary["status"] != "PASS":
+            status = "INCOMPLETE"
+        pairs_path = output_dir / str(ledger_row["replicate_id"]) / "manipulation_pairs.csv"
+        if block_summary["status"] == "PASS":
+            all_pairs.extend(_read_csv_dicts(pairs_path))
+
+    result = {
+        "pilot_id": PILOT_ID,
+        "REAL_LLM_CALLS": total_calls,
+        "PILOT_STATUS": status,
+        "FORMAL_INFERENCE": False,
+        "P_VALUES_COMPUTED": False,
+        "PILOT_ONLY": True,
+        "OPTIONAL_STOPPING": False,
+        "REPLACEMENT_REPLICATES": False,
+        "replicates": replicate_summaries,
+        "readiness": readiness,
+    }
+    if status == "PASS":
+        summary = summarize_manipulation_by_block(all_pairs)
+        _write_csv(output_dir / "manipulation_pairs.csv", all_pairs)
+        (output_dir / "manipulation_summary.json").write_text(
+            json.dumps(summary, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        result["manipulation_summary"] = summary
+        result["PROGRESSION_AUTHORIZED"] = (
+            summary["DIRECTION_GATE"] == "PASS"
+            and summary["MANIPULATION_STRENGTH"] == "PASS"
+        )
+    else:
+        result["PROGRESSION_AUTHORIZED"] = False
+
+    (output_dir / "pilot_execution_summary.json").write_text(
+        json.dumps(_small_result_summary(result), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return result
+
+
+def _execute_replicate_child(
+    output_dir: Path,
+    ledger_row: Mapping,
+    activation_token: str | None,
+) -> dict:
+    replicate_id = str(ledger_row["replicate_id"])
+    env = dict(os.environ)
+    env["PYTHONHASHSEED"] = str(ledger_row["python_hash_seed"])
+    cmd = [
+        sys.executable,
+        "-X",
+        "utf8",
+        str(Path(__file__).resolve()),
+        "--_run-replicate",
+        replicate_id,
+        "--output-dir",
+        str(output_dir),
+        "--activation-token",
+        activation_token or "",
+    ]
+    proc = subprocess.run(
+        cmd,
+        cwd=Path(__file__).resolve().parent,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    block_dir = output_dir / replicate_id
+    summary_path = block_dir / "block_execution_summary.json"
+    if summary_path.exists():
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        if not isinstance(summary, dict):
+            raise PilotContractError(f"{replicate_id} block summary invalid")
+        return summary
+    return {
+        "replicate_id": replicate_id,
+        "attempt_count": 1,
+        "status": "INCOMPLETE",
+        "failure_message": f"child_exit_{proc.returncode}",
+        "real_llm_calls": 0,
+        "replay_miss_count": 0,
+        "matched_agents": 0,
+    }
+
+
+def _read_csv_dicts(path: Path) -> list[dict]:
+    with path.open("r", encoding="utf-8", newline="") as f:
+        return [dict(row) for row in csv.DictReader(f)]
+
+
+async def _execute_replicate_block(output_dir: Path, ledger_row: Mapping) -> dict:
+    replicate_id = str(ledger_row["replicate_id"])
+    if replicate_id not in ALLOWED_REPLICATE_IDS:
+        raise PilotContractError("replicate_id must be R001 or R002")
+    block_dir = output_dir / replicate_id
+    block_dir.mkdir(parents=False, exist_ok=False)
+    call_log = block_dir / "pilot_llm_calls.jsonl"
+    call_log.write_text("", encoding="utf-8")
+    write_seed_ledger_csv([dict(ledger_row)], block_dir / "seed_ledger.csv")
+    (block_dir / "sanitized_model_config.json").write_text(
+        json.dumps(sanitized_model_config(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    configs = select_pilot_conditions()
+    (block_dir / "pilot_condition_manifest.json").write_text(
+        json.dumps(
+            [
+                row
+                for row in build_pilot_manifest_rows([dict(ledger_row)])
+                if row["replicate_id"] == replicate_id
+            ],
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    if os.environ.get("PYTHONHASHSEED") != str(ledger_row["python_hash_seed"]):
+        raise PilotContractError("PYTHONHASHSEED does not match ledger")
+    real_router = _build_real_router(int(ledger_row["requested_llm_seed"]))
+    audited = AuditedRealRouter(
+        real_router,
+        pilot_id=PILOT_ID,
+        replicate_id=replicate_id,
+        requested_llm_seed=int(ledger_row["requested_llm_seed"]),
+        call_log_path=call_log,
+    )
+
+    results = []
+    cache: dict = {}
+    replay_miss_by_condition: dict[str, int] = {}
+    status = "PASS"
+    failure_message = ""
+    try:
+        for config in configs:
+            if config.is_control:
+                router = PilotRecordingRouter(audited, config.exp_id)
+                result = await _run_with_patch(config, override_router=router)
+                cache.update(router.cache)
+                result["run_audit"] = {
+                    "router_role": "recording",
+                    "recording_cache_size": len(router.cache),
+                    "replay_miss_count": "",
+                }
+            else:
+                router = PilotReplayRouter(
+                    audited,
+                    cache,
+                    replay_until_tick=6,
+                    exp_id=config.exp_id,
+                )
+                result = await _run_with_patch(config, override_router=router)
+                if router.miss_count != 0:
+                    raise PilotContractError("replay miss count must be zero")
+                result["run_audit"] = {
+                    "router_role": "replay",
+                    "recording_cache_size": len(cache),
+                    "replay_miss_count": router.miss_count,
+                }
+                replay_miss_by_condition[config.exp_id] = router.miss_count
+            results.append(result)
+    except Exception as exc:
+        status = "INCOMPLETE"
+        failure_message = type(exc).__name__
+    finally:
+        await _close_router_resource(real_router)
+
+    if status == "PASS":
+        try:
+            _validate_block_outputs(results, replicate_id)
+            _validate_preclarification_alignment(results)
+            write_agent_records_csv(results, str(block_dir / "agent_records.csv"))
+            write_mechanism_records_csv(results, str(block_dir / "mechanism_records.csv"))
+            write_clarification_exposure_csv(results, str(block_dir / "clarification_exposure.csv"))
+            write_trajectories_csv(results, str(block_dir / "trajectories.csv"))
+            pairs = _pairs_from_results(replicate_id, results)
+            _write_csv(block_dir / "manipulation_pairs.csv", pairs)
+        except Exception as exc:
+            status = "INCOMPLETE"
+            failure_message = type(exc).__name__
+            pairs = []
+    else:
+        pairs = []
+
+    summary = {
+        "replicate_id": replicate_id,
+        "attempt_count": 1,
+        "status": status,
+        "failure_message": failure_message,
+        "real_llm_calls": audited.call_count,
+        "replay_miss_count": sum(replay_miss_by_condition.values()),
+        "matched_agents": len({row["agent_id"] for row in pairs}),
+        "manipulation_pairs": pairs,
+    }
+    public_summary = dict(summary)
+    public_summary.pop("manipulation_pairs", None)
+    (block_dir / "block_execution_summary.json").write_text(
+        json.dumps(public_summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return summary
+
+
+def _validate_block_outputs(results: list[Mapping], replicate_id: str) -> None:
+    if len(results) != len(PILOT_CONDITION_IDS):
+        raise PilotContractError(f"{replicate_id} missing pilot condition results")
+    if [row.get("exp_id") for row in results] != list(PILOT_CONDITION_IDS):
+        raise PilotContractError(f"{replicate_id} condition order mismatch")
+    total_mechanism = sum(len(row.get("mechanism_records", [])) for row in results)
+    if total_mechanism != 1800:
+        raise PilotContractError(f"{replicate_id} mechanism row count mismatch: {total_mechanism}")
+    for result in results:
+        if len(result.get("mechanism_records", [])) != 600:
+            raise PilotContractError(f"{result.get('exp_id')} mechanism rows != 600")
+        if not fallback_counts_pass(result.get("mechanism_records", [])):
+            raise PilotContractError(f"{result.get('exp_id')} fallback gate failed")
+
+
+def _validate_preclarification_alignment(results: list[Mapping]) -> None:
+    by_id = {row["exp_id"]: row for row in results}
+    rational = by_id["Rational-Hub-Immediate"]["mechanism_records"]
+    empathy = by_id["Empathy-Hub-Immediate"]["mechanism_records"]
+    fields = (
+        "trust_final",
+        "attitude_att",
+        "subjective_norm_sn",
+        "pbc",
+        "crisis_memory",
+        "repair_memory",
+        "purchase_intention",
+    )
+    r_keyed = {
+        (int(row["tick"]), row["agent_id"]): row
+        for row in rational
+        if int(row["tick"]) == 5
+    }
+    e_keyed = {
+        (int(row["tick"]), row["agent_id"]): row
+        for row in empathy
+        if int(row["tick"]) == 5
+    }
+    if set(r_keyed) != set(e_keyed):
+        raise PilotContractError("PRECLARIFICATION_ALIGNMENT_FAILURE")
+    for key, r_row in r_keyed.items():
+        e_row = e_keyed[key]
+        for field in fields:
+            if r_row.get(field) != e_row.get(field):
+                raise PilotContractError("PRECLARIFICATION_ALIGNMENT_FAILURE")
+
+
+def _pairs_from_results(replicate_id: str, results: list[Mapping]) -> list[dict]:
+    by_id = {row["exp_id"]: row for row in results}
+    rational_rows = [
+        row
+        for row in by_id["Rational-Hub-Immediate"]["mechanism_records"]
+        if int(row["tick"]) == 6
+    ]
+    empathy_rows = [
+        row
+        for row in by_id["Empathy-Hub-Immediate"]["mechanism_records"]
+        if int(row["tick"]) == 6
+    ]
+    return compute_manipulation_pairs(replicate_id, rational_rows, empathy_rows)
+
+
+def _small_result_summary(result: Mapping) -> dict:
+    summary = {
+        "pilot_id": PILOT_ID,
+        "PILOT_STATUS": result.get("PILOT_STATUS"),
+        "REAL_LLM_CALLS": result.get("REAL_LLM_CALLS"),
+        "FORMAL_INFERENCE": False,
+        "P_VALUES_COMPUTED": False,
+        "PILOT_ONLY": True,
+        "PROGRESSION_AUTHORIZED": result.get("PROGRESSION_AUTHORIZED", False),
+        "replicates": [
+            {
+                "replicate_id": row.get("replicate_id"),
+                "attempt_count": row.get("attempt_count"),
+                "status": row.get("status"),
+                "real_llm_calls": row.get("real_llm_calls"),
+                "replay_miss_count": row.get("replay_miss_count"),
+                "matched_agents": row.get("matched_agents"),
+            }
+            for row in result.get("replicates", [])
+        ],
+    }
+    if "manipulation_summary" in result:
+        summary["manipulation_summary"] = result["manipulation_summary"]
+    return summary
+
+
 def _truthy(value) -> bool:
     return value is True or str(value).strip().lower() == "true"
 
@@ -404,7 +991,9 @@ def _float(value) -> float:
 
 
 def assert_real_execution_authorized(args) -> None:
-    if getattr(args, "execute_real", False):
+    if getattr(args, "execute_real", False) and getattr(args, "activation_token", "") != ACTIVATION_TOKEN:
+        raise PilotContractError(REAL_MODE_REJECTION)
+    if getattr(args, "_run_replicate", "") and getattr(args, "activation_token", "") != ACTIVATION_TOKEN:
         raise PilotContractError(REAL_MODE_REJECTION)
 
 
@@ -481,10 +1070,13 @@ def _semantic_input_row(
 def parse_args(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--preflight", action="store_true")
+    parser.add_argument("--preflight-real", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--offline-test", action="store_true")
     parser.add_argument("--execute-real", action="store_true")
+    parser.add_argument("--activation-token", default="")
     parser.add_argument("--output-dir", default="")
+    parser.add_argument("--_run-replicate", default="")
     return parser.parse_args(argv)
 
 
@@ -492,6 +1084,23 @@ def main(argv=None) -> int:
     args = parse_args(argv)
     try:
         assert_real_execution_authorized(args)
+        output_dir = Path(args.output_dir) if args.output_dir else PILOT_OUTPUT_ROOT
+        if args.preflight_real:
+            print(json.dumps(assert_activation_ready(args.activation_token, output_dir), sort_keys=True))
+            return 0
+        if args._run_replicate:
+            ledger = {
+                row["replicate_id"]: row
+                for row in build_pilot_seed_ledger()
+            }
+            if args._run_replicate not in ledger:
+                raise PilotContractError("replicate_id must be R001 or R002")
+            summary = asyncio.run(_execute_replicate_block(output_dir, ledger[args._run_replicate]))
+            return 0 if summary["status"] == "PASS" else 1
+        if args.execute_real:
+            result = asyncio.run(execute_real_pilot(output_dir, args.activation_token))
+            print(json.dumps(_small_result_summary(result), sort_keys=True))
+            return 0 if result["PILOT_STATUS"] == "PASS" else 1
         if args.preflight:
             print(json.dumps(preflight(), sort_keys=True))
             return 0

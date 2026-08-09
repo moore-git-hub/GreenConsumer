@@ -57,6 +57,12 @@ from plugins.environment.network.SocialNetworkPlugin import SocialNetworkPlugin
 from experiment_config import ExperimentConfig
 from node_selector import select_target_nodes
 from clarification_injector import ClarificationInjector
+from mechanism_v2 import (
+    PUBLIC_EXPOSURE_RATE,
+    build_exposure_audit,
+    one_hop_amplification_nodes,
+    select_public_exposure_nodes,
+)
 from metrics_calculator import compute_metrics, SimulationMetrics
 from generate_data import FORRESTER_2026_CLUSTERS, SOCIAL_MEDIA_ROLES, ROLE_PROBS, SOCIAL_ROLES  # kept for reference
 
@@ -657,6 +663,23 @@ async def run_simulation_core(config: ExperimentConfig, override_router=None) ->
         )
     injector.set_target_nodes(target_nodes)
 
+    # Mechanism-v2: separate public statement availability from paid seed allocation.
+    if config.is_control:
+        public_exposure_nodes = []
+        amplified_nodes = []
+    else:
+        public_exposure_nodes = select_public_exposure_nodes(
+            net_plugin.graph.nodes(), config.random_seed, PUBLIC_EXPOSURE_RATE
+        )
+        amplified_nodes = one_hop_amplification_nodes(net_plugin.graph, target_nodes)
+
+    injector.set_public_exposure_nodes(public_exposure_nodes)
+    injector.set_amplified_nodes(amplified_nodes)
+    clarification_exposure_meta = build_exposure_audit(
+        net_plugin.graph, config.exp_id,
+        public_exposure_nodes, target_nodes, amplified_nodes
+    )
+
     # ── 8b. 网络 / 目标节点审计元数据（TASK_002，只读，不改变任何选点或建图逻辑）──
     network_meta      = build_network_meta(net_plugin, config)
     target_nodes_meta = build_target_nodes_meta(net_plugin.graph, config, target_nodes)
@@ -726,7 +749,7 @@ async def run_simulation_core(config: ExperimentConfig, override_router=None) ->
                 "addressing the controversy. The company responds to the greenwashing allegations."
             )
             for ag in agents:
-                if ag.agent_id in injector.target_nodes:
+                if ag.agent_id in clarification_injected_ids:
                     s_plugin = ag.get_component("state")._plugin
                     # current_news 更新 → Plan 层 is_quiet_day=False → quiet_ticks 不累加
                     await s_plugin.set_state("current_news", clarification_headline)
@@ -854,6 +877,7 @@ async def run_simulation_core(config: ExperimentConfig, override_router=None) ->
         "agent_records_schema_version": AGENT_RECORDS_SCHEMA_VERSION,
         "network_meta": network_meta,             # 真实建图分支 + 结构指纹
         "target_nodes_meta": target_nodes_meta,   # 目标节点选择审计明细
+        "clarification_exposure_meta": clarification_exposure_meta,
         "network_nodes": network_nodes,           # run 级 network_nodes.csv 行数据（无 exp_id）
         "network_edges": network_edges,           # run 级 network_edges.csv 行数据（无 exp_id）
         "effective_event_timeline": effective_event_timeline,  # 本次实际生效的事件时间线

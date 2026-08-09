@@ -61,15 +61,26 @@ class ClarificationInjector:
         """
         self.content_factor = config.content_factor
         self.clarification_tick = config.clarification_tick  # None = 不澄清
-        self.target_nodes: List[str] = []  # 由外部在网络构建后设置
+        self.target_nodes: List[str] = []  # K paid-amplification seeds
+        self.public_exposure_nodes: List[str] = []
+        self.amplified_nodes: List[str] = []
+        self.last_exposure_modes = {}
         # ── TASK_002 审计回执：最近一次 inject() 实际成功写入 inbox 的 Agent ID ──
         # 只写不读，不参与任何投放判定；供 agent_records 的
         # clarification_injected（阶段②）取真实来源。
         self.last_injected_ids: List[str] = []
 
     def set_target_nodes(self, nodes: List[str]):
-        """设置目标投放节点（由 NodeSelector 选出后调用）"""
-        self.target_nodes = nodes
+        """设置 K 个 paid-amplification seed 节点。"""
+        self.target_nodes = list(nodes)
+
+    def set_public_exposure_nodes(self, nodes: List[str]):
+        """设置公共企业声明的有机基础曝光节点。"""
+        self.public_exposure_nodes = list(nodes)
+
+    def set_amplified_nodes(self, nodes: List[str]):
+        """设置 paid seeds 经真实网络拓扑产生的一跳放大触达。"""
+        self.amplified_nodes = list(nodes)
 
     def should_inject(self, current_tick: int) -> bool:
         """当前 Tick 是否需要注入澄清"""
@@ -108,33 +119,53 @@ class ClarificationInjector:
             inbox 的 Agent ID 列表；未注入时为空列表。
             返回值恒等于 len(self.last_injected_ids)。
         """
-        # 无条件重置：避免上一 Tick 的回执泄漏到本 Tick（阶段②误判为 True）
+        # 无条件重置：避免上一 Tick 的回执泄漏到本 Tick。
         self.last_injected_ids = []
+        self.last_exposure_modes = {}
 
         if not self.should_inject(current_tick):
             return 0
 
-        msg = self.get_message()
+        base_msg = self.get_message()
         injected_ids = []
+        recipients = (
+            set(self.public_exposure_nodes)
+            | set(self.target_nodes)
+            | set(self.amplified_nodes)
+        )
 
         for ag in agents:
-            if ag.agent_id in self.target_nodes:
+            if ag.agent_id in recipients:
+                modes = []
+                if ag.agent_id in self.public_exposure_nodes:
+                    modes.append("public_organic")
+                if ag.agent_id in self.target_nodes:
+                    modes.append("paid_seed")
+                if ag.agent_id in self.amplified_nodes:
+                    modes.append("paid_one_hop")
+
+                msg = dict(base_msg)
+                msg["exposure_modes"] = list(modes)
+
                 state_plugin = ag.get_component("state")._plugin
                 s_data = getattr(state_plugin, "state_data",
                                  getattr(state_plugin, "_state_data", {}))
                 inbox = s_data.get("incoming_messages", [])
                 await state_plugin.set_state("incoming_messages", list(inbox) + [msg])
-                # 只有 set_state 成功返回后才登记，确保回执 == 实际写入
                 injected_ids.append(ag.agent_id)
+                self.last_exposure_modes[ag.agent_id] = list(modes)
 
         self.last_injected_ids = injected_ids
         injected_count = len(injected_ids)
 
         if injected_count > 0:
             content_short = "Rational" if self.content_factor == "rational-evidence" else "Empathy"
-            print(f"💊 [Clarification] Tick {current_tick} | "
+            print(f"💊 [Clarification-v2] Tick {current_tick} | "
                   f"Content={content_short} | "
-                  f"Injected to {injected_count}/{len(self.target_nodes)} nodes")
+                  f"Public={len(self.public_exposure_nodes)} | "
+                  f"PaidSeeds={len(self.target_nodes)} | "
+                  f"OneHop={len(self.amplified_nodes)} | "
+                  f"Reached={injected_count}")
 
         return injected_count
 

@@ -529,6 +529,27 @@ def write_agent_records_csv(results: list, output_path: str):
                 writer.writerow(rec)
 
 
+CLARIFICATION_EXPOSURE_FIELDS = [
+    "exp_id", "agent_id", "public_organic", "paid_seed",
+    "paid_one_hop", "reached", "exposure_modes",
+]
+
+
+def write_clarification_exposure_csv(results: list, output_path: str):
+    # Persist public-vs-paid exposure audit.
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(
+            f, fieldnames=CLARIFICATION_EXPOSURE_FIELDS,
+            restval="", extrasaction="raise"
+        )
+        writer.writeheader()
+        for result in results:
+            if "error" in result:
+                continue
+            for row in result.get("clarification_exposure_meta", []):
+                writer.writerow(row)
+
+
 def write_target_nodes_csv(results: list, output_path: str):
     """目标节点选择审计明细 → CSV
 
@@ -910,6 +931,7 @@ def _build_llm_metadata(project_root: str, replication_context: dict | None) -> 
 _HASHED_SOURCES = [
     "run_experiments.py",
     "simulation_core.py",
+    "mechanism_v2.py",
     "experiment_config.py",
     "node_selector.py",
     "clarification_injector.py",
@@ -1756,6 +1778,15 @@ async def main(args=None):
         print(f"agent_records: {agent_records_path}")
     except Exception as e:
         _record_postprocess_error("write agent_records.csv", e)
+
+    clarification_exposure_path = os.path.join(
+        run_dir, "clarification_exposure.csv"
+    )
+    try:
+        write_clarification_exposure_csv(results, clarification_exposure_path)
+        print(f"clarification_exposure: {clarification_exposure_path}")
+    except Exception as e:
+        _record_postprocess_error("write clarification_exposure.csv", e)
 
     target_nodes_path = os.path.join(run_dir, "target_nodes.csv")
     try:

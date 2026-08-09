@@ -541,9 +541,34 @@ def write_mechanism_records_csv(results: list, output_path: str):
         writer = csv.DictWriter(f, fieldnames=fieldnames, restval="", extrasaction="raise")
         writer.writeheader()
         for r in results:
-            if "error" in r or "mechanism_records" not in r:
+            if "error" in r:
                 continue
-            for rec in r["mechanism_records"]:
+            exp_id = r.get("exp_id", "unknown")
+            if "agent_records" not in r:
+                raise ValueError(f"{exp_id} missing agent_records")
+            if "mechanism_records" not in r:
+                raise ValueError(f"{exp_id} missing mechanism_records")
+            agent_records = r["agent_records"]
+            mechanism_records = r["mechanism_records"]
+            if len(agent_records) != len(mechanism_records):
+                raise ValueError(
+                    f"{exp_id} agent_records/mechanism_records row-count mismatch: "
+                    f"{len(agent_records)} != {len(mechanism_records)}"
+                )
+            key_fields = ("exp_id", "tick", "agent_id")
+            agent_keys = {
+                tuple(rec.get(field) for field in key_fields)
+                for rec in agent_records
+            }
+            mechanism_keys = [
+                tuple(rec.get(field) for field in key_fields)
+                for rec in mechanism_records
+            ]
+            if len(set(mechanism_keys)) != len(mechanism_keys):
+                raise ValueError(f"{exp_id} duplicate mechanism_records join key")
+            if agent_keys != set(mechanism_keys):
+                raise ValueError(f"{exp_id} agent_records/mechanism_records key-set mismatch")
+            for rec in mechanism_records:
                 writer.writerow(rec)
 
 

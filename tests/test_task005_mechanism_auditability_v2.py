@@ -139,6 +139,14 @@ def _snapshot():
     return cfg, s_data, plan, thought
 
 
+def _writer_raises(results, path: Path) -> bool:
+    try:
+        run_experiments.write_mechanism_records_csv(results, str(path))
+        return False
+    except ValueError:
+        return True
+
+
 def main() -> int:
     current_agent_fields = list(simulation_core.AGENT_RECORDS_FIELDS)
     start_agent_fields = _literal_name(_git_show("simulation_core.py"), "AGENT_RECORDS_FIELDS")
@@ -227,8 +235,13 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory() as td:
         out = Path(td) / "mechanism_records.csv"
+        complete_result = {
+            "exp_id": cfg.exp_id,
+            "agent_records": [agent_record],
+            "mechanism_records": [mechanism_record],
+        }
         run_experiments.write_mechanism_records_csv(
-            [{"mechanism_records": [mechanism_record]}],
+            [complete_result],
             str(out),
         )
         with out.open(newline="", encoding="utf-8") as f:
@@ -238,15 +251,63 @@ def main() -> int:
         check("mechanism CSV writes one row", len(rows) == 1, len(rows))
         bad = dict(mechanism_record)
         bad["extra_silent_field"] = "forbidden"
-        try:
-            run_experiments.write_mechanism_records_csv(
-                [{"mechanism_records": [bad]}],
-                str(Path(td) / "bad.csv"),
-            )
-            strict_failed = False
-        except ValueError:
-            strict_failed = True
+        strict_failed = _writer_raises(
+            [{"exp_id": cfg.exp_id, "agent_records": [agent_record], "mechanism_records": [bad]}],
+            Path(td) / "bad.csv",
+        )
         check("mechanism CSV rejects extra fields", strict_failed)
+        check(
+            "successful result missing mechanism_records raises",
+            _writer_raises(
+                [{"exp_id": cfg.exp_id, "agent_records": [agent_record]}],
+                Path(td) / "missing_mechanism.csv",
+            ),
+        )
+        check(
+            "successful result missing agent_records raises",
+            _writer_raises(
+                [{"exp_id": cfg.exp_id, "mechanism_records": [mechanism_record]}],
+                Path(td) / "missing_agent.csv",
+            ),
+        )
+        check(
+            "mechanism row count mismatch raises",
+            _writer_raises(
+                [{
+                    "exp_id": cfg.exp_id,
+                    "agent_records": [agent_record, dict(agent_record, tick=7)],
+                    "mechanism_records": [mechanism_record],
+                }],
+                Path(td) / "row_mismatch.csv",
+            ),
+        )
+        check(
+            "mechanism key mismatch raises",
+            _writer_raises(
+                [{
+                    "exp_id": cfg.exp_id,
+                    "agent_records": [agent_record],
+                    "mechanism_records": [dict(mechanism_record, agent_id="Consumer_999")],
+                }],
+                Path(td) / "key_mismatch.csv",
+            ),
+        )
+        check(
+            "duplicate mechanism key raises",
+            _writer_raises(
+                [{
+                    "exp_id": cfg.exp_id,
+                    "agent_records": [agent_record, dict(agent_record, tick=7)],
+                    "mechanism_records": [mechanism_record, dict(mechanism_record)],
+                }],
+                Path(td) / "duplicate_key.csv",
+            ),
+        )
+        run_experiments.write_mechanism_records_csv(
+            [{"exp_id": "Error-Condition", "error": "boom"}],
+            str(Path(td) / "error_skip.csv"),
+        )
+        check("error result may be skipped", (Path(td) / "error_skip.csv").exists())
 
         agent_out = Path(td) / "agent_records.csv"
         run_experiments.write_agent_records_csv(

@@ -41,6 +41,7 @@ class GreenCognitionPlugin(ReflectPlugin):
         if not obs:
             vals={"semantic_valence":0.0,"semantic_arousal":0.0,"semantic_credibility":0.5,
               "semantic_evidence_strength":0.0,"semantic_topic_relevance":0.0,
+              "semantic_perceived_empathy":0.0,
               "semantic_hypocrisy_perceived":False,"semantic_observation_present":False,
               "semantic_social_observation_count":0,"raw_affective_output":0.0,
               "trust_change_affective":0.0,"affective_was_clipped":False,
@@ -80,10 +81,13 @@ Return JSON only. Do NOT decide buying or posting:
  "credibility": <float 0 to 1>,
  "evidence_strength": <float 0 to 1>,
  "topic_relevance": <float 0 to 1>,
+ "perceived_empathy": <float 0 to 1>,
  "hypocrisy_perceived": <boolean>,
  "importance": <float 1 to 10>,
  "reasoning": "<one concise first-person sentence in English>"
 }}
+perceived_empathy means how much the message expresses understanding,
+acknowledgement, concern, and care for consumer feelings and relationship harm.
 A brand statement may help, do nothing, or backfire. Judge the actual content.
 """
         try:
@@ -93,13 +97,16 @@ A brand statement may help, do nothing, or backfire. Judge the actual content.
             v=clip(float(r.get("valence",0)),-1,1); ar=clip01(r.get("arousal",0))
             cr=clip01(r.get("credibility",.5)); ev=clip01(r.get("evidence_strength",0))
             tr=clip01(r.get("topic_relevance",r.get("topic_consistency",.5)))
+            pe=clip01(r.get("perceived_empathy",0))
             hyp=bool(r.get("hypocrisy_perceived",False)); imp=clip(r.get("importance",5),1,10)
             reason=str(r.get("reasoning","")).strip(); aff=semantic_to_affective(v,ar,cr)
             thought={"valence":v,"arousal":ar,"credibility":cr,"evidence_strength":ev,
-              "topic_relevance":tr,"hypocrisy_perceived":hyp,"importance":imp,
+              "topic_relevance":tr,"perceived_empathy":pe,
+              "hypocrisy_perceived":hyp,"importance":imp,
               "reasoning":reason,"trust_change_affective":aff}
             vals={"semantic_valence":v,"semantic_arousal":ar,"semantic_credibility":cr,
               "semantic_evidence_strength":ev,"semantic_topic_relevance":tr,
+              "semantic_perceived_empathy":pe,
               "semantic_hypocrisy_perceived":hyp,"semantic_observation_present":True,
               "semantic_social_observation_count":len(soc),"raw_affective_output":aff,
               "trust_change_affective":aff,"affective_was_clipped":False,
@@ -112,11 +119,13 @@ A brand statement may help, do nothing, or backfire. Judge the actual content.
             print(f"[Reflect-v2 ERROR] {a.agent_id}: {type(e).__name__}: {e}")
             vals={"semantic_valence":0.0,"semantic_arousal":0.0,"semantic_credibility":0.5,
               "semantic_evidence_strength":0.0,"semantic_topic_relevance":0.0,
+              "semantic_perceived_empathy":0.0,
               "semantic_hypocrisy_perceived":False,"semantic_observation_present":True,
               "semantic_social_observation_count":len(soc),"raw_affective_output":0.0,
               "trust_change_affective":0.0,"affective_was_clipped":False,
               "latest_thought":{"valence":0.0,"arousal":0.0,"credibility":0.5,
                 "evidence_strength":0.0,"topic_relevance":0.0,"hypocrisy_perceived":False,
+                "perceived_empathy":0.0,
                 "importance":0.0,"reasoning":"","semantic_fallback_used":True},
               "reflect_primary_source":primary,
               "reflect_message_sources":sorted({str(o.get("source","Unknown")) for o in obs}),

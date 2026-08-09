@@ -190,7 +190,7 @@ assert len(AGENT_RECORDS_FIELDS) == len(set(AGENT_RECORDS_FIELDS)), \
     "agent_records schema v2.0 存在重复字段"
 
 
-MECHANISM_RECORDS_SCHEMA_VERSION = "1.0"
+MECHANISM_RECORDS_SCHEMA_VERSION = "1.1"
 MECHANISM_RECORDS_FIELDS = [
     "schema_version",
     "exp_id", "tick", "agent_id",
@@ -198,6 +198,7 @@ MECHANISM_RECORDS_FIELDS = [
     "semantic_observation_present", "semantic_social_observation_count",
     "semantic_valence", "semantic_arousal", "semantic_credibility",
     "semantic_evidence_strength", "semantic_topic_relevance",
+    "semantic_perceived_empathy",
     "semantic_hypocrisy_perceived",
     "semantic_fallback_used", "reflect_primary_source",
     "previous_trust", "baseline_trust", "trust_before_signal",
@@ -215,7 +216,7 @@ MECHANISM_RECORDS_FIELDS = [
 ]
 
 assert len(MECHANISM_RECORDS_FIELDS) == len(set(MECHANISM_RECORDS_FIELDS)), \
-    "mechanism_records schema v1.0 存在重复字段"
+    "mechanism_records schema v1.1 存在重复字段"
 
 
 def _audit_float(value, digits: int = 12):
@@ -523,6 +524,9 @@ def build_mechanism_record(*, config, tick, agent_id, s_data, plan, thought) -> 
         "semantic_topic_relevance": _audit_float(
             s_data.get("semantic_topic_relevance", "")
         ),
+        "semantic_perceived_empathy": _audit_float(
+            s_data.get("semantic_perceived_empathy", "")
+        ),
         "semantic_hypocrisy_perceived": bool(
             s_data.get("semantic_hypocrisy_perceived", False)
         ),
@@ -557,7 +561,7 @@ def build_mechanism_record(*, config, tick, agent_id, s_data, plan, thought) -> 
         "clarification_content_type": str(plan.get("clarification_content_type", "")),
     }
     assert set(record.keys()) == set(MECHANISM_RECORDS_FIELDS), \
-        "mechanism_records 记录字段与 schema v1.0 不一致"
+        "mechanism_records 记录字段与 schema v1.1 不一致"
     return record
 
 

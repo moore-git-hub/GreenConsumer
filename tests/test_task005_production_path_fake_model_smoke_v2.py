@@ -72,14 +72,15 @@ class DeterministicSemanticFakeRouter:
                 0.80,
                 0.65,
                 0.95,
+                0.10,
                 True,
                 8,
                 "I am concerned because the allegation appears relevant and credible.",
             )
         if "[Brand Statement]" in prompt:
             if (
-                "Verified Evidence on Our Sustainability Work" in prompt
-                or "facts you can check" in prompt
+                "VerdantCo Structured Evidence Summary" in prompt
+                or "verification, audit, procedural transparency" in prompt
             ):
                 self.categories.append("rational_statement")
                 return _json_response(
@@ -88,21 +89,23 @@ class DeterministicSemanticFakeRouter:
                     0.90,
                     0.95,
                     0.90,
+                    0.30,
                     False,
                     7,
                     "I see checkable evidence in the brand statement.",
                 )
             if (
-                "your frustration is valid" in prompt
-                or "Community Trust Board" in prompt
+                "VerdantCo Responsibility and Relationship Message" in prompt
+                or "responsibility, consumer frustration" in prompt
             ):
                 self.categories.append("empathy_statement")
                 return _json_response(
-                    0.75,
+                    0.10,
                     0.75,
                     0.72,
                     0.35,
                     0.90,
+                    0.88,
                     False,
                     7,
                     "I feel acknowledged by the brand statement.",
@@ -116,6 +119,7 @@ class DeterministicSemanticFakeRouter:
                 0.45,
                 0.20,
                 0.50,
+                0.10,
                 False,
                 4,
                 "A social post mildly shaped my perception.",
@@ -123,7 +127,17 @@ class DeterministicSemanticFakeRouter:
         raise RuntimeError("unknown observed prompt")
 
 
-def _json_response(valence, arousal, credibility, evidence, relevance, hypocrisy, importance, reasoning):
+def _json_response(
+    valence,
+    arousal,
+    credibility,
+    evidence,
+    relevance,
+    perceived_empathy,
+    hypocrisy,
+    importance,
+    reasoning,
+):
     return json.dumps(
         {
             "valence": valence,
@@ -131,6 +145,7 @@ def _json_response(valence, arousal, credibility, evidence, relevance, hypocrisy
             "credibility": credibility,
             "evidence_strength": evidence,
             "topic_relevance": relevance,
+            "perceived_empathy": perceived_empathy,
             "hypocrisy_perceived": hypocrisy,
             "importance": importance,
             "reasoning": reasoning,
@@ -332,6 +347,7 @@ def _content_gate(h, rational, empathy):
         "semantic_arousal",
         "semantic_credibility",
         "semantic_evidence_strength",
+        "semantic_perceived_empathy",
         "semantic_topic_relevance",
     ]
     semantic_contrasts = {
@@ -343,6 +359,20 @@ def _content_gate(h, rational, empathy):
         any(abs(v) > 1e-9 for v in semantic_contrasts.values()),
         semantic_contrasts,
     )
+    primary_gates = {
+        "D_evidence": semantic_contrasts["semantic_evidence_strength"] > 0,
+        "D_credibility": semantic_contrasts["semantic_credibility"] > 0,
+        "D_empathy": (
+            _mean(e_rows, "semantic_perceived_empathy")
+            - _mean(r_rows, "semantic_perceived_empathy")
+        ) > 0,
+        "D_arousal": (
+            _mean(e_rows, "semantic_arousal")
+            - _mean(r_rows, "semantic_arousal")
+        ) > 0,
+    }
+    h.check("content primary semantic gates v2", all(primary_gates.values()), primary_gates)
+    h.check("valence descriptive only", "semantic_valence" in semantic_contrasts)
     downstream_fields = ["attitude_att", "repair_memory", "trust_final", "purchase_intention"]
     downstream = {}
     for field in downstream_fields:

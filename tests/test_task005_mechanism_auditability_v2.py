@@ -23,7 +23,6 @@ from experiment_config import ExperimentConfig
 START_HEAD = "29cb4e49fb67a7902ae8773929d671b793f4dac1"
 PROTECTED_SOURCES = (
     "mechanism_v2.py",
-    "plugins/agent/reflect/GreenCognitionPlugin.py",
     "plugins/agent/plan/ConsumerPlanPlugin.py",
     "node_selector.py",
     "experiment_config.py",
@@ -85,6 +84,7 @@ def _snapshot():
         "semantic_credibility": 0.900000000001,
         "semantic_evidence_strength": 0.950000000001,
         "semantic_topic_relevance": 0.900000000001,
+        "semantic_perceived_empathy": 0.850000000001,
         "semantic_hypocrisy_perceived": False,
     }
     plan = {
@@ -162,6 +162,7 @@ def main() -> int:
         "semantic_observation_present", "semantic_social_observation_count",
         "semantic_valence", "semantic_arousal", "semantic_credibility",
         "semantic_evidence_strength", "semantic_topic_relevance",
+        "semantic_perceived_empathy",
         "semantic_hypocrisy_perceived", "semantic_fallback_used",
         "reflect_primary_source", "previous_trust", "baseline_trust",
         "trust_before_signal", "affective_change", "trust_final",
@@ -174,7 +175,7 @@ def main() -> int:
         "clarification_content_type",
     }
     fields = list(simulation_core.MECHANISM_RECORDS_FIELDS)
-    check("mechanism schema version", simulation_core.MECHANISM_RECORDS_SCHEMA_VERSION == "1.0")
+    check("mechanism schema version", simulation_core.MECHANISM_RECORDS_SCHEMA_VERSION == "1.1")
     check("mechanism schema unique", len(fields) == len(set(fields)), fields)
     check("mechanism required fields present", required <= set(fields), sorted(required - set(fields)))
     check("runner imports same mechanism schema", run_experiments.MECHANISM_RECORDS_FIELDS == fields)
@@ -223,6 +224,7 @@ def main() -> int:
 
     audit = simulation_core._audit_float
     check("semantic persistence", mechanism_record["semantic_valence"] == audit(s_data["semantic_valence"]))
+    check("perceived empathy persistence", mechanism_record["semantic_perceived_empathy"] == audit(s_data["semantic_perceived_empathy"]))
     check("TPB persistence", mechanism_record["attitude_att"] == audit(plan["attitude_att"]))
     check("memory persistence", mechanism_record["crisis_memory"] == audit(plan["crisis_memory"]) and mechanism_record["repair_memory"] == audit(plan["repair_memory"]))
     check("intention persistence", mechanism_record["purchase_intention"] == audit(plan["purchase_intention"]))
@@ -322,14 +324,23 @@ def main() -> int:
     for path in PROTECTED_SOURCES:
         current = (ROOT / path).read_text(encoding="utf-8")
         check(f"protected source unchanged {path}", current == _git_show(path))
+    mechanism_src = (ROOT / "mechanism_v2.py").read_text(encoding="utf-8")
+    mechanism_ast = ast.parse(mechanism_src)
+    transition_src = "\n".join(
+        ast.get_source_segment(mechanism_src, node) or ""
+        for node in mechanism_ast.body
+        if isinstance(node, ast.FunctionDef)
+        and node.name in {"update_psychological_state", "behavior_probabilities"}
+    )
+    check("perceived empathy absent from transition equations", "perceived_empathy" not in transition_src)
 
     contract = (
         ROOT
         / ".kiro/specs/task005-replication-inference/"
-        / "mechanism_auditability_schema_amendment1.0.json"
+        / "mechanism_auditability_schema_amendment1.1.json"
     ).read_text(encoding="utf-8")
-    check("contract says no p tuning", '"parameter_tuning": false' in contract)
-    check("contract says reporting only", '"amendment_type": "reporting_only"' in contract)
+    check("contract says no behavior change", '"behavioral_mechanism_changed": false' in contract)
+    check("contract names perceived empathy", '"semantic_perceived_empathy"' in contract)
 
     print("\nTASK_005 MECHANISM AUDITABILITY V2")
     print("Passed:", P)

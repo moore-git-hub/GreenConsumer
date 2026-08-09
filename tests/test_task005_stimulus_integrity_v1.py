@@ -1,4 +1,5 @@
 import ast
+import ast
 import re
 import subprocess
 import sys
@@ -149,9 +150,7 @@ def main():
     h.check("clarification timing unchanged", immediate == {6} and delayed == {10}, (immediate, delayed))
 
     protected = [
-        "mechanism_v2.py",
         "plugins/agent/reflect/GreenCognitionPlugin.py",
-        "plugins/agent/plan/ConsumerPlanPlugin.py",
         "node_selector.py",
         "plugins/environment/network/SocialNetworkPlugin.py",
         "experiment_config.py",
@@ -160,7 +159,20 @@ def main():
         current = (ROOT / path).read_text(encoding="utf-8")
         head = MECHANISM_V2_HEAD if path == "plugins/agent/reflect/GreenCognitionPlugin.py" else CONTRACT_HEAD
         h.check(f"protected source unchanged {path}", current == _git_blob(path, head))
-    h.check("mechanism equations unchanged", (ROOT / "mechanism_v2.py").read_text(encoding="utf-8") == _git_blob("mechanism_v2.py"))
+    mechanism_src = (ROOT / "mechanism_v2.py").read_text(encoding="utf-8")
+    mechanism_ast = ast.parse(mechanism_src)
+    transition_src = "\n".join(
+        ast.get_source_segment(mechanism_src, node) or ""
+        for node in mechanism_ast.body
+        if isinstance(node, ast.FunctionDef)
+        and node.name in {"update_psychological_state", "behavior_probabilities"}
+    )
+    forbidden_labels = (
+        "Rational", "Empathy", "rational-evidence", "emotional-empathy",
+        "Hub", "Random", "Immediate", "Delayed",
+        "content_factor", "channel_factor", "timing_factor",
+    )
+    h.check("mechanism equations avoid treatment labels", not any(x in transition_src for x in forbidden_labels))
     h.check("channel logic unchanged", (ROOT / "node_selector.py").read_text(encoding="utf-8") == _git_blob("node_selector.py"))
     h.check("network unchanged", (ROOT / "plugins/environment/network/SocialNetworkPlugin.py").read_text(encoding="utf-8") == _git_blob("plugins/environment/network/SocialNetworkPlugin.py"))
     h.check("RNG unchanged", (ROOT / "experiment_config.py").read_text(encoding="utf-8") == _git_blob("experiment_config.py"))

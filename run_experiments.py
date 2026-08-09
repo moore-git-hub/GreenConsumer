@@ -937,7 +937,9 @@ def _read_llm_config(project_root: str) -> dict:
     for key in ("name", "model", "base_url", "temperature", "top_p", "seed",
                 "max_tokens", "frequency_penalty", "presence_penalty"):
         meta[key] = entry.get(key, "unknown")
-    meta["api_key_present"] = bool(entry.get("api_key"))
+    api_key = entry.get("api_key")
+    meta["api_key_present"] = bool(api_key) and not _is_placeholder_secret(api_key)
+    meta["api_key"] = "<REDACTED>" if meta["api_key_present"] else "not-present"
     return meta
 
 
@@ -1262,6 +1264,44 @@ class ReplicationStartupError(ValueError):
     """Raised for TASK_005 child-mode pre-simulation contract failures."""
 
 
+TASK005_LLM_API_KEY_ENV = "DASHSCOPE_API_KEY"
+TASK005_LLM_API_KEY_PLACEHOLDER = "__FROM_ENV_DASHSCOPE_API_KEY__"
+
+
+def _is_placeholder_secret(value) -> bool:
+    if not isinstance(value, str):
+        return False
+    text = value.strip()
+    return (
+        text == ""
+        or text == TASK005_LLM_API_KEY_PLACEHOLDER
+        or text.startswith("__FROM_ENV_")
+        or text.upper() in {"<REDACTED>", "REDACTED", "PLACEHOLDER"}
+    )
+
+
+def _read_required_llm_api_key_from_env() -> str:
+    value = os.environ.get(TASK005_LLM_API_KEY_ENV, "")
+    if _is_placeholder_secret(value):
+        raise ReplicationStartupError(
+            f"{TASK005_LLM_API_KEY_ENV} must be set for real LLM execution"
+        )
+    return value
+
+
+def _inject_llm_api_key(models_conf, api_key: str):
+    conf = copy.deepcopy(models_conf)
+    entries = conf if isinstance(conf, list) else [conf]
+    for entry in entries:
+        if isinstance(entry, dict) and "chat" in (entry.get("capabilities") or []):
+            entry["api_key"] = api_key
+            return conf
+    if entries and isinstance(entries[0], dict):
+        entries[0]["api_key"] = api_key
+        return conf
+    raise ReplicationStartupError("models_config.yaml has no injectable model entry")
+
+
 def parse_cli_args(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--replication-id", dest="replication_id", default=None)
@@ -1515,7 +1555,9 @@ def _config_with_requested_llm_seed(models_conf, requested_llm_seed: int):
 def _build_real_router(requested_llm_seed: int | None = None):
     import yaml
     with open(os.path.join(current_dir, "configs/models_config.yaml"), "r", encoding="utf-8") as f:
-        models_conf = yaml.safe_load(f)
+        raw_models_conf = yaml.safe_load(f)
+    api_key = _read_required_llm_api_key_from_env()
+    models_conf = _inject_llm_api_key(raw_models_conf, api_key)
     if requested_llm_seed is not None:
         models_conf = _config_with_requested_llm_seed(models_conf, requested_llm_seed)
     from agentkernel_standalone.toolkit.models.router import ModelRouter, AsyncModelRouter

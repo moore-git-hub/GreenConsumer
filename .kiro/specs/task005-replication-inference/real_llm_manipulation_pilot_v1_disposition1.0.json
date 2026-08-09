@@ -1,0 +1,24 @@
+{
+  "R002_retry_authorized": false,
+  "R003_authorized": false,
+  "replacement_authorized": false,
+  "even_if_R002_had_passed": "pilot-v1 still cannot satisfy all-block direction contract because R001 D_valence < 0",
+  "formal_inference": false,
+  "p_values_computed": false,
+  "pilot_id": "task005-real-manipulation-pilot-v1",
+  "pilot_status": "INCOMPLETE",
+  "pilot_v1_retry_authorized": false,
+  "r001_primary_diagnostics": {
+    "D_arousal": 0.04,
+    "D_credibility": 0.1065,
+    "D_evidence": 0.2195,
+    "D_valence": -0.1735
+  },
+  "r002_forensic": {
+    "last_confirmed_stage": "CALL_LOG_CREATED",
+    "root_cause_confidence": "localized",
+    "root_cause_note": "Only an empty pilot_llm_calls.jsonl is present in R002; no seed ledger, sanitized model config, condition manifest, block summary, stdout, stderr, or log artifact exists in the block directory."
+  },
+  "schema_version": "1.0",
+  "scientific_progression": "BLOCKED"
+}

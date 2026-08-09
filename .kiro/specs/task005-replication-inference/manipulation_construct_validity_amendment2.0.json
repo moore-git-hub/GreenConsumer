@@ -1,0 +1,59 @@
+{
+  "behavioral_transition_effect": "none",
+  "construct_decision": {
+    "emotional_empathy_primary": [
+      "semantic_perceived_empathy",
+      "semantic_arousal"
+    ],
+    "rational_evidence_primary": [
+      "semantic_evidence_strength",
+      "semantic_credibility"
+    ],
+    "semantic_valence_role": "descriptive_only"
+  },
+  "literature_provenance": [
+    {
+      "doi": "10.1177/1948550613506122",
+      "use": "construct rationale only"
+    },
+    {
+      "doi": "10.1108/MIP-03-2018-0080",
+      "use": "construct rationale only"
+    },
+    {
+      "doi": "10.1016/j.jbusres.2020.06.061",
+      "use": "construct rationale only"
+    },
+    {
+      "doi": "10.1016/j.jbusres.2025.115679",
+      "use": "construct rationale only"
+    }
+  ],
+  "new_semantic_field": {
+    "behavioral_transition_effect": "none",
+    "definition": "LLM appraisal of how much the observed message expresses understanding, acknowledgement, concern, and care for consumer feelings, worries, and relationship harm.",
+    "field": "semantic_perceived_empathy",
+    "range": [
+      0.0,
+      1.0
+    ],
+    "role": "construct-validation semantic appraisal"
+  },
+  "outcome_data_used_for_construct_redesign": false,
+  "pilot_v1_cannot_be_pooled_with_pilot_v2": true,
+  "pilot_v1_cannot_be_reclassified_as_pass": true,
+  "pilot_v1_outcomes_not_used_to_tune_stimulus": true,
+  "p_values_computed": false,
+  "permitted_construct_diagnostic_inputs": [
+    "semantic_evidence_strength",
+    "semantic_credibility",
+    "semantic_valence",
+    "semantic_arousal",
+    "semantic_topic_relevance",
+    "semantic_hypocrisy_perceived",
+    "Reflect semantic reasoning if locally available"
+  ],
+  "schema_version": "2.0",
+  "semantic_valence_direction_gate": "removed prospectively for pilot-v2; not retroactively changed for pilot-v1",
+  "stimulus_text_changed": false
+}

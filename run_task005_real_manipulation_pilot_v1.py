@@ -18,11 +18,19 @@ import tempfile
 from pathlib import Path
 from typing import Iterable, Mapping
 
+# The pilot runner must protect its own import path from HuggingFace /
+# Transformers metadata lookups. Use assignment, not setdefault, so parent
+# env values such as HF_HUB_OFFLINE=0 cannot weaken offline preparation tests.
+os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["HF_DATASETS_OFFLINE"] = "1"
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 import yaml
 
 from experiment_config import generate_experiment_matrix
 from replication_config import (
-    LEDGER_FIELDS,
     build_seed_ledger,
     write_seed_ledger_csv,
 )
@@ -32,6 +40,7 @@ from run_experiments import (
     TASK005_LLM_API_KEY_PLACEHOLDER,
     _is_placeholder_secret,
 )
+from simulation_core import MECHANISM_RECORDS_FIELDS
 
 
 PILOT_ID = "task005-real-manipulation-pilot-v1"
@@ -51,10 +60,18 @@ TOPIC_RELEVANCE_WARNING_THRESHOLD = 0.10
 REAL_MODE_REJECTION = "PILOT_EXECUTION_NOT_AUTHORIZED"
 
 PRIMARY_DIMENSIONS = (
-    "evidence_strength",
-    "credibility",
-    "valence",
-    "arousal",
+    "semantic_evidence_strength",
+    "semantic_credibility",
+    "semantic_valence",
+    "semantic_arousal",
+)
+REQUIRED_SEMANTIC_SOURCE_FIELDS = (
+    "semantic_evidence_strength",
+    "semantic_credibility",
+    "semantic_valence",
+    "semantic_arousal",
+    "semantic_topic_relevance",
+    "semantic_hypocrisy_perceived",
 )
 
 
@@ -207,51 +224,106 @@ def assert_no_replay_miss(rows: Iterable[Mapping]) -> None:
             raise PilotContractError("replay miss count must be zero")
 
 
+def assert_mechanism_schema_alignment() -> None:
+    missing = set(REQUIRED_SEMANTIC_SOURCE_FIELDS) - set(MECHANISM_RECORDS_FIELDS)
+    if missing:
+        raise PilotContractError(f"mechanism schema missing semantic fields: {sorted(missing)}")
+
+
+def _detected_rows(rows: list[Mapping], label: str) -> list[Mapping]:
+    seen: set[str] = set()
+    detected = []
+    for row in rows:
+        agent_id = str(row.get("agent_id", ""))
+        if not agent_id:
+            raise PilotContractError(f"{label} row missing agent_id")
+        if agent_id in seen:
+            raise PilotContractError(f"duplicate agent_id in {label}: {agent_id}")
+        seen.add(agent_id)
+        if _truthy(row.get("clarification_detected_by_plan")):
+            for field in REQUIRED_SEMANTIC_SOURCE_FIELDS:
+                if field not in row:
+                    raise PilotContractError(f"{label} row missing {field}")
+            detected.append(row)
+    return detected
+
+
 def matched_agent_ids(rational_rows: list[Mapping], empathy_rows: list[Mapping]) -> list[str]:
-    rational_ids = {
-        str(row["agent_id"])
-        for row in rational_rows
-        if _truthy(row.get("clarification_detected_by_plan"))
-    }
-    empathy_ids = {
-        str(row["agent_id"])
-        for row in empathy_rows
-        if _truthy(row.get("clarification_detected_by_plan"))
-    }
+    rational_ids = {str(row["agent_id"]) for row in _detected_rows(rational_rows, "rational")}
+    empathy_ids = {str(row["agent_id"]) for row in _detected_rows(empathy_rows, "empathy")}
     if rational_ids != empathy_ids:
         raise PilotContractError("matched Rational/Empathy reach sets differ")
     return sorted(rational_ids)
 
 
 def compute_manipulation_pairs(
+    replicate_id: str,
     rational_rows: list[Mapping],
     empathy_rows: list[Mapping],
 ) -> list[dict]:
+    assert_mechanism_schema_alignment()
+    if replicate_id not in ALLOWED_REPLICATE_IDS:
+        raise PilotContractError("replicate_id must be R001 or R002")
     agent_ids = matched_agent_ids(rational_rows, empathy_rows)
-    r_by_id = {str(row["agent_id"]): row for row in rational_rows}
-    e_by_id = {str(row["agent_id"]): row for row in empathy_rows}
+    r_by_id = {str(row["agent_id"]): row for row in _detected_rows(rational_rows, "rational")}
+    e_by_id = {str(row["agent_id"]): row for row in _detected_rows(empathy_rows, "empathy")}
     pairs: list[dict] = []
     for agent_id in agent_ids:
         r = r_by_id[agent_id]
         e = e_by_id[agent_id]
         pairs.append(
             {
+                "replicate_id": replicate_id,
                 "agent_id": agent_id,
-                "D_evidence": _float(r["evidence_strength"]) - _float(e["evidence_strength"]),
-                "D_credibility": _float(r["credibility"]) - _float(e["credibility"]),
-                "D_valence": _float(e["valence"]) - _float(r["valence"]),
-                "D_arousal": _float(e["arousal"]) - _float(r["arousal"]),
-                "topic_relevance_abs_diff": abs(
-                    _float(r["topic_relevance"]) - _float(e["topic_relevance"])
+                "D_evidence": (
+                    _float(r["semantic_evidence_strength"])
+                    - _float(e["semantic_evidence_strength"])
                 ),
+                "D_credibility": (
+                    _float(r["semantic_credibility"])
+                    - _float(e["semantic_credibility"])
+                ),
+                "D_valence": _float(e["semantic_valence"]) - _float(r["semantic_valence"]),
+                "D_arousal": _float(e["semantic_arousal"]) - _float(r["semantic_arousal"]),
+                "rational_topic_relevance": _float(r["semantic_topic_relevance"]),
+                "empathy_topic_relevance": _float(e["semantic_topic_relevance"]),
+                "rational_hypocrisy_perceived": bool(r["semantic_hypocrisy_perceived"]),
+                "empathy_hypocrisy_perceived": bool(e["semantic_hypocrisy_perceived"]),
             }
         )
     return pairs
 
 
-def summarize_manipulation_pairs(pairs: list[Mapping]) -> dict:
+def summarize_manipulation_by_block(pairs: list[Mapping]) -> dict:
     if not pairs:
         raise PilotContractError("no matched manipulation pairs")
+    by_rep: dict[str, list[Mapping]] = {}
+    for row in pairs:
+        by_rep.setdefault(str(row.get("replicate_id", "")), []).append(row)
+    if set(by_rep) != set(ALLOWED_REPLICATE_IDS):
+        raise PilotContractError("manipulation pairs must contain exactly R001 and R002")
+
+    per_replicate: dict[str, dict] = {}
+    all_blocks_direction_pass = True
+    for replicate_id in ALLOWED_REPLICATE_IDS:
+        rows = by_rep[replicate_id]
+        dims = {}
+        for dim in ("D_evidence", "D_credibility", "D_valence", "D_arousal"):
+            values = [_float(row[dim]) for row in rows]
+            mean_value = statistics.fmean(values)
+            dims[dim] = {"mean": mean_value, "passes_direction": mean_value > 0}
+            if mean_value <= 0:
+                all_blocks_direction_pass = False
+        per_replicate[replicate_id] = {"dimensions": dims}
+
+    pooled = _summarize_pooled_pairs(pairs)
+    pooled["per_replicate"] = per_replicate
+    pooled["all_blocks_direction_pass"] = all_blocks_direction_pass
+    pooled["DIRECTION_GATE"] = "PASS" if all_blocks_direction_pass else "FAIL"
+    return pooled
+
+
+def _summarize_pooled_pairs(pairs: list[Mapping]) -> dict:
     summary = {
         "pilot_id": PILOT_ID,
         "FORMAL_INFERENCE": False,
@@ -279,12 +351,30 @@ def summarize_manipulation_pairs(pairs: list[Mapping]) -> dict:
         }
         if mean_value < ENGINEERING_SEPARATION_FLOOR:
             weak.append(dim)
-    topic_mean = statistics.fmean(_float(row["topic_relevance_abs_diff"]) for row in pairs)
-    summary["topic_relevance_abs_mean_diff"] = topic_mean
+    rational_topic_mean = statistics.fmean(
+        _float(row["rational_topic_relevance"]) for row in pairs
+    )
+    empathy_topic_mean = statistics.fmean(
+        _float(row["empathy_topic_relevance"]) for row in pairs
+    )
+    topic_group_mean_diff = abs(rational_topic_mean - empathy_topic_mean)
+    summary["rational_topic_relevance_mean"] = rational_topic_mean
+    summary["empathy_topic_relevance_mean"] = empathy_topic_mean
+    summary["topic_relevance_group_mean_abs_diff"] = topic_group_mean_diff
+    summary["topic_relevance_paired_abs_mean_diff_supplementary"] = statistics.fmean(
+        abs(_float(row["rational_topic_relevance"]) - _float(row["empathy_topic_relevance"]))
+        for row in pairs
+    )
     summary["topic_relevance_warning"] = (
         "TOPIC_RELEVANCE_IMBALANCE"
-        if topic_mean > TOPIC_RELEVANCE_WARNING_THRESHOLD
+        if topic_group_mean_diff > TOPIC_RELEVANCE_WARNING_THRESHOLD
         else ""
+    )
+    summary["rational_hypocrisy_perceived_rate"] = statistics.fmean(
+        1.0 if row["rational_hypocrisy_perceived"] else 0.0 for row in pairs
+    )
+    summary["empathy_hypocrisy_perceived_rate"] = statistics.fmean(
+        1.0 if row["empathy_hypocrisy_perceived"] else 0.0 for row in pairs
     )
     summary["MANIPULATION_STRENGTH"] = "WEAK" if weak else "PASS"
     summary["weak_dimensions"] = weak
@@ -342,49 +432,21 @@ def run_offline_self_test() -> dict:
     if len(manifest) != 6 or not validate_record_replay_order(manifest):
         raise PilotContractError("pilot manifest mismatch")
     rational = [
-        {
-            "agent_id": "A001",
-            "clarification_detected_by_plan": True,
-            "evidence_strength": 0.80,
-            "credibility": 0.75,
-            "valence": 0.20,
-            "arousal": 0.25,
-            "topic_relevance": 0.91,
-        },
-        {
-            "agent_id": "A002",
-            "clarification_detected_by_plan": True,
-            "evidence_strength": 0.70,
-            "credibility": 0.65,
-            "valence": 0.30,
-            "arousal": 0.20,
-            "topic_relevance": 0.88,
-        },
+        _semantic_input_row("A001", 0.80, 0.75, 0.20, 0.25, 0.91, False),
+        _semantic_input_row("A002", 0.70, 0.65, 0.30, 0.20, 0.88, True),
     ]
     empathy = [
-        {
-            "agent_id": "A001",
-            "clarification_detected_by_plan": True,
-            "evidence_strength": 0.45,
-            "credibility": 0.50,
-            "valence": 0.70,
-            "arousal": 0.62,
-            "topic_relevance": 0.86,
-        },
-        {
-            "agent_id": "A002",
-            "clarification_detected_by_plan": True,
-            "evidence_strength": 0.50,
-            "credibility": 0.48,
-            "valence": 0.66,
-            "arousal": 0.58,
-            "topic_relevance": 0.84,
-        },
+        _semantic_input_row("A001", 0.45, 0.50, 0.70, 0.62, 0.86, True),
+        _semantic_input_row("A002", 0.50, 0.48, 0.66, 0.58, 0.84, True),
     ]
-    pairs = compute_manipulation_pairs(rational, empathy)
-    summary = summarize_manipulation_pairs(pairs)
+    pairs = []
+    for replicate_id in ALLOWED_REPLICATE_IDS:
+        pairs.extend(compute_manipulation_pairs(replicate_id, rational, empathy))
+    summary = summarize_manipulation_by_block(pairs)
     if summary["MANIPULATION_STRENGTH"] != "PASS":
         raise PilotContractError("offline manipulation self-test should pass")
+    if summary["DIRECTION_GATE"] != "PASS":
+        raise PilotContractError("offline direction gate should pass")
     if not fallback_counts_pass(
         [
             {"semantic_fallback_used": 0, "plan_fallback_used": 0, "json_parse_failure": 0},
@@ -393,6 +455,27 @@ def run_offline_self_test() -> dict:
     ):
         raise PilotContractError("fallback count logic failed")
     return summary
+
+
+def _semantic_input_row(
+    agent_id: str,
+    evidence: float,
+    credibility: float,
+    valence: float,
+    arousal: float,
+    topic: float,
+    hypocrisy: bool,
+) -> dict:
+    return {
+        "agent_id": agent_id,
+        "clarification_detected_by_plan": True,
+        "semantic_evidence_strength": evidence,
+        "semantic_credibility": credibility,
+        "semantic_valence": valence,
+        "semantic_arousal": arousal,
+        "semantic_topic_relevance": topic,
+        "semantic_hypocrisy_perceived": hypocrisy,
+    }
 
 
 def parse_args(argv=None):

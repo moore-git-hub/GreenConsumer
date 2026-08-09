@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+import textwrap
 import subprocess
 import sys
 import tempfile
@@ -14,6 +15,8 @@ if str(ROOT) not in sys.path:
 
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+os.environ.setdefault("HF_DATASETS_OFFLINE", "1")
+os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 import run_task005_real_manipulation_pilot_v1 as pilot
@@ -73,73 +76,106 @@ def test_replay_miss_and_matched_exposure_gates() -> None:
     else:
         check("replay miss fail closed", False)
 
+    check(
+        "actual mechanism schema has semantic source fields",
+        set(pilot.REQUIRED_SEMANTIC_SOURCE_FIELDS) <= set(pilot.MECHANISM_RECORDS_FIELDS),
+        pilot.REQUIRED_SEMANTIC_SOURCE_FIELDS,
+    )
     rational = [
-        _semantic_row("A1", True, 0.8, 0.7, 0.2, 0.2, 0.9),
-        _semantic_row("A2", True, 0.7, 0.6, 0.3, 0.3, 0.8),
+        _semantic_row("A1", True, 0.8, 0.7, 0.2, 0.2, 0.9, False),
+        _semantic_row("A2", True, 0.7, 0.6, 0.3, 0.3, 0.8, True),
     ]
     empathy = [
-        _semantic_row("A1", True, 0.4, 0.4, 0.8, 0.7, 0.86),
-        _semantic_row("A2", True, 0.5, 0.4, 0.7, 0.6, 0.74),
+        _semantic_row("A1", True, 0.4, 0.4, 0.8, 0.7, 0.86, True),
+        _semantic_row("A2", True, 0.5, 0.4, 0.7, 0.6, 0.74, True),
     ]
-    pairs = pilot.compute_manipulation_pairs(rational, empathy)
+    pairs = pilot.compute_manipulation_pairs("R001", rational, empathy)
     check("matched pairs count", len(pairs) == 2, pairs)
+    check("pairs include replicate id", {row["replicate_id"] for row in pairs} == {"R001"}, pairs)
+    check("pairs include topic values", "rational_topic_relevance" in pairs[0] and "empathy_topic_relevance" in pairs[0])
+    check("pairs include hypocrisy values", "rational_hypocrisy_perceived" in pairs[0] and "empathy_hypocrisy_perceived" in pairs[0])
     check("D evidence direction", all(row["D_evidence"] > 0 for row in pairs), pairs)
     check("D credibility direction", all(row["D_credibility"] > 0 for row in pairs), pairs)
     check("D valence direction", all(row["D_valence"] > 0 for row in pairs), pairs)
     check("D arousal direction", all(row["D_arousal"] > 0 for row in pairs), pairs)
     empathy_bad = [dict(row) for row in empathy[:1]]
     try:
-        pilot.compute_manipulation_pairs(rational, empathy_bad)
+        pilot.compute_manipulation_pairs("R001", rational, empathy_bad)
     except pilot.PilotContractError:
         check("matched exposure mismatch fails", True)
     else:
         check("matched exposure mismatch fails", False)
+    duplicate = rational + [dict(rational[0])]
+    try:
+        pilot.compute_manipulation_pairs("R001", duplicate, empathy)
+    except pilot.PilotContractError:
+        check("duplicate agent fails", True)
+    else:
+        check("duplicate agent fails", False)
 
 
-def _semantic_row(agent_id, detected, evidence, credibility, valence, arousal, topic):
+def _semantic_row(agent_id, detected, evidence, credibility, valence, arousal, topic, hypocrisy):
     return {
         "agent_id": agent_id,
         "clarification_detected_by_plan": detected,
-        "evidence_strength": evidence,
-        "credibility": credibility,
-        "valence": valence,
-        "arousal": arousal,
-        "topic_relevance": topic,
+        "semantic_evidence_strength": evidence,
+        "semantic_credibility": credibility,
+        "semantic_valence": valence,
+        "semantic_arousal": arousal,
+        "semantic_topic_relevance": topic,
+        "semantic_hypocrisy_perceived": hypocrisy,
     }
 
 
 def test_floor_topic_and_fallback_logic() -> None:
-    pairs = [
-        {
-            "D_evidence": 0.06,
-            "D_credibility": 0.07,
-            "D_valence": 0.08,
-            "D_arousal": 0.09,
-            "topic_relevance_abs_diff": 0.04,
-        },
-        {
-            "D_evidence": 0.07,
-            "D_credibility": 0.08,
-            "D_valence": 0.06,
-            "D_arousal": 0.10,
-            "topic_relevance_abs_diff": 0.05,
-        },
-    ]
-    summary = pilot.summarize_manipulation_pairs(pairs)
+    pairs = _pairs_for_blocks(0.06)
+    summary = pilot.summarize_manipulation_by_block(pairs)
+    check("per block direction gate pass", summary["all_blocks_direction_pass"] is True and summary["DIRECTION_GATE"] == "PASS", summary)
     check("0.05 floor pass", summary["MANIPULATION_STRENGTH"] == "PASS", summary)
     check("no topic warning below threshold", summary["topic_relevance_warning"] == "", summary)
-    weak = [dict(row) for row in pairs]
-    weak[0]["D_evidence"] = 0.01
-    weak[1]["D_evidence"] = 0.02
-    weak_summary = pilot.summarize_manipulation_pairs(weak)
+    weak = _pairs_for_blocks(0.049)
+    weak_summary = pilot.summarize_manipulation_by_block(weak)
     check("weak floor labels weak", weak_summary["MANIPULATION_STRENGTH"] == "WEAK", weak_summary)
-    topic = [dict(row) for row in pairs]
-    topic[0]["topic_relevance_abs_diff"] = 0.2
-    topic[1]["topic_relevance_abs_diff"] = 0.2
-    topic_summary = pilot.summarize_manipulation_pairs(topic)
+    floor = _pairs_for_blocks(0.050)
+    floor_summary = pilot.summarize_manipulation_by_block(floor)
+    check("floor equals 0.050 passes", floor_summary["MANIPULATION_STRENGTH"] == "PASS", floor_summary)
+    failing_block = _pairs_for_blocks(0.06)
+    for row in failing_block:
+        if row["replicate_id"] == "R002":
+            row["D_arousal"] = -0.01
+    failing_summary = pilot.summarize_manipulation_by_block(failing_block)
+    check("R002 one dimension negative fails direction gate", failing_summary["all_blocks_direction_pass"] is False, failing_summary)
+    topic = _pairs_for_blocks(0.06)
+    for row in topic:
+        row["rational_topic_relevance"] = 0.901
+        row["empathy_topic_relevance"] = 0.800
+    topic_summary = pilot.summarize_manipulation_by_block(topic)
     check("topic relevance warning", topic_summary["topic_relevance_warning"] == "TOPIC_RELEVANCE_IMBALANCE")
+    check("topic uses group mean difference", abs(topic_summary["topic_relevance_group_mean_abs_diff"] - 0.101) < 1e-12, topic_summary)
+    check("hypocrisy rates reported", "rational_hypocrisy_perceived_rate" in topic_summary and "empathy_hypocrisy_perceived_rate" in topic_summary)
     check("fallback zero pass", pilot.fallback_counts_pass([{"semantic_fallback_used": 0, "plan_fallback_used": 0, "json_parse_failure": 0}]))
     check("fallback nonzero fail", not pilot.fallback_counts_pass([{"semantic_fallback_used": 1, "plan_fallback_used": 0, "json_parse_failure": 0}]))
+
+
+def _pairs_for_blocks(value: float) -> list[dict]:
+    rows = []
+    for replicate_id in ("R001", "R002"):
+        for index in range(2):
+            rows.append(
+                {
+                    "replicate_id": replicate_id,
+                    "agent_id": f"A{index + 1}",
+                    "D_evidence": value,
+                    "D_credibility": value,
+                    "D_valence": value,
+                    "D_arousal": value,
+                    "rational_topic_relevance": 0.82,
+                    "empathy_topic_relevance": 0.80,
+                    "rational_hypocrisy_perceived": index == 0,
+                    "empathy_hypocrisy_perceived": True,
+                }
+            )
+    return rows
 
 
 def test_credential_preflight_and_real_rejection() -> None:
@@ -215,6 +251,43 @@ def test_cli_modes() -> None:
     check("cli offline-test passes", proc.returncode == 0, proc.stdout + proc.stderr)
 
 
+def test_network_tripwire_offline_test() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        sitecustomize = Path(tmp) / "sitecustomize.py"
+        sitecustomize.write_text(
+            textwrap.dedent(
+                """
+                import socket
+
+                def _forbidden(*args, **kwargs):
+                    raise RuntimeError("NETWORK_FORBIDDEN_TEST")
+
+                socket.create_connection = _forbidden
+                _orig_socket = socket.socket
+
+                class _GuardedSocket(_orig_socket):
+                    def connect(self, *args, **kwargs):
+                        raise RuntimeError("NETWORK_FORBIDDEN_TEST")
+
+                socket.socket = _GuardedSocket
+                """
+            ),
+            encoding="utf-8",
+        )
+        env = dict(os.environ)
+        existing = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = str(sitecustomize.parent) + (os.pathsep + existing if existing else "")
+        env.pop("HF_HUB_OFFLINE", None)
+        env.pop("TRANSFORMERS_OFFLINE", None)
+        env.pop("HF_DATASETS_OFFLINE", None)
+        env["TOKENIZERS_PARALLELISM"] = "true"
+        cmd = [sys.executable, "-X", "utf8", "run_task005_real_manipulation_pilot_v1.py", "--offline-test"]
+        proc = subprocess.run(cmd, cwd=ROOT, env=env, text=True, capture_output=True, timeout=60)
+        combined = proc.stdout + proc.stderr
+        check("NETWORK_TRIPWIRE_OFFLINE_TEST exit 0", proc.returncode == 0, combined)
+        check("NETWORK_TRIPWIRE_OFFLINE_TEST not triggered", "NETWORK_FORBIDDEN_TEST" not in combined, combined)
+
+
 def main() -> int:
     test_identity_and_seed_ledger()
     test_conditions_from_matrix_and_record_replay()
@@ -224,6 +297,7 @@ def main() -> int:
     test_dry_run_artifacts_are_sanitized()
     test_no_pvalue_imports_or_formal_reuse()
     test_cli_modes()
+    test_network_tripwire_offline_test()
     print(f"Passed: {P}")
     print(f"Failed: {F}")
     return 1 if F else 0

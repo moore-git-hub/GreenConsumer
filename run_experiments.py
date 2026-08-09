@@ -54,6 +54,8 @@ from simulation_core import (
     ENTERPRISE_STRATEGY,
     AGENT_RECORDS_FIELDS,
     AGENT_RECORDS_SCHEMA_VERSION,
+    MECHANISM_RECORDS_FIELDS,
+    MECHANISM_RECORDS_SCHEMA_VERSION,
 )
 from metrics_calculator import (
     METRICS_SCHEMA_VERSION,
@@ -529,6 +531,22 @@ def write_agent_records_csv(results: list, output_path: str):
                 writer.writerow(rec)
 
 
+def write_mechanism_records_csv(results: list, output_path: str):
+    """Persist mechanism-v2 audit rows without changing agent_records.csv."""
+    fieldnames = list(MECHANISM_RECORDS_FIELDS)
+    duplicates = sorted({n for n in fieldnames if fieldnames.count(n) > 1})
+    assert len(fieldnames) == len(set(fieldnames)), \
+        f"mechanism_records schema 存在重复字段: {duplicates}"
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames, restval="", extrasaction="raise")
+        writer.writeheader()
+        for r in results:
+            if "error" in r or "mechanism_records" not in r:
+                continue
+            for rec in r["mechanism_records"]:
+                writer.writerow(rec)
+
+
 CLARIFICATION_EXPOSURE_FIELDS = [
     "exp_id", "agent_id", "public_organic", "paid_seed",
     "paid_one_hop", "reached", "exposure_modes",
@@ -997,6 +1015,9 @@ def write_run_metadata_json(results: list, output_path: str, project_root: str,
         "agent_records_schema_version": AGENT_RECORDS_SCHEMA_VERSION,
         "agent_records_field_count": len(AGENT_RECORDS_FIELDS),
         "agent_records_fields": list(AGENT_RECORDS_FIELDS),
+        "mechanism_records_schema_version": MECHANISM_RECORDS_SCHEMA_VERSION,
+        "mechanism_records_field_count": len(MECHANISM_RECORDS_FIELDS),
+        "mechanism_records_fields": list(MECHANISM_RECORDS_FIELDS),
         "run_id": run_id,
         "generated_at": datetime.datetime.now().isoformat(timespec="seconds"),
         "project_root": project_root,
@@ -1130,6 +1151,7 @@ LATEST_MANAGED_TARGETS = (
     "ranking_robustness.csv",
     "trajectories.csv",
     "agent_records.csv",
+    "mechanism_records.csv",
     "target_nodes.csv",
     "network_nodes.csv",
     "network_edges.csv",
@@ -1778,6 +1800,13 @@ async def main(args=None):
         print(f"agent_records: {agent_records_path}")
     except Exception as e:
         _record_postprocess_error("write agent_records.csv", e)
+
+    mechanism_records_path = os.path.join(run_dir, "mechanism_records.csv")
+    try:
+        write_mechanism_records_csv(results, mechanism_records_path)
+        print(f"mechanism_records: {mechanism_records_path}")
+    except Exception as e:
+        _record_postprocess_error("write mechanism_records.csv", e)
 
     clarification_exposure_path = os.path.join(
         run_dir, "clarification_exposure.csv"

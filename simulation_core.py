@@ -184,6 +184,34 @@ assert len(AGENT_RECORDS_FIELDS) == len(set(AGENT_RECORDS_FIELDS)), \
     "agent_records schema v2.0 存在重复字段"
 
 
+MECHANISM_RECORDS_SCHEMA_VERSION = "1.0"
+MECHANISM_RECORDS_FIELDS = [
+    "schema_version",
+    "exp_id", "tick", "agent_id",
+    "content_factor", "channel_factor", "timing_factor", "clarification_tick_config",
+    "semantic_observation_present", "semantic_social_observation_count",
+    "semantic_valence", "semantic_arousal", "semantic_credibility",
+    "semantic_evidence_strength", "semantic_topic_relevance",
+    "semantic_hypocrisy_perceived",
+    "semantic_fallback_used", "reflect_primary_source",
+    "previous_trust", "baseline_trust", "trust_before_signal",
+    "affective_change", "trust_final",
+    "attitude_att", "subjective_norm_sn", "pbc",
+    "emotion_valence", "emotion_arousal",
+    "crisis_memory_before", "repair_memory_before",
+    "crisis_memory", "repair_memory",
+    "purchase_intention", "posting_intention",
+    "buy_probability", "post_probability",
+    "buy_draw", "post_draw",
+    "is_buying", "is_posting",
+    "plan_fallback_used",
+    "clarification_detected_by_plan", "clarification_content_type",
+]
+
+assert len(MECHANISM_RECORDS_FIELDS) == len(set(MECHANISM_RECORDS_FIELDS)), \
+    "mechanism_records schema v1.0 存在重复字段"
+
+
 def _audit_float(value, digits: int = 12):
     """审计浮点：保留 12 位小数，用于事后高精度复算。
 
@@ -459,6 +487,74 @@ def build_agent_record(*, config, tick, agent_id, cluster_type, social_role,
     return record
 
 
+def build_mechanism_record(*, config, tick, agent_id, s_data, plan, thought) -> dict:
+    """Persist mechanism-v2 values actually present in this Agent/Tick snapshot.
+
+    This is reporting-only audit data. Values come from Reflect state and the
+    Plan-layer plan_result; this function must not recompute mechanism equations.
+    """
+    latest_thought = thought if isinstance(thought, dict) else {}
+    clr_tick = config.clarification_tick if config.clarification_tick is not None else ""
+    record = {
+        "schema_version": MECHANISM_RECORDS_SCHEMA_VERSION,
+        "exp_id": config.exp_id,
+        "tick": tick,
+        "agent_id": agent_id,
+        "content_factor": config.content_factor,
+        "channel_factor": config.channel_factor,
+        "timing_factor": config.timing_factor,
+        "clarification_tick_config": clr_tick,
+        "semantic_observation_present": bool(s_data.get("semantic_observation_present", False)),
+        "semantic_social_observation_count": int(
+            s_data.get("semantic_social_observation_count", 0)
+        ),
+        "semantic_valence": _audit_float(s_data.get("semantic_valence", "")),
+        "semantic_arousal": _audit_float(s_data.get("semantic_arousal", "")),
+        "semantic_credibility": _audit_float(s_data.get("semantic_credibility", "")),
+        "semantic_evidence_strength": _audit_float(
+            s_data.get("semantic_evidence_strength", "")
+        ),
+        "semantic_topic_relevance": _audit_float(
+            s_data.get("semantic_topic_relevance", "")
+        ),
+        "semantic_hypocrisy_perceived": bool(
+            s_data.get("semantic_hypocrisy_perceived", False)
+        ),
+        "semantic_fallback_used": bool(latest_thought.get("semantic_fallback_used", False)),
+        "reflect_primary_source": str(s_data.get("reflect_primary_source", "")),
+        "previous_trust": _audit_float(plan.get("previous_trust_raw", "")),
+        "baseline_trust": _audit_float(plan.get("baseline_trust_raw", "")),
+        "trust_before_signal": _audit_float(plan.get("trust_after_decay_raw", "")),
+        "affective_change": _audit_float(plan.get("affective_change_raw", "")),
+        "trust_final": _audit_float(plan.get("trust_score_raw", "")),
+        "attitude_att": _audit_float(plan.get("attitude_att", "")),
+        "subjective_norm_sn": _audit_float(plan.get("subjective_norm_sn", "")),
+        "pbc": _audit_float(plan.get("pbc", "")),
+        "emotion_valence": _audit_float(plan.get("emotion_valence", "")),
+        "emotion_arousal": _audit_float(plan.get("emotion_arousal", "")),
+        "crisis_memory_before": _audit_float(plan.get("crisis_memory_before", "")),
+        "repair_memory_before": _audit_float(plan.get("repair_memory_before", "")),
+        "crisis_memory": _audit_float(plan.get("crisis_memory", "")),
+        "repair_memory": _audit_float(plan.get("repair_memory", "")),
+        "purchase_intention": _audit_float(plan.get("purchase_intention", "")),
+        "posting_intention": _audit_float(plan.get("posting_intention", "")),
+        "buy_probability": _audit_float(plan.get("buy_probability", "")),
+        "post_probability": _audit_float(plan.get("post_probability", "")),
+        "buy_draw": _audit_float(plan.get("buy_draw", "")),
+        "post_draw": _audit_float(plan.get("post_draw", "")),
+        "is_buying": bool(plan.get("is_buying", False)),
+        "is_posting": bool(plan.get("is_posting", False)),
+        "plan_fallback_used": bool(plan.get("plan_fallback_used", False)),
+        "clarification_detected_by_plan": bool(
+            plan.get("clarification_detected_by_plan", False)
+        ),
+        "clarification_content_type": str(plan.get("clarification_content_type", "")),
+    }
+    assert set(record.keys()) == set(MECHANISM_RECORDS_FIELDS), \
+        "mechanism_records 记录字段与 schema v1.0 不一致"
+    return record
+
+
 def _generate_profiles_inline(num_agents: int, seed: int) -> list:
     """
     内联生成 Agent profiles（不写文件）。
@@ -709,6 +805,7 @@ async def run_simulation_core(config: ExperimentConfig, override_router=None) ->
     cumulative_buyers = set()
     # 逐 Agent 逐 Tick 详细记录（供后续分析使用）
     agent_records = []    # List[dict]，每条一个 Agent 在一个 Tick 的完整快照
+    mechanism_records = [] # List[dict]，每条一个 Agent 在一个 Tick 的 mechanism-v2 快照
     tick_post_counts = [] # 每 Tick 发帖总数（用于社交活跃度分析）
     tick_buy_counts  = [] # 每 Tick 新增购买数
 
@@ -811,6 +908,14 @@ async def run_simulation_core(config: ExperimentConfig, override_router=None) ->
                 clarification_injected=(ag.agent_id in clarification_injected_ids),
                 cumulative_buyers_count=len(cumulative_buyers),
             ))
+            mechanism_records.append(build_mechanism_record(
+                config=config,
+                tick=tick,
+                agent_id=ag.agent_id,
+                s_data=s_data,
+                plan=plan,
+                thought=thought,
+            ))
 
         # 回填本 Tick 汇总列（必须等本 Tick 所有 Agent 结算完毕才可知）
         if agents:
@@ -872,6 +977,8 @@ async def run_simulation_core(config: ExperimentConfig, override_router=None) ->
         "trust_trajectory": trust_trajectory,
         "conversion_trajectory": conversion_trajectory,
         "agent_records": agent_records,       # 逐 Agent 逐 Tick 详细数据
+        "mechanism_records": mechanism_records,
+        "mechanism_records_schema_version": MECHANISM_RECORDS_SCHEMA_VERSION,
         "tick_post_counts": tick_post_counts, # 每 Tick 发帖数
         "tick_buy_counts":  tick_buy_counts,  # 每 Tick 新增购买数
         "agent_records_schema_version": AGENT_RECORDS_SCHEMA_VERSION,

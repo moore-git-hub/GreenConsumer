@@ -353,6 +353,62 @@ def write_seed_ledger_csv(
                 pass
 
 
+def write_seed_ledger_subset_csv(
+    full_ledger,
+    replicate_ids,
+    output_path,
+) -> None:
+    """Write selected rows from a validated full seed ledger as UTF-8 CSV.
+
+    The selected rows are block-local evidence, not a complete ledger, so this
+    function deliberately validates only the full ledger and never calls
+    validate_seed_ledger on the subset.
+    """
+    validated_full = validate_seed_ledger(full_ledger)
+    if not isinstance(replicate_ids, (list, tuple)):
+        raise ValueError("replicate_ids must be a non-empty list or tuple")
+    if not replicate_ids:
+        raise ValueError("replicate_ids must be non-empty")
+    if not all(isinstance(rid, str) and rid for rid in replicate_ids):
+        raise ValueError("replicate_ids must contain non-empty strings")
+    if len(set(replicate_ids)) != len(replicate_ids):
+        raise ValueError("replicate_ids must be unique")
+
+    by_id = {row["replicate_id"]: row for row in validated_full}
+    missing = [rid for rid in replicate_ids if rid not in by_id]
+    if missing:
+        raise ValueError("replicate_id not present in full ledger")
+
+    selected = [by_id[rid] for rid in replicate_ids]
+    path = Path(output_path)
+    parent = path.parent if path.parent != Path("") else Path(".")
+    tmp_path: str | None = None
+    try:
+        parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp_path = tempfile.mkstemp(
+            prefix=f".{path.name}.", suffix=".tmp", dir=str(parent)
+        )
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=list(LEDGER_FIELDS))
+            writer.writeheader()
+            for row in selected:
+                out = {field: row[field] for field in LEDGER_FIELDS}
+                out["execution_order"] = json.dumps(
+                    list(row["execution_order"]),
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                )
+                writer.writerow(out)
+        os.replace(tmp_path, path)
+        tmp_path = None
+    finally:
+        if tmp_path is not None:
+            try:
+                os.remove(tmp_path)
+            except FileNotFoundError:
+                pass
+
+
 def read_seed_ledger_csv(
     input_path,
 ) -> list[dict]:

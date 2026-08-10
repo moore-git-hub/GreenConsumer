@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import asyncio
 import json
 import os
 import shutil
@@ -111,9 +112,11 @@ def _assert_block_pass(root: Path, rid: str) -> dict:
     exposure = rows(block / "clarification_exposure.csv")
     check(f"{rid} true production path", summary["TRUE_PRODUCTION_PATH"] is True, summary)
     check(f"{rid} run_with_patch used", summary["PRODUCTION_RUN_WITH_PATCH_USED"] is True, summary)
+    check(f"{rid} block seed injection", summary["BLOCK_SEED_INJECTION"] == "PASS", summary)
+    check(f"{rid} condition seed singleton", summary["condition_random_seed_set"] == [summary["ledger_simulation_seed"]], summary)
     check(f"{rid} mechanism 5400", len(mech) == 5400, len(mech))
-    check(f"{rid} call count equals audit", summary["audited_router_calls"] == len(calls), summary)
-    check(f"{rid} fake inner equals audit", summary["fake_inner_chat_calls"] == len(calls), summary)
+    check(f"{rid} model count equals audit", summary["MODEL_CALLS"] == len(calls), summary)
+    check(f"{rid} fake inner equals audit", summary["FAKE_MODEL_CALLS"] == len(calls), summary)
     check(f"{rid} real calls zero", summary["REAL_LLM_CALLS"] == 0, summary)
     check(f"{rid} replay misses zero", summary["replay_miss_count"] == 0, summary)
     check(f"{rid} agent gate", summary["agent_key_integrity"] == "PASS", summary)
@@ -146,12 +149,23 @@ def test_true_production_path_fake_acceptance() -> None:
         check("true production path flag", result["TRUE_PRODUCTION_PATH"] is True, result)
         check("production run_with_patch flag", result["PRODUCTION_RUN_WITH_PATCH_USED"] is True, result)
         check("fake two blocks", result["blocks"] == 2, result)
+        check("batch block seed injection", result["BLOCK_SEED_INJECTION"] == "PASS", result)
         check("fake real calls zero", result["REAL_LLM_CALLS"] == 0, result)
         check("fake call audit equality", result["fake_call_audit_equal"] is True, result)
         s1 = _assert_block_pass(root, "R001")
         s2 = _assert_block_pass(root, "R002")
-        check("R001 fake calls positive", s1["fake_inner_chat_calls"] > 0, s1)
-        check("R002 fake calls positive", s2["fake_inner_chat_calls"] > 0, s2)
+        check("R001 fake calls positive", s1["FAKE_MODEL_CALLS"] > 0, s1)
+        check("R002 fake calls positive", s2["FAKE_MODEL_CALLS"] > 0, s2)
+        ledger = v2.build_pilot_seed_ledger()
+        r001 = ledger[0]["simulation_seed"]
+        r002 = ledger[1]["simulation_seed"]
+        check("R001 R002 ledger seeds differ", r001 != r002, (r001, r002))
+        check("R001 seed exact", s1["ledger_simulation_seed"] == r001, s1)
+        check("R002 seed exact", s2["ledger_simulation_seed"] == r002, s2)
+        manifest1 = json.loads((root / "R001" / "condition_manifest.json").read_text(encoding="utf-8"))
+        manifest2 = json.loads((root / "R002" / "condition_manifest.json").read_text(encoding="utf-8"))
+        check("R001 manifest seeds exact", {row["random_seed"] for row in manifest1} == {r001}, manifest1)
+        check("R002 manifest seeds exact", {row["random_seed"] for row in manifest2} == {r002}, manifest2)
 
         bad = root / "R001" / "mechanism_records.csv"
         mech = rows(bad)
@@ -197,6 +211,124 @@ def test_true_production_path_fake_acceptance() -> None:
         exposure[-1] = dict(exposure[0])
         write_rows(path, exposure)
         expect_error("strategy duplicate exposure fails", lambda: v2.validate_block_gates(root / "R001", "R001"))
+
+
+def test_block_seed_and_audit_negative_cases() -> None:
+    with tempfile.TemporaryDirectory(prefix="task005_v2_seedneg_") as tmp:
+        root = Path(tmp)
+        v2.run_production_path_fake_acceptance(root)
+        block = root / "R002"
+        manifest = json.loads((block / "condition_manifest.json").read_text(encoding="utf-8"))
+        manifest[0]["random_seed"] = 42
+        (block / "condition_manifest.json").write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
+        summary = json.loads((block / "block_execution_summary.json").read_text(encoding="utf-8"))
+        check("R002 condition seed 42 detectable", {row["random_seed"] for row in manifest} != {summary["ledger_simulation_seed"]}, manifest)
+        expect_error("R002 condition seed 42 fails gate", lambda: v2.validate_block_gates(block, "R002"))
+        manifest[0]["random_seed"] = summary["ledger_simulation_seed"] + 1
+        (block / "condition_manifest.json").write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
+        expect_error("condition seed != ledger fails gate", lambda: v2.validate_block_gates(block, "R002"))
+
+    with tempfile.TemporaryDirectory(prefix="task005_v2_auditneg_") as tmp:
+        root = Path(tmp)
+        v2.run_production_path_fake_acceptance(root)
+        block = root / "R001"
+        summary = json.loads((block / "block_execution_summary.json").read_text(encoding="utf-8"))
+        summary["REAL_LLM_CALLS"] = 0
+        summary["execution_mode"] = "real"
+        check("real-mode hardcoded zero detectable", summary["REAL_LLM_CALLS"] != summary["MODEL_CALLS"], summary)
+
+        path = block / "pilot_llm_calls.jsonl"
+        audit = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        audit.pop()
+        path.write_text("\n".join(json.dumps(row, sort_keys=True) for row in audit) + "\n", encoding="utf-8")
+        expect_error("audit rows not equal model calls fails", lambda: v2.validate_block_gates(block, "R001"))
+
+    for field, value, label in (
+        ("semantic_schema_ok", "", "semantic_schema_ok empty fails"),
+        ("response_parse_ok", False, "semantic response_parse false fails"),
+        ("prompt_category", "unknown", "unknown prompt category fails"),
+    ):
+        with tempfile.TemporaryDirectory(prefix="task005_v2_semneg_") as tmp:
+            root = Path(tmp)
+            v2.run_production_path_fake_acceptance(root)
+            block = root / "R001"
+            path = block / "pilot_llm_calls.jsonl"
+            audit = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+            audit[0][field] = value
+            path.write_text("\n".join(json.dumps(row, sort_keys=True) for row in audit) + "\n", encoding="utf-8")
+            expect_error(label, lambda b=block: v2.validate_block_gates(b, "R001"))
+
+
+def test_failure_lifecycle_and_resume() -> None:
+    class CloseFailRouter(v2.DeterministicFakeInnerRouter):
+        def __init__(self):
+            super().__init__()
+            self._task005_router_close_noop = False
+
+        async def close(self):
+            raise RuntimeError("close failed with SECRET_TOKEN")
+
+    with tempfile.TemporaryDirectory(prefix="task005_v2_closefail_") as tmp:
+        root = Path(tmp)
+        ledger = v2.build_pilot_seed_ledger()[0]
+        summary = asyncio.run(v2.execute_variance_block(
+            root / "R001",
+            ledger,
+            inner_router=CloseFailRouter(),
+            execution_mode="offline-fake",
+        ))
+        disk = json.loads((root / "R001" / "block_execution_summary.json").read_text(encoding="utf-8"))
+        check("router close failure incomplete return", summary["status"] == "INCOMPLETE", summary)
+        check("router close failure incomplete disk", disk["failure_stage"] == "router-close", disk)
+        check("router close failure sanitized", "SECRET" not in json.dumps(disk), disk)
+
+    with tempfile.TemporaryDirectory(prefix="task005_v2_continue_") as tmp:
+        root = Path(tmp)
+        ledger = v2.build_pilot_seed_ledger()[:2]
+        calls = []
+        def factory(row):
+            calls.append(row["replicate_id"])
+            if row["replicate_id"] == "R001":
+                raise RuntimeError("factory fail")
+            return v2.DeterministicFakeInnerRouter()
+        result = v2._run_variance_blocks(root, ledger, execution_mode="offline-fake", inner_router_factory=factory)
+        check("one block fails pilot incomplete", result["status"] == "INCOMPLETE", result)
+        check("batch continues next block", calls == ["R001", "R002"], calls)
+        check("future block passes after prior failure", result["block_summaries"][1]["status"] == "PASS", result)
+
+    with tempfile.TemporaryDirectory(prefix="task005_v2_resume_") as tmp:
+        root = Path(tmp)
+        result1 = v2.run_production_path_fake_acceptance(root)
+        before = (root / "R001" / "block_execution_summary.json").read_text(encoding="utf-8")
+        result2 = v2.run_production_path_fake_acceptance(root)
+        after = (root / "R001" / "block_execution_summary.json").read_text(encoding="utf-8")
+        check("marker existing block never reruns", before == after, (result1["status"], result2["status"]))
+        lifecycle = (root / "R002" / "replicate_lifecycle.jsonl").read_text(encoding="utf-8").splitlines()
+        check("lifecycle append-only events present", len(lifecycle) >= 18 and any("BLOCK_PASS" in line for line in lifecycle), len(lifecycle))
+
+
+def test_real_execution_surface_locked() -> None:
+    with tempfile.TemporaryDirectory(prefix="task005_v2_reallock_") as tmp:
+        root = Path(tmp)
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "run_task005_real_variance_pilot_v2.py"),
+                "--execute-real",
+                "--activation-token",
+                "anything",
+                "--output-dir",
+                str(root / "out"),
+            ],
+            cwd=ROOT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+        )
+        check("execute-real locked exit", proc.returncode == 2, proc.stdout)
+        check("execute-real creates no output", not (root / "out").exists(), list(root.iterdir()))
+        expect_error("future real batch locked", lambda: v2.run_future_real_variance_batch(root / "real", activation_token=None))
 
 
 def test_fail_closed_schema_import() -> None:
@@ -303,6 +435,9 @@ def main() -> int:
     test_strict_semantic_validator()
     test_synthetic_fixture_not_production_gate()
     test_true_production_path_fake_acceptance()
+    test_block_seed_and_audit_negative_cases()
+    test_failure_lifecycle_and_resume()
+    test_real_execution_surface_locked()
     test_fail_closed_schema_import()
     test_network_tripwire()
     test_secret_scan()

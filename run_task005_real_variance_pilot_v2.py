@@ -10,12 +10,15 @@ from __future__ import annotations
 import argparse
 import asyncio
 import csv
+import dataclasses
+import datetime
 import hashlib
 import json
 import math
 import os
 import shutil
 import statistics
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -27,13 +30,15 @@ os.environ["HF_DATASETS_OFFLINE"] = "1"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-if __name__ == "__main__" and "--execute-real" in os.sys.argv[1:]:
+if __name__ == "__main__" and "--execute-real" in sys.argv[1:]:
     print("VARIANCE_V2_REAL_EXECUTION_NOT_AUTHORIZED")
     raise SystemExit(2)
 
 from replication_config import EXECUTION_ORDER, build_seed_ledger, write_seed_ledger_subset_csv
 import run_task005_real_variance_pilot_v1 as v1
 from run_experiments import (
+    _build_real_router,
+    _close_router_resource,
     _run_with_patch,
     write_agent_records_csv,
     write_clarification_exposure_csv,
@@ -73,6 +78,29 @@ OUTPUT_FILES = (
     "block_estimands.csv",
     "block_execution_summary.json",
 )
+ALLOWED_PROMPT_CATEGORIES = {"semantic"}
+PROFILE_IDENTITY_FIELDS = ("agent_id", "cluster_type", "social_role", "baseline_trust")
+SOURCE_FREEZE_FILES = (
+    "mechanism_v2.py",
+    "plugins/agent/plan/ConsumerPlanPlugin.py",
+    "plugins/agent/reflect/GreenCognitionPlugin.py",
+    "simulation_core.py",
+    "clarification_injector.py",
+    "experiment_config.py",
+    "replication_config.py",
+    "run_experiments.py",
+    "task005_audited_llm_router.py",
+    "run_task005_real_variance_pilot_v2.py",
+    "configs/models_config.yaml",
+    ".kiro/specs/task005-replication-inference/task005_estimand_contract1.0.json",
+    ".kiro/specs/task005-replication-inference/task005_estimand_contract_amendment1.1.json",
+    ".kiro/specs/task005-replication-inference/real_llm_variance_pilot_v2_contract1.0.json",
+    ".kiro/specs/task005-replication-inference/empathy_relational_repair_amendment1.0.json",
+    ".kiro/specs/task005-replication-inference/mechanism_auditability_schema_amendment1.2.json",
+    ".kiro/specs/task005-replication-inference/manipulation_stage_closure1.0.json",
+    ".kiro/specs/task005-replication-inference/task005_active_regression_gate_manifest1.0.json",
+    ".kiro/specs/task005-replication-inference/variance_v2_profile_identity_contract1.0.json",
+)
 
 
 class VarianceV2Error(RuntimeError):
@@ -97,6 +125,34 @@ def select_variance_conditions():
     if tuple(cfg.exp_id for cfg in configs) != tuple(EXECUTION_ORDER):
         raise VarianceV2Error("condition order mismatch")
     return configs
+
+
+def select_variance_conditions_for_block(ledger_row: Mapping):
+    base = select_variance_conditions()
+    simulation_seed = int(ledger_row["simulation_seed"])
+    configs = [dataclasses.replace(cfg, random_seed=simulation_seed) for cfg in base]
+    if len(configs) != v1.CONDITIONS_PER_BLOCK:
+        raise VarianceV2Error("block must contain exactly 9 conditions")
+    if tuple(cfg.exp_id for cfg in configs) != tuple(EXECUTION_ORDER):
+        raise VarianceV2Error("block condition order mismatch")
+    if {cfg.random_seed for cfg in configs} != {simulation_seed}:
+        raise VarianceV2Error("block condition seeds must equal ledger simulation_seed")
+    return configs
+
+
+def current_source_hashes() -> dict[str, str]:
+    hashes = {}
+    for rel in SOURCE_FREEZE_FILES:
+        path = Path(rel)
+        if not path.exists():
+            raise VarianceV2Error(f"source freeze file missing: {rel}")
+        hashes[rel] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return hashes
+
+
+def _source_freeze_digest() -> str:
+    blob = json.dumps(current_source_hashes(), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
 def _write_csv(path: Path, rows: list[Mapping], fieldnames: list[str]) -> None:
@@ -196,8 +252,7 @@ def _profile_hash_from_result(result: Mapping) -> str:
     tick1 = [row for row in records if int(row.get("tick", 0)) == 1]
     if len(tick1) != v1.AGENT_COUNT:
         raise VarianceV2Error(f"{result.get('exp_id')} missing initialized profile audit rows")
-    fields = ("agent_id", "cluster_type", "social_role", "baseline_trust")
-    return _canonical_hash(tick1, fields)
+    return _canonical_hash(tick1, PROFILE_IDENTITY_FIELDS)
 
 
 def _identity_json_hash(path: Path, identity_key: str) -> str:
@@ -258,12 +313,81 @@ def _assert_production_pretreatment_alignment(mechanism_rows: list[Mapping]) -> 
     return "PASS"
 
 
-def validate_block_gates(block_dir: Path, replicate_id: str) -> dict:
+def _as_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str) and value in {"True", "False"}:
+        return value == "True"
+    raise VarianceV2Error(f"invalid audit boolean {value!r}")
+
+
+def _validate_audit_rows(call_rows: list[Mapping], replicate_id: str, ledger_row: Mapping) -> dict:
+    if not call_rows:
+        raise VarianceV2Error("AUDIT_LOG_ROWS must be > 0")
+    condition_set = set(EXECUTION_ORDER)
+    seen = set()
+    categories: dict[str, int] = {}
+    for index, row in enumerate(call_rows, start=1):
+        if row.get("pilot_id") != PILOT_ID:
+            raise VarianceV2Error("audit row pilot_id mismatch")
+        if row.get("replicate_id") != replicate_id:
+            raise VarianceV2Error("audit row replicate_id mismatch")
+        if int(row.get("call_index", 0)) != index or index in seen:
+            raise VarianceV2Error("audit call_index must be contiguous 1..N")
+        seen.add(index)
+        if row.get("condition") not in condition_set:
+            raise VarianceV2Error("audit row condition outside matrix")
+        tick = int(row.get("tick", 0))
+        if tick < 1 or tick > v1.TOTAL_TICKS:
+            raise VarianceV2Error("audit row tick out of range")
+        for field in ("prompt_sha256", "response_sha256"):
+            value = str(row.get(field, ""))
+            if len(value) != 64 or any(ch not in "0123456789abcdef" for ch in value.lower()):
+                raise VarianceV2Error(f"audit {field} must be 64 hex")
+        if row.get("model") != MODEL:
+            raise VarianceV2Error("audit model mismatch")
+        if abs(float(row.get("temperature")) - TEMPERATURE) > 1e-12:
+            raise VarianceV2Error("audit temperature mismatch")
+        if int(row.get("requested_llm_seed")) != int(ledger_row["requested_llm_seed"]):
+            raise VarianceV2Error("audit requested_llm_seed mismatch")
+        category = str(row.get("prompt_category"))
+        categories[category] = categories.get(category, 0) + 1
+        if category not in ALLOWED_PROMPT_CATEGORIES:
+            raise VarianceV2Error("audit prompt category is not allowed")
+        if category == "semantic":
+            if not _as_bool(row.get("response_parse_ok")):
+                raise VarianceV2Error("semantic audit response_parse_ok must be true")
+            if not _as_bool(row.get("semantic_schema_ok")):
+                raise VarianceV2Error("semantic audit semantic_schema_ok must be true")
+            if str(row.get("validation_error_type", "")):
+                raise VarianceV2Error("semantic audit validation_error_type must be empty")
+            if str(row.get("error_type", "")):
+                raise VarianceV2Error("semantic audit error_type must be empty")
+    return categories
+
+
+def validate_block_gates(block_dir: Path, replicate_id: str, ledger_row: Mapping | None = None) -> dict:
     mechanism_rows = v1._read_csv_dicts(block_dir / "mechanism_records.csv")
     exposure_rows = v1._read_csv_dicts(block_dir / "clarification_exposure.csv")
     call_rows = _read_jsonl(block_dir / "pilot_llm_calls.jsonl")
     if not call_rows and (block_dir / "pilot_llm_calls.csv").exists():
         call_rows = v1._read_csv_dicts(block_dir / "pilot_llm_calls.csv")
+    if ledger_row is None:
+        ledger_row = next(row for row in build_pilot_seed_ledger() if row["replicate_id"] == replicate_id)
+    manifest = json.loads((block_dir / "condition_manifest.json").read_text(encoding="utf-8"))
+    manifest_seed_set = {int(row.get("random_seed")) for row in manifest}
+    if len(manifest) != v1.CONDITIONS_PER_BLOCK:
+        raise VarianceV2Error("condition_manifest must contain 9 rows")
+    if tuple(row.get("exp_id") for row in manifest) != tuple(EXECUTION_ORDER):
+        raise VarianceV2Error("condition_manifest order mismatch")
+    if manifest_seed_set != {int(ledger_row["simulation_seed"])}:
+        raise VarianceV2Error("condition_manifest random_seed must equal ledger simulation_seed")
+    categories = _validate_audit_rows(call_rows, replicate_id, ledger_row)
+    summary_path = block_dir / "block_execution_summary.json"
+    if summary_path.exists():
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        if summary.get("status") == "PASS" and int(summary.get("MODEL_CALLS", -1)) != len(call_rows):
+            raise VarianceV2Error("MODEL_CALLS must equal AUDIT_LOG_ROWS")
 
     condition_metrics = [
         v1.compute_condition_metrics(
@@ -295,12 +419,6 @@ def validate_block_gates(block_dir: Path, replicate_id: str) -> dict:
     _assert_identity_file(block_dir, "profile_identity.json", "profile_hash")
     pretreatment = _assert_production_pretreatment_alignment(mechanism_rows)
     estimands = v1.build_block_estimands(replicate_id, condition_metrics)
-    raw_ok = all(
-        row.get("semantic_schema_ok") in (True, "True", "")
-        for row in call_rows
-    )
-    if not raw_ok:
-        raise VarianceV2Error("raw semantic validation failed")
     return {
         "agent_key_integrity": "PASS",
         "exposure_key_integrity": "PASS",
@@ -310,6 +428,7 @@ def validate_block_gates(block_dir: Path, replicate_id: str) -> dict:
         "raw_semantic_validation": "PASS",
         "real_llm_calls": 0,
         "audit_log_rows": len(call_rows),
+        "prompt_category_distribution": categories,
         "condition_metrics": condition_metrics,
         "block_estimands": estimands,
     }
@@ -374,138 +493,281 @@ def _write_block_csv_outputs(block_dir: Path, results: list[dict]) -> None:
     write_trajectories_csv(results, str(block_dir / "trajectories.csv"))
 
 
-async def execute_variance_block(block_dir: Path, ledger_row: Mapping, *, inner_router) -> dict:
-    replicate_id = str(ledger_row["replicate_id"])
-    configs = select_variance_conditions()
-    block_dir.mkdir(parents=True, exist_ok=True)
-    _write_json(block_dir / "attempt_marker.json", {
+def _append_lifecycle(block_dir: Path, event: str, **fields) -> None:
+    path = block_dir / "replicate_lifecycle.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "event": event,
+        "time": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        **fields,
+    }
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(payload, sort_keys=True, ensure_ascii=False) + "\n")
+
+
+def _attempt_marker_payload(ledger_row: Mapping) -> dict:
+    return {
         "pilot_id": PILOT_ID,
-        "replicate_id": replicate_id,
+        "replicate_id": ledger_row["replicate_id"],
         "attempt_count": 1,
-        "created_at_ms": int(time.time() * 1000),
-    })
-    _write_jsonl(block_dir / "replicate_lifecycle.jsonl", [{
-        "event": "attempt_started",
-        "replicate_id": replicate_id,
-        "time_ms": int(time.time() * 1000),
-    }])
-    write_seed_ledger_subset_csv(build_pilot_seed_ledger(), [replicate_id], block_dir / "seed_ledger.csv")
-    _write_json(block_dir / "sanitized_model_config.json", {
-        "model": MODEL,
-        "temperature": TEMPERATURE,
-        "api_key": "[redacted-not-read]",
-        "execution_mode": "deterministic-fake" if isinstance(inner_router, DeterministicFakeInnerRouter) else "future-real-locked",
-    })
-    _write_json(block_dir / "condition_manifest.json", [
-        {
-            "exp_id": cfg.exp_id,
-            "content_factor": cfg.content_factor,
-            "channel_factor": cfg.channel_factor,
-            "timing_factor": cfg.timing_factor,
-            "clarification_tick": cfg.clarification_tick,
-            "is_control": cfg.is_control,
-        }
-        for cfg in configs
-    ])
+        "master_seed": MASTER_SEED,
+        "simulation_seed": ledger_row["simulation_seed"],
+        "requested_llm_seed": ledger_row["requested_llm_seed"],
+        "python_hash_seed": ledger_row["python_hash_seed"],
+        "activation_head": _git_head(),
+        "source_freeze_digest": _source_freeze_digest(),
+        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    }
 
-    audit_path = block_dir / "pilot_llm_calls.jsonl"
-    if audit_path.exists():
-        audit_path.unlink()
-    audited = ValidatedAuditedRouter(
-        inner_router,
-        audit_path=audit_path,
-        pilot_id=PILOT_ID,
-        replicate_id=replicate_id,
-        requested_llm_seed=ledger_row.get("requested_llm_seed", 0),
-        model=MODEL,
-        temperature=TEMPERATURE,
-    )
 
-    results: list[dict] = []
-    llm_cache: dict = {}
-    replay_misses: dict[str, int] = {}
-    for cfg in configs:
-        if cfg.is_control:
-            router = AuditedRecordingRouter(audited, cfg.exp_id)
-            result = await _run_with_patch(cfg, override_router=router)
-            llm_cache.update(router.cache)
-            replay_misses[cfg.exp_id] = 0
-        else:
-            assert cfg.clarification_tick is not None
-            router = AuditedReplayRouter(
-                audited,
-                llm_cache,
-                replay_until_tick=cfg.clarification_tick,
-                exp_id=cfg.exp_id,
-            )
-            result = await _run_with_patch(cfg, override_router=router)
-            replay_misses[cfg.exp_id] = router.miss_count
-            if router.miss_count != 0:
-                raise VarianceV2Error(f"{cfg.exp_id} replay miss count must be zero")
-        result["exp_id"] = cfg.exp_id
-        result["config"] = cfg.to_dict()
-        results.append(result)
+def _git_head() -> str:
+    import subprocess
 
-    _write_block_csv_outputs(block_dir, results)
+    try:
+        proc = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=Path(__file__).resolve().parent,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        return proc.stdout.strip() if proc.returncode == 0 else "unknown"
+    except Exception:
+        return "unknown"
 
-    network_rows = [
-        {"exp_id": result["exp_id"], "network_hash": _network_hash_from_result(result)}
-        for result in results
-    ]
-    profile_rows = [
-        {"exp_id": result["exp_id"], "profile_hash": _profile_hash_from_result(result)}
-        for result in results
-    ]
-    _write_json(block_dir / "network_identity.json", {
-        "source": "actual production nodes+edges",
-        "conditions": network_rows,
-    })
-    _write_json(block_dir / "profile_identity.json", {
-        "source": "actual initialized profiles",
-        "conditions": profile_rows,
-    })
 
-    gates = validate_block_gates(block_dir, replicate_id)
-    _write_csv(block_dir / "condition_metrics.csv", gates["condition_metrics"], [
-        "replicate_id", "exp_id", "content_factor", "channel_factor", "timing_factor",
-        "is_control", "POST_TRUST_AUC", "EARLY_TRUST_AUC", "PURCHASE_RATE_T30",
-        "PURCHASE_TRAJECTORY_AUC", "REACH_RATE", "FINAL_TRUST_T30",
-    ])
-    _write_csv(block_dir / "block_estimands.csv", [gates["block_estimands"]], [
-        "replicate_id", *v1.PRIMARY_ESTIMANDS, *v1.SECONDARY_ESTIMANDS,
-    ])
-    audit_rows = _read_jsonl(audit_path)
-    fake_model_calls = getattr(inner_router, "call_count", audited.call_count)
+def _sanitize_error_type(exc: BaseException) -> str:
+    return type(exc).__name__[:80]
+
+
+def _write_incomplete_summary(
+    block_dir: Path,
+    ledger_row: Mapping,
+    *,
+    failure_stage: str,
+    failure_type: str,
+    execution_mode: str,
+    model_calls: int = 0,
+    audit_rows: int = 0,
+) -> dict:
     summary = {
         "pilot_id": PILOT_ID,
-        "replicate_id": replicate_id,
+        "replicate_id": ledger_row["replicate_id"],
         "attempt_count": 1,
-        "status": "PASS",
+        "status": "INCOMPLETE",
+        "failure_stage": failure_stage,
+        "failure_type": failure_type,
+        "execution_mode": execution_mode,
         "TRUE_PRODUCTION_PATH": True,
-        "PRODUCTION_RUN_WITH_PATCH_USED": True,
-        "conditions": len(results),
-        "mechanism_rows": sum(len(result.get("mechanism_records", [])) for result in results),
-        "real_llm_calls": 0,
-        "REAL_LLM_CALLS": 0,
-        "fake_inner_chat_calls": fake_model_calls,
-        "audited_router_calls": audited.call_count,
-        "audit_log_rows": len(audit_rows),
-        "fake_call_audit_equal": fake_model_calls == len(audit_rows) == audited.call_count,
-        "replay_miss_count": sum(replay_misses.values()),
-        "replay_misses": replay_misses,
-        "agent_key_integrity": gates["agent_key_integrity"],
-        "exposure_key_integrity": gates["exposure_key_integrity"],
-        "pretreatment_alignment": gates["pretreatment_alignment"],
-        "network_identity_alignment": gates["network_identity_alignment"],
-        "profile_identity_alignment": gates["profile_identity_alignment"],
-        "raw_semantic_validation": gates["raw_semantic_validation"],
+        "PRODUCTION_RUN_WITH_PATCH_USED": False,
+        "ledger_simulation_seed": ledger_row["simulation_seed"],
+        "condition_random_seed_set": [],
+        "MODEL_CALLS": model_calls,
+        "AUDIT_LOG_ROWS": audit_rows,
+        "FAKE_MODEL_CALLS": model_calls if execution_mode == "offline-fake" else 0,
+        "REAL_LLM_CALLS": model_calls if execution_mode == "real" else 0,
+        "fake_call_audit_equal": model_calls == audit_rows,
+        "replay_miss_count": 0,
     }
     _write_json(block_dir / "block_execution_summary.json", summary)
-    _write_jsonl(block_dir / "replicate_lifecycle.jsonl", [
-        {"event": "attempt_started", "replicate_id": replicate_id},
-        {"event": "attempt_finished", "replicate_id": replicate_id, "status": "PASS"},
-    ])
+    _append_lifecycle(block_dir, "BLOCK_INCOMPLETE", failure_stage=failure_stage, failure_type=failure_type)
     return summary
+
+
+def _build_real_inner_router(ledger_row: Mapping):
+    api_key = os.environ.get("DASHSCOPE_API_KEY", "")
+    if not api_key or api_key.startswith("__") or api_key.upper() in {"REDACTED", "PLACEHOLDER"}:
+        raise VarianceV2Error("DASHSCOPE_API_KEY must be set for real variance-v2 execution")
+    return _build_real_router(int(ledger_row["requested_llm_seed"]))
+
+
+async def execute_variance_block(
+    block_dir: Path,
+    ledger_row: Mapping,
+    *,
+    inner_router=None,
+    execution_mode: str,
+) -> dict:
+    replicate_id = str(ledger_row["replicate_id"])
+    if execution_mode not in {"offline-fake", "real"}:
+        raise VarianceV2Error("execution_mode must be offline-fake or real")
+    configs = select_variance_conditions_for_block(ledger_row)
+    block_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(block_dir / "attempt_marker.json", _attempt_marker_payload(ledger_row))
+    _append_lifecycle(block_dir, "ATTEMPT_MARKER_CREATED", replicate_id=replicate_id)
+    model_calls = 0
+    audited = None
+    audit_path = block_dir / "pilot_llm_calls.jsonl"
+    result_summary = None
+    try:
+        write_seed_ledger_subset_csv(build_pilot_seed_ledger(), [replicate_id], block_dir / "seed_ledger.csv")
+        _append_lifecycle(block_dir, "SEED_LEDGER_WRITTEN", replicate_id=replicate_id)
+        _write_json(block_dir / "sanitized_model_config.json", {
+            "model": MODEL,
+            "temperature": TEMPERATURE,
+            "api_key": "[redacted]",
+            "api_key_source": "DASHSCOPE_API_KEY environment only" if execution_mode == "real" else "not-read",
+            "execution_mode": execution_mode,
+        })
+        _write_json(block_dir / "condition_manifest.json", [
+            {
+                "exp_id": cfg.exp_id,
+                "content_factor": cfg.content_factor,
+                "channel_factor": cfg.channel_factor,
+                "timing_factor": cfg.timing_factor,
+                "clarification_tick": cfg.clarification_tick,
+                "is_control": cfg.is_control,
+                "random_seed": cfg.random_seed,
+            }
+            for cfg in configs
+        ])
+        _append_lifecycle(block_dir, "ROUTER_BUILD_STARTED", replicate_id=replicate_id)
+        if inner_router is None:
+            inner_router = _build_real_inner_router(ledger_row)
+        if execution_mode == "offline-fake" and not hasattr(inner_router, "_task005_router_close_noop"):
+            setattr(inner_router, "_task005_router_close_noop", True)
+        _append_lifecycle(block_dir, "ROUTER_BUILD_COMPLETED", replicate_id=replicate_id)
+
+        if audit_path.exists():
+            audit_path.unlink()
+        audited = ValidatedAuditedRouter(
+            inner_router,
+            audit_path=audit_path,
+            pilot_id=PILOT_ID,
+            replicate_id=replicate_id,
+            requested_llm_seed=ledger_row.get("requested_llm_seed", 0),
+            model=MODEL,
+            temperature=TEMPERATURE,
+        )
+
+        results: list[dict] = []
+        llm_cache: dict = {}
+        replay_misses: dict[str, int] = {}
+        for cfg in configs:
+            event_name = "CONTROL_STARTED" if cfg.is_control else "CONDITION_STARTED"
+            _append_lifecycle(block_dir, event_name, replicate_id=replicate_id, exp_id=cfg.exp_id)
+            if cfg.is_control:
+                router = AuditedRecordingRouter(audited, cfg.exp_id)
+                result = await _run_with_patch(cfg, override_router=router)
+                llm_cache.update(router.cache)
+                replay_misses[cfg.exp_id] = 0
+                _append_lifecycle(block_dir, "CONTROL_COMPLETED", replicate_id=replicate_id, exp_id=cfg.exp_id)
+            else:
+                assert cfg.clarification_tick is not None
+                router = AuditedReplayRouter(
+                    audited,
+                    llm_cache,
+                    replay_until_tick=cfg.clarification_tick,
+                    exp_id=cfg.exp_id,
+                )
+                result = await _run_with_patch(cfg, override_router=router)
+                replay_misses[cfg.exp_id] = router.miss_count
+                if router.miss_count != 0:
+                    raise VarianceV2Error(f"{cfg.exp_id} replay miss count must be zero")
+                _append_lifecycle(block_dir, "CONDITION_COMPLETED", replicate_id=replicate_id, exp_id=cfg.exp_id)
+            result["exp_id"] = cfg.exp_id
+            result["config"] = cfg.to_dict()
+            results.append(result)
+
+        _append_lifecycle(block_dir, "EXPORT_STARTED", replicate_id=replicate_id)
+        _write_block_csv_outputs(block_dir, results)
+        network_rows = [
+            {"exp_id": result["exp_id"], "network_hash": _network_hash_from_result(result)}
+            for result in results
+        ]
+        profile_rows = [
+            {"exp_id": result["exp_id"], "profile_hash": _profile_hash_from_result(result)}
+            for result in results
+        ]
+        _write_json(block_dir / "network_identity.json", {
+            "source": "actual production nodes+edges",
+            "conditions": network_rows,
+        })
+        _write_json(block_dir / "profile_identity.json", {
+            "source": "actual initialized profiles",
+            "canonical_fields": list(PROFILE_IDENTITY_FIELDS),
+            "conditions": profile_rows,
+        })
+        _append_lifecycle(block_dir, "EXPORT_COMPLETED", replicate_id=replicate_id)
+
+        _append_lifecycle(block_dir, "QUALITY_GATES_STARTED", replicate_id=replicate_id)
+        gates = validate_block_gates(block_dir, replicate_id, ledger_row)
+        _write_csv(block_dir / "condition_metrics.csv", gates["condition_metrics"], [
+            "replicate_id", "exp_id", "content_factor", "channel_factor", "timing_factor",
+            "is_control", "POST_TRUST_AUC", "EARLY_TRUST_AUC", "PURCHASE_RATE_T30",
+            "PURCHASE_TRAJECTORY_AUC", "REACH_RATE", "FINAL_TRUST_T30",
+        ])
+        _write_csv(block_dir / "block_estimands.csv", [gates["block_estimands"]], [
+            "replicate_id", *v1.PRIMARY_ESTIMANDS, *v1.SECONDARY_ESTIMANDS,
+        ])
+        _append_lifecycle(block_dir, "QUALITY_GATES_COMPLETED", replicate_id=replicate_id)
+        audit_rows = _read_jsonl(audit_path)
+        model_calls = audited.call_count
+        summary = {
+            "pilot_id": PILOT_ID,
+            "replicate_id": replicate_id,
+            "attempt_count": 1,
+            "status": "PASS",
+            "execution_mode": execution_mode,
+            "TRUE_PRODUCTION_PATH": True,
+            "PRODUCTION_RUN_WITH_PATCH_USED": True,
+            "BLOCK_SEED_INJECTION": "PASS",
+            "ledger_simulation_seed": int(ledger_row["simulation_seed"]),
+            "condition_random_seed_set": sorted({int(cfg.random_seed) for cfg in configs}),
+            "replicate_cache_scope": "local",
+            "conditions": len(results),
+            "mechanism_rows": sum(len(result.get("mechanism_records", [])) for result in results),
+            "MODEL_CALLS": model_calls,
+            "AUDIT_LOG_ROWS": len(audit_rows),
+            "FAKE_MODEL_CALLS": model_calls if execution_mode == "offline-fake" else 0,
+            "REAL_LLM_CALLS": model_calls if execution_mode == "real" else 0,
+            "fake_inner_chat_calls": model_calls if execution_mode == "offline-fake" else 0,
+            "audited_router_calls": audited.call_count,
+            "audit_log_rows": len(audit_rows),
+            "fake_call_audit_equal": model_calls == len(audit_rows),
+            "replay_miss_count": sum(replay_misses.values()),
+            "replay_misses": replay_misses,
+            "prompt_category_distribution": gates["prompt_category_distribution"],
+            "agent_key_integrity": gates["agent_key_integrity"],
+            "exposure_key_integrity": gates["exposure_key_integrity"],
+            "pretreatment_alignment": gates["pretreatment_alignment"],
+            "network_identity_alignment": gates["network_identity_alignment"],
+            "profile_identity_alignment": gates["profile_identity_alignment"],
+            "raw_semantic_validation": gates["raw_semantic_validation"],
+        }
+        _write_json(block_dir / "block_execution_summary.json", summary)
+        _append_lifecycle(block_dir, "BLOCK_PASS", replicate_id=replicate_id)
+        result_summary = summary
+    except Exception as exc:
+        audit_rows = _read_jsonl(audit_path)
+        model_calls = audited.call_count if audited is not None else model_calls
+        result_summary = _write_incomplete_summary(
+            block_dir,
+            ledger_row,
+            failure_stage="block-execution",
+            failure_type=_sanitize_error_type(exc),
+            execution_mode=execution_mode,
+            model_calls=model_calls,
+            audit_rows=len(audit_rows),
+        )
+    finally:
+        try:
+            _append_lifecycle(block_dir, "ROUTER_CLOSE_STARTED", replicate_id=replicate_id)
+            close_target = audited._inner if audited is not None else inner_router
+            await _close_router_resource(close_target)
+            _append_lifecycle(block_dir, "ROUTER_CLOSE_COMPLETED", replicate_id=replicate_id)
+        except Exception as exc:
+            result_summary = _write_incomplete_summary(
+                block_dir,
+                ledger_row,
+                failure_stage="router-close",
+                failure_type=_sanitize_error_type(exc),
+                execution_mode=execution_mode,
+                model_calls=audited.call_count if audited is not None else model_calls,
+                audit_rows=len(_read_jsonl(audit_path)),
+            )
+    assert result_summary is not None
+    return result_summary
 
 
 def _block_status(block_dir: Path) -> str:
@@ -526,13 +788,10 @@ def _block_status(block_dir: Path) -> str:
     return "NOT_STARTED"
 
 
-def run_production_path_fake_acceptance(output_dir: Path, *, blocks: int = 2) -> dict:
-    if blocks != 2:
-        raise VarianceV2Error("production-path fake acceptance is frozen at 2 blocks")
-    ledger = build_pilot_seed_ledger()
+def _run_variance_blocks(output_dir: Path, ledger_rows: list[Mapping], *, execution_mode: str, inner_router_factory) -> dict:
     output_dir.mkdir(parents=True, exist_ok=True)
     block_summaries = []
-    for ledger_row in ledger[:blocks]:
+    for ledger_row in ledger_rows:
         replicate_id = ledger_row["replicate_id"]
         block_dir = output_dir / replicate_id
         status = _block_status(block_dir)
@@ -544,25 +803,73 @@ def run_production_path_fake_acceptance(output_dir: Path, *, blocks: int = 2) ->
             continue
         if block_dir.exists():
             shutil.rmtree(block_dir)
-        fake_inner = DeterministicFakeInnerRouter()
-        block_summaries.append(asyncio.run(execute_variance_block(block_dir, ledger_row, inner_router=fake_inner)))
+        try:
+            inner = inner_router_factory(ledger_row)
+            block_summaries.append(asyncio.run(
+                execute_variance_block(
+                    block_dir,
+                    ledger_row,
+                    inner_router=inner,
+                    execution_mode=execution_mode,
+                )
+            ))
+        except Exception as exc:
+            block_dir.mkdir(parents=True, exist_ok=True)
+            block_summaries.append(_write_incomplete_summary(
+                block_dir,
+                ledger_row,
+                failure_stage="batch-continuation",
+                failure_type=_sanitize_error_type(exc),
+                execution_mode=execution_mode,
+            ))
     status = "PASS" if all(row.get("status") == "PASS" for row in block_summaries) else "INCOMPLETE"
+    condition_seed_sets = {
+        row.get("replicate_id", ""): row.get("condition_random_seed_set", [])
+        for row in block_summaries
+    }
     return {
         "pilot_id": PILOT_ID,
         "status": status,
         "TRUE_PRODUCTION_PATH": True,
         "PRODUCTION_RUN_WITH_PATCH_USED": True,
-        "blocks": blocks,
+        "BLOCK_SEED_INJECTION": "PASS" if all(
+            row.get("BLOCK_SEED_INJECTION") == "PASS"
+            for row in block_summaries
+            if row.get("status") == "PASS"
+        ) else "FAIL",
+        "blocks": len(ledger_rows),
         "conditions_per_block": len(select_variance_conditions()),
-        "real_llm_calls": 0,
-        "REAL_LLM_CALLS": 0,
+        "execution_mode": execution_mode,
+        "REAL_LLM_CALLS": sum(int(row.get("REAL_LLM_CALLS", 0)) for row in block_summaries),
         "external_network_calls": 0,
+        "FAKE_MODEL_CALLS": sum(int(row.get("FAKE_MODEL_CALLS", 0)) for row in block_summaries),
+        "MODEL_CALLS": sum(int(row.get("MODEL_CALLS", 0)) for row in block_summaries),
+        "AUDIT_LOG_ROWS": sum(int(row.get("AUDIT_LOG_ROWS", 0)) for row in block_summaries),
         "fake_inner_chat_calls": sum(int(row.get("fake_inner_chat_calls", 0)) for row in block_summaries),
         "audited_router_calls": sum(int(row.get("audited_router_calls", 0)) for row in block_summaries),
         "audit_log_rows": sum(int(row.get("audit_log_rows", 0)) for row in block_summaries),
         "fake_call_audit_equal": all(bool(row.get("fake_call_audit_equal")) for row in block_summaries if row.get("status") == "PASS"),
+        "condition_seed_sets": condition_seed_sets,
         "block_summaries": block_summaries,
     }
+
+
+def run_production_path_fake_acceptance(output_dir: Path, *, blocks: int = 2) -> dict:
+    if blocks != 2:
+        raise VarianceV2Error("production-path fake acceptance is frozen at 2 blocks")
+    ledger = build_pilot_seed_ledger()
+    return _run_variance_blocks(
+        output_dir,
+        ledger[:blocks],
+        execution_mode="offline-fake",
+        inner_router_factory=lambda _row: DeterministicFakeInnerRouter(),
+    )
+
+
+def run_future_real_variance_batch(output_dir: Path, *, activation_token: str | None) -> dict:
+    if activation_token:
+        raise VarianceV2Error(REAL_MODE_REJECTION)
+    raise VarianceV2Error(REAL_MODE_REJECTION)
 
 
 def preflight() -> dict:
@@ -584,6 +891,7 @@ def main(argv=None) -> int:
     parser.add_argument("--preflight", action="store_true")
     parser.add_argument("--offline-test", action="store_true")
     parser.add_argument("--execute-real", action="store_true")
+    parser.add_argument("--activation-token", default="")
     parser.add_argument("--output-dir", default="")
     args = parser.parse_args(argv)
     try:

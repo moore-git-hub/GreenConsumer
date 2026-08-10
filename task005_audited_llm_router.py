@@ -211,6 +211,7 @@ class DeterministicFakeInnerRouter:
 
     def __init__(self):
         self.call_count = 0
+        self._task005_router_close_noop = True
 
     async def chat(self, prompt: str) -> str:
         self.call_count += 1

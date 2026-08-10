@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -31,6 +32,15 @@ def check(name: str, condition: bool, actual=None) -> None:
 def _rows(path: Path) -> list[dict]:
     with path.open(newline="", encoding="utf-8") as f:
         return list(csv.DictReader(f))
+
+
+def expect_error(name: str, fn) -> None:
+    try:
+        fn()
+    except Exception:
+        check(name, True)
+        return
+    check(name, False, "expected exception")
 
 
 def test_contract_identity() -> None:
@@ -104,6 +114,43 @@ def test_estimand_boundaries() -> None:
         exposure_rows=exposure,
     )
     check("strategy reach rate", smetric["REACH_RATE"] == 7 / 20, smetric)
+    repeated_buyers = _fixture_rows(control.exp_id, post_ticks, {"A00"})
+    metric2 = pilot.compute_condition_metrics(
+        replicate_id="R001",
+        config=control,
+        mechanism_rows=repeated_buyers,
+        exposure_rows=[],
+    )
+    expected_purchase_auc = (((0.0 + 0.05) / 2) + sum((0.05 + 0.05) / 2 for _ in range(2, 30))) / 29
+    check("purchase trajectory AUC", abs(metric2["PURCHASE_TRAJECTORY_AUC"] - expected_purchase_auc) < 1e-12, metric2)
+
+    dup = list(rows)
+    dup[-1] = dict(dup[0])
+    expect_error("duplicate mechanism key fails", lambda: pilot.compute_condition_metrics(
+        replicate_id="R001", config=control, mechanism_rows=dup, exposure_rows=[]
+    ))
+    missing = rows[:-1]
+    expect_error("missing mechanism agent fails", lambda: pilot.compute_condition_metrics(
+        replicate_id="R001", config=control, mechanism_rows=missing, exposure_rows=[]
+    ))
+    changed = [dict(row) for row in rows]
+    for row in changed:
+        if int(row["tick"]) == 30 and row["agent_id"] == "A19":
+            row["agent_id"] = "A99"
+            break
+    expect_error("changing agent set fails", lambda: pilot.compute_condition_metrics(
+        replicate_id="R001", config=control, mechanism_rows=changed, exposure_rows=[]
+    ))
+    dup_exp = list(exposure)
+    dup_exp[-1] = dict(dup_exp[0])
+    expect_error("duplicate exposure agent fails", lambda: pilot.compute_condition_metrics(
+        replicate_id="R001", config=strategy, mechanism_rows=srows, exposure_rows=dup_exp
+    ))
+    bad_exp = list(exposure)
+    bad_exp[-1] = {"exp_id": strategy.exp_id, "agent_id": "A99", "reached": False}
+    expect_error("exposure mechanism mismatch fails", lambda: pilot.compute_condition_metrics(
+        replicate_id="R001", config=strategy, mechanism_rows=srows, exposure_rows=bad_exp
+    ))
 
 
 def test_block_estimands_and_variance() -> None:
@@ -132,6 +179,7 @@ def test_block_estimands_and_variance() -> None:
             "POST_TRUST_AUC": post_auc,
             "EARLY_TRUST_AUC": 5.0 if cfg.timing_factor == "immediate" else 4.0,
             "PURCHASE_RATE_T30": purchase_rate,
+            "PURCHASE_TRAJECTORY_AUC": purchase_rate / 2.0,
             "REACH_RATE": None if cfg.is_control else (0.9 if cfg.channel_factor == "hub" else 0.6),
             "FINAL_TRUST_T30": 9.0,
         })
@@ -159,6 +207,16 @@ def test_block_estimands_and_variance() -> None:
         + sum(row["PURCHASE_RATE_T30"] for row in metrics if row["content_factor"] == "emotional-empathy" and row["channel_factor"] == "random") / 2
     )
     check("content x channel purchase equal-weight", abs(est["CONTENT_x_CHANNEL_PURCHASE_RATE_T30"] - expected_cp) < 1e-12, est)
+    expected_three_way_purchase = sum(
+        (1 if row["content_factor"] == "rational-evidence" else -1)
+        * (1 if row["channel_factor"] == "hub" else -1)
+        * (1 if row["timing_factor"] == "immediate" else -1)
+        * row["PURCHASE_RATE_T30"]
+        for row in metrics
+        if not row["is_control"]
+    )
+    check("three-way purchase interaction", abs(est["CONTENT_x_CHANNEL_x_TIMING_PURCHASE_RATE_T30"] - expected_three_way_purchase) < 1e-12, est)
+    check("purchase trajectory secondary", abs(est["OVERALL_CLARIFICATION_PURCHASE_TRAJECTORY_AUC"] - 0.075) < 1e-12, est)
     est2 = dict(est, replicate_id="R002", P1_OVERALL_CLARIFICATION_POST_TRUST=3.0)
     summary = pilot.summarize_variance([est, est2])
     check("ddof1 variance", summary["primary_estimands"]["P1_OVERALL_CLARIFICATION_POST_TRUST"]["sample_variance"] == 0.5, summary)
@@ -166,6 +224,20 @@ def test_block_estimands_and_variance() -> None:
     check("correlation 5x5 rows", len(summary["correlation_matrix"]) == 5, summary)
     check("leave one out rows", len(summary["leave_one_out_sd"]) == 10, summary)
     check("no p values", summary["p_values_computed"] is False, summary)
+    ten = []
+    for idx in range(10):
+        row = dict(est, replicate_id=f"R{idx + 1:03d}")
+        row["P1_OVERALL_CLARIFICATION_POST_TRUST"] = 2.0 + idx / 10
+        ten.append(row)
+    statuses = {f"R{idx + 1:03d}": "PASS" for idx in range(10)}
+    official = pilot.build_official_variance_summary(ten, statuses)
+    check("official 10 pass computed", official["OFFICIAL_VARIANCE_STATUS"] == "COMPUTED", official)
+    partial = pilot.build_official_variance_summary(ten[:9], {f"R{idx + 1:03d}": "PASS" for idx in range(9)})
+    check("9 pass not computed", partial["OFFICIAL_VARIANCE_STATUS"] == "NOT_COMPUTED_INCOMPLETE", partial)
+    statuses["R010"] = "INCOMPLETE"
+    incomplete = pilot.build_official_variance_summary(ten, statuses)
+    check("9 pass one incomplete not computed", incomplete["OFFICIAL_VARIANCE_STATUS"] == "NOT_COMPUTED_INCOMPLETE", incomplete)
+    check("partial not power planning", incomplete["POWER_PLANNING_USE"] is False, incomplete)
 
 
 def test_dry_run_and_cli() -> None:
@@ -203,6 +275,73 @@ def test_dry_run_and_cli() -> None:
     )
     check("offline-test pass", proc.returncode == 0, proc.stdout + proc.stderr)
     check("offline-test zero calls", '"real_llm_calls": 0' in proc.stdout, proc.stdout)
+    with tempfile.TemporaryDirectory(prefix="task005_net_tripwire_") as tmp:
+        tmp_path = Path(tmp)
+        (tmp_path / "sitecustomize.py").write_text(
+            "import socket\n"
+            "def blocked(*a, **k):\n"
+            "    raise RuntimeError('NETWORK_FORBIDDEN_TEST')\n"
+            "socket.create_connection = blocked\n"
+            "_old_socket = socket.socket\n"
+            "class GuardedSocket(_old_socket):\n"
+            "    def connect(self, *a, **k):\n"
+            "        raise RuntimeError('NETWORK_FORBIDDEN_TEST')\n"
+            "socket.socket = GuardedSocket\n",
+            encoding="utf-8",
+        )
+        env = dict(os.environ)
+        for key in ("HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE", "HF_DATASETS_OFFLINE", "HF_HUB_DISABLE_TELEMETRY"):
+            env.pop(key, None)
+        env["PYTHONPATH"] = str(tmp_path) + os.pathsep + env.get("PYTHONPATH", "")
+        net = subprocess.run(
+            [sys.executable, str(ROOT / "run_task005_real_variance_pilot_v1.py"), "--offline-test"],
+            text=True,
+            capture_output=True,
+            cwd=ROOT,
+            env=env,
+        )
+        check("network tripwire offline-test", net.returncode == 0, net.stdout + net.stderr)
+        check("network tripwire not triggered", "NETWORK_FORBIDDEN_TEST" not in (net.stdout + net.stderr), net.stdout + net.stderr)
+
+
+def test_resume_semantics() -> None:
+    ledger = pilot.build_pilot_seed_ledger()
+    with tempfile.TemporaryDirectory(prefix="task005_variance_resume_") as tmp:
+        root = Path(tmp)
+        activation = pilot.build_activation_artifact()
+        r1 = root / "R001"
+        r1.mkdir()
+        pilot._write_json(r1 / "attempt_marker.json", pilot._attempt_marker_payload(ledger[0], activation))
+        pilot._write_json(r1 / "block_execution_summary.json", {"replicate_id": "R001", "status": "PASS", "attempt_count": 1})
+        s1 = pilot._execute_or_resume_block(root, ledger[0], pilot.ACTIVATION_TOKEN)
+        check("PASS marker summary skipped", s1.get("skipped_immutable") is True, s1)
+        r2 = root / "R002"
+        r2.mkdir()
+        pilot._write_json(r2 / "attempt_marker.json", pilot._attempt_marker_payload(ledger[1], activation))
+        s2 = pilot._execute_or_resume_block(root, ledger[1], pilot.ACTIVATION_TOKEN)
+        check("marker no summary crash incomplete", s2["status"] == "INCOMPLETE_CRASH_OR_INTERRUPTION", s2)
+        calls = []
+        old_run = pilot.subprocess.run
+        old_loader = pilot.load_activation_artifact
+        old_git = pilot._git_stdout
+        class FakeProc:
+            returncode = 99
+            stdout = ""
+            stderr = ""
+        def fake_run(*args, **kwargs):
+            calls.append(args)
+            return FakeProc()
+        try:
+            pilot.subprocess.run = fake_run
+            pilot.load_activation_artifact = lambda: activation
+            pilot._git_stdout = lambda args: "78bcd209d842ae236d9bd6ab0c8291f50a7830eb"
+            s3 = pilot._execute_or_resume_block(root, ledger[2], pilot.ACTIVATION_TOKEN)
+        finally:
+            pilot.subprocess.run = old_run
+            pilot.load_activation_artifact = old_loader
+            pilot._git_stdout = old_git
+        check("future block allowed once", len(calls) == 1, calls)
+        check("future failed no retry summary", s3["status"] == "INCOMPLETE", s3)
 
 
 def test_source_freeze() -> None:
@@ -218,6 +357,7 @@ def test_source_freeze() -> None:
         "run_experiments.py",
         "run_task005_real_variance_pilot_v1.py",
         ".kiro/specs/task005-replication-inference/task005_estimand_contract1.0.json",
+        ".kiro/specs/task005-replication-inference/task005_estimand_contract_amendment1.1.json",
         ".kiro/specs/task005-replication-inference/real_llm_variance_pilot_contract1.0.json",
         ".kiro/specs/task005-replication-inference/empathy_relational_repair_amendment1.0.json",
         ".kiro/specs/task005-replication-inference/mechanism_auditability_schema_amendment1.2.json",
@@ -232,6 +372,7 @@ def main() -> int:
     test_estimand_boundaries()
     test_block_estimands_and_variance()
     test_dry_run_and_cli()
+    test_resume_semantics()
     test_source_freeze()
     print("Passed:", P)
     print("Failed:", F)

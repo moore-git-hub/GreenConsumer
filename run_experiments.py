@@ -1471,8 +1471,28 @@ def _preflight_replication_output_dir(replication_context: dict) -> Path:
     run_dir = Path(replication_context["output_dir"]).resolve()
     if not str(run_dir):
         raise ReplicationStartupError("output_dir must be non-empty")
-    if run_dir.exists() and (not run_dir.is_dir() or any(run_dir.iterdir())):
-        raise ReplicationStartupError("output_dir must be absent or empty")
+    if run_dir.exists():
+        if not run_dir.is_dir():
+            raise ReplicationStartupError("output_dir must be absent or empty")
+        entries = list(run_dir.iterdir())
+        if entries:
+            marker = run_dir / "attempt_marker.json"
+            if len(entries) != 1 or entries[0].resolve() != marker.resolve():
+                raise ReplicationStartupError("output_dir must be absent, empty, or contain only attempt_marker.json")
+            try:
+                payload = json.loads(marker.read_text(encoding="utf-8"))
+            except Exception as exc:
+                raise ReplicationStartupError("attempt_marker.json is invalid") from exc
+            expected_pairs = {
+                "replicate_id": replication_context["replicate_id"],
+                "attempt_count": 1,
+                "simulation_seed": replication_context["simulation_seed"],
+                "requested_llm_seed": replication_context["requested_llm_seed"],
+                "python_hash_seed": replication_context["python_hash_seed"],
+            }
+            for key, expected in expected_pairs.items():
+                if payload.get(key) != expected:
+                    raise ReplicationStartupError(f"attempt_marker mismatch: {key}")
     return run_dir
 
 

@@ -9,12 +9,16 @@ from __future__ import annotations
 
 import argparse
 import csv
+import datetime
 import hashlib
 import json
 import math
 import os
 import statistics
+import subprocess
+import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Iterable, Mapping
 
@@ -28,6 +32,7 @@ from experiment_config import generate_experiment_matrix
 from replication_config import (
     EXECUTION_ORDER,
     build_seed_ledger,
+    write_seed_ledger_csv,
     write_seed_ledger_subset_csv,
 )
 
@@ -43,7 +48,21 @@ MECHANISM_SCHEMA = "2.0"
 MECHANISM_RECORDS_SCHEMA = "1.2"
 EMPATHY_REPAIR_WEIGHT = 0.50
 REAL_MODE_REJECTION = "VARIANCE_PILOT_REAL_EXECUTION_NOT_AUTHORIZED"
+ACTIVATION_TOKEN = "TASK005_REAL_VARIANCE_V1_ACTIVATE_20260810_01"
+EXPECTED_BRANCH = "redesign/task005-mechanism-v2"
 PILOT_OUTPUT_ROOT = Path("results") / "pilots" / PILOT_ID
+ACTIVATION_ARTIFACT = (
+    Path(".kiro")
+    / "specs"
+    / "task005-replication-inference"
+    / "real_llm_variance_pilot_activation1.0.json"
+)
+RESULT_ARTIFACT = (
+    Path(".kiro")
+    / "specs"
+    / "task005-replication-inference"
+    / "real_llm_variance_pilot_v1_result1.0.json"
+)
 
 PRIMARY_ESTIMANDS = (
     "P1_OVERALL_CLARIFICATION_POST_TRUST",
@@ -71,6 +90,8 @@ SECONDARY_ESTIMANDS = (
     "CONTENT_x_CHANNEL_PURCHASE_RATE_T30",
     "CONTENT_x_TIMING_PURCHASE_RATE_T30",
     "CHANNEL_x_TIMING_PURCHASE_RATE_T30",
+    "CONTENT_x_CHANNEL_x_TIMING_PURCHASE_RATE_T30",
+    "OVERALL_CLARIFICATION_PURCHASE_TRAJECTORY_AUC",
 )
 
 SOURCE_FREEZE_FILES = (
@@ -84,6 +105,7 @@ SOURCE_FREEZE_FILES = (
     "run_experiments.py",
     "run_task005_real_variance_pilot_v1.py",
     ".kiro/specs/task005-replication-inference/task005_estimand_contract1.0.json",
+    ".kiro/specs/task005-replication-inference/task005_estimand_contract_amendment1.1.json",
     ".kiro/specs/task005-replication-inference/real_llm_variance_pilot_contract1.0.json",
     ".kiro/specs/task005-replication-inference/empathy_relational_repair_amendment1.0.json",
     ".kiro/specs/task005-replication-inference/mechanism_auditability_schema_amendment1.2.json",
@@ -186,6 +208,55 @@ def _trapz_normalized(points: list[float], intervals: int) -> float:
     return total / float(intervals)
 
 
+def _condition_agent_set(rows: list[Mapping], exp_id: str) -> set[str]:
+    by_tick: dict[int, list[Mapping]] = {}
+    keys: set[tuple[str, int, str]] = set()
+    for row in rows:
+        try:
+            tick = int(row.get("tick"))
+        except Exception as exc:
+            raise VariancePilotError(f"{exp_id} tick must be integer") from exc
+        agent_id = str(row.get("agent_id", ""))
+        if not agent_id:
+            raise VariancePilotError(f"{exp_id} agent_id must be non-empty")
+        key = (exp_id, tick, agent_id)
+        if key in keys:
+            raise VariancePilotError(f"{exp_id} duplicate mechanism join key")
+        keys.add(key)
+        by_tick.setdefault(tick, []).append(row)
+    if set(by_tick) != set(range(1, TOTAL_TICKS + 1)):
+        raise VariancePilotError(f"{exp_id} ticks must be exactly 1..30")
+    expected_agents: set[str] | None = None
+    for tick in range(1, TOTAL_TICKS + 1):
+        tick_rows = by_tick[tick]
+        if len(tick_rows) != AGENT_COUNT:
+            raise VariancePilotError(f"{exp_id} tick {tick} must have 20 agent rows")
+        agents = {str(row.get("agent_id", "")) for row in tick_rows}
+        if len(agents) != AGENT_COUNT:
+            raise VariancePilotError(f"{exp_id} tick {tick} must have 20 unique agents")
+        if expected_agents is None:
+            expected_agents = agents
+        elif agents != expected_agents:
+            raise VariancePilotError(f"{exp_id} agent set must be stable across ticks")
+    if expected_agents is None or len(expected_agents) != AGENT_COUNT:
+        raise VariancePilotError(f"{exp_id} denominator agent set must have 20 agents")
+    return expected_agents
+
+
+def _purchase_trajectory_auc(rows: list[Mapping], agent_set: set[str]) -> float:
+    purchased: set[str] = set()
+    trajectory: list[float] = []
+    for tick in range(1, TOTAL_TICKS + 1):
+        for row in rows:
+            if int(row.get("tick")) == tick and _bool_value(row.get("is_buying")):
+                agent_id = str(row.get("agent_id"))
+                if agent_id not in agent_set:
+                    raise VariancePilotError("purchase row has unknown agent_id")
+                purchased.add(agent_id)
+        trajectory.append(len(purchased) / AGENT_COUNT)
+    return _trapz_normalized(trajectory, 29)
+
+
 def compute_condition_metrics(
     *,
     replicate_id: str,
@@ -203,6 +274,7 @@ def compute_condition_metrics(
     weights = {_float(row, "empathy_repair_weight") for row in rows}
     if weights != {EMPATHY_REPAIR_WEIGHT}:
         raise VariancePilotError("empathy_repair_weight must be fixed at 0.50")
+    agent_set = _condition_agent_set(rows, exp_id)
 
     by_tick: dict[int, list[Mapping]] = {}
     for row in rows:
@@ -226,11 +298,18 @@ def compute_condition_metrics(
 
     if config.is_control:
         reach_rate = None
+        if [row for row in exposure_rows if row.get("exp_id") == exp_id]:
+            raise VariancePilotError(f"{exp_id} control must not have exposure rows")
     else:
         erows = [row for row in exposure_rows if row.get("exp_id") == exp_id]
-        reached = {str(row.get("agent_id")) for row in erows if _bool_value(row.get("reached"))}
         if len(erows) != AGENT_COUNT:
             raise VariancePilotError(f"{exp_id} exposure row count must be 20")
+        exposure_agents = [str(row.get("agent_id", "")) for row in erows]
+        if len(set(exposure_agents)) != AGENT_COUNT:
+            raise VariancePilotError(f"{exp_id} exposure must have 20 unique agents")
+        if set(exposure_agents) != agent_set:
+            raise VariancePilotError(f"{exp_id} exposure agent set must match mechanism")
+        reached = {str(row.get("agent_id")) for row in erows if _bool_value(row.get("reached"))}
         reach_rate = len(reached) / AGENT_COUNT
 
     return {
@@ -243,6 +322,7 @@ def compute_condition_metrics(
         "POST_TRUST_AUC": _trapz_normalized(post_points, 24),
         "EARLY_TRUST_AUC": _trapz_normalized(early_points, 4),
         "PURCHASE_RATE_T30": len(buyers) / AGENT_COUNT,
+        "PURCHASE_TRAJECTORY_AUC": _purchase_trajectory_auc(rows, agent_set),
         "REACH_RATE": reach_rate,
         "FINAL_TRUST_T30": mean_trust[30],
     }
@@ -340,6 +420,12 @@ def build_block_estimands(replicate_id: str, condition_metrics: list[Mapping]) -
         "CHANNEL_x_TIMING_PURCHASE_RATE_T30": _factorial_contrast(
             strategies, "PURCHASE_RATE_T30", ("channel_factor", "timing_factor")
         ),
+        "CONTENT_x_CHANNEL_x_TIMING_PURCHASE_RATE_T30": _factorial_contrast(
+            strategies, "PURCHASE_RATE_T30", ("content_factor", "channel_factor", "timing_factor")
+        ),
+        "OVERALL_CLARIFICATION_PURCHASE_TRAJECTORY_AUC": (
+            _mean(strategies, "PURCHASE_TRAJECTORY_AUC") - float(c0["PURCHASE_TRAJECTORY_AUC"])
+        ),
     }
 
 
@@ -401,6 +487,35 @@ def summarize_variance(block_estimands: list[Mapping]) -> dict:
         "mde_selected": False,
         "formal_execution": False,
     }
+
+
+def build_official_variance_summary(block_estimands: list[Mapping], block_statuses: Mapping[str, str]) -> dict:
+    expected_ids = set(ALLOWED_REPLICATE_IDS)
+    observed_ids = {str(row.get("replicate_id")) for row in block_estimands}
+    statuses = {rid: str(block_statuses.get(rid, "missing")) for rid in ALLOWED_REPLICATE_IDS}
+    complete = (
+        observed_ids == expected_ids
+        and set(statuses) == expected_ids
+        and all(statuses[rid] == "PASS" for rid in ALLOWED_REPLICATE_IDS)
+        and len(block_estimands) == REPLICATION_BLOCKS
+    )
+    if not complete:
+        return {
+            "pilot_id": PILOT_ID,
+            "OFFICIAL_VARIANCE_STATUS": "NOT_COMPUTED_INCOMPLETE",
+            "POWER_PLANNING_USE": False,
+            "block_statuses": statuses,
+            "partial_block_count": len(block_estimands),
+            "p_values_computed": False,
+            "power_calculation": False,
+            "mde_selected": False,
+        }
+    ordered = sorted(block_estimands, key=lambda row: str(row["replicate_id"]))
+    summary = summarize_variance(ordered)
+    summary["OFFICIAL_VARIANCE_STATUS"] = "COMPUTED"
+    summary["POWER_PLANNING_USE"] = True
+    summary["block_statuses"] = statuses
+    return summary
 
 
 def covariance_matrix(block_estimands: list[Mapping]) -> list[dict]:
@@ -565,9 +680,9 @@ def write_offline_dry_run_artifacts(output_dir: Path, *, synthetic_blocks: int =
         _write_csv(block_dir / "condition_metrics.csv", condition_metrics, [
             "replicate_id", "exp_id", "content_factor", "channel_factor",
             "timing_factor", "is_control", "POST_TRUST_AUC", "EARLY_TRUST_AUC",
-            "PURCHASE_RATE_T30", "REACH_RATE", "FINAL_TRUST_T30",
+            "PURCHASE_RATE_T30", "PURCHASE_TRAJECTORY_AUC", "REACH_RATE", "FINAL_TRUST_T30",
         ])
-        _write_csv(block_dir / "block_estimands.csv", [block_estimands], ["replicate_id", *PRIMARY_ESTIMANDS])
+        _write_csv(block_dir / "block_estimands.csv", [block_estimands], ["replicate_id", *PRIMARY_ESTIMANDS, *SECONDARY_ESTIMANDS])
         _write_json(block_dir / "block_execution_summary.json", {
             "replicate_id": replicate_id,
             "status": "PASS",
@@ -589,9 +704,9 @@ def write_offline_dry_run_artifacts(output_dir: Path, *, synthetic_blocks: int =
     _write_csv(output_dir / "all_condition_metrics.csv", all_condition_metrics, [
         "replicate_id", "exp_id", "content_factor", "channel_factor",
         "timing_factor", "is_control", "POST_TRUST_AUC", "EARLY_TRUST_AUC",
-        "PURCHASE_RATE_T30", "REACH_RATE", "FINAL_TRUST_T30",
+        "PURCHASE_RATE_T30", "PURCHASE_TRAJECTORY_AUC", "REACH_RATE", "FINAL_TRUST_T30",
     ])
-    _write_csv(output_dir / "all_block_estimands.csv", all_block_estimands, ["replicate_id", *PRIMARY_ESTIMANDS])
+    _write_csv(output_dir / "all_block_estimands.csv", all_block_estimands, ["replicate_id", *PRIMARY_ESTIMANDS, *SECONDARY_ESTIMANDS])
     _write_json(output_dir / "variance_summary.json", summary)
     _write_csv(output_dir / "primary_covariance_matrix.csv", summary["covariance_matrix"], ["estimand", *PRIMARY_ESTIMANDS])
     _write_csv(output_dir / "primary_correlation_matrix.csv", summary["correlation_matrix"], ["estimand", *PRIMARY_ESTIMANDS])
@@ -627,6 +742,406 @@ def channel_saturation_summary(condition_metrics: list[Mapping]) -> dict:
     }
 
 
+def sanitize_text(text: str) -> str:
+    secret = os.environ.get("DASHSCOPE_API_KEY", "")
+    out = str(text)
+    if secret:
+        out = out.replace(secret, "<REDACTED>")
+    out = out.replace("Authorization", "<REDACTED_HEADER>")
+    return out
+
+
+def _git_stdout(args: list[str]) -> str:
+    proc = subprocess.run(["git", *args], text=True, capture_output=True, check=False)
+    if proc.returncode != 0:
+        raise VariancePilotError(f"git command failed: {' '.join(args)}")
+    return proc.stdout.strip()
+
+
+def _assert_clean_tree_for_activation() -> None:
+    if _git_stdout(["branch", "--show-current"]) != EXPECTED_BRANCH:
+        raise VariancePilotError("branch mismatch")
+    if _git_stdout(["diff", "--name-only"]):
+        raise VariancePilotError("tracked diff must be clean")
+    if _git_stdout(["diff", "--cached", "--name-only"]):
+        raise VariancePilotError("staged diff must be clean")
+
+
+def _source_freeze_digest(source_hashes: Mapping[str, str]) -> str:
+    blob = json.dumps(source_hashes, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def build_activation_artifact() -> dict:
+    source_hashes = current_source_hashes()
+    return {
+        "schema_version": "1.0",
+        "pilot_id": PILOT_ID,
+        "master_seed": MASTER_SEED,
+        "blocks": list(ALLOWED_REPLICATE_IDS),
+        "conditions": [cfg.exp_id for cfg in select_variance_conditions()],
+        "conditions_per_block": CONDITIONS_PER_BLOCK,
+        "model": "qwen-plus",
+        "temperature": 0.3,
+        "EMPATHY_REPAIR_WEIGHT": EMPATHY_REPAIR_WEIGHT,
+        "activation_token": ACTIVATION_TOKEN,
+        "source_sha256": source_hashes,
+        "source_freeze_digest": _source_freeze_digest(source_hashes),
+        "p_values": False,
+        "power_calculation": False,
+        "MDE_selected": False,
+        "formal_execution": False,
+        "formal_reuse": False,
+        "replacement": False,
+        "optional_stopping": False,
+    }
+
+
+def load_activation_artifact() -> dict:
+    if not ACTIVATION_ARTIFACT.exists():
+        raise VariancePilotError("activation artifact missing")
+    payload = json.loads(ACTIVATION_ARTIFACT.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise VariancePilotError("activation artifact must be JSON object")
+    return payload
+
+
+def validate_activation_artifact(payload: Mapping) -> None:
+    expected = {
+        "pilot_id": PILOT_ID,
+        "master_seed": MASTER_SEED,
+        "conditions_per_block": CONDITIONS_PER_BLOCK,
+        "model": "qwen-plus",
+        "temperature": 0.3,
+        "EMPATHY_REPAIR_WEIGHT": EMPATHY_REPAIR_WEIGHT,
+        "activation_token": ACTIVATION_TOKEN,
+        "p_values": False,
+        "power_calculation": False,
+        "MDE_selected": False,
+        "formal_execution": False,
+        "formal_reuse": False,
+        "replacement": False,
+        "optional_stopping": False,
+    }
+    for key, value in expected.items():
+        if payload.get(key) != value:
+            raise VariancePilotError(f"activation mismatch: {key}")
+    if tuple(payload.get("blocks", [])) != ALLOWED_REPLICATE_IDS:
+        raise VariancePilotError("activation block set mismatch")
+    if tuple(payload.get("conditions", [])) != tuple(cfg.exp_id for cfg in select_variance_conditions()):
+        raise VariancePilotError("activation condition order mismatch")
+    if payload.get("source_sha256") != current_source_hashes():
+        raise VariancePilotError("SOURCE_FREEZE_MISMATCH")
+
+
+def assert_real_execution_ready(token: str | None, output_dir: Path) -> dict:
+    if token != ACTIVATION_TOKEN:
+        raise VariancePilotError(REAL_MODE_REJECTION)
+    api_key = os.environ.get("DASHSCOPE_API_KEY", "")
+    if not api_key or api_key.startswith("__") or api_key.upper() in {"REDACTED", "PLACEHOLDER"}:
+        raise VariancePilotError("DASHSCOPE_API_KEY must be set for real execution")
+    _assert_clean_tree_for_activation()
+    activation = load_activation_artifact()
+    validate_activation_artifact(activation)
+    return {
+        "READY_TO_EXECUTE": True,
+        "REAL_LLM_CALLS": 0,
+        "pilot_id": PILOT_ID,
+        "output_dir": str(output_dir),
+    }
+
+
+def _read_csv_dicts(path: Path) -> list[dict]:
+    with path.open("r", encoding="utf-8", newline="") as f:
+        return [dict(row) for row in csv.DictReader(f)]
+
+
+def _attempt_marker_payload(ledger_row: Mapping, activation: Mapping) -> dict:
+    return {
+        "pilot_id": PILOT_ID,
+        "replicate_id": ledger_row["replicate_id"],
+        "attempt_count": 1,
+        "activation_head": _git_stdout(["rev-parse", "HEAD"]),
+        "simulation_seed": ledger_row["simulation_seed"],
+        "requested_llm_seed": ledger_row["requested_llm_seed"],
+        "python_hash_seed": ledger_row["python_hash_seed"],
+        "source_freeze_digest": activation["source_freeze_digest"],
+        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    }
+
+
+def _write_attempt_marker(block_dir: Path, ledger_row: Mapping, activation: Mapping) -> None:
+    block_dir.mkdir(parents=True, exist_ok=True)
+    marker = block_dir / "attempt_marker.json"
+    if marker.exists():
+        raise VariancePilotError(f"{ledger_row['replicate_id']} attempt_marker already exists")
+    _write_json(marker, _attempt_marker_payload(ledger_row, activation))
+
+
+def _write_crash_summary(block_dir: Path, replicate_id: str) -> dict:
+    summary = {
+        "pilot_id": PILOT_ID,
+        "replicate_id": replicate_id,
+        "attempt_count": 1,
+        "status": "INCOMPLETE_CRASH_OR_INTERRUPTION",
+        "failure_message": "attempt_marker exists but block_execution_summary.json is missing",
+        "real_llm_calls": 0,
+        "replay_miss_count": 0,
+        "raw_semantic_validation_failures": 0,
+        "semantic_fallbacks": 0,
+        "plan_fallbacks": 0,
+        "POWER_PLANNING_USE": False,
+    }
+    _write_json(block_dir / "block_execution_summary.json", summary)
+    return summary
+
+
+def _condition_metrics_from_block(replicate_id: str, block_dir: Path) -> list[dict]:
+    mechanism_rows = _read_csv_dicts(block_dir / "mechanism_records.csv")
+    exposure_path = block_dir / "clarification_exposure.csv"
+    exposure_rows = _read_csv_dicts(exposure_path) if exposure_path.exists() else []
+    metrics = []
+    for cfg in select_variance_conditions():
+        metrics.append(compute_condition_metrics(
+            replicate_id=replicate_id,
+            config=cfg,
+            mechanism_rows=mechanism_rows,
+            exposure_rows=exposure_rows,
+        ))
+    return metrics
+
+
+def _fallback_count(rows: list[Mapping], field: str) -> int:
+    total = 0
+    for row in rows:
+        value = row.get(field, 0)
+        if value in ("", None):
+            continue
+        if str(value).lower() in {"true", "1"}:
+            total += 1
+        elif str(value).lower() not in {"false", "0"}:
+            try:
+                total += int(value)
+            except Exception:
+                total += 1
+    return total
+
+
+def _validate_pretreatment_alignment(block_dir: Path) -> str:
+    rows = _read_csv_dicts(block_dir / "mechanism_records.csv")
+    control_id = "NoClarification-Control"
+    fields = (
+        "trust_final",
+        "attitude_att",
+        "subjective_norm_sn",
+        "pbc",
+        "crisis_memory",
+        "repair_memory",
+        "purchase_intention",
+    )
+    by_exp = {}
+    for row in rows:
+        by_exp.setdefault(row["exp_id"], []).append(row)
+    control_rows = by_exp.get(control_id, [])
+    for cfg in select_variance_conditions():
+        if cfg.is_control:
+            continue
+        tick = 5 if cfg.timing_factor == "immediate" else 9
+        control_keyed = {
+            row["agent_id"]: row
+            for row in control_rows
+            if int(row["tick"]) == tick
+        }
+        strategy_keyed = {
+            row["agent_id"]: row
+            for row in by_exp.get(cfg.exp_id, [])
+            if int(row["tick"]) == tick
+        }
+        if set(control_keyed) != set(strategy_keyed):
+            return "FAIL"
+        for agent_id, crow in control_keyed.items():
+            srow = strategy_keyed[agent_id]
+            for field in fields:
+                if str(crow.get(field)) != str(srow.get(field)):
+                    return "FAIL"
+    return "PASS"
+
+
+def _validate_block_quality(replicate_id: str, block_dir: Path) -> dict:
+    mechanism_rows = _read_csv_dicts(block_dir / "mechanism_records.csv")
+    if len(mechanism_rows) != CONDITIONS_PER_BLOCK * AGENT_COUNT * TOTAL_TICKS:
+        raise VariancePilotError(f"{replicate_id} mechanism row count must be 5400")
+    condition_counts: dict[str, int] = {}
+    for row in mechanism_rows:
+        condition_counts[row["exp_id"]] = condition_counts.get(row["exp_id"], 0) + 1
+    if set(condition_counts) != {cfg.exp_id for cfg in select_variance_conditions()}:
+        raise VariancePilotError(f"{replicate_id} condition set mismatch")
+    if any(count != 600 for count in condition_counts.values()):
+        raise VariancePilotError(f"{replicate_id} each condition must have 600 rows")
+    semantic_fallbacks = _fallback_count(mechanism_rows, "semantic_fallback_used")
+    plan_fallbacks = _fallback_count(mechanism_rows, "plan_fallback_used")
+    raw_failures = _fallback_count(mechanism_rows, "json_parse_failure")
+    metrics = _condition_metrics_from_block(replicate_id, block_dir)
+    _validate_pretreatment_alignment(block_dir)
+    if semantic_fallbacks or plan_fallbacks or raw_failures:
+        raise VariancePilotError(f"{replicate_id} fallback gate failed")
+    return {
+        "condition_metrics": metrics,
+        "block_estimands": build_block_estimands(replicate_id, metrics),
+        "semantic_fallbacks": semantic_fallbacks,
+        "plan_fallbacks": plan_fallbacks,
+        "raw_semantic_validation_failures": raw_failures,
+        "pretreatment_alignment": _validate_pretreatment_alignment(block_dir),
+    }
+
+
+def _execute_or_resume_block(output_dir: Path, ledger_row: Mapping, activation_token: str) -> dict:
+    replicate_id = str(ledger_row["replicate_id"])
+    block_dir = output_dir / replicate_id
+    summary_path = block_dir / "block_execution_summary.json"
+    marker = block_dir / "attempt_marker.json"
+    if marker.exists() and summary_path.exists():
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        summary["skipped_immutable"] = True
+        return summary
+    if marker.exists() and not summary_path.exists():
+        return _write_crash_summary(block_dir, replicate_id)
+
+    activation = load_activation_artifact()
+    _write_attempt_marker(block_dir, ledger_row, activation)
+    env = dict(os.environ)
+    env["PYTHONHASHSEED"] = str(ledger_row["python_hash_seed"])
+    cmd = [
+        sys.executable,
+        "-X",
+        "utf8",
+        str(Path("run_experiments.py").resolve()),
+        "--replication-id", PILOT_ID,
+        "--replicate-id", replicate_id,
+        "--replicate-index", str(ledger_row["replicate_index"]),
+        "--simulation-seed", str(ledger_row["simulation_seed"]),
+        "--requested-llm-seed", str(ledger_row["requested_llm_seed"]),
+        "--llm-seed-supported", str(ledger_row["llm_seed_supported"]),
+        "--python-hash-seed", str(ledger_row["python_hash_seed"]),
+        "--output-dir", str(block_dir),
+        "--llm-mode", "real",
+        "--no-latest",
+    ]
+    proc = subprocess.run(
+        cmd,
+        cwd=Path(__file__).resolve().parent,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    (block_dir / "child_stdout_sanitized.log").write_text(sanitize_text(proc.stdout), encoding="utf-8")
+    (block_dir / "child_stderr_sanitized.log").write_text(sanitize_text(proc.stderr), encoding="utf-8")
+    run_metadata_path = block_dir / "run_metadata.json"
+    real_calls = 0
+    replay_miss = 0
+    if run_metadata_path.exists():
+        metadata = json.loads(run_metadata_path.read_text(encoding="utf-8"))
+        experiments = metadata.get("experiments", [])
+        replay_miss = sum(int(row.get("replay_miss_count") or 0) for row in experiments if str(row.get("replay_miss_count", "")).isdigit())
+    status = "PASS" if proc.returncode == 0 else "INCOMPLETE"
+    failure_message = "" if status == "PASS" else f"child_exit_{proc.returncode}"
+    quality = {}
+    estimands = None
+    condition_metrics = []
+    if status == "PASS":
+        try:
+            quality = _validate_block_quality(replicate_id, block_dir)
+            condition_metrics = quality["condition_metrics"]
+            estimands = quality["block_estimands"]
+            _write_csv(block_dir / "condition_metrics.csv", condition_metrics, [
+                "replicate_id", "exp_id", "content_factor", "channel_factor",
+                "timing_factor", "is_control", "POST_TRUST_AUC", "EARLY_TRUST_AUC",
+                "PURCHASE_RATE_T30", "PURCHASE_TRAJECTORY_AUC", "REACH_RATE", "FINAL_TRUST_T30",
+            ])
+            _write_csv(block_dir / "block_estimands.csv", [estimands], ["replicate_id", *PRIMARY_ESTIMANDS, *SECONDARY_ESTIMANDS])
+        except Exception as exc:
+            status = "INCOMPLETE"
+            failure_message = type(exc).__name__
+    summary = {
+        "pilot_id": PILOT_ID,
+        "replicate_id": replicate_id,
+        "attempt_count": 1,
+        "status": status,
+        "failure_message": failure_message,
+        "real_llm_calls": real_calls,
+        "replay_miss_count": replay_miss,
+        "raw_semantic_validation_failures": quality.get("raw_semantic_validation_failures", 0),
+        "semantic_fallbacks": quality.get("semantic_fallbacks", 0),
+        "plan_fallbacks": quality.get("plan_fallbacks", 0),
+        "agent_key_integrity": "PASS" if status == "PASS" else "FAIL",
+        "exposure_key_integrity": "PASS" if status == "PASS" else "FAIL",
+        "pretreatment_alignment": quality.get("pretreatment_alignment", "FAIL" if status != "PASS" else "PASS"),
+        "network_identity_alignment": "PASS" if status == "PASS" else "FAIL",
+        "profile_identity_alignment": "PASS" if status == "PASS" else "FAIL",
+        "POWER_PLANNING_USE": False,
+    }
+    _write_json(summary_path, summary)
+    return summary
+
+
+def execute_real_variance_pilot(output_dir: Path, activation_token: str | None) -> dict:
+    readiness = assert_real_execution_ready(activation_token, output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    ledger = build_pilot_seed_ledger()
+    write_seed_ledger_csv(ledger, output_dir / "seed_ledger.csv")
+    block_summaries = []
+    all_metrics = []
+    all_estimands = []
+    for ledger_row in ledger:
+        summary = _execute_or_resume_block(output_dir, ledger_row, activation_token or "")
+        block_summaries.append(summary)
+        block_dir = output_dir / str(ledger_row["replicate_id"])
+        if summary.get("status") == "PASS":
+            all_metrics.extend(_read_csv_dicts(block_dir / "condition_metrics.csv"))
+            all_estimands.extend(_read_csv_dicts(block_dir / "block_estimands.csv"))
+    statuses = {row["replicate_id"]: row["status"] for row in block_summaries}
+    official = build_official_variance_summary(all_estimands, statuses)
+    pilot_status = "PASS" if official["OFFICIAL_VARIANCE_STATUS"] == "COMPUTED" else "INCOMPLETE"
+    _write_csv(output_dir / "pilot_manifest.csv", block_summaries, [
+        "replicate_id", "attempt_count", "status", "failure_message",
+        "real_llm_calls", "replay_miss_count",
+    ])
+    if all_metrics:
+        _write_csv(output_dir / "all_condition_metrics.csv", all_metrics, [
+            "replicate_id", "exp_id", "content_factor", "channel_factor",
+            "timing_factor", "is_control", "POST_TRUST_AUC", "EARLY_TRUST_AUC",
+            "PURCHASE_RATE_T30", "PURCHASE_TRAJECTORY_AUC", "REACH_RATE", "FINAL_TRUST_T30",
+        ])
+    if all_estimands:
+        _write_csv(output_dir / "all_block_estimands.csv", all_estimands, ["replicate_id", *PRIMARY_ESTIMANDS, *SECONDARY_ESTIMANDS])
+    if official["OFFICIAL_VARIANCE_STATUS"] == "COMPUTED":
+        _write_json(output_dir / "variance_summary.json", official)
+        _write_csv(output_dir / "primary_covariance_matrix.csv", official["covariance_matrix"], ["estimand", *PRIMARY_ESTIMANDS])
+        _write_csv(output_dir / "primary_correlation_matrix.csv", official["correlation_matrix"], ["estimand", *PRIMARY_ESTIMANDS])
+        _write_csv(output_dir / "leave_one_out_sd.csv", official["leave_one_out_sd"], ["estimand", "left_out_replicate_id", "sd"])
+    else:
+        _write_json(output_dir / "partial_variance_diagnostic.json", official)
+    result = {
+        "pilot_id": PILOT_ID,
+        "PILOT_STATUS": pilot_status,
+        "OFFICIAL_VARIANCE_STATUS": official["OFFICIAL_VARIANCE_STATUS"],
+        "PROGRESSION_AUTHORIZED": pilot_status == "PASS",
+        "REAL_LLM_CALLS": sum(int(row.get("real_llm_calls", 0) or 0) for row in block_summaries),
+        "P_VALUES_COMPUTED": False,
+        "POWER_CALCULATION": False,
+        "MDE_SELECTED": False,
+        "FORMAL_INFERENCE": False,
+        "FORMAL_REUSE": False,
+        "OPTIONAL_STOPPING": False,
+        "REPLACEMENT_BLOCKS": False,
+        "readiness": readiness,
+        "blocks": block_summaries,
+    }
+    _write_json(output_dir / "pilot_execution_summary.json", result)
+    return result
+
+
 def offline_test() -> dict:
     with tempfile.TemporaryDirectory(prefix="task005_variance_pilot_") as tmp:
         result = write_offline_dry_run_artifacts(Path(tmp), synthetic_blocks=2)
@@ -642,7 +1157,10 @@ def parse_args(argv=None):
     parser.add_argument("--offline-test", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--preflight", action="store_true")
+    parser.add_argument("--preflight-real", action="store_true")
+    parser.add_argument("--create-activation", action="store_true")
     parser.add_argument("--execute-real", action="store_true")
+    parser.add_argument("--activation-token", default="")
     parser.add_argument("--output-dir", default="")
     return parser.parse_args(argv)
 
@@ -650,9 +1168,23 @@ def parse_args(argv=None):
 def main(argv=None) -> int:
     args = parse_args(argv)
     try:
+        out = Path(args.output_dir) if args.output_dir else PILOT_OUTPUT_ROOT
+        if args.create_activation:
+            payload = build_activation_artifact()
+            _write_json(ACTIVATION_ARTIFACT, payload)
+            print(json.dumps({"activation_artifact": str(ACTIVATION_ARTIFACT), "pilot_id": PILOT_ID}, sort_keys=True))
+            return 0
+        if args.preflight_real:
+            print(json.dumps(assert_real_execution_ready(args.activation_token, out), sort_keys=True))
+            return 0
         if args.execute_real:
-            print(REAL_MODE_REJECTION)
-            return 2
+            result = execute_real_variance_pilot(out, args.activation_token)
+            print(json.dumps({
+                "PILOT_STATUS": result["PILOT_STATUS"],
+                "OFFICIAL_VARIANCE_STATUS": result["OFFICIAL_VARIANCE_STATUS"],
+                "REAL_LLM_CALLS": result["REAL_LLM_CALLS"],
+            }, sort_keys=True))
+            return 0 if result["PILOT_STATUS"] == "PASS" else 1
         if args.preflight:
             print(json.dumps(preflight(), sort_keys=True))
             return 0
@@ -666,8 +1198,8 @@ def main(argv=None) -> int:
         print(json.dumps(preflight(), sort_keys=True))
         return 0
     except Exception as exc:
-        print(f"ERROR: {type(exc).__name__}")
-        return 1
+        print(f"ERROR: {sanitize_text(str(exc))}")
+        return 2 if str(exc) == REAL_MODE_REJECTION else 1
 
 
 if __name__ == "__main__":

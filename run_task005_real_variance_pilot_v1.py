@@ -299,8 +299,13 @@ def compute_condition_metrics(
     if config.is_control:
         reach_rate = None
         control_exposure = [row for row in exposure_rows if row.get("exp_id") == exp_id]
+        if len(control_exposure) != AGENT_COUNT:
+            raise VariancePilotError(f"{exp_id} control exposure audit must have 20 rows")
+        control_agents = [str(row.get("agent_id", "")) for row in control_exposure]
+        if len(set(control_agents)) != AGENT_COUNT or set(control_agents) != agent_set:
+            raise VariancePilotError(f"{exp_id} control exposure agent set must match mechanism")
         if any(_bool_value(row.get("reached")) for row in control_exposure):
-            raise VariancePilotError(f"{exp_id} control exposure rows must not be reached")
+            raise VariancePilotError(f"{exp_id} control exposure rows must all be unreached")
     else:
         erows = [row for row in exposure_rows if row.get("exp_id") == exp_id]
         if len(erows) != AGENT_COUNT:
@@ -581,7 +586,14 @@ def _synthetic_mechanism_rows(replicate_id: str, config, block_index: int) -> li
 
 def _synthetic_exposure_rows(config, block_index: int) -> list[dict]:
     if config.is_control:
-        return []
+        return [
+            {
+                "exp_id": config.exp_id,
+                "agent_id": f"Consumer_{i:03d}",
+                "reached": False,
+            }
+            for i in range(AGENT_COUNT)
+        ]
     if config.channel_factor == "hub":
         reached_count = 18 + (block_index % 2)
     else:

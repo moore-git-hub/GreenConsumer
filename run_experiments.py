@@ -54,12 +54,21 @@ from simulation_core import (
     ENTERPRISE_STRATEGY,
     AGENT_RECORDS_FIELDS,
     AGENT_RECORDS_SCHEMA_VERSION,
+    MECHANISM_RECORDS_FIELDS,
+    MECHANISM_RECORDS_SCHEMA_VERSION,
 )
-try:
-    from simulation_core import MECHANISM_RECORDS_FIELDS, MECHANISM_RECORDS_SCHEMA_VERSION
-except ImportError:
-    MECHANISM_RECORDS_FIELDS = ()
-    MECHANISM_RECORDS_SCHEMA_VERSION = "1.2"
+if MECHANISM_RECORDS_SCHEMA_VERSION != "1.2":
+    raise RuntimeError("MECHANISM_RECORDS_SCHEMA_VERSION must be 1.2")
+_REQUIRED_MECHANISM_RECORD_FIELDS = {
+    "schema_version",
+    "exp_id",
+    "tick",
+    "agent_id",
+    "trust_final",
+    "empathy_repair_weight",
+}
+if not _REQUIRED_MECHANISM_RECORD_FIELDS.issubset(set(MECHANISM_RECORDS_FIELDS)):
+    raise RuntimeError("MECHANISM_RECORDS_FIELDS missing required audit fields")
 from metrics_calculator import (
     METRICS_SCHEMA_VERSION,
     LOCAL_WINDOW_TICKS,

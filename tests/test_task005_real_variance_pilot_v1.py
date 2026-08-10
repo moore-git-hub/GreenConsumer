@@ -123,6 +123,19 @@ def test_estimand_boundaries() -> None:
     )
     expected_purchase_auc = (((0.0 + 0.05) / 2) + sum((0.05 + 0.05) / 2 for _ in range(2, 30))) / 29
     check("purchase trajectory AUC", abs(metric2["PURCHASE_TRAJECTORY_AUC"] - expected_purchase_auc) < 1e-12, metric2)
+    control_audit_exposure = [{"exp_id": control.exp_id, "agent_id": f"A{i:02d}", "reached": False} for i in range(20)]
+    metric3 = pilot.compute_condition_metrics(
+        replicate_id="R001",
+        config=control,
+        mechanism_rows=rows,
+        exposure_rows=control_audit_exposure,
+    )
+    check("control audit exposure allowed unreached", metric3["REACH_RATE"] is None, metric3)
+    bad_control_exposure = list(control_audit_exposure)
+    bad_control_exposure[0] = {"exp_id": control.exp_id, "agent_id": "A00", "reached": True}
+    expect_error("control reached exposure fails", lambda: pilot.compute_condition_metrics(
+        replicate_id="R001", config=control, mechanism_rows=rows, exposure_rows=bad_control_exposure
+    ))
 
     dup = list(rows)
     dup[-1] = dict(dup[0])

@@ -298,8 +298,9 @@ def compute_condition_metrics(
 
     if config.is_control:
         reach_rate = None
-        if [row for row in exposure_rows if row.get("exp_id") == exp_id]:
-            raise VariancePilotError(f"{exp_id} control must not have exposure rows")
+        control_exposure = [row for row in exposure_rows if row.get("exp_id") == exp_id]
+        if any(_bool_value(row.get("reached")) for row in control_exposure):
+            raise VariancePilotError(f"{exp_id} control exposure rows must not be reached")
     else:
         erows = [row for row in exposure_rows if row.get("exp_id") == exp_id]
         if len(erows) != AGENT_COUNT:

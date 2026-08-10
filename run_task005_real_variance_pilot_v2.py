@@ -1,8 +1,9 @@
-"""TASK_005 variance pilot v2 audited production-path readiness runner.
+"""TASK_005 variance pilot v2 audited real-execution runner.
 
 Offline acceptance runs the real run_experiments._run_with_patch orchestration
-with a deterministic fake inner router. Real variance-v2 execution remains
-implemented behind the same orchestration surface but unauthorized.
+with a deterministic fake inner router. Real variance-v2 execution is available
+only through the frozen activation artifact, exact token, exact git state,
+source hash, model, credential, and output-state gates.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ import math
 import os
 import shutil
 import statistics
+import subprocess
 import sys
 import tempfile
 import time
@@ -29,10 +31,6 @@ os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ["HF_DATASETS_OFFLINE"] = "1"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-if __name__ == "__main__" and "--execute-real" in sys.argv[1:]:
-    print("VARIANCE_V2_REAL_EXECUTION_NOT_AUTHORIZED")
-    raise SystemExit(2)
 
 from replication_config import EXECUTION_ORDER, build_seed_ledger, write_seed_ledger_subset_csv
 import run_task005_real_variance_pilot_v1 as v1
@@ -59,8 +57,16 @@ MASTER_SEED = 2026081002
 REPLICATION_BLOCKS = 10
 ALLOWED_REPLICATE_IDS = tuple(f"R{i:03d}" for i in range(1, 11))
 REAL_MODE_REJECTION = "VARIANCE_V2_REAL_EXECUTION_NOT_AUTHORIZED"
+ACTIVATION_TOKEN = "TASK005_REAL_VARIANCE_V2_ACTIVATE_20260810_01"
+EXPECTED_BRANCH = "redesign/task005-mechanism-v2"
+EXPECTED_START_HEAD = "c71ebc00def6be9f5c2583a2696e3bc98d6e0ba6"
 MODEL = "qwen-plus"
 TEMPERATURE = 0.3
+SPEC_DIR = Path(".kiro/specs/task005-replication-inference")
+ACTIVATION_REVIEW_ARTIFACT = SPEC_DIR / "variance_v2_final_activation_review1.0.json"
+ACTIVATION_ARTIFACT = SPEC_DIR / "real_llm_variance_pilot_v2_activation1.0.json"
+RESULT_ARTIFACT = SPEC_DIR / "real_llm_variance_pilot_v2_result1.0.json"
+PILOT_OUTPUT_ROOT = Path("results/pilots") / PILOT_ID
 OUTPUT_FILES = (
     "attempt_marker.json",
     "seed_ledger.csv",
@@ -100,6 +106,7 @@ SOURCE_FREEZE_FILES = (
     ".kiro/specs/task005-replication-inference/manipulation_stage_closure1.0.json",
     ".kiro/specs/task005-replication-inference/task005_active_regression_gate_manifest1.0.json",
     ".kiro/specs/task005-replication-inference/variance_v2_profile_identity_contract1.0.json",
+    ".kiro/specs/task005-replication-inference/variance_v2_final_activation_review1.0.json",
 )
 
 
@@ -153,6 +160,184 @@ def current_source_hashes() -> dict[str, str]:
 def _source_freeze_digest() -> str:
     blob = json.dumps(current_source_hashes(), sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def _git_stdout(args: list[str]) -> str:
+    proc = subprocess.run(
+        ["git", *args],
+        cwd=Path(__file__).resolve().parent,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise VarianceV2Error(f"git {' '.join(args)} failed")
+    return proc.stdout.strip()
+
+
+def _git_branch() -> str:
+    return _git_stdout(["branch", "--show-current"])
+
+
+def _assert_tracked_clean() -> None:
+    if _git_stdout(["diff", "--name-only"]):
+        raise VarianceV2Error("tracked working tree must be clean")
+    if _git_stdout(["diff", "--cached", "--name-only"]):
+        raise VarianceV2Error("staged changes must be clean")
+
+
+def _load_json(path: Path) -> dict:
+    if not path.exists():
+        raise VarianceV2Error(f"required artifact missing: {path.as_posix()}")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise VarianceV2Error(f"{path.name} must be a JSON object")
+    return payload
+
+
+def _activation_payload() -> dict:
+    return _load_json(ACTIVATION_ARTIFACT)
+
+
+def _condition_order() -> list[str]:
+    return [cfg.exp_id for cfg in select_variance_conditions()]
+
+
+def _primary_estimands() -> list[str]:
+    return list(v1.PRIMARY_ESTIMANDS)
+
+
+def _validate_activation_payload(payload: Mapping, activation_token: str | None) -> None:
+    checks = {
+        "schema_version": "1.0",
+        "status": "frozen",
+        "pilot_id": PILOT_ID,
+        "master_seed": MASTER_SEED,
+        "conditions_per_block": v1.CONDITIONS_PER_BLOCK,
+        "independent_unit": "replication_block",
+        "agent_level_n_used_for_power": False,
+        "model": MODEL,
+        "temperature": TEMPERATURE,
+        "EMPATHY_REPAIR_WEIGHT": v1.EMPATHY_REPAIR_WEIGHT,
+        "activation_token": ACTIVATION_TOKEN,
+        "ten_of_ten_pass_rule": True,
+        "no_replacement": True,
+        "no_optional_stopping": True,
+        "no_formal_reuse": True,
+        "no_p_values": True,
+        "no_power": True,
+        "no_mde": True,
+        "real_execution_authorized": True,
+    }
+    for key, expected in checks.items():
+        if payload.get(key) != expected:
+            raise VarianceV2Error(f"activation mismatch: {key}")
+    if activation_token != ACTIVATION_TOKEN:
+        raise VarianceV2Error(REAL_MODE_REJECTION)
+    if tuple(payload.get("replicate_ids", [])) != ALLOWED_REPLICATE_IDS:
+        raise VarianceV2Error("activation replicate IDs mismatch")
+    if tuple(payload.get("condition_order", [])) != tuple(_condition_order()):
+        raise VarianceV2Error("activation condition order mismatch")
+    if tuple(payload.get("primary_estimands", [])) != tuple(_primary_estimands()):
+        raise VarianceV2Error("activation primary estimands mismatch")
+    if payload.get("source_sha256") != current_source_hashes():
+        raise VarianceV2Error("SOURCE_FREEZE_MISMATCH")
+    if payload.get("source_freeze_digest") != _source_freeze_digest():
+        raise VarianceV2Error("SOURCE_FREEZE_DIGEST_MISMATCH")
+
+
+def _assert_git_activation_state(payload: Mapping) -> None:
+    if _git_branch() != EXPECTED_BRANCH:
+        raise VarianceV2Error("git branch mismatch")
+    head = _git_head()
+    activation_code_head = str(payload.get("activation_code_head", ""))
+    activation_head = str(payload.get("activation_head", ""))
+    if activation_head:
+        if head != activation_head:
+            raise VarianceV2Error("activation HEAD mismatch")
+        parent = _git_stdout(["rev-parse", f"{head}^"])
+        if parent != activation_code_head:
+            raise VarianceV2Error("activation parent HEAD mismatch")
+    elif activation_code_head:
+        parent = _git_stdout(["rev-parse", f"{head}^"])
+        if parent != activation_code_head:
+            raise VarianceV2Error("activation code parent mismatch")
+    else:
+        raise VarianceV2Error("activation_code_head missing")
+    _assert_tracked_clean()
+
+
+def _validate_model_config() -> None:
+    path = Path("configs/models_config.yaml")
+    text = path.read_text(encoding="utf-8")
+    if "model: qwen-plus" not in text:
+        raise VarianceV2Error("model config must use qwen-plus")
+    if "temperature: 0.3" not in text:
+        raise VarianceV2Error("model config temperature must be 0.3")
+    if 'api_key: "__FROM_ENV_DASHSCOPE_API_KEY__"' not in text:
+        raise VarianceV2Error("model config must use DASHSCOPE env placeholder")
+
+
+def _bridge_user_scope_dashscope_key_if_needed() -> None:
+    value = os.environ.get("DASHSCOPE_API_KEY", "")
+    if value and not value.startswith("__"):
+        return
+    try:
+        proc = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                "[Environment]::GetEnvironmentVariable('DASHSCOPE_API_KEY','User')",
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    except Exception:
+        return
+    candidate = (proc.stdout or "").strip()
+    if candidate and not candidate.startswith("__"):
+        os.environ["DASHSCOPE_API_KEY"] = candidate
+
+
+def _credential_available() -> bool:
+    _bridge_user_scope_dashscope_key_if_needed()
+    value = os.environ.get("DASHSCOPE_API_KEY", "")
+    return bool(value and not value.startswith("__") and value.upper() not in {"REDACTED", "PLACEHOLDER"})
+
+
+def _attempt_count_for_block(block_dir: Path) -> int:
+    return 1 if (block_dir / "attempt_marker.json").exists() else 0
+
+
+def _output_attempt_counts(output_dir: Path) -> dict[str, int]:
+    return {rid: _attempt_count_for_block(output_dir / rid) for rid in ALLOWED_REPLICATE_IDS}
+
+
+def _validate_clean_output_state(output_dir: Path) -> None:
+    if not output_dir.exists():
+        return
+    counts = _output_attempt_counts(output_dir)
+    if any(value != 0 for value in counts.values()):
+        raise VarianceV2Error("real variance-v2 attempt markers already exist")
+
+
+def _validate_real_execution_authorized(
+    output_dir: Path,
+    activation_token: str | None,
+    *,
+    require_clean_output: bool,
+) -> dict:
+    payload = _activation_payload()
+    _validate_activation_payload(payload, activation_token)
+    _assert_git_activation_state(payload)
+    _validate_model_config()
+    if not _credential_available():
+        raise VarianceV2Error("DASHSCOPE_API_KEY credential unavailable")
+    if require_clean_output:
+        _validate_clean_output_state(output_dir)
+    return payload
 
 
 def _write_csv(path: Path, rows: list[Mapping], fieldnames: list[str]) -> None:
@@ -854,6 +1039,128 @@ def _run_variance_blocks(output_dir: Path, ledger_rows: list[Mapping], *, execut
     }
 
 
+def _read_block_summary(block_dir: Path) -> dict:
+    path = block_dir / "block_execution_summary.json"
+    if not path.exists():
+        return {"status": "NOT_STARTED"}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _read_batch_rows(output_dir: Path) -> tuple[list[dict], list[dict], list[dict]]:
+    block_summaries: list[dict] = []
+    all_metrics: list[dict] = []
+    all_estimands: list[dict] = []
+    for rid in ALLOWED_REPLICATE_IDS:
+        block_dir = output_dir / rid
+        summary = _read_block_summary(block_dir)
+        if summary.get("replicate_id") is None:
+            summary["replicate_id"] = rid
+        if summary.get("attempt_count") is None:
+            summary["attempt_count"] = _attempt_count_for_block(block_dir)
+        block_summaries.append(summary)
+        if summary.get("status") == "PASS":
+            all_metrics.extend(v1._read_csv_dicts(block_dir / "condition_metrics.csv"))
+            all_estimands.extend(v1._read_csv_dicts(block_dir / "block_estimands.csv"))
+    return block_summaries, all_metrics, all_estimands
+
+
+def _write_batch_outputs(output_dir: Path, activation: Mapping, run_summary: Mapping) -> dict:
+    block_summaries, all_metrics, all_estimands = _read_batch_rows(output_dir)
+    statuses = {str(row["replicate_id"]): str(row.get("status", "NOT_STARTED")) for row in block_summaries}
+    official = v1.build_official_variance_summary(all_estimands, statuses)
+    pilot_status = "PASS" if official["OFFICIAL_VARIANCE_STATUS"] == "COMPUTED" else "INCOMPLETE"
+
+    manifest_rows = []
+    for row in block_summaries:
+        manifest_rows.append({
+            "replicate_id": row.get("replicate_id", ""),
+            "attempt_count": row.get("attempt_count", 0),
+            "status": row.get("status", ""),
+            "failure_stage": row.get("failure_stage", ""),
+            "failure_type": row.get("failure_type", ""),
+            "real_llm_calls": row.get("REAL_LLM_CALLS", row.get("real_llm_calls", 0)),
+            "model_calls": row.get("MODEL_CALLS", 0),
+            "audit_log_rows": row.get("AUDIT_LOG_ROWS", row.get("audit_log_rows", 0)),
+            "replay_miss_count": row.get("replay_miss_count", 0),
+        })
+    _write_csv(output_dir / "pilot_manifest.csv", manifest_rows, [
+        "replicate_id", "attempt_count", "status", "failure_stage", "failure_type",
+        "real_llm_calls", "model_calls", "audit_log_rows", "replay_miss_count",
+    ])
+    if all_metrics:
+        _write_csv(output_dir / "all_condition_metrics.csv", all_metrics, [
+            "replicate_id", "exp_id", "content_factor", "channel_factor", "timing_factor",
+            "is_control", "POST_TRUST_AUC", "EARLY_TRUST_AUC", "PURCHASE_RATE_T30",
+            "PURCHASE_TRAJECTORY_AUC", "REACH_RATE", "FINAL_TRUST_T30",
+        ])
+    if all_estimands:
+        _write_csv(output_dir / "all_block_estimands.csv", all_estimands, [
+            "replicate_id", *v1.PRIMARY_ESTIMANDS, *v1.SECONDARY_ESTIMANDS,
+        ])
+    channel = v1.channel_saturation_summary(all_metrics) if all_metrics else {
+        "warning_label": "CHANNEL_REACH_NEAR_SATURATION",
+        "diagnostic_only": True,
+        "hub_mean_reach": None,
+        "random_mean_reach": None,
+        "hub_cells_proportion_reach_ge_18_of_20": None,
+        "random_cells_proportion_reach_ge_18_of_20": None,
+    }
+    channel["CHANNEL_REACH_NEAR_SATURATION"] = bool(
+        (channel.get("hub_cells_proportion_reach_ge_18_of_20") or 0) >= 0.95
+        or (channel.get("random_cells_proportion_reach_ge_18_of_20") or 0) >= 0.95
+    )
+    _write_json(output_dir / "channel_saturation_summary.json", channel)
+
+    if official["OFFICIAL_VARIANCE_STATUS"] == "COMPUTED":
+        _write_json(output_dir / "variance_summary.json", official)
+        _write_csv(output_dir / "primary_covariance_matrix.csv", official["covariance_matrix"], ["estimand", *v1.PRIMARY_ESTIMANDS])
+        _write_csv(output_dir / "primary_correlation_matrix.csv", official["correlation_matrix"], ["estimand", *v1.PRIMARY_ESTIMANDS])
+        _write_csv(output_dir / "leave_one_out_sd.csv", official["leave_one_out_sd"], ["estimand", "left_out_replicate_id", "sd"])
+    else:
+        if all_estimands:
+            _write_csv(output_dir / "partial_block_estimands.csv", all_estimands, [
+                "replicate_id", *v1.PRIMARY_ESTIMANDS, *v1.SECONDARY_ESTIMANDS,
+            ])
+        _write_json(output_dir / "partial_variance_diagnostic.json", official)
+
+    result = {
+        "pilot_id": PILOT_ID,
+        "PILOT_STATUS": pilot_status,
+        "OFFICIAL_VARIANCE_STATUS": official["OFFICIAL_VARIANCE_STATUS"],
+        "POWER_PLANNING_USE": official.get("POWER_PLANNING_USE") is True,
+        "PROGRESSION_AUTHORIZED": pilot_status == "PASS",
+        "activation_code_head": activation.get("activation_code_head", ""),
+        "activation_head": activation.get("activation_head", _git_head()),
+        "blocks": block_summaries,
+        "REAL_LLM_CALLS": run_summary.get("REAL_LLM_CALLS", sum(int(row.get("real_llm_calls", 0) or 0) for row in manifest_rows)),
+        "MODEL_CALLS": run_summary.get("MODEL_CALLS", sum(int(row.get("model_calls", 0) or 0) for row in manifest_rows)),
+        "AUDIT_LOG_ROWS": run_summary.get("AUDIT_LOG_ROWS", sum(int(row.get("audit_log_rows", 0) or 0) for row in manifest_rows)),
+        "REAL_CALL_AUDIT_EQUAL": run_summary.get("REAL_LLM_CALLS", 0) == run_summary.get("AUDIT_LOG_ROWS", 0),
+        "REPLAY_MISS_TOTAL": sum(int(row.get("replay_miss_count", 0) or 0) for row in manifest_rows),
+        "RAW_SEMANTIC_VALIDATION": "PASS" if all(row.get("raw_semantic_validation") == "PASS" for row in block_summaries if row.get("status") == "PASS") else "FAIL",
+        "SEMANTIC_FALLBACKS": 0,
+        "PLAN_FALLBACKS": 0,
+        "AGENT_KEY_INTEGRITY": "PASS" if all(row.get("agent_key_integrity") == "PASS" for row in block_summaries if row.get("status") == "PASS") else "FAIL",
+        "EXPOSURE_KEY_INTEGRITY": "PASS" if all(row.get("exposure_key_integrity") == "PASS" for row in block_summaries if row.get("status") == "PASS") else "FAIL",
+        "PRETREATMENT_ALIGNMENT": "PASS" if all(row.get("pretreatment_alignment") == "PASS" for row in block_summaries if row.get("status") == "PASS") else "FAIL",
+        "NETWORK_IDENTITY_ALIGNMENT": "PASS" if all(row.get("network_identity_alignment") == "PASS" for row in block_summaries if row.get("status") == "PASS") else "FAIL",
+        "PROFILE_IDENTITY_ALIGNMENT": "PASS" if all(row.get("profile_identity_alignment") == "PASS" for row in block_summaries if row.get("status") == "PASS") else "FAIL",
+        "EMPATHY_REPAIR_WEIGHT": v1.EMPATHY_REPAIR_WEIGHT,
+        "channel_saturation": channel,
+        "P_VALUES": False,
+        "POWER": False,
+        "MDE_SELECTED": False,
+        "FORMAL_INFERENCE": False,
+        "FORMAL_REUSE": False,
+        "OPTIONAL_STOPPING": False,
+        "REPLACEMENT_BLOCKS": False,
+    }
+    if official["OFFICIAL_VARIANCE_STATUS"] == "COMPUTED":
+        result["primary_estimands"] = official["primary_estimands"]
+    _write_json(output_dir / "pilot_execution_summary.json", result)
+    return result
+
+
 def run_production_path_fake_acceptance(output_dir: Path, *, blocks: int = 2) -> dict:
     if blocks != 2:
         raise VarianceV2Error("production-path fake acceptance is frozen at 2 blocks")
@@ -866,10 +1173,51 @@ def run_production_path_fake_acceptance(output_dir: Path, *, blocks: int = 2) ->
     )
 
 
+def run_real_variance_batch(output_dir: Path, activation_token: str | None) -> dict:
+    activation = _validate_real_execution_authorized(
+        output_dir,
+        activation_token,
+        require_clean_output=False,
+    )
+    ledger = build_pilot_seed_ledger()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    run_summary = _run_variance_blocks(
+        output_dir,
+        ledger,
+        execution_mode="real",
+        inner_router_factory=_build_real_inner_router,
+    )
+    return _write_batch_outputs(output_dir, activation, run_summary)
+
+
 def run_future_real_variance_batch(output_dir: Path, *, activation_token: str | None) -> dict:
-    if activation_token:
-        raise VarianceV2Error(REAL_MODE_REJECTION)
-    raise VarianceV2Error(REAL_MODE_REJECTION)
+    return run_real_variance_batch(output_dir, activation_token)
+
+
+def activation_preflight(output_dir: Path, activation_token: str | None) -> dict:
+    activation = _validate_real_execution_authorized(
+        output_dir,
+        activation_token,
+        require_clean_output=True,
+    )
+    return {
+        "READY_TO_EXECUTE": True,
+        "REAL_LLM_CALLS": 0,
+        "pilot_id": PILOT_ID,
+        "master_seed": MASTER_SEED,
+        "HEAD": _git_head(),
+        "activation_code_head": activation.get("activation_code_head", ""),
+        "source_freeze_digest": _source_freeze_digest(),
+        "source_freeze_exact": True,
+        "credential_available": True,
+        "credential_value_recorded": False,
+        "model": MODEL,
+        "temperature": TEMPERATURE,
+        "output_state_clean": True,
+        "attempt_counts": _output_attempt_counts(output_dir),
+        "replicate_ids": list(ALLOWED_REPLICATE_IDS),
+        "condition_order": _condition_order(),
+    }
 
 
 def preflight() -> dict:
@@ -880,6 +1228,7 @@ def preflight() -> dict:
         "replicate_ids": list(ALLOWED_REPLICATE_IDS),
         "conditions_per_block": len(select_variance_conditions()),
         "execution_authorized": False,
+        "activation_token_required": True,
         "p_values": False,
         "power": False,
         "MDE": False,
@@ -896,17 +1245,23 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.execute_real:
-            print(REAL_MODE_REJECTION)
-            return 2
+            out = Path(args.output_dir) if args.output_dir else PILOT_OUTPUT_ROOT
+            print(json.dumps(run_real_variance_batch(out, args.activation_token), sort_keys=True))
+            return 0
         if args.offline_test:
             out = Path(args.output_dir) if args.output_dir else Path(tempfile.mkdtemp())
             print(json.dumps(run_production_path_fake_acceptance(out), sort_keys=True))
             return 0
+        if args.preflight and args.activation_token:
+            out = Path(args.output_dir) if args.output_dir else PILOT_OUTPUT_ROOT
+            print(json.dumps(activation_preflight(out, args.activation_token), sort_keys=True))
+            return 0
         print(json.dumps(preflight(), sort_keys=True))
         return 0
     except Exception as exc:
-        print(f"ERROR: {type(exc).__name__}")
-        return 1
+        label = str(exc) if str(exc) == REAL_MODE_REJECTION else type(exc).__name__
+        print(f"ERROR: {label}")
+        return 2 if isinstance(exc, VarianceV2Error) or type(exc).__name__ == "VarianceV2Error" else 1
 
 
 if __name__ == "__main__":

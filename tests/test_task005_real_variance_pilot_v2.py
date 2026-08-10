@@ -53,6 +53,13 @@ def write_rows(path: Path, data: list[dict]) -> None:
         writer.writerows(data)
 
 
+def utf8_env() -> dict:
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    return env
+
+
 def test_contract_and_rejection() -> None:
     contract = json.loads(
         (ROOT / ".kiro/specs/task005-replication-inference/real_llm_variance_pilot_v2_contract1.0.json")
@@ -63,18 +70,19 @@ def test_contract_and_rejection() -> None:
     check("v2 master seed", contract["master_seed"] == 2026081002)
     check("v2 10 blocks", tuple(contract["replicates"]) == tuple(f"R{i:03d}" for i in range(1, 11)))
     check("v2 9 conditions", preflight["conditions_per_block"] == 9, preflight)
-    check("v2 execution unauthorized", contract["execution_authorized"] is False)
+    check("v2 contract started unauthorized", contract["execution_authorized"] is False)
     check("v2 no p", contract["p_values"] is False)
     proc = subprocess.run(
-        [sys.executable, str(ROOT / "run_task005_real_variance_pilot_v2.py"), "--execute-real"],
+        [sys.executable, "-X", "utf8", str(ROOT / "run_task005_real_variance_pilot_v2.py"), "--execute-real"],
         cwd=ROOT,
         text=True,
         encoding="utf-8",
         errors="replace",
         capture_output=True,
+        env=utf8_env(),
     )
     check("v2 real rejected exit", proc.returncode == 2, proc.stdout)
-    check("v2 real rejected label", v2.REAL_MODE_REJECTION in proc.stdout, proc.stdout)
+    check("v2 real rejected without token", "ERROR:" in proc.stdout, proc.stdout)
 
 
 def test_strict_semantic_validator() -> None:
@@ -313,6 +321,8 @@ def test_real_execution_surface_locked() -> None:
         proc = subprocess.run(
             [
                 sys.executable,
+                "-X",
+                "utf8",
                 str(ROOT / "run_task005_real_variance_pilot_v2.py"),
                 "--execute-real",
                 "--activation-token",
@@ -325,10 +335,41 @@ def test_real_execution_surface_locked() -> None:
             encoding="utf-8",
             errors="replace",
             capture_output=True,
+            env=utf8_env(),
         )
         check("execute-real locked exit", proc.returncode == 2, proc.stdout)
         check("execute-real creates no output", not (root / "out").exists(), list(root.iterdir()))
         expect_error("future real batch locked", lambda: v2.run_future_real_variance_batch(root / "real", activation_token=None))
+        expect_error("bad activation token locked", lambda: v2.run_real_variance_batch(root / "real", "bad-token"))
+
+    payload = {
+        "schema_version": "1.0",
+        "status": "frozen",
+        "pilot_id": v2.PILOT_ID,
+        "master_seed": v2.MASTER_SEED,
+        "replicate_ids": list(v2.ALLOWED_REPLICATE_IDS),
+        "conditions_per_block": 9,
+        "condition_order": [cfg.exp_id for cfg in v2.select_variance_conditions()],
+        "primary_estimands": list(v2.v1.PRIMARY_ESTIMANDS),
+        "independent_unit": "replication_block",
+        "agent_level_n_used_for_power": False,
+        "model": v2.MODEL,
+        "temperature": v2.TEMPERATURE,
+        "EMPATHY_REPAIR_WEIGHT": v2.v1.EMPATHY_REPAIR_WEIGHT,
+        "activation_token": v2.ACTIVATION_TOKEN,
+        "activation_code_head": v2.EXPECTED_START_HEAD,
+        "source_sha256": {},
+        "source_freeze_digest": "bad",
+        "ten_of_ten_pass_rule": True,
+        "no_replacement": True,
+        "no_optional_stopping": True,
+        "no_formal_reuse": True,
+        "no_p_values": True,
+        "no_power": True,
+        "no_mde": True,
+        "real_execution_authorized": True,
+    }
+    expect_error("activation source mismatch fails", lambda: v2._validate_activation_payload(payload, v2.ACTIVATION_TOKEN))
 
 
 def test_fail_closed_schema_import() -> None:

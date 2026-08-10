@@ -1,0 +1,57 @@
+{
+  "schema_version": "managerial_mde_contract1.0",
+  "task": "TASK_005",
+  "stage": "managerial-mde-and-prospective-power-v1",
+  "firewall": {
+    "frozen_before_variance_or_covariance_read": true,
+    "observed_variance_pilot_means_used": false,
+    "pilot_p_values_used": false,
+    "strategy_ranking_used": false,
+    "treatment_winner_used": false
+  },
+  "common_provenance": {
+    "literature_derived": false,
+    "variance_derived": false,
+    "observed_effect_derived": false,
+    "significance_tuned": false,
+    "cost_tuned": false,
+    "classification": "smallest effect of practical/managerial interest"
+  },
+  "mde": {
+    "P1_OVERALL_CLARIFICATION_POST_TRUST": {
+      "value": 0.15,
+      "unit": "normalized trust points",
+      "interpretation": "minimum managerially relevant sustained average post-crisis trust recovery difference"
+    },
+    "P2_CONTENT_POST_TRUST": {
+      "value": 0.15,
+      "unit": "normalized trust points",
+      "interpretation": "minimum managerially relevant sustained difference between the two composite communication archetypes",
+      "test_direction": "two-sided",
+      "directional_winner_assumption": "none"
+    },
+    "P3_TIMING_EARLY_TRUST": {
+      "value": 0.15,
+      "unit": "normalized trust points",
+      "interpretation": "minimum managerially relevant early-window trust recovery-speed advantage"
+    },
+    "P4_CHANNEL_REACH": {
+      "value": 0.15,
+      "unit": "proportion",
+      "equivalent": "15 percentage points",
+      "natural_scale_20_agents": "approximately 3 agents per condition"
+    },
+    "P5_OVERALL_CLARIFICATION_PURCHASE": {
+      "value": 0.05,
+      "unit": "proportion",
+      "equivalent": "5 percentage points",
+      "natural_scale_20_agents": "approximately 1 agent per condition"
+    }
+  },
+  "trust_endpoint_policy": {
+    "P1_P2_P3_uniform_mde": 0.15,
+    "trust_mdes_differ_by_sd": false
+  },
+  "real_llm_calls_authorized_by_this_artifact": false,
+  "formal_execution_authorized": false
+}

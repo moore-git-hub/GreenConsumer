@@ -1,5 +1,9 @@
 # Kiro Handoff — Phase 1 and Phase 2
 
+> Historical handoff only. For the current TASK_005 formal-v2 state and release
+> boundary, use `GABM_HANDOFF.md`. This file must not be treated as the active
+> execution instruction.
+
 ## Purpose
 
 This package aligns two completed audits with the local GreenConsumer repository:

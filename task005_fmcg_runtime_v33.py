@@ -56,6 +56,7 @@ def _isolated_runtime_patch(
     """Patch explicit module objects and restore them on every exit path."""
 
     original_profile_builder = simulation_module._generate_profiles_inline
+    original_agent_record_builder = simulation_module.build_agent_record
     original_record_builder = simulation_module.build_mechanism_record
     original_events = dict(simulation_module.ENTERPRISE_STRATEGY)
     original_templates = dict(clarification_module.CONTENT_TEMPLATES)
@@ -67,8 +68,27 @@ def _isolated_runtime_patch(
     original_public_selector = simulation_module.select_public_exposure_nodes
     original_amplification_selector = simulation_module.one_hop_amplification_nodes
 
+    def _audit_compatible_plan(plan):
+        """Keep legacy audit fields numeric without changing v3.3 science."""
+        row = dict(plan or {})
+        # simulation_core's legacy audit schema expects numeric decay fields.
+        # v3.3 has two retentions, so the repair-memory decay is stored in the
+        # legacy scalar slot while the full pair is preserved in v3.3 fields.
+        legacy_decay = 1.0 - float(DEFAULT_TRUST_PARAMETERS.repair_retention)
+        row["decay_lambda"] = legacy_decay
+        row["decay_rate_raw"] = legacy_decay
+        return row
+
+    def build_v33_agent_record(*args, **kwargs):
+        safe = dict(kwargs)
+        safe["plan"] = _audit_compatible_plan(kwargs.get("plan", {}))
+        return original_agent_record_builder(*args, **safe)
+
     def build_v33_mechanism_record(*args, **kwargs):
-        row = original_record_builder(*args, **kwargs)
+        safe = dict(kwargs)
+        safe_plan = _audit_compatible_plan(kwargs.get("plan", {}))
+        safe["plan"] = safe_plan
+        row = original_record_builder(*args, **safe)
         state_data = kwargs["s_data"]
         plan = kwargs["plan"]
         social_count = int(state_data.get("semantic_social_observation_count", 0))
@@ -115,9 +135,7 @@ def _isolated_runtime_patch(
         return row
 
     def public_selector(nodes, base_seed, rate):
-        return select_public_exposure_nodes_v33(
-            nodes, base_seed, rate=rate
-        )
+        return select_public_exposure_nodes_v33(nodes, base_seed, rate=rate)
 
     def amplification_selector(graph, seed_nodes):
         return select_paid_amplification_nodes_v33(
@@ -133,6 +151,7 @@ def _isolated_runtime_patch(
 
     try:
         simulation_module._generate_profiles_inline = _scenario_profiles
+        simulation_module.build_agent_record = build_v33_agent_record
         simulation_module.build_mechanism_record = build_v33_mechanism_record
         simulation_module.ENTERPRISE_STRATEGY.clear()
         simulation_module.ENTERPRISE_STRATEGY.update({5: CRISIS_STIMULUS})
@@ -146,6 +165,7 @@ def _isolated_runtime_patch(
         yield
     finally:
         simulation_module._generate_profiles_inline = original_profile_builder
+        simulation_module.build_agent_record = original_agent_record_builder
         simulation_module.build_mechanism_record = original_record_builder
         simulation_module.ENTERPRISE_STRATEGY.clear()
         simulation_module.ENTERPRISE_STRATEGY.update(original_events)

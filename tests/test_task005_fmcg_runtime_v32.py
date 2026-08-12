@@ -6,6 +6,8 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -117,6 +119,25 @@ class FMCGRuntimeV32Tests(unittest.TestCase):
         config = generate_experiment_matrix()[-1]
         with self.assertRaises(ValueError):
             asyncio.run(runtime.run_scenario_v32(config, override_router=None))
+
+    def test_builder_bootstrap_has_no_deleted_static_data_dependencies(self):
+        """清理代码库后，Builder 不得继续引用已删除 relation/map 文件。"""
+        simulation_cfg = yaml.safe_load(
+            (ROOT / "configs" / "simulation_config.yaml").read_text(
+                encoding="utf-8-sig"
+            )
+        )
+        environment_cfg = yaml.safe_load(
+            (ROOT / "configs" / "environment_config.yaml").read_text(
+                encoding="utf-8-sig"
+            )
+        )
+
+        self.assertEqual(
+            simulation_cfg["data"],
+            {"agent_profiles": "data/agents/profiles.jsonl"},
+        )
+        self.assertEqual(environment_cfg["components"], {})
 
 
 if __name__ == "__main__":

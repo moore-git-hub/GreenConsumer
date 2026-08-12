@@ -44,7 +44,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_run_args(p_run)
     p_pipeline = sub.add_parser(
         "pipeline",
-        help="run v3.3 then reuse descriptive analysis/visualization readers",
+        help="run v3.3 cognition + renewal demand + lag-aware descriptive diagnostics",
     )
     add_run_args(p_pipeline)
 
@@ -86,11 +86,8 @@ def main(argv=None) -> int:
         payload = asyncio.run(execute(settings))
 
         if args.command == "pipeline":
-            # Output columns remain backward-readable, so the current v3.2
-            # descriptive readers can be reused.  This is engineering output,
-            # never formal inference.
-            from greenconsumer_v32.analysis import analyze_run
-            from greenconsumer_v32.visualization import plot_run
+            from .analysis import analyze_run
+            from .visualization import plot_run
 
             run_dir = Path(payload["output_dir"])
             analysis = analyze_run(run_dir)
@@ -106,14 +103,14 @@ def main(argv=None) -> int:
         return 0
 
     if args.command == "analyze":
-        from greenconsumer_v32.analysis import analyze_run
+        from .analysis import analyze_run
 
         payload = analyze_run(args.run_dir.resolve())
         print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
         return 0
 
     if args.command == "plot":
-        from greenconsumer_v32.visualization import plot_run
+        from .visualization import plot_run
 
         outputs = plot_run(args.run_dir.resolve())
         print(json.dumps({"status": "PASS", "figures": outputs}, ensure_ascii=False))

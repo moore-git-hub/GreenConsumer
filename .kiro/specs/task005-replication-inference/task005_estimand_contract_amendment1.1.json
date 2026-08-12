@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.1",
+  "status": "frozen",
+  "amends": "task005_estimand_contract1.0.json",
+  "primary_estimands_P1_to_P5_unchanged": true,
+  "independent_unit": "replication_block",
+  "agent_level_n_used_for_power": false,
+  "purchase_trajectory_auc": {
+    "role": "secondary",
+    "condition_metric": "PURCHASE_TRAJECTORY_AUC",
+    "trajectory": "CUMULATIVE_PURCHASE_RATE_bc(t)",
+    "definition": "unique agents with is_buying=true at any Tick <= t divided by 20",
+    "ticks": "Tick1-Tick30",
+    "integration": "trapezoidal",
+    "normalization_intervals": 29,
+    "unit": "proportion",
+    "block_estimand": "OVERALL_CLARIFICATION_PURCHASE_TRAJECTORY_AUC",
+    "block_estimand_definition": "mean 8 strategy PURCHASE_TRAJECTORY_AUC minus control PURCHASE_TRAJECTORY_AUC",
+    "primary": false,
+    "power_driving": false
+  },
+  "purchase_rate_factorial_interactions": {
+    "CONTENT_x_CHANNEL_PURCHASE_RATE_T30": "registered in 1.0",
+    "CONTENT_x_TIMING_PURCHASE_RATE_T30": "registered in 1.0",
+    "CHANNEL_x_TIMING_PURCHASE_RATE_T30": "registered in 1.0",
+    "CONTENT_x_CHANNEL_x_TIMING_PURCHASE_RATE_T30": {
+      "definition": "sum(content_sign * channel_sign * timing_sign * PURCHASE_RATE_T30)",
+      "content_sign": {
+        "rational-evidence": 1,
+        "emotional-empathy": -1
+      },
+      "channel_sign": {
+        "hub": 1,
+        "random": -1
+      },
+      "timing_sign": {
+        "immediate": 1,
+        "delayed": -1
+      },
+      "denominator": 1
+    }
+  },
+  "iqr_convention": {
+    "official_variance_pilot_n": 10,
+    "method": "median-of-halves",
+    "Q1": "median of lower 5 sorted block values",
+    "Q3": "median of upper 5 sorted block values",
+    "IQR": "Q3 - Q1",
+    "post_data_quantile_method_switching_permitted": false
+  },
+  "firewalls": {
+    "p_values": false,
+    "power_calculation": false,
+    "MDE_selected": false,
+    "formal_inference": false,
+    "formal_reuse": false,
+    "replacement_blocks": false,
+    "optional_stopping": false
+  }
+}

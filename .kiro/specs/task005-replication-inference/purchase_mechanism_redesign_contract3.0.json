@@ -1,0 +1,71 @@
+{
+  "schema_version": "purchase_mechanism_redesign_contract3.0",
+  "task": "TASK_005",
+  "status": "frozen_before_v3_replay_output",
+  "model_stage": "parallel_purchase_construct_redesign",
+  "diagnosis_source": "task005-real-variance-pilot-v3; post-hoc construct diagnosis only",
+  "research_integrity": {
+    "target_p_value": null,
+    "significance_guaranteed": false,
+    "tune_until_significant": false,
+    "hardcode_strategy_winner": false,
+    "reuse_v2_rows_for_v3_formal_inference": false,
+    "first_v3_replay_p_values": false
+  },
+  "v2_purchase_endpoint": {
+    "name": "PURCHASE_RATE_T30",
+    "status": "retired_as_causal_purchase_estimand",
+    "reasons": [
+      "contains pre-scandal and pre-clarification purchases",
+      "repeats a purchase trial on every Tick",
+      "uses an absorbing ever_purchased state in an existing-customer FMCG scenario",
+      "conflates opportunity hazard with conditional focal-brand choice",
+      "develops a high cumulative control ceiling"
+    ]
+  },
+  "v3_core": {
+    "scenario": "Oatly FMCG repeat purchase",
+    "tick_unit": "day",
+    "opportunity_interval_ticks": 7,
+    "opportunity_phase_inputs": [
+      "block_simulation_seed",
+      "agent_id"
+    ],
+    "opportunity_condition_invariant": true,
+    "post_crisis_only": true,
+    "conditional_choice_probability": "explicit TPB purchase_intention",
+    "multiply_choice_probability_by_daily_opportunity_rate": false,
+    "repeat_choice_allowed": true,
+    "absorbing_ever_purchased": false,
+    "choice_draw_action_label": "brand_choice_v3"
+  },
+  "candidate_estimands": {
+    "primary": "mean expected focal-brand choice probability over post-crisis purchase opportunities",
+    "secondary": "realized focal-brand choice share over the same opportunities",
+    "pre_treatment_behavior_included": false
+  },
+  "conversion_support_extension": {
+    "status": "conceptually_required_for_direct_PBC_intervention_but_not_parameterized",
+    "communication_changes_pbc_by_default": false,
+    "authorized_default_pbc_lift": null,
+    "required_cells": [
+      "no_action",
+      "communication_only",
+      "facilitation_only",
+      "communication_plus_facilitation"
+    ],
+    "required_estimand": "communication_by_facilitation_interaction"
+  },
+  "scenario_boundary": {
+    "transfer_to_nev": false,
+    "reason": "weekly repeat purchase is incompatible with durable-good adoption and replacement cycles",
+    "formal_run_requires_final_scenario_decision": true
+  },
+  "formal_disposition": {
+    "task005_formal_v2_executed": false,
+    "task005_formal_v2_authorized": false,
+    "task005_formal_v2_status": "superseded_before_execution_if_v3_is_adopted",
+    "new_independent_v3_formal_required": true
+  },
+  "real_llm_calls_authorized": false
+}

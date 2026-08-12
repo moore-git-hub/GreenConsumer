@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0",
+  "stage": "TASK_005 Stage I.5B-2",
+  "status": "frozen-candidate",
+  "classification": "engineering-pilot-extension-launch-contract",
+  "frozen_head": "e698eaa9b08f88d354065d19566a1341e16f6dc5",
+  "branch": "refactor/task005-replication-inference",
+  "upstream": "origin/refactor/task005-replication-inference",
+  "source_hashes": {
+    "replication_config.py": "A3430810849E418B5FF9FEDA3FBD4DF071B942E59B9A0D02E4D0E19BCCE3AA0C",
+    "run_replications.py": "A2D70BFA2908DE138F949019F0C31B6CCDDEE3B63FA50D4CA5C70DDBAC49F146",
+    "run_experiments.py": "E96FD5B2FD2BE08503C8CA25724FE64C1E2340075375A8808B2848C851DC4B22",
+    "replication_analysis.py": "57300D2C3D5111CCD25AE85F38F0C181536ABF4FB9FEFD52CEC639C10E60237E"
+  },
+  "decision_inputs": {
+    "pilot_extension_contract1.0.json": "B3688C7F6ACD94A96212C7CAAEB523C793130C1628E5B1BED4B5CE30148A3B96",
+    "pilot_extension_decision1.0.md": "8BE2550915B17F30C654DD2EEC821D30BEFF33FCFA1E979FE732FCAC71D281EA",
+    "task005_stageH2_evidence.zip": "0E8D0D8C8D627FFA1DEB409538C5ECD2927821CDBBAC43352A0B5A3FE07D3F6F",
+    "task005_stageI5A_precision_diagnostic.zip": "31412396BD24C698996B95197247259EA188C4488F452505D527F0823E0879A9"
+  },
+  "base_batch": {
+    "replication_id": "task005-real-pilot-v1",
+    "relative_path": "results/replications/task005-real-pilot-v1",
+    "frozen_evidence_prefix": "batch\\task005-real-pilot-v1\\",
+    "immutable": true,
+    "expected_valid_blocks": 3,
+    "expected_external_interruptions": 2
+  },
+  "extension_batch": {
+    "replication_id": "task005-real-pilot-extension-v1",
+    "relative_path": "results/replications/task005-real-pilot-extension-v1",
+    "master_seed": 188668086,
+    "num_replicates": 2,
+    "llm_mode": "real",
+    "llm_seed_supported": "unknown",
+    "provider_model": "qwen-plus",
+    "provider_system_fingerprint": "",
+    "max_parallel": 1,
+    "retry_failed": false,
+    "physical_to_canonical_block_map": {
+      "R001": "P004",
+      "R002": "P005"
+    },
+    "expected_seed_rows": [
+      {
+        "replicate_index": 1,
+        "replicate_id": "R001",
+        "canonical_block_id": "P004",
+        "simulation_seed": 4187293815,
+        "requested_llm_seed": 836958817,
+        "python_hash_seed": 227373458
+      },
+      {
+        "replicate_index": 2,
+        "replicate_id": "R002",
+        "canonical_block_id": "P005",
+        "simulation_seed": 4272437146,
+        "requested_llm_seed": 3270415158,
+        "python_hash_seed": 1090171497
+      }
+    ]
+  },
+  "provider_preflight": {
+    "config_path": "configs/models_config.yaml",
+    "expected_config_sha256": "9D0C9A8347024BC029F65827A9BDB53DA1320C5AD20493BD622321248D7177F9",
+    "name": "OpenAIProvider",
+    "model": "qwen-plus",
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "temperature": 0.3,
+    "configured_seed": 42,
+    "api_key_present_required": true,
+    "live_api_call_performed": false
+  },
+  "initial_launch_argv": [
+    "<python-executable>",
+    "-X",
+    "utf8",
+    "<project-root>/run_replications.py",
+    "--replication-id",
+    "task005-real-pilot-extension-v1",
+    "--master-seed",
+    "188668086",
+    "--num-replicates",
+    "2",
+    "--llm-mode",
+    "real",
+    "--llm-seed-supported",
+    "unknown",
+    "--provider-model",
+    "qwen-plus",
+    "--output-root",
+    "<project-root>/results/replications",
+    "--python-executable",
+    "<python-executable>",
+    "--max-parallel",
+    "1"
+  ],
+  "initial_launch_forbidden_tokens": [
+    "--retry-failed"
+  ],
+  "resume_contract": {
+    "same_replication_id": true,
+    "same_master_seed": true,
+    "same_num_replicates": true,
+    "same_provider_fields": true,
+    "same_python_executable": true,
+    "same_output_root": true,
+    "retry_failed_required": true,
+    "base_batch_must_remain_unchanged": true
+  },
+  "gates": {
+    "stage_i5b2_preflight_must_pass": true,
+    "stage_i5b2_contract_commit_must_be_pushed": true,
+    "engineering_extension_launch_permitted_now": false,
+    "formal_target_n_frozen": false,
+    "formal_llm_launch_permitted": false,
+    "statistical_inference_performed": false
+  }
+}

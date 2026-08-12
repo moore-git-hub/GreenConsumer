@@ -1,0 +1,73 @@
+{
+  "analysis": {
+    "P3_P4_p_values": false,
+    "confirmatory": [
+      "P1_OVERALL_CLARIFICATION_POST_TRUST_V32",
+      "P2_CONTENT_POST_TRUST_V32",
+      "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32"
+    ],
+    "confirmatory_multiplicity": "Holm FWER 0.05 across exactly P1/P2/P5",
+    "exploratory_only": [
+      "P3_TIMING_PRE_DELAY_TRUST_V32",
+      "P4_CHANNEL_REACH_V32"
+    ]
+  },
+  "authorization": {
+    "authorization_artifact_included": false,
+    "formal_execution_authorized": false,
+    "note": "This contract itself does not authorize execution; the live authorization artifact does.",
+    "runtime_token_included": false,
+    "separate_explicit_user_authorization_required": true
+  },
+  "authorization_bindings": {
+    "activation_gate_sha256": "837b3ca8d61877232e4ed2a35d9b5d0a9c8b87b77aaab310d42d7221104c92c1",
+    "analysis_contract_sha256": "98e62fdb4e691b8479c9ae6fe01aa614e67c2cec4e90ea6e1f56f62ca8569a1d",
+    "analysis_runner_sha256": "77c69793931fce9d31a3964fa99c8109ab10d13f18f9fb3b87035eb65c05ecec",
+    "formal_runner_sha256": "4b439e629f957fa552d11df36cf0bd2d4987e2eeac9b0e7d6216c9f16a346db5",
+    "launch_contract_sha256": "d4368a2fa7e22cec724323071d986fcdca9feb006c8e44bf1a632204fc62c73c",
+    "scope_sha256": "74c1d06b84b0677d7681be429e11a614860de3abdc7a46b247140c9e5593b16e",
+    "seed_ledger_sha256": "686053552ce77833bd2ade93f0ba33057293d7fe7888836d6d2744624c852781"
+  },
+  "execution": {
+    "F011_or_later_forbidden": true,
+    "activation_gate": "activate_task005_fmcg_formal_v32_n10.py",
+    "analysis_runner": "analyze_task005_fmcg_formal_v32_n10.py",
+    "optional_stopping_allowed": false,
+    "per_block_python_hash_seed_bound_before_interpreter_start": true,
+    "provider_request_ceiling_overall": 3000,
+    "provider_request_ceiling_per_block": 300,
+    "replacement_allowed": false,
+    "runner": "run_task005_fmcg_formal_v32_n10.py",
+    "runner_binding_fix": "live authorization binds runtime-contract SHA separately from non-circular artifact bindings",
+    "serial_subprocess_blocks": true
+  },
+  "formal_attempt_blocks": 10,
+  "formal_batch_id": "task005-fmcg-v32-formal-n10",
+  "formal_block_ids": [
+    "F001",
+    "F002",
+    "F003",
+    "F004",
+    "F005",
+    "F006",
+    "F007",
+    "F008",
+    "F009",
+    "F010"
+  ],
+  "frozen_file_sha256": {
+    ".kiro/specs/task005-replication-inference/task005_fmcg_v32_formal_analysis_contract1.0.json": "98e62fdb4e691b8479c9ae6fe01aa614e67c2cec4e90ea6e1f56f62ca8569a1d",
+    ".kiro/specs/task005-replication-inference/task005_fmcg_v32_formal_launch_contract1.0.json": "d4368a2fa7e22cec724323071d986fcdca9feb006c8e44bf1a632204fc62c73c",
+    ".kiro/specs/task005-replication-inference/task005_fmcg_v32_formal_scope_freeze1.0.json": "74c1d06b84b0677d7681be429e11a614860de3abdc7a46b247140c9e5593b16e",
+    ".kiro/specs/task005-replication-inference/task005_fmcg_v32_formal_seed_ledger1.0.csv": "686053552ce77833bd2ade93f0ba33057293d7fe7888836d6d2744624c852781",
+    ".kiro/specs/task005-replication-inference/task005_fmcg_v32_n10_design_power_check1.0.json": "c06dc93f191f5edcb10f932e4c3dddc522e6a0f778a1d28443d25b34fba71572",
+    "activate_task005_fmcg_formal_v32_n10.py": "837b3ca8d61877232e4ed2a35d9b5d0a9c8b87b77aaab310d42d7221104c92c1",
+    "analyze_task005_fmcg_formal_v32_n10.py": "77c69793931fce9d31a3964fa99c8109ab10d13f18f9fb3b87035eb65c05ecec",
+    "run_task005_fmcg_formal_v32_n10.py": "4b439e629f957fa552d11df36cf0bd2d4987e2eeac9b0e7d6216c9f16a346db5"
+  },
+  "schema_version": "task005_fmcg_v32_formal_runtime_contract1.1",
+  "source_branch": "redesign/task005-mechanism-v2",
+  "source_head": "ef6567adaafcafcf3b9f6884295f509a05ed727e",
+  "status": "FROZEN_RUNTIME_AUTHORIZATION_READY",
+  "task": "TASK_005"
+}

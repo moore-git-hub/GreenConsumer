@@ -1,0 +1,33 @@
+{
+  "attempt_counts": {
+    "R001": 1,
+    "R002": 1,
+    "R003": 1,
+    "R004": 1,
+    "R005": 1,
+    "R006": 1,
+    "R007": 1,
+    "R008": 1,
+    "R009": 1,
+    "R010": 1
+  },
+  "do_not_rerun": [
+    "R001",
+    "R002",
+    "R003",
+    "R004",
+    "R005",
+    "R006",
+    "R007",
+    "R008",
+    "R009",
+    "R010"
+  ],
+  "official_variance_use": false,
+  "pilot_id": "task005-real-variance-pilot-v1",
+  "power_planning_use": false,
+  "replacement_authorized": false,
+  "retry_authorized": false,
+  "schema_version": "1.0",
+  "status": "INCOMPLETE"
+}

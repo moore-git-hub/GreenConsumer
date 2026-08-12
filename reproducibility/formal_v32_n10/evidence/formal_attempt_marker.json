@@ -1,0 +1,22 @@
+{
+  "authorization_id": "task005-v32-n10-auth-20260812T0910+0800",
+  "formal_batch_id": "task005-fmcg-v32-formal-n10",
+  "formal_block_ids": [
+    "F001",
+    "F002",
+    "F003",
+    "F004",
+    "F005",
+    "F006",
+    "F007",
+    "F008",
+    "F009",
+    "F010"
+  ],
+  "maximum_attempt_blocks": 10,
+  "optional_stopping_allowed": false,
+  "replacement_allowed": false,
+  "schema_version": "task005_fmcg_v32_formal_attempt_marker1.0",
+  "source_branch": "redesign/task005-mechanism-v2",
+  "source_head": "ef6567adaafcafcf3b9f6884295f509a05ed727e"
+}

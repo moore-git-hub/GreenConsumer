@@ -1,0 +1,269 @@
+{
+  "schema_version": "1.0",
+  "stage": "TASK_005 Stage I.5C-2",
+  "status": "frozen",
+  "classification": "offline-operating-characteristic-calibration-design",
+  "parent": {
+    "git_head": "c1c29bcd21f18693d1d8a9fb2fde23f18a06e876",
+    "stageI1C_analysis_contract_sha256": "7801618FCE0E987F3F3439CA19CD624CDEC0F6D776BD466FBCAAB0F12F3BF6D8",
+    "stageI5C0_precision_evidence_sha256": "106638D4C6DE9D923798CEBF4E128CE4B4F95F5B03829443D2ED19036A33179D",
+    "stageI5C1_scope_amendment_sha256": "C0925334381A16328843C7D39483BA65E3859EF1002B2383454C00BCC14B6C5F"
+  },
+  "purpose": {
+    "goal": "Select a defensible formal valid-block target from the frozen candidate set using offline operating-characteristic calibration before any formal LLM run.",
+    "real_llm_calls_permitted": false,
+    "formal_data_collection_permitted": false,
+    "formal_target_n_frozen_by_this_stage": false,
+    "engineering_pilot_used_for_effect_inference": false
+  },
+  "independent_unit": "replication_block",
+  "engineering_calibration_basis": {
+    "canonical_blocks": [
+      "P001",
+      "P002",
+      "P003",
+      "P004",
+      "P005"
+    ],
+    "formal_sample_membership": false,
+    "use_allowed": [
+      "estimate residual scale",
+      "preserve empirical cross-estimand dependence",
+      "offline operating-characteristic calibration",
+      "leave-one-engineering-block-out sensitivity"
+    ],
+    "use_forbidden": [
+      "formal strategy inference",
+      "formal factorial inference",
+      "effect-direction selection",
+      "ranking-based sample-size selection",
+      "pooling with future formal blocks"
+    ]
+  },
+  "confirmatory_scope": {
+    "metrics": [
+      "final_trust_gain_vs_control",
+      "post_scandal_auc_gain_vs_control"
+    ],
+    "strategy_estimands_per_metric": 8,
+    "factorial_estimands_per_metric": 6,
+    "strategy_estimands_total": 16,
+    "factorial_estimands_total": 12,
+    "confirmatory_estimands_total": 28,
+    "exploratory_metric_excluded": "local_trust_effect_did_3"
+  },
+  "confirmatory_families": {
+    "strategy_primary_16": {
+      "size": 16,
+      "members": "8 strategies x 2 confirmatory primary metrics",
+      "multiplicity": "Holm",
+      "alpha": 0.05,
+      "two_sided": true
+    },
+    "factorial_confirmatory_12": {
+      "size": 12,
+      "members": "6 confirmatory factorial contrasts x 2 confirmatory primary metrics",
+      "multiplicity": "Holm",
+      "alpha": 0.05,
+      "two_sided": true
+    },
+    "note": "This preserves the Stage I.1C cross-metric family structure after removing the exploratory local-DID metric from confirmatory scope."
+  },
+  "formal_test_emulated": {
+    "estimand_test": "two_sided_one_sample_student_t",
+    "null_value": 0.0,
+    "ci_method": "student_t_mean_interval",
+    "ci_level": 0.95,
+    "holm_adjustment": true,
+    "decision_threshold": 0.05,
+    "effect_size_and_ci_before_p_value": true
+  },
+  "synthetic_data_generator": {
+    "source_matrix": "5 x 28 engineering estimand matrix reconstructed from frozen Stage I.5C-0 P001-P005 inventory",
+    "centering": "center each of the 28 estimands across P001-P005; observed engineering means are not used as synthetic truth",
+    "resampling_unit": "whole 28-dimensional centered block residual vector",
+    "resampling": "sample P001-P005 residual vectors with replacement",
+    "wild_symmetrization": "multiply each sampled whole-block residual vector by one independent Rademacher sign (+1/-1); the same sign applies to all 28 coordinates of that sampled block",
+    "dependence_policy": "preserve within-block cross-estimand covariance structure; never resample estimands independently",
+    "variance_stress_multipliers": [
+      1.0,
+      1.5,
+      2.0
+    ],
+    "variance_stress_application": "multiply the centered whole-block residual vector by the stress multiplier",
+    "pilot_effect_direction_used": false,
+    "pilot_effect_mean_used_as_truth": false,
+    "random_seed_policy": {
+      "primary_stream_A": 202608071,
+      "primary_stream_B": 202608072,
+      "loo_namespace_base": 202608170,
+      "deterministic": true
+    }
+  },
+  "effect_scenarios": {
+    "null": {
+      "truth": "all 28 confirmatory estimands equal zero",
+      "purpose": [
+        "FWER",
+        "CI coverage"
+      ],
+      "hard_gate": true
+    },
+    "single_signal_moderate": {
+      "standardized_effect_d": 0.5,
+      "definition": "activate exactly one confirmatory estimand at a time; absolute signal equals 0.50 times that estimand's full-five-block sample SD; all other confirmatory estimands are zero",
+      "direction": "positive by convention because formal test is two-sided",
+      "pilot_effect_direction_used": false,
+      "purpose": "descriptive power sensitivity only",
+      "hard_gate": false
+    },
+    "single_signal_strong": {
+      "standardized_effect_d": 0.8,
+      "definition": "activate exactly one confirmatory estimand at a time; absolute signal equals 0.80 times that estimand's full-five-block sample SD; all other confirmatory estimands are zero",
+      "direction": "positive by convention because formal test is two-sided",
+      "pilot_effect_direction_used": false,
+      "purpose": "minimum Holm-adjusted detection power across 28 estimands",
+      "hard_gate_at_variance_1x": true
+    },
+    "dense_moderate": {
+      "standardized_effect_d": 0.5,
+      "definition": "all 28 confirmatory estimands receive a positive signal equal to 0.50 times their own full-five-block sample SD",
+      "purpose": "descriptive family-level discovery sensitivity only",
+      "hard_gate": false
+    }
+  },
+  "candidate_valid_block_counts": [
+    12,
+    16,
+    20,
+    24,
+    30,
+    40
+  ],
+  "monte_carlo": {
+    "primary_iterations_per_cell_per_stream": 20000,
+    "primary_streams": 2,
+    "primary_streams_independent": true,
+    "loo_iterations_per_cell": 5000,
+    "leave_one_engineering_block_out_variants": 5,
+    "binomial_interval": "Wilson 95%",
+    "no_adaptive_increase_after_results": true
+  },
+  "operating_characteristics": {
+    "null_familywise_error": {
+      "families": [
+        "strategy_primary_16",
+        "factorial_confirmatory_12"
+      ],
+      "measure": "probability of >=1 Holm rejection in the family under global null"
+    },
+    "marginal_ci_coverage": {
+      "estimands": 28,
+      "measure": "proportion of 95% Student-t intervals containing synthetic truth"
+    },
+    "single_signal_power": {
+      "estimands": 28,
+      "measure": "Holm-adjusted rejection probability of the one active estimand, rotated across all 28 estimands"
+    },
+    "inactive_false_rejection": {
+      "measure": "probability of any false Holm rejection among inactive members of the active estimand's confirmatory family",
+      "hard_gate": false
+    },
+    "dense_discovery": {
+      "measure": "mean and minimum adjusted rejection probability under dense d=0.50",
+      "hard_gate": false
+    }
+  },
+  "hard_selection_gates": {
+    "null_fwer": {
+      "applies_to_variance_multipliers": [
+        1.0,
+        1.5,
+        2.0
+      ],
+      "family_point_estimate_max": 0.055,
+      "family_wilson95_upper_max": 0.06,
+      "must_pass_both_primary_streams": true
+    },
+    "ci_coverage": {
+      "applies_to_variance_multipliers": [
+        1.0,
+        1.5,
+        2.0
+      ],
+      "mean_across_28_min": 0.945,
+      "minimum_single_estimand_min": 0.93,
+      "must_pass_both_primary_streams": true
+    },
+    "single_signal_d0_80_power": {
+      "applies_to_variance_multiplier": 1.0,
+      "minimum_across_28_min": 0.8,
+      "minimum_wilson95_lower_min": 0.78,
+      "must_pass_both_primary_streams": true
+    },
+    "monte_carlo_stream_stability": {
+      "max_absolute_difference": {
+        "family_fwer": 0.015,
+        "mean_ci_coverage": 0.015,
+        "minimum_single_signal_power_d0_80": 0.02
+      },
+      "must_pass": true
+    }
+  },
+  "stress_sensitivity": {
+    "single_signal_d0_80_at_1_5x_and_2_0x": {
+      "report": true,
+      "hard_gate": false,
+      "reason": "stress multipliers deliberately reduce standardized signal because the absolute signal is anchored to full-five-block baseline SD"
+    },
+    "leave_one_engineering_block_out": {
+      "variants": 5,
+      "iterations_per_cell": 5000,
+      "evaluate": [
+        "family FWER under null at 1.0x",
+        "mean and minimum CI coverage at 1.0x",
+        "minimum single-signal d=0.80 power at 1.0x"
+      ],
+      "hard_gate": false,
+      "reason": "four-block residual libraries are too small to serve as a formal automatic rejection rule; they are a pilot-uncertainty sensitivity"
+    }
+  },
+  "sample_size_selection_rule": {
+    "rule": "Among 12,16,20,24,30,40 choose the smallest N that passes every hard selection gate in both primary Monte Carlo streams.",
+    "no_interpolation_between_candidates": true,
+    "if_streams_disagree_on_smallest_passing_n": "use the larger of the two smallest-passing candidate Ns, provided the combined hard gates at that N pass; otherwise no selection",
+    "preferred_operational_ceiling": 30,
+    "absolute_candidate_ceiling": 40,
+    "if_smallest_passing_n_is_40": "do not freeze N automatically; require explicit feasibility decision",
+    "if_no_candidate_passes": "formal target remains unfrozen; prohibit formal launch and require transparent design revision",
+    "oc_result_does_not_itself_freeze_formal_n": true
+  },
+  "secondary_outputs_not_allowed_to_select_n": [
+    "local_trust_effect_did_3",
+    "Pareto membership",
+    "strategy rank",
+    "bootstrap top-1 probability",
+    "observed engineering effect direction",
+    "observed engineering p-values"
+  ],
+  "implementation_constraints_for_next_stage": {
+    "next_stage": "TASK_005 Stage I.5C-3",
+    "task": "implement and test offline OC calibration runner",
+    "network_access": "forbidden",
+    "real_llm_calls": "forbidden",
+    "input_evidence_immutable": true,
+    "existing_replication_results_immutable": true,
+    "output_directory_refuse_overwrite": true,
+    "deterministic_replay_required": true,
+    "synthetic_fixture_acceptance_before_full_calibration": true,
+    "production_analysis_engine_scope_update_required_before_formal_inference": true,
+    "production_analysis_engine_note": "replication_analysis.py currently encodes the pre-amendment 24/18 Holm families and three primary metrics; it must not be used for amended formal inference until a separately reviewed scope update is implemented."
+  },
+  "gates": {
+    "oc_design_frozen": true,
+    "oc_calibration_executed": false,
+    "formal_target_n_frozen": false,
+    "formal_llm_launch_permitted": false,
+    "formal_data_collection_started": false
+  }
+}

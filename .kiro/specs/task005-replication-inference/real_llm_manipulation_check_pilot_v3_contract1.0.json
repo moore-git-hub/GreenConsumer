@@ -1,0 +1,45 @@
+{
+  "artifact": "real_llm_manipulation_check_pilot_v3_contract1.0",
+  "pilot_id": "task005-real-manipulation-pilot-v3",
+  "master_seed": 2026080904,
+  "replication_blocks": 2,
+  "replicates": [
+    "R001",
+    "R002"
+  ],
+  "conditions": [
+    "NoClarification-Control",
+    "Rational-Hub-Immediate",
+    "Empathy-Hub-Immediate"
+  ],
+  "model": "qwen-plus",
+  "temperature": 0.3,
+  "primary_dimensions": [
+    "D_evidence",
+    "D_credibility",
+    "D_empathy"
+  ],
+  "primary_direction_gates": {
+    "D_evidence": "Rational semantic_evidence_strength - Empathy semantic_evidence_strength > 0",
+    "D_credibility": "Rational semantic_credibility - Empathy semantic_credibility > 0",
+    "D_empathy": "Empathy semantic_perceived_empathy - Rational semantic_perceived_empathy > 0"
+  },
+  "descriptive_dimensions": {
+    "D_arousal_descriptive": "Empathy semantic_arousal - Rational semantic_arousal",
+    "D_valence_descriptive": "Empathy semantic_valence - Rational semantic_valence"
+  },
+  "engineering_floor": 0.05,
+  "threshold_type": "engineering_construct_separation_floor",
+  "literature_derived": false,
+  "significance_threshold": false,
+  "p_values": false,
+  "formal_inference": false,
+  "optional_stopping": false,
+  "replacement_replicates": false,
+  "pooling_with_prior_pilots": false,
+  "stimulus_text_changed": false,
+  "behavioral_mechanism_changed": false,
+  "raw_semantic_schema": "mechanism_records schema 1.1; no new semantic fields",
+  "activation_required": true,
+  "real_llm_calls_in_preparation": false
+}

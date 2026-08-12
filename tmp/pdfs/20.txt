@@ -1,0 +1,557 @@
+
+
+===== PAGE 1 =====
+第 45 卷 第 1 期 系统工程理论与实践 Vol. 45, No. 1
+2025 年 1 月 Systems Engineering — Theory & Practice Jan., 2025
+doi: 10.12011/SETP2023-1855 中图法分类号: N941 文献标志码: A
+复杂网络上消息竞争传播与传染病扩散耦合模型研究
+刘非凡1,2,3, 陈依晴1, 夏昊翔1,2,3
+(1. 大连理工大学 系统工程研究所 , 大连 116024; 2. 大连理工大学 先进智能研究院 , 大连 116024; 3. 大连理工大学
+社会计算与认知智能教育部重点实验室, 大连 116024)
+摘 要 现实世界中, 传染病扩散往往伴随着正确与错误消息的竞争传播 . 而正确与错误消
+息的竞争传播对传染病的扩散又产生显著影响, 这为流行性传染病传播机制研究和突发公共
+卫生事件防治带来巨大挑战. 当前把消息竞争传播与传染病扩散综合起来的耦合动力学模型
+研究尚不充分. 结合动力系统分析和仿真模拟方法 , 提出一个两层多路复用网络中的耦合扩
+散模型, 研究正确消息和错误消息之间的竞争如何影响到传染病的扩散时间与范围 . 综合微
+观马尔可夫链分析和仿真实验的研究结果表明, 消息层的竞争传播模式会严重影响传染病的
+扩散范围. 群体认知水平会通过影响消息层的竞争传播来促进或抑制传染病的感染范围 . 特
+别是, 消息层中正确消息和错误消息的盛行时间、以及正确消息初始传播的时刻 , 对传染病
+传播范围的影响至关重要. 研究结果对指导消息竞争与疾病耦合传播情境下疫情精准防控具
+有借鉴意义.
+关键词 传染病扩散; 竞争传播; 耦合动力学; 微观马尔可夫链; 多路复用网络
+A coupled dynamic model of competitive information diﬀusion
+and infectious disease spreading on complex networks
+LIU Feifan1,2,3 CHEN Yiqing 1, XIA Haoxiang 1,2,3
+(1. Institute of Systems Engineering, Dalian University of Technology, Dalian 116024, China; 2. Institute for Advanced
+Intelligence, Dalian University of Technology, Dalian 116024, China; 3. MoE Key Laboratory of Social Computing and
+Cognitive Intelligence, Dalian University of Technology, Dalian 116024, China)
+Abstract In the real world, the spreading of infectious diseases is commonly co-occurring with
+the competitive diﬀusion of relevant information (or “knowledge”) and misinformation (or “fal-
+lacy”). This competitive diﬀusion has, in turn, remarkable eﬀects on the spreading of infectious
+diseases, posing great challenges to the studies of the mechanisms of epidemic transmission and
+the prevention and control of public health emergencies. To overcome the deﬁciency on the stud-
+ies on the coupled dynamic models of competitive information diﬀusion and disease spreading,
+a coupled dynamic model on multiplex networks is proposed to examine how the competitive
+diﬀusion of knowledge and fallacy inﬂuences the time-scale and range-scope of disease spreading.
+收稿日期: 2023-08-16
+作者简介: 刘非凡 (1991–), 男, 甘肃陇西人, 博士, 研究方向: 复杂系统, 群体行为, 耦合传播模型, E-mail: liufeifan@
+dlut.edu.cn; 陈依晴 (1998–), 女, 湖南怀化人, 硕士, 研究方向: 传染病建模, 消息竞争传播, 复杂网络, E-mail: fxd453@
+qq.com; 通信作者: 夏昊翔 (1972–), 男, 浙江新昌人, 教授, 博士生导师, 研究方向: 复杂系统, 群体行为模式, 计算社会
+科学, E-mail: hxxia@dlut.edu.cn.
+基金项目: 国家自然科学基金面上项目 (71871042, 72371052)
+F oundation item: National Natural Science Foundation of China (71871042, 72371052)
+中文引用格式: 刘非凡, 陈依晴, 夏昊翔. 复杂网络上消息竞争传播与传染病扩散耦合模型研究 [J]. 系统工程理论与实践,
+2025, 45(1): 224– 235.
+英文引用格式: Liu F F, Chen Y Q, Xia H X. A coupled dynamic model of competitive information diﬀusion and
+infectious disease spreading on complex networks[J]. Systems Engineering — Theory & Practice, 2025, 45(1): 224–
+235.
+
+===== PAGE 2 =====
+第 1 期 刘非凡, 等: 复杂网络上消息竞争传播与传染病扩散耦合模型研究 225
+By comprehensively utilizing the dynamic system analysis based on the microscopic-Markov-
+Chain-approach (MMCA) and the simulative analysis, the results indicate that the information
+diﬀusion signiﬁcantly aﬀects the spreading of infectious diseases. The group cognitive level af-
+fects the spreading of infectious diseases by inﬂuencing the competitive diﬀusion of knowledge
+and fallacy. In particular, the prevalence time of knowledge and fallacy in the information layer
+and the initiation time for knowledge diﬀusion are crucial for the spreading of infectious diseases.
+The ﬁndings in this study may shed some light on guiding the precise prevention and control of
+epidemics.
+Keywords infectious disease spreading; competitive diﬀusion; coupled dynamics; MMCA; mul-
+tiplex network
+1 引言
+纵观人类历史, 历次传染病的大规模流行都严重威胁到人类生命和财产安全 [1,2]. 以 2019 年开始暴
+发的新冠疫情为例, 截止世界卫生组织 WHO 宣布新冠 COVID-19 不再成为国际关注突发公共卫生事
+件的当天, 全球确诊病例已超过 7.6 亿, 累计死亡人数超过 692 万人 [3]. 与此同时, 通信技术的发展与社
+交媒体的出现, 开启了人类社会信息传播的新纪元 . 愈加庞杂的信息类型和频繁的信息交互 , 使得网络
+信息舆论对人们现实生活带来深刻影响 [4]. 这种影响也不可避免地蔓延至疫情防控领域, 致使传染病传
+播过程呈现出信息舆情与疾病传播的耦合共演化特征, 加剧疫情防治工作的复杂性和艰巨性. 如何在真
+伪信息混杂的舆情环境中, 有效预防传染病的大规模传播, 仍然是人类需要长期共同面对的全球性重要
+议题.
+针对上述问题 , 研究人员通过广泛探究传染病在人群中的传播时空特征 [5,6]、 影响因素和趋势规
+律 [7,8], 构建预测模型 [9–11], 并在此基础上评估干预措施效应 [12,13], 以期科学有效地应对疫情 . 经典的
+传染病传播模型如 SI、SIS、SIR 等得到广泛研究, 这些模型简洁又深刻地刻画出传染病传播动力学过
+程 [14,15]. 早期大多数研究假设种群完全混合 , 即个体在单位时间内与群体中其他所有个体接触的概率
+是相同的, 个体的异质性往往被忽略. 然而, 在现实世界的人群中, 个体在短时间内通常只与有限数量的
+其他个体接触. 在传染病传播的建模和分析中 , 考虑群体的拓扑关系结构具有现实意义 . 因此, 基于复
+杂网络理论的传染病传播研究日益成为流行病动力学领域的主要研究课题 [16,17]. 特别是 Vespignani 和
+Pastor-Satorras [18] 研究表明 SIS 模型在无标度网络中的流行阈值趋向于 0, 这从根本上改变了经典流
+行病模型得出的许多结论, 引起了大量学者的关注 [19–21].
+近年来, 伴随社交媒体的蓬勃发展, 传染病和信息耦合传播引发了研究人员的普遍关注 [22]. 其中很
+重要的研究动因之一在于人们对周围疾病发生的意识或认知会影响到疾病传播过程 [23]. Funk 等设计了
+个体意识在群体中与疾病耦合传播的数学模型 , 发现在混合人群中意识的传播并不影响爆发阈值但是
+会减少爆发规模 [24]. Wu 等提出了一个具有意识反应或风险感知的 SIS 模型, 以考虑局部和全局意识
+对疾病暴发过程中传播阈值和范围的影响 [25]. Wang 等将人口流动模式引入到消息和传染病的耦合传
+播中, 发现信息只在足够吸引人们向健康人群移动时 , 才能降低疾病传播范围 [26]. Gündüç 将信息层的
+人群划分为了创新者和模仿者并以 Bass 方程刻画信息扩散过程, 发现仅采取有限的预防措施就能抑制
+疾病扩散 [27]. Chen 等提出资源配置与传染病传播的耦合模型, 通过量化个体在意识到传染病时的反应
+强度, 发现人们过于谨慎和无私都不利于对传染病的控制 , 而是存在一个最优解使得传染病传播阈值最
+大 [28].
+进一步, 考虑网络拓扑结构的影响, Zhan 等发现传染病在人群中传播和信息在网络上的传播的两种
+动态过程具有较高的相关性, 并存在多重爆发现象 [29]. Fan 等区分了个体的活跃和不活跃两种状态 [30],
+设定活跃的个体可以主动与邻居接触, 而不活跃的个体只能通过其活跃邻居获得联系 , 研究表明个体行
+为活跃率的降低会抑制传染病的传播并增加传染病传播阈值 . Zheng 等提出一个耦合的复式网络来模
+拟流行病的动态, 并采用微观马尔可夫链的方法来推导流行病阈值 [31]. Kabir 和 Tanimoto 发现疾病层
+和信息层的度分布差异对人群中的传染病扩散范围有不同的影响 [32]. 更进一步地, Huang 等将谣言与
+
+===== PAGE 3 =====
+226 系 统 工 程 理 论 与 实 践 第 45 卷
+知识同时纳入到传染病和信息的耦合传播中以研究如何利用知识来遏制谣言和传染病的传播 [33]. Wu
+和 Xiao 提出了一个异质平均场模型发现当两个网络层之间没有链路重叠时自我意识无法提高传染病
+的传播阈值 [34]. Xiao 等提出 MM-SIS 模型, 发现多路网络中, 不同信息之间相互作用和传播路径多样
+性等因素对信息爆发规模以及传染病阈值的显著影响 [35].
+综上所述, 现有研究侧重关注消息会增强个体的保护意识 , 探究个体、 局部和全局意识的强度和
+范围对传染病扩散的抑制效用 . 但值得注意的是, 一方面, 现实群体中同时存在正确消息和错误消息交
+织传播 [36–38]. 盛行的假消息会阻碍正确消息的传播 , 而适时的正确消息的发布又会抑制错误消息的扩
+散 [39,40]. 已有研究发现, 社交媒体上错误信息造成的恐慌比 COVID-19 的传播速度更快, 延缓和抑制
+了人们和政府对疫情的及时响应 [41], 甚至导致某些国家或地区感染人群规模显著上升 [42,43]. 错误消息
+和正确消息是同时竞争性传播 , 对传染病扩散具有重要影响 . 特别是在疫情暴发初期, 错误消息爆发式
+传播, 严重阻碍疫情防控, 极易加剧疫情扩散和暴发, 并危害公共卫生安全. 另一方面, 在公共卫生领域,
+一个具有高群体认知水平的社区能够迅速响应疾病暴发, 有效分享健康信息, 共同制定和执行防控措施,
+从而降低疾病的传播风险 [44]. 反之, 群体认知水平较低的群体 , 在同时接收到真假消息时 , 缺乏足够的
+辨别能力, 易导致疾病的快速扩散, 引起医疗资源快速消耗, 防控成本急剧增加等一系列问题 [45].
+然而, 当前针对正确与错误消息竞争传播情境下的传染病扩散耦合动力学机理尚不明晰 , 相应的理
+论和数值分析研究并不充分 , 特别是对传染病传播过程中群体认知水平以及正确消息的初始传播等关
+键影响因素缺乏系统分析 , 致使现有研究成果难以深入理解复杂舆情信息与疾病传播错综交织情形下
+的疫情传播模式和规律.
+因此, 本研究构建了一个双层耦合网络模型 UAkArU-SIR, 引入群体认知水平因素 , 仿真模拟初始
+阶段错误消息压倒性传播优势的现实情境 , 试图全面探究在正确消息和错误消息竞争传播影响下的传
+染病传播动力学模型. 本研究后续内容安排如下: 第一部分, 介绍所提正确与错误消息竞争传播与传染
+病扩散的耦合模型 UAkArU-SIR 基本设定; 第二部分运用微观马尔可夫链方法分析所提耦合动力系统
+中个体状态转移、 传染病传播阈值以及网络结构特征三要素之间的交互作用; 第三部分进一步采用蒙特
+卡罗仿真实验, 分别对比经典 SIR 模型与所提 UAkArU-SIR 模型的传播动力学差异、消息竞争传播对
+疾病传播和未接收消息群体的影响、以及疫情传播初期错误消息爆发的特殊情境下模型的动力学传播
+特征. 最后第四部分总结主要研究思路和结论, 讨论本文研究局限以及对未来工作的展望.
+2 模型设定
+本研究选择一个两层多路复用网络 (multiplex network) 作为动力系统演化的分析框架, 如图 1 所
+示. 图 1(a) 中, 上层网络代表正确消息和错误消息竞争传播的信息层社交网络, 下层网络是传染病传播
+的疾病层物理网络. 两层网络节点一一对应, 即个体同时出现在社交网络和物理接触网络中 . 考虑到现
+实中在线社交的存在, 个体之间消息交互频繁于在疾病传播过程中交互 . 因此, 模型设定中消息层网络
+密度较高. 即, 疾病层和消息层网络的节点数均为 N , 疾病层的平均度为 k, 消息层中每个节点随机增加
+k′ 条连接, 平均度为 l = k + k′.
+消息层采用 UAkArU-SIR 模型, 如图 1(b) 所示. 正确消息和错误消息具有竞争性和互斥性 , 每个
+人在任何时候都只能支持一种消息, 因此个体可以被分为三种状态: 1) U (unknown individual); 2) A k
+(information spreader); 3) A r (misinformation spreader). 其中 U 代表不知道任何疾病信息的个体, A k
+代表具有正确消息并传播正确消息的个体, 通过采取积极的自我保护措施, 降低染病的可能性; A r 代表
+知道并传播错误消息的个体, 这类个体受到错误消息的影响会采取错误的行动 , 导致个体染病的概率变
+大. A k 以 λk 的概率向 U 态个体传播正确消息, A r 以 λr 的概率向 U 态个体传播错误消息. 与此同时,
+传播者可能会忘记消息而再次变为 U 态, 即 Ak 态个体将以 µk 的概率变为 U 态, A r 态个体将以 µr 的
+概率变为 U 态个体. 另外, 本研究假设所有个体都是固执的, 即一种消息的传播者不能被他们的邻居说
+服而直接支持另一种消息. 但是存在一种特殊情况, 即 U 态个体同时被告知正确消息和错误消息. 在此
+情形下, 引入了群体认知水平, 代表一个处于 U 态的个体在既接收到正确消息又接收到错误消息时 , 选
+
+===== PAGE 4 =====
+第 1 期 刘非凡, 等: 复杂网络上消息竞争传播与传染病扩散耦合模型研究 227
+双层耦合网络模型
+消息层传播模型
+疾病层传播模型
+群体认知水平
+0 ≤ γk ≤ 1
+1 ≤ γr ≤ +∞
+消息层网络
+疾病层网络
+(a)
+(b)
+(c)
+Ak
+Ar
+U U
+θ
+1 − θ
+λk
+μk
+λr μr
+AkS
+γrβ
+β
+γkβ
+ArS
+US I Rα
+图 1 消息竞争传播与传染病扩散两层多路复用网络模型
+择支持和传播正确消息的概率 θ (0 ≤ θ ≤ 1). 当 θ = 0 .0 时, 表示当个体既接收到正确消息又接收到
+错误消息时, 只会选择并支持错误消息; 当 θ = 1.0 时, 表示当个体既接收到正确消息又接收到错误消息
+时, 完全选择并支持正确消息. 这种设定背后对应的现实情境是某种特定单方面的信息源 (无论是正确
+或者错误) 对于 U 态个体有极高的影响力. 直到存在另外一种具有对立消息的情况出现, U 态个体才可
+能在正确与错误消息之间权衡取舍 . 在这种情况下, 本文所设定的群体认知水平表现为 U 态个体在同
+时面对正确和错误消息时的认知力和分辨力, 整体上可视作公共卫生素养水平的体现.
+疾病层采用经典的 SIR 模型来刻画疾病传播, 如图 1(c) 所示. 个体可以分为三种状态: 1) S (Sus-
+ceptible), I (Infected), R (Recovered). 其中, S 代表未染病但是能被疾病感染的个体 (易感染者), I 代
+表感染疾病并能传染疾病的个体 (感染者), R 代表恢复或者死亡个体 (移除者). 当 S 态个体接触到 I 态
+个体后, 将以 β 的概率变为感染者, I 态个体将以 α 变为 R 态. 其中消息层个体的状态会影响疾病层 S
+态向 I 态的转换过程. 一个在消息层中为 U 态的 S 态个体接触到 I 态个体后, 将以 β 的概率变为感染
+表 1 模型参数及其描述
+参数 描述
+λk 正确消息传播率 (0 ≤ λk ≤ 1)
+λr 错误消息传播率 (0 ≤ λr ≤ 1)
+µk 正确消息恢复率 (0 ≤ µk ≤ 1)
+µr 错误消息恢复率 (0 ≤ µr ≤ 1)
+θ 群体认知水平 (0 ≤ θ ≤ 1)
+l 消息传播网络的平均度 (0 ≤ l ≤ +∞)
+β 传染病传播率 (0 ≤ β ≤ 1)
+α 传染病恢复率 (0 ≤ α ≤ 1)
+γk 正确消息对传染病的影响 (0 ≤ γk ≤ 1)
+γr 错误消息对传染病的影响 (1 ≤ γr ≤ +∞)
+k 传染病传播网络的平均度 (0 ≤ k ≤ +∞)
+者, 消息层中为 Ak 态的 S 态个体接触到 I 态个体后,
+将以 γkβ (0 ≤ γk ≤ 1) 的概率变为感染者 , 消息层
+中为 Ar 态的 S 态个体接触到 I 态个体后, 将以 γrβ
+(1 ≤ γr < +∞) 的概率变为感染者. 因此, 所有个体在
+两层中可以分为九种状态 : US ( 不知道任何消息的易
+感者)、UI ( 不知道任何消息的感染者)、UR ( 不知道任
+何消息的恢复或死亡者 )、 AkS ( 相信并传播正确消息
+的易感者)、AkI ( 相信并传播正确消息的感染者)、AkR
+(相信并传播正确消息的恢复或死亡者 )、ArS ( 相信并
+传播错误消息的易感者)、ArI ( 相信并传播错误消息的
+感染者)、ArR ( 相信并传播错误消息的恢复或死亡者).
+模型中所有参数及其描述如表 1 所示.
+3 基于微观马尔可夫链的传播动力系统分析
+探究传染病传播动力学过程, 需要对动力系统开展数学分析, 严谨的理论分析有助于更透彻地理解
+模型的物理本质. 主流的系统分析方法是平均场 (mean ﬁeld, MF), 以及近期逐渐兴起的微观马尔可夫
+链 (MMCA) 方法. 相较于平均场以平均作用效果替代单个作用效果的加和的方法 [46], MMCA 更适用
+于加权和非加权复杂网络 , 对现实世界的刻画和扩散阈值的估算更加准确 [47]. 针对本研究模型所刻画
+
+===== PAGE 5 =====
+228 系 统 工 程 理 论 与 实 践 第 45 卷
+的包含两类竞争消息、 疾病传播以及复杂网络拓扑结构等复杂现实场景, 本节将采用微观马尔可夫链方
+法对所提耦合传染病扩散模型的系统动力学特性进行理论分析.
+本研究所提消息与传染病的耦合模型中个体共有九种可能的状态, 分别是 US、UI、UR、AkS、AkI、
+AkR、ArS、ArI、ArR. 图 2 是九种状态的转移概率树, 表示节点每一时步状态的转换. 树的根节点表示
+在第 t 时步节点的状态, 叶子结点是 t + 1 时步节点的状态. 第一层状态的转变代表消息层中两种消息
+的竞争传播, 第二层状态的转变表示传染病的传播.
+在每一个时间步 t, 每个节点 i 的状态只能是九类中一种. pUS
+i (t)、pUI
+i (t)、pUR
+i (t)、pAkS
+i (t)、pAkI
+i (t)、
+pAkR
+i (t)、pArS
+i (t)、pArI
+i (t)、pArR
+i (t) 分别表示在第 t 时步每种状态节点在整个网络所占的比例. A = (aij),
+B = ( bij) 分别表示消息竞争传播网络和传染病传播网络的邻接矩阵 . 在第 t 时步, 消息层中一个不知
+道任何消息的 U 态个体保持 U 态的概率为 ri(t),  qAk
+i (t) 和  qAr
+i (t) 分别表示 U 态个体变成正确消息传
+播者 Ak 和错误消息传播者 Ar 的概率. 具体定义、 公式及推导过程见附录.
+根据上述针对本文所提复杂网络上消息竞争传播与传染病扩散耦合模型的动力系统分析结果 , 得
+到影响传染病传播的状态转移方程, 以及传染病传播关键阈值 βc 的解析表达式 βc = α
+∧max(H) , ∧max 是
+矩阵 H 的最大特征值. 研究发现, 两层耦合模型中传播阈值不仅与传染病恢复率 α 成正比, 和疾病层
+网络结构, 特别是网络矩阵 H 的最大特征值呈负相关关系 , 还与消息层中两种消息的竞争传播状态以
+及与疾病层交互的动力学过程有关.
+图 2 个体状态转移概率树
+4 数值仿真
+消息竞争传播状态和动力学过程究竟如何具体影响到传染病的传播 , 以及群体认知水平和消息初
+始传播时滞性因素的影响等问题超出了系统动力学方法所能分析的范畴 . 同时, 现实中正确错误消息以
+及传染病传播等情况数据往往难以全面准确采集, 因此, 本研究更进一步开展了多组数值仿真模拟实验,
+探究双层耦合网络模型中正确消息和错误消息竞争传播影响下的传染病传播动力学 , 特别是重点探讨
+与以往研究具有核心差异的正确消息与错误消息的竞争、群体认知水平、以及正确消息初始传播时间
+
+===== PAGE 6 =====
+第 1 期 刘非凡, 等: 复杂网络上消息竞争传播与传染病扩散耦合模型研究 229
+等因素对传染病扩散影响的仿真结果.
+4.1 MMCA 理论分析结果与仿真实验结果的对比
+本研究所有数值仿真实验结果均是在两层 BA 无标度网络 [48] 和两层 WS 小世界网络 [49] 上进行
+的. 由于 WS 小世界网络得到的结论与 BA 无标度网络得到的结论一致 , 因此下文只展示了 BA 无标
+度网络上的结果. 参考已有相关研究中的模型设定 [27,30,34], 本研究将 BA 网络设定节点数 N = 1000 ,
+考虑消息层人员交互较之于疾病层活动更加频繁密切的情况 , 疾病层网络的度设置为 k = 4 , 消息层网
+络的度 l = 6. 传染病、 正确消息及错误消息的初始感染节点都为20 个, 消息层中正确消息和错误消息
+的恢复率分别设为 µk = µr = 0.1.
+/uni00000013/uni00000015/uni00000013/uni00000017/uni00000013/uni00000019/uni00000013/uni0000001b/uni00000013
+/uni00000013/uni00000011/uni00000013
+/uni00000013/uni00000011/uni00000015
+/uni00000013/uni00000011/uni00000017
+/uni00000013/uni00000011/uni00000019
+/uni00000013/uni00000011/uni0000001b
+/uni00000014/uni00000011/uni00000013
+/uni00000038/uni0000000b/uni00000030/uni00000030/uni00000026/uni00000024/uni0000000c
+/uni00000024/uni0000004e/uni0000000b/uni00000030/uni00000030/uni00000026/uni00000024/uni0000000c
+/uni00000024/uni00000055/uni0000000b/uni00000030/uni00000030/uni00000026/uni00000024/uni0000000c
+/uni00000036/uni0000000b/uni00000030/uni00000030/uni00000026/uni00000024/uni0000000c
+/uni0000002c/uni0000000b/uni00000030/uni00000030/uni00000026/uni00000024/uni0000000c
+/uni00000035/uni0000000b/uni00000030/uni00000030/uni00000026/uni00000024/uni0000000c
+/uni00000038/uni0000000b/uni00000030/uni00000026/uni0000000c
+/uni00000024/uni0000004e/uni0000000b/uni00000030/uni00000026/uni0000000c
+/uni00000024/uni00000055/uni0000000b/uni00000030/uni00000026/uni0000000c
+/uni00000036/uni0000000b/uni00000030/uni00000026/uni0000000c
+/uni0000002c/uni0000000b/uni00000030/uni00000026/uni0000000c
+/uni00000035/uni0000000b/uni00000030/uni00000026/uni0000000c
+图 3 MMCA 和 MC 随时间演化
+对比图
+首先对前面基于 MMCA 分析的结果与仿真实验结果进行交
+叉检验, 对比 MMCA 和蒙特卡罗模拟 (Monte Carlo simulation,
+以下简称 MC) 随时间演化的结果, 其中参数设置如下: 传染病传
+播率 β = 0 .4, 传染病恢复率 α = 0 .1, 正确消息传播率和错误消
+息传播率分别为 λk = 0.5 和 λr = 1.0, 群体认知水平 θ = 0.0, 正
+确消息对传染病传播率的降低系数 γk = 0 .0, 错误消息对传染病
+传播率的增大系数 γr = 1 .2. 结果如图 3 所示, 横坐标是演化时
+间, 纵坐标是各种状态的个体在网络中所占的比例 , 其中实线是
+MMCA 的结果, 虚线是 MC 的结果, 六种不同标记的曲线分别代
+表个体在消息层和疾病层中的不同状态 . 图中可以看到, MMCA
+迭代方法与 MC 模拟结果高度吻合.
+4.2 SIR 和 UAkArU-SIR 模型对比分析
+本研究比较了经典 SIR 模型与所提 UAkArU-SIR 模型中各类状态个体占比的演化情况, 以反映消
+息层, 特别是消息竞争机制对疾病传播、扩散以及恢复等状态的影响 . 其中, 正确消息对疾病感染率的
+降低系数 r = 0, 错误消息对疾病感染率的增大系数 m = 1.2, 疾病恢复率 α = 0.2.
+从图 4 中可以看到, 在相同传染病传播率和传染病恢复率下 (β = 0 .2 和 α = 0 .2), 正确消息和错
+误消息竞争传播影响下的 R 态人群只占 12% 左右, 远小于 SIR 模型中的基本扩散至整个人群的结果
+(92%). 这是因为在 UAkArU-SIR 模型中当正确消息传播率大于错误消息时 , 且群体认知水平较高时 ,
+正确消息会迅速传播并覆盖 90% 的人群, 从而使错误消息和传染病无法在人群中扩散.
+/uni00000013/uni00000015/uni00000013/uni00000017/uni00000013/uni00000019/uni00000013/uni0000001b/uni00000013
+/uni00000013/uni00000011/uni00000013
+/uni00000013/uni00000011/uni00000015
+/uni00000013/uni00000011/uni00000017
+/uni00000013/uni00000011/uni00000019
+/uni00000013/uni00000011/uni0000001b
+/uni00000014/uni00000011/uni00000013
+/uni0000000b/uni00000044/uni0000000c/uni00000036/uni0000002c/uni00000035
+/uni00000036
+/uni0000002c
+/uni00000035
+/uni00000013/uni00000015/uni00000013/uni00000017/uni00000013/uni00000019/uni00000013/uni0000001b/uni00000013
+/uni00000013/uni00000011/uni00000013
+/uni00000013/uni00000011/uni00000015
+/uni00000013/uni00000011/uni00000017
+/uni00000013/uni00000011/uni00000019
+/uni00000013/uni00000011/uni0000001b
+/uni00000014/uni00000011/uni00000013
+/uni0000000b/uni00000045/uni0000000c/uni00000038/uni00000024/uni0000004e/uni00000024/uni00000055/uni00000038/uni00000010/uni00000036/uni0000002c/uni00000035
+/uni00000038
+/uni00000024/uni0000004e
+/uni00000024/uni00000055
+/uni00000036
+/uni0000002c
+/uni00000035
+图 4 SIR 和 UAkArU-SIR 模型随时间演化对比结果
+4.3 传染病传播率对 UAkArU-SIR 模型的影响分析
+在传染病传播过程中 , 传染病传播率的大小是至关重要的 . 因此, 图 5 展示了传染病传播率对传
+染病传播范围的影响. 所有子图的横坐标是传染病的传播率 , 纵坐标是传染病的传播范围 R(∞). 子图
+(a)、(b)、(c) 反映了三种代表性群体认知水平的结果 , 每幅子图中三条不同形态的线分别是正确消息
+传播率和错误消息传播率组合的三种代表性情景 , 其中, λk = 1 .0 和 λr = 0 .5 代表正确消息传播率大
+
+===== PAGE 7 =====
+230 系 统 工 程 理 论 与 实 践 第 45 卷
+图 5 传染病传播率的影响
+于错误消息传播率这一情景 , λk = 0 .5 和 λr = 0 .5 代表正确消息传播率等于错误消息传播率的情景 ,
+λk = 0 .5 和 λr = 1 .0 代表正确消息传播率小于错误消息传播率的情景 , 传染病恢复率 α = 0 .5. 显然,
+在不同的正确消息传播率和错误消息传播率组合下 , 随着传染病传播率的增加, 传染病传播范围都在不
+断增加.
+并且, 在某一确定的传染病传播率下, 当传染病传播率大于传染病传播阈值时, λk = 1.0 和 λr = 0.5
+即正确消息传播率大于错误消息传播率时传染病传播范围最小 , 其次是 λk = 0 .5 和 λr = 0 .5 即正确
+消息传播率等于错误消息传播率 , 最大的是 λk = 0 .5 和 λr = 1 .0 即正确消息传播率小于错误消息传
+播率. 与此同时, 传染病传播阈值与消息层中正确消息和错误消息的竞争传播情况有关 , 这与上述通过
+MMCA 方法分析得出的结果是一致的. 具体来说, 当 λk = 1.0 和 λr = 0.5 即正确消息传播率大于错误
+消息传播率时传染病传播阈值最大, λk = 0 .5 和 λr = 0 .5 即正确消息传播率等于错误消息传播率次之,
+而当 λk = 0 .5 和 λr = 1 .0 即正确消息传播率小于错误消息传播率时传染病传播阈值最小 . 除此之外,
+群体认知水平 θ 也会影响传染病的传播阈值. 在图 5(a) 中, 群体认知水平 θ = 0.0 时传染病的传播阈值
+小于 0.05, 而在图 5(c) 中, 当 θ = 1 .0 时传染病传播阈值接近于 0.15, 即群体认知水平越高的群体其传
+染病传播阈值越大. 需要注意的是, 传染病传播率对疾病传播范围的影响并非线性增长关系 , 而是呈现
+先增加后稳定的趋势, 即 β 值较小的影响程度高于 β 值大时的影响程度.
+4.4 正确消息对错误消息扩散以及传染病传播的影响分析
+为了探究正确消息如何影响传染病和错误消息的传播 , 讨论了在不同群体认知水平 θ 和不同错误
+消息传播率 λr 下, 正确消息传播率对传染病传播范围 R(∞) 和错误消息传播范围 Ar(∞) 的影响, 结
+果如图 6 所示. 图 6(a)～(c) 的实验结果表明, 随着正确消息传播率的增大 , 传染病传播范围在逐步减
+小, 并且在某一确定的正确消息传播率下, 错误消息传播率越大, 传染病传播范围越广, 也就是说错误消
+息传播率越大, 使传染病无法在人群中传播开所需的正确消息传播率越大. 然而, 从图 6(d)～(f) 中发现,
+当群体认知水平 θ = 0.0 时, 随着正确消息传播率的增加, 错误消息传播范围基本不变, 在错误消息传播
+率为 0.5 和 1.0 时一直保持在 0.9 左右; 而当 θ = 0.5 和 θ = 1.0 时随着正确消息传播率的增加, 错误消
+息传播范围初始不变然后慢慢减小, 特别是当 θ = 1.0, 错误消息传播范围迅速减小到 0.
+上述结果意味着 , 正确消息可以有效抑制传染病和错误消息的传播 , 使其无法继续在人群中扩散 .
+但是从图 6(a) 和 (d) 中可以看出, 当错误消息传播率特别大 , 并且群体认知水平特别低即 θ = 0 .0 时,
+无论正确消息传播率多大, 传染病和错误消息在人群中的传播范围都处于很高的水平. 正确消息的传播
+可以抑制传染病的传播 , 但是这是在错误消息传播率不是特别大的情况下 . 通过分别对比图 6(a)～(c)、
+(d)～(f), 可以看到, 当错误消息传播率 λr = 0 .5 和 λr = 1 .0 时, 在同一正确消息传播率下, 认知水平越
+高的群体, 传染病和错误消息传播范围越小. 因此, 该结果的政策意涵在于, 管理者在疫情防控过程中一
+方面促进积极传播正确消息的同时, 也要尽可能地抑制错误消息的传播, 防止过于侧重某一方面致使整
+体系统防控造成事倍功半的效果.
+
+===== PAGE 8 =====
+第 1 期 刘非凡, 等: 复杂网络上消息竞争传播与传染病扩散耦合模型研究 231
+图 6 正确消息和错误消息传播率对传染病传播范围的影响
+4.5 消息竞争传播情境下群体认知水平对 U 态群体的影响分析
+为了考察双层耦合模型中消息竞争对 U 态群体的影响, 进一步分析了正确消息和错误消息传播率
+以及群体认知水平三者之间的关系, 如图 7 所示. 图 7(a) 是正确消息在人群中的最终传播范围 Ak(∞),
+图 7(b) 是错误消息在人群中的最终传播范围 Ar(∞), 图 7(c) 是传染病在人群中的最终传播范围 R(∞),
+其中传染病传播率 β = 0 .2, 传染病恢复率 α = 0 .5. 通过对比图 7(a)～(c), 可以看到传染病传播范围和
+错误消息在人群中的最终传播范围大致呈正相关 , 即当错误消息在整个人群中广泛传播时 , 传染病也在
+人群中大肆传播; 传染病传播范围与正确消息在人群中的最终传播范围大致呈负相关 , 即当人群中大部
+分个体相信并传播正确消息时, 传染病基本无法在人群中流行.
+但需要注意的是, 图中存在错误消息最终占领大半个人群而传染病传播范围很小甚至接近于 0 的
+结果. 据此, 可以通过不同参数之间的影响关系将该热图划分为 5 个区域, 即: 1) 传染病和错误消息都
+在人群中广泛传播; 2) 错误消息入侵整个人群但传染病只传播一半人群; 3) 传染病和错误消息都占领一
+半人群; 4) 错误消息入侵大半个人群而传染病无法传播; 5) 错误消息和传染病都在人群中消失.
+为了理解图中出现的错误消息占据大半人群 , 而传染病传播范围较小这一现象产生的原因 , 探讨了
+图 7 正确消息传播率、 错误消息传播率及群体认知水平的影响
+
+===== PAGE 9 =====
+232 系 统 工 程 理 论 与 实 践 第 45 卷
+消息层中消息传播时间的影响, 如图 8 所示. 图 8(a) 和 (b) 分别是在不同正确消息传播率、 错误消息传
+播率以及群体认知水平下的结果, 其中传染病传播率 β = 0 .2, 传染病恢复率 α = 0 .5. 尽管正确消息和
+错误消息在人群中的最终传播范围都在 0.45 左右, 而图 8(a) 的传染病传播范围达到 0.55 以上, 图 8(b)
+的传染病传播范围不到 0.2. 这是因为图 8(b) 情境下的正确消息传播速度快, 正确消息在初始阶段就迅
+速覆盖了整个人群, 在传染病还没在人群中传播开时就使传染病消失 . 然而, 由于该群体认知水平总体
+较低, 传染病消失后错误消息仍在慢慢侵蚀人群. 而图 8(a) 是错误消息迅速占领人群的情况, 传染病在
+此情境下迅速传播. 但需要注意的是, 该群体的认知水平极高, 随着正确消息的不断传播, 错误消息在人
+群中的比例逐渐下降, 传染病也无法继续在人群中传播 . 由此看出, 消息和传染病具有不同的传播时间
+尺度, 且受群体认知水平的影响, 正确消息和错误消息的在人群中的盛行时间会强烈影响到传染病的传
+播. 如果在传染病传播初期, 与传染病防御有关的正确消息能在人群中快速传播 , 或者群体认知水平已
+处于较高水平, 这将极大程度抑制错误消息的冲击 , 降低传染病的传播范围 , 提高群体的传染病感染成
+本, 有利于疫情防控工作的顺利开展和实施.
+图 8 群体认知水平影响下, 双层耦合模型中个体比例随时间演化结果
+4.6 初始错误消息涌现情境下消息竞争对传染病传播的影响分析
+最后, 考虑到现实世界中, 传染病传播初期通常是错误消息会迅速传播 , 而正确消息存在滞后性的
+情境 [41], 本文进一步探究了正确消息初始传播时间对传染病传播和错误消息传播的影响 , 如图 9 所示.
+传染病传播率 β = 0 .2, 传染病恢复率 α = 0 .5. 从图 9(a)～(c) 中可以看到当群体认知水平特别低 , 即
+θ = 0 .0 时, 只有正确消息初始传播时间小于 2 时, 传染病传播范围才略微有所降低 . 一旦正确消息初
+始传播时间推迟一个时步, 传染病在人群中的传播范围就会迅速扩张, 达到 0.67 左右; 而当群体认知水
+平特别高即 θ = 1.0 时, 容忍正确消息滞后传播时步可以达到 4. 与此同时, 在前 2 个时步, 传染病的传
+播范围随着时间推迟而扩大的速度非常快 , 在之后的时步传染病传播范围增加的速度开始放缓 . 并且,
+在前 4 个时步内, 即正确消息传播率更大而错误消息传播率更小的情况下 , 传染病传播范围更小. 而在
+图 9(d)～(f) 中, 正确消息初始传播时间并不影响错误消息在整个人群中的最终比例, 这是因为消息层采
+用的是 UAkArU-SIR 模型. 群体认知水平 θ 对错误消息在人群中的最终传播范围影响非常显著 , 当群
+体认知水平 θ = 0.0 时, 90% 以上的个体支持且传播错误消息, 而当 θ = 1.0 时, 错误消息最终在人群中
+消失. 因此, 在传染病传播初期正确消息的传播是至关重要的, 一旦传染病在人群中迅速传播开之后, 正
+确消息对传染病的抑制作用会被削弱甚至无法抑制传染病的传播. 上述结果对错误、 虚假信息在互联网
+场域中 “病毒式” 传播的时代背景下, 大规模异质人群疫情突发初期的预防与管控具有重要启示.
+5 结论
+在传染病流行期间, 与疾病有关的正确和错误消息也在人群中竞相传播. 互联网的快速发展和各种
+在线社交平台兴起, 使得人与人之间的社交距离更近 , 舆情消息传播和扩散速度也更快 . 正确消息会让
+人们采取一些保护措施 , 如戴口罩, 定期消杀, 抑制传染病的快速传播 . 但具有更快传播速率的错误消
+息, 则会误导人们采取不当的传染病应对行为, 增加感染疾病的概率, 为疫情防控工作带来重大挑战.
+
+===== PAGE 10 =====
+第 1 期 刘非凡, 等: 复杂网络上消息竞争传播与传染病扩散耦合模型研究 233
+图 9 正确消息初始传播时间对传染病传播范围的影响
+针对当前研究缺少消息竞争情境下传染病在复杂网络中的耦合传播动力学问题 , 本文构建了消息
+和传染病两层耦合的多路复用网络模型 UAkArU-SIR, 表征正确消息和错误消息竞争传播影响下的疾
+病传播过程. 在消息层模型中, 考虑了群体认知水平, 即当个体既受到正确消息传播又受到错误消息传
+播时选择正确消息的概率, 反映现实中群体的公共卫生素养 , 对真假消息的认知力和辨别力 . 基于该模
+型, 本文综合微观马尔可夫链的理论分析和蒙特卡罗仿真方法 , 探究了 UAkArU-SIR 模型的动力学特
+性, 并得到了疾病传播阈值解析解, 以及网络结构对传染病恢复率的影响.
+进一步, 通过仿真分析研究发现 , 正确与错误消息的竞争传播对疾病传播的影响十分关键 , 主要表
+现为: 1) 正确消息的迅速传播既能抑制错误消息传播 , 也能控制疾病的流行, 因此扩大正确消息传播是
+控制错误消息和疾病的重要手段 , 但是需要注意的是当错误消息传播率特别大并且群体认知水平很低
+时, 不管正确消息传播率多大 , 错误消息和疾病传播范围都会很广 , 因此在积极传播正确消息的同时也
+要遏制错误消息的传播 ; 2) 群体认知水平会通过影响消息层正确消息和错误消息的竞争传播来影响疾
+病的扩散, 具体表现为群体认知水平越高, 正确消息传播速度越快, 疾病传播范围越小; 3) 疾病传播范围
+与正确消息最终传播范围大致呈正相关, 与错误消息最终传播范围大致呈负相关. 但是由于消息层和疾
+病层具有不同的时间尺度, 当正确消息传播率非常大而错误消息传播率比较小时 , 在群体认知水平的影
+响下, 错误消息初始传播不开 , 但最终会占领整个人群 , 而此时由于正确消息迅速传播使得疾病很快消
+失, 疾病传播范围很小, 因此消息的盛行时间对疾病的传播是至关重要的; 4) 在疾病传播初期, 正确消息
+尽早介入并形成传播是非常关键的, 一旦疾病迅速传播开之后, 正确消息的作用将被削弱甚至难以起到
+作用. 当正确消息没法及时传播时, 可以通过控制错误消息传播并加大对正确消息的传播来控制疾病的
+传播. 以上结果对指导消息竞争与疾病耦合传播情境下疫情精准防控具有参考借鉴意义.
+本研究在模型上仍然存在以下局限 : 首先, 只考虑了消息竞争传播对疾病传播的影响 , 并没有考虑
+疾病传播对消息传播的反向作用; 其次, 没有充分考虑官方媒体、 意见领袖等的作用, 以及信息层传播中
+现实中大量存在的信息茧房现象. 后续拟综合这些机制, 进一步探究传染病与消息耦合传播的动力学机
+理. 在此基础上, 基于动力学模型研究结果, 进而探讨传染病疾病控制和相应舆情管理的现实策略.
+
+===== PAGE 11 =====
+234 系 统 工 程 理 论 与 实 践 第 45 卷
+参考文献
+[1] Gubler D J. Epidemic dengue/dengue hemorrhagic fever as a public health, social and economic problem in the
+21st century[J]. Trends in Microbiology, 2002, 10(2): 100–103.
+[2] Rodolfo S. Prevention in COVID-19 time: From failure to future[J]. Journal of Epidemiology and Community
+Health, 2020, 74(9): 689.
+[3] WHO. WHO chief declares end to COVID-19 as a global health emergency[EB/OL]. [2023-12-18].
+https://news.un.org/en/story/2023/05/1136367.
+[4] 闫志华, 唐锡晋. 融合高效用模式的在线媒体突发话题发现 [J]. 系统工程理论与实践, 2021, 41(5): 1138–1149.
+Yan Z H, Tang X J. Bursty topic discovery of online media incorporating high utility pattern[J]. Systems
+Engineering — Theory & Practice, 2021, 41(5): 1138–1149.
+[5] 曹永旺, 刘樱, 周春山. 城市群视角下新冠肺炎疫情的时空扩散特征与影响因素 [J]. 地域研究与开发, 2021, 40(3):
+1–7.
+Cao Y W, Liu Y, Zhou C S. Spatiotemporal diﬀusion characteristics and inﬂuencing factors of COVID-19
+epidemic from the perspective of urban agglomeration[J]. Areal Research and Development, 2021, 40(3): 1–7.
+[6] 桑茂盛, 丁一, 包铭磊, 等. 基于新冠病毒特征及防控措施的传播动力学模型 [J]. 系统工程理论与实践, 2021, 41(1):
+124–133.
+Sang M S, Ding Y, Bao M L, et al. Propagation dynamics model considering the characteristics of 2019-nCoV
+and prevention-control measurements[J], Systems Engineering — Theory & Practice, 2021, 41(1): 124–133.
+[7] Qiu Y, Chen X, Shi W. Impacts of social and economic factors on the transmission of coronavirus disease 2019
+(COVID-19) in China[J]. Journal of Population Economics, 2020, 33(4): 1127–1172.
+[8] Jia J S, Lu X, Yuan Y, et al. Population ﬂow drives spatio-temporal distribution of COVID-19 in China[J].
+Nature, 2020, 582(7812): 389–394.
+[9] 方匡南, 任蕊, 朱建平, 等. 基于动态 SEIR 模型的传染性疾病预测和政策评估 [J]. 管理科学学报 , 2022, 25(10):
+114–126.
+Fang K N, Ren R, Zhu J P, et al. Prediction and policy assessment of infectious diseases transmission using
+dynamic SEIR model[J]. Journal of Management Sciences in China, 2022, 25(10): 114–126.
+[10] Hethcote H W. The mathematics of infectious diseases[J]. SIAM Review, 2000, 42(4): 599–653.
+[11] Wu J T, Leung K, Leung G M. Nowcasting and forecasting the potential domestic and international spread
+of the 2019-nCoV outbreak originating in Wuhan, China: A modelling study[J]. Lancet, 2020, 395(10225):
+689–697.
+[12] 王治莹, 李勇建. 政府干预下突发事件舆情传播规律与控制决策 [J]. 管理科学学报, 2017, 20(2): 43–52.
+Wang Z Y, Li Y J. Propagation law and coping strategies for public opinions in emergency with the consideration
+of the government intervention[J]. Journal of Management Sciences in China, 2017, 20(2): 43–52.
+[13] Kraemer M, Yang C H, Gutierrez B, et al. The eﬀect of human mobility and control measures on the COVID-19
+epidemic in China[J]. Science, 2020, 368(6490): 493–497.
+[14] Zhu W J, Shen S F. An improved SIR model describing the epidemic dynamics of the COVID-19 in China[J].
+Results in Physics, 2021, 25: 104289.
+[15] Cadoni M, Gaeta G. Size and timescale of epidemics in the SIR framework[J]. Physica D, 2020, 411: 132626.
+[16] Li C, Tsai C, Yang S. Analysis of epidemic spreading of an SIRS model in complex heterogeneous networks[J].
+Communications in Nonlinear Science and Numerical Simulation, 2014, 19(4): 1042–1054.
+[17] Wang J, Peng W. Fluctuations for the outbreak prevalence of the SIR epidemics in complex networks[J]. Physica
+A: Statistical Mechanics and Its Applications, 2020, 548: 123848.
+[18] Vespignani A, Pastor-Satorras R. Epidemic dynamics and endemic states in complex networks[J]. Physical
+Review E, 2001, 63(6): 66117.
+[19] Barabási A, Dezsö Z. Halting viruses in scale-free networks[J]. Physical Review E, 2002, 65(5): 55103.
+[20] Meloni S, Arenas A, Moreno Y. Traﬃc-driven epidemic spreading in ﬁnite-size scale-free networks[J]. Proceedings
+of the National Academy of Sciences, 2009, 106(40): 16897–16902.
+[21] Zhang H, Guan Z, Li T, et al. A stochastic SIR epidemic on scale-free network with community structure[J].
+Physica A: Statistical Mechanics and Its Applications, 2013, 392(4): 974–981.
+[22] Wang W, Liu Q H, Cai S M, et al. Suppressing disease spreading by using information diﬀusion on multiplex
+networks[J]. Scientiﬁc Reports, 2016, 6: 29259.
+[23] Kan J, Zhang H. Eﬀects of awareness diﬀusion and self-initiated awareness behavior on epidemic spreading —
+
+===== PAGE 12 =====
+第 1 期 刘非凡, 等: 复杂网络上消息竞争传播与传染病扩散耦合模型研究 235
+An approach based on multiplex networks[J]. Communications in Nonlinear Science and Numerical Simulation,
+2017, 44: 193–203.
+[24] Funk S, Gilad E, Watkins C, et al. The spread of awareness and its impact on epidemic outbreaks[J]. Proceedings
+of the National Academy of Sciences, 2009, 106(16): 6872–6877.
+[25] Wu Q, Fu X, Small M, et al. The impact of awareness on epidemic spreading in networks[J]. Chaos: An
+Interdisciplinary Journal of Nonlinear Science, 2012, 22(1): 13101.
+[26] Wang B, Han Y, Tanaka G. Interplay between epidemic spread and information propagation on metapopulation
+networks[J]. Journal of Theoretical Biology, 2017, 420: 18–25.
+[27] Gündüç S. A study on the eﬀects of diﬀusion of information on epidemic spread[J]. International Journal of
+Modeling, Simulation, and Scientiﬁc Computing, 2019, 10(3): 1950015.
+[28] Chen X, Liu Q, Wang R, et al. Self-awareness-based resource allocation strategy for containment of epidemic
+spreading[J]. Complexity, 2020, 2020(1): 3256415.
+[29] Zhan X, Liu C, Zhou G, et al. Coupling dynamics of epidemic spreading and information diﬀusion on complex
+networks[J]. Applied Mathematics and Computation, 2018, 332: 437–448.
+[30] Fan C, Jin Y, Huo L, et al. Eﬀect of individual behavior on the interplay between awareness and disease spreading
+in multiplex networks[J]. Physica A: Statistical Mechanics and Its Applications, 2016, 461: 523–530.
+[31] Zheng C, Xia C, Guo Q, et al. Interplay between SIR-based disease spreading and awareness diﬀusion on
+multiplex networks[J]. Journal of Parallel and Distributed Computing, 2018, 115: 20–28.
+[32] Kabir K M A, Tanimoto J. Analysis of epidemic outbreaks in two-layer networks with diﬀerent structures for
+information spreading and disease diﬀusion[J]. Communications in Nonlinear Science and Numerical Simulation,
+2019, 72: 565–574.
+[33] Huang H, Chen Y, Ma Y. Modeling the competitive diﬀusions of rumor and knowledge and the impacts on
+epidemic spreading[J]. Applied Mathematics and Computation, 2021, 388: 125536.
+[34] Wu Q, Xiao G. A colored mean-ﬁeld model for analyzing the eﬀects of awareness on epidemic spreading in
+multiplex networks[J]. Chaos: An Interdisciplinary Journal of Nonlinear Science, 2018, 28(10): 103116.
+[35] Xiao Y, Zhang L, Li Q, et al. MM-SIS: Model for multiple information spreading in multiplex network[J].
+Physica A: Statistical Mechanics and Its Applications, 2019, 513: 135–146.
+[36] Lazer D, Baum M A, Benkler Y, et al. The science of fake news[J]. Science, 2018, 359(6380): 1094–1096.
+[37] Del V M, Bessi A, Zollo F, et al. The spreading of misinformation online[J]. Proceedings of the National Academy
+of Sciences, 2016, 113(3): 554–559.
+[38] Pennycook G, Epstein Z, Mosleh M, et al. Shifting attention to accuracy can reduce misinformation online[J].
+Nature, 2021, 592(7855): 590–595.
+[39] Yang D, Chow T W S, Zhong L, et al. The competitive information spreading over multiplex social networks[J].
+Physica A: Statistical Mechanics and Its Applications, 2018, 503: 981–990.
+[40] Liu Y, Diao S, Zhu Y, et al. SHIR competitive information diﬀusion model for online social media[J]. Physica
+A: Statistical Mechanics and Its Applications, 2016, 461: 543–553.
+[41] Depoux A, Martin S, Karaﬁllakis E, et al. The pandemic of social media panic travels faster than the COVID-19
+outbreak[J]. Journal of Travel Medicine, 2020, 27(3): Taaa31.
+[42] Ali I. Impacts of rumors and conspiracy theories surrounding COVID-19 on preparedness programs[J]. Disaster
+Medicine and Public Health Preparedness, 2022, 16(1): 310–315.
+[43] Zou W, Tang L. What do we believe in? Rumors and processing strategies during the COVID-19 outbreak in
+China[J]. Public Understanding Science, 2021, 30(2): 153–168.
+[44] Sørensen K, Van den Broucke S, Fullam J, et al. Health literacy and public health: A systematic review and
+integration of deﬁnitions and models[J]. BMC Public Health, 2012, 12(1): 80.
+[45] Paakkari L, Okan O. COVID-19: Health literacy is an underestimated problem[J]. The Lancet Public Health,
+2020, 5(5): E249–E250.
+[46] Sneppen K, Bak P, Flyvbjerg H. Mean ﬁeld theory for a simple model of evolution[J]. Physical Review Letters,
+1993, 71(24): 4087–4090.
+[47] Gómez S, Arenas A, Borge-Holthoefer J, et al. Discrete-time Markov chain approach to contact-based disease
+spreading in complex networks[J]. Europhysics Letters, 2010, 89(3): 38009.
+[48] Barabási A, Albert R. Emergence of scaling in random networks[J]. Science, 1999, 286: 509–512.
+[49] Watts D J, Strogatz S H. Collective dynamics of ‘small-world’ networks[J]. Nature, 1998, 393: 440–442.

@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "artifact": "real_llm_variance_pilot_v2_disposition",
+  "pilot_id": "task005-real-variance-pilot-v2",
+  "status": "INCOMPLETE",
+  "retry_authorized": false,
+  "replacement_authorized": false,
+  "official_variance_use": false,
+  "power_planning_use": false,
+  "real_llm_calls": 0,
+  "scientific_condition_execution_started": false,
+  "official_variance_status": "NOT_COMPUTED_INCOMPLETE",
+  "v2_raw_history_mutable": false,
+  "v2_result_artifact_mutable": false,
+  "p_values": false,
+  "power": false,
+  "mde": false,
+  "formal_inference": false,
+  "optional_stopping": false,
+  "replacement": false
+}

@@ -1,0 +1,54 @@
+{
+  "artifact": "manipulation_construct_validity_amendment3.0",
+  "scope": "prospective TASK_005 manipulation construct convergence for pilot-v3 and later engineering checks",
+  "content_factor_labels": [
+    "rational-evidence",
+    "emotional-empathy"
+  ],
+  "interpretation": "composite communication archetypes",
+  "rational_evidence_primary_manipulation": [
+    "semantic_evidence_strength: Rational > Empathy",
+    "semantic_credibility: Rational > Empathy"
+  ],
+  "empathy_primary_manipulation": [
+    "semantic_perceived_empathy: Empathy > Rational"
+  ],
+  "primary_dimensions": [
+    "D_evidence",
+    "D_credibility",
+    "D_empathy"
+  ],
+  "descriptive_semantic_appraisals": {
+    "semantic_arousal": "descriptive semantic appraisal / candidate mediator",
+    "semantic_valence": "descriptive semantic appraisal / candidate mediator"
+  },
+  "arousal_gate_removed_prospectively": true,
+  "valence_gate_removed_prospectively": true,
+  "pilot_v1_reinterpreted": false,
+  "pilot_v2_reinterpreted": false,
+  "outcome_firewall": true,
+  "allowed_basis_for_change": "construct-validation evidence",
+  "disallowed_basis_for_change": [
+    "trust",
+    "purchase intention",
+    "posting",
+    "AUC",
+    "final outcome"
+  ],
+  "emotional_empathy_meaning": [
+    "acknowledgement",
+    "concern",
+    "relationship-oriented communication",
+    "perceived empathy"
+  ],
+  "not_claimed": [
+    "necessarily higher arousal",
+    "necessarily more positive valence",
+    "pure emotion causal effect"
+  ],
+  "stimulus_text_changed": false,
+  "temperature_changed": false,
+  "behavioral_transition_equations_changed": false,
+  "p_values": false,
+  "formal_inference": false
+}

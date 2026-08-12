@@ -1,0 +1,75 @@
+{
+  "schema_version": "purchase_demand_redesign_contract3.1",
+  "task": "TASK_005",
+  "status": "frozen_before_v31_replay_output",
+  "scenario": "Oatly-like plant-based-milk FMCG repeat choice",
+  "supersedes_for_new_work": "purchase_mechanism_redesign_contract3.0",
+  "population_layers": {
+    "cognitive_network_agents": 20,
+    "micro_buyers_per_cognitive_agent": 25,
+    "standardized_demand_population": 500,
+    "inferential_unit": "replication_block",
+    "micro_buyers_are_independent_replications": false,
+    "real_market_share_claim": false
+  },
+  "opportunity_process": {
+    "tick_unit": "day",
+    "interval_ticks": [5, 7, 10, 14],
+    "condition_invariant": true,
+    "inputs": ["block_seed", "micro_buyer_id"],
+    "absorbing_purchase_state": false
+  },
+  "balanced_heterogeneity": {
+    "distribution": "symmetric normal quantiles with hash-derived cyclic permutations",
+    "reference_logit_sd": {
+      "brand_preference": 0.6,
+      "baseline_pbc": 0.4,
+      "initial_loyalty": 0.6
+    },
+    "sensitivity_logit_sd": {
+      "brand_preference": [0.0, 0.6, 1.0],
+      "baseline_pbc": [0.0, 0.4, 0.8],
+      "initial_loyalty": [0.0, 0.6, 1.0]
+    },
+    "treatment_invariant": true,
+    "empirically_calibrated": false
+  },
+  "choice_equation": {
+    "formula": "logit(p)=logit(I)+preference+beta_pbc*(PBC-PBC0)+beta_loyalty*loyalty",
+    "intention_source": "v2 extended-TPB equation recomputed from recorded Att, SN, trust and current PBC",
+    "beta_pbc_reference": 1.0,
+    "beta_pbc_sensitivity": [0.0, 1.0, 1.5],
+    "beta_loyalty_reference": 0.5,
+    "beta_loyalty_sensitivity": [0.0, 0.5, 1.0],
+    "loyalty_retention": 0.85,
+    "loyalty_learning_rate": 0.2,
+    "choice_draw_inputs": ["block_seed", "micro_buyer_id", "tick", "fixed_action_label"]
+  },
+  "facilitation_factor": {
+    "name": "purchase-friction support package",
+    "operationalization": "time-limited trial voucher with verified retail availability",
+    "levels": ["absent", "present"],
+    "crossed_with_all_communication_conditions": true,
+    "exposure": "universal deterministic",
+    "active_ticks_inclusive": [6, 19],
+    "pbc_signal_reference": 0.35,
+    "pbc_signal_sensitivity": [0.2, 0.35, 0.5],
+    "changes_trust_att_sn": false,
+    "empirically_calibrated": false
+  },
+  "outcomes": [
+    "expected focal-brand choice share at category-purchase opportunities",
+    "trailing-7-day realized focal-brand choice share",
+    "incremental focal-brand choices per 1000 category-purchase opportunities",
+    "communication-only effect",
+    "facilitation-only effect",
+    "communication-by-facilitation interaction",
+    "segment-level effects",
+    "post-crisis recovery time"
+  ],
+  "retired_outcome": "cumulative ever-purchased share",
+  "acceptance_not_based_on": ["p_value", "significance", "desired_effect_size", "curve_separation"],
+  "real_llm_calls_authorized": false,
+  "production_promotion_authorized": false,
+  "formal_inference_authorized": false
+}

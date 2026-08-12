@@ -1,0 +1,82 @@
+{
+  "schema_version": "task005_fmcg_redesign_checkpoint1.0",
+  "created_at_utc": "2026-08-11T03:50:44Z",
+  "task": "TASK_005",
+  "status": "PARALLEL_PROTOTYPE_PASS_NOT_PILOT_READY",
+  "scenario_decision": "option A: fictional plant-based-milk FMCG repeat choice",
+  "formal_v2": {
+    "executed": false,
+    "authorized": false,
+    "disposition": "do not execute while scenario-v3.2 redesign is active"
+  },
+  "v31_offline_replay": {
+    "source_blocks": 10,
+    "cognitive_agents_per_condition": 20,
+    "standardized_micro_buyers": 500,
+    "real_llm_calls_added": 0,
+    "p_values_computed": false,
+    "all_structural_gates_pass": true,
+    "mean_old_post_crisis_opportunities_per_condition": 71.7,
+    "mean_v31_post_crisis_opportunities_per_condition": 1601.3,
+    "realized_curve_resolution_percentage_points": {
+      "old": 1.3947001394700138,
+      "v31": 0.06244925997626928
+    },
+    "reference_expected_effects_per_1000_opportunities": {
+      "average_communication_only": 6.718620621847971,
+      "rational_minus_empathy": 12.46090085719831,
+      "immediate_minus_delayed": 8.430121109201828,
+      "hub_minus_random": 0.473466776353737,
+      "facilitation_only": 38.30904874144908,
+      "average_combined_total": 45.201132874055425,
+      "average_interaction": 0.1734635107583718
+    },
+    "facilitation_sensitivity_per_1000": {
+      "minimum_frozen_setting": 14.247976168838773,
+      "maximum_frozen_setting": 54.93193441146432
+    },
+    "interpretation": "communication effects were not enlarged by population projection; facilitation direction is stable but magnitude is uncalibrated"
+  },
+  "scenario_alignment": {
+    "old_trajectory_product_category_explicit": false,
+    "old_personas_contain_purchase_history": false,
+    "v31_replay_is_final_scenario_validation": false,
+    "scenario32_contract_frozen": true,
+    "new_real_llm_output_exists": false
+  },
+  "implemented_parallel_components": [
+    "treatment-invariant heterogeneous category opportunities",
+    "conditional binary brand choice with common random numbers",
+    "non-absorbing loyalty state",
+    "separate facilitation-to-PBC path",
+    "fictional product-aligned crisis and clarification assets",
+    "balanced engineering persona schema",
+    "peer-approval-only subjective-norm update"
+  ],
+  "verification": {
+    "unit_tests_passed": 16,
+    "unit_tests_failed": 0,
+    "python_compile": "PASS",
+    "csv_decomposition_independent_rebuild": "PASS",
+    "git_diff_check": "PASS",
+    "visual_javascript_syntax": "PASS",
+    "visual_browser_render": "NOT_RUN_BROWSER_BINARY_UNAVAILABLE"
+  },
+  "hashes": {
+    "purchase_mechanism_v31.py": "4e97bc1757436e33ff7ac559cac483b55ee1336cc5eeb2ee88fcd28fa35a5b75",
+    "mechanism_v31_cognition.py": "f73e7e7cd45ec693e3eed2a0f2488a830dec4cc00218397f1f2e416081a8692a",
+    "fmcg_scenario_v32.py": "9c8e6e4d585cc5cff254a9dd0677740a6dab82fbd7f746a3676757a955a7ab66",
+    "analysis/task005_purchase_demand_v31.py": "a648146e014d4cc0bbffd72eb1f211b50f81f0b09a3afe2f0931cd84ecbc871f",
+    "purchase_demand_redesign_contract3.1.json": "391fd8f773c5d4e31c7a6148b7812ae6d9ce03a6c33965d9a894f44aa3ce3eac",
+    "fmcg_scenario_contract3.2.json": "86db1b057d173a73634a83bd3560636dcd860a1aacc54e9e9f2f7f38a4c6b00d",
+    "task005_purchase_demand_v31_replay1.0.json": "23d0c994fd4c170ec16bde6bd6d3b5a9ed1ed92105d1466f097ae6ef26adeb53"
+  },
+  "remaining_blockers_before_engineering_pilot": [
+    "connect scenario-v3.2 assets and v3.1 demand audit fields to a parallel runner",
+    "add perceived_peer_approval to the real semantic schema and prompt",
+    "run a fake-model 9-by-2 full-matrix smoke test",
+    "calibrate demand parameters externally or retain the frozen sensitivity design",
+    "pass the Windows-Kernel regression suite",
+    "obtain new version-specific real-LLM execution authorization"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "budget_constraint": {
+    "engineering_blocks_count_toward_formal_n": false,
+    "engineering_blocks_reused_as_formal_blocks": false,
+    "maximum_attempt_blocks": 10,
+    "optional_stopping": false,
+    "replacement_blocks": false
+  },
+  "confirmatory_family": {
+    "estimands": [
+      "P1_OVERALL_CLARIFICATION_POST_TRUST_V32",
+      "P2_CONTENT_POST_TRUST_V32",
+      "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32"
+    ],
+    "family_size": 3,
+    "familywise_alpha": 0.05,
+    "managerial_mde": {
+      "P1_OVERALL_CLARIFICATION_POST_TRUST_V32": 0.15,
+      "P2_CONTENT_POST_TRUST_V32": 0.15,
+      "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32": 0.05
+    },
+    "multiplicity": "Holm step-down",
+    "test": "block-level one-sample two-sided t-test versus 0"
+  },
+  "exploratory_mechanistic_family": {
+    "P3_role": "timing mechanism; immediate minus delayed over frozen T6-T9 pre-delay window",
+    "P4_role": "network reach mechanism only; Hub minus Random reach, not direct persuasion/purchase",
+    "confirmatory_significance_claims_permitted": false,
+    "estimands": [
+      "P3_TIMING_PRE_DELAY_TRUST_V32",
+      "P4_CHANNEL_REACH_V32"
+    ],
+    "included_in_confirmatory_holm": false,
+    "included_in_formal_sample_sizing": false
+  },
+  "formal_batch_id": "task005-fmcg-v32-formal-n10",
+  "formal_execution_authorized": false,
+  "purchase_policy": {
+    "P5_endpoint": "expected focal-brand repeat-choice probability conditional on a category-purchase opportunity",
+    "conversion_support": "crossed offline through PBC-only path",
+    "legacy_first_purchase_endpoint_retired": true
+  },
+  "real_llm_calls_authorized_by_this_artifact": false,
+  "scenario": "fmcg-scenario-3.2",
+  "schema_version": "task005_fmcg_v32_formal_scope_freeze1.0",
+  "source_branch": "redesign/task005-mechanism-v2",
+  "source_head": "ef6567adaafcafcf3b9f6884295f509a05ed727e",
+  "status": "FROZEN",
+  "task": "TASK_005",
+  "trust_recovery_policy": {
+    "control_is_time_varying_counterfactual": true,
+    "mechanism_change_required": false,
+    "natural_time_recovery_allowed": true,
+    "treatment_contrasts_use_contemporaneous_control": true
+  }
+}

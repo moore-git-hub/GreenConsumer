@@ -1,0 +1,57 @@
+{
+  "confirmatory_family": [
+    "P1_OVERALL_CLARIFICATION_POST_TRUST_V32",
+    "P2_CONTENT_POST_TRUST_V32",
+    "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32"
+  ],
+  "formal_batch_id": "task005-fmcg-v32-formal-n10",
+  "formal_execution_authorized": false,
+  "interpretation": {
+    "P1_P2_P5_have_adequate_prospective_power_at_frozen_mde": true,
+    "P3_not_power_gated": true,
+    "P4_large_variance_not_hidden": true,
+    "P4_not_power_gated": true,
+    "variance10_observed_means_used_as_power_alternative": false,
+    "variance10_p_values_used": false
+  },
+  "managerial_mde": {
+    "P1_OVERALL_CLARIFICATION_POST_TRUST_V32": 0.15,
+    "P2_CONTENT_POST_TRUST_V32": 0.15,
+    "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32": 0.05
+  },
+  "n_attempt_blocks": 10,
+  "operating_characteristic": {
+    "all_mde_holm_detection_probability": {
+      "P1_OVERALL_CLARIFICATION_POST_TRUST_V32": 0.99994,
+      "P2_CONTENT_POST_TRUST_V32": 1.0,
+      "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32": 1.0
+    },
+    "family": [
+      "P1_OVERALL_CLARIFICATION_POST_TRUST_V32",
+      "P2_CONTENT_POST_TRUST_V32",
+      "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32"
+    ],
+    "global_null_empirical_fwer": 0.042435,
+    "holm_fwer": 0.05,
+    "monte_carlo_reps_per_scenario": 200000,
+    "single_active_mde_detection_probability": {
+      "P1_OVERALL_CLARIFICATION_POST_TRUST_V32": 0.998725,
+      "P2_CONTENT_POST_TRUST_V32": 1.0,
+      "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32": 1.0
+    }
+  },
+  "planning_sd": {
+    "P1_OVERALL_CLARIFICATION_POST_TRUST_V32": 0.07205020316115668,
+    "P2_CONTENT_POST_TRUST_V32": 0.056043263883642384,
+    "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32": 0.005184921931264169
+  },
+  "prospective_marginal_power_at_n10_using_bonferroni_first_step_alpha_0_0166667": {
+    "P1_OVERALL_CLARIFICATION_POST_TRUST_V32": 0.9987525090996786,
+    "P2_CONTENT_POST_TRUST_V32": 0.9999966455368392,
+    "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32": 1.0
+  },
+  "schema_version": "task005_fmcg_v32_n10_design_power_check1.0",
+  "source_head": "ef6567adaafcafcf3b9f6884295f509a05ed727e",
+  "status": "PASS_FOR_FROZEN_THREE_PRIMARY_N10_DESIGN",
+  "task": "TASK_005"
+}

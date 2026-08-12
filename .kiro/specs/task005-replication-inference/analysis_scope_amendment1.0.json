@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0",
+  "stage": "TASK_005 Stage I.5C-1",
+  "status": "frozen",
+  "classification": "pre-formal-analysis-scope-amendment",
+  "frozen_head_before_amendment": "776aaac0831cebdea1f1082baacd8e4510b8b146",
+  "evidence_basis": {
+    "stageI5C0_evidence_zip_sha256": "106638D4C6DE9D923798CEBF4E128CE4B4F95F5B03829443D2ED19036A33179D",
+    "engineering_blocks": 5,
+    "formal_blocks_in_evidence": 0,
+    "statistical_inference_used_for_amendment": false,
+    "effect_direction_used_for_amendment": false,
+    "strategy_rank_used_for_amendment": false,
+    "p_values_used_for_amendment": false,
+    "basis": [
+      "engineering-pilot variance",
+      "precision feasibility",
+      "runtime feasibility"
+    ]
+  },
+  "metric_scope": {
+    "confirmatory_primary_metrics": [
+      "final_trust_gain_vs_control",
+      "post_scandal_auc_gain_vs_control"
+    ],
+    "exploratory_mechanism_metrics": [
+      "local_trust_effect_did_3"
+    ],
+    "local_did_reason": "The engineering pilot indicates substantially higher variance for local_trust_effect_did_3, producing an operationally infeasible precision-driven diagnostic target under the frozen half-width criterion. The status change is made before any formal data collection and is not based on effect sign, p-values, or ranking."
+  },
+  "confirmatory_estimands_after_amendment": {
+    "strategy_primary_per_metric": 8,
+    "factorial_confirmatory_per_metric": 6,
+    "confirmatory_metric_count": 2,
+    "confirmatory_strategy_estimands_total": 16,
+    "confirmatory_factorial_estimands_total": 12,
+    "confirmatory_estimands_total": 28
+  },
+  "exploratory_estimands_after_amendment": {
+    "metric": "local_trust_effect_did_3",
+    "strategy_estimands": 8,
+    "factorial_estimands": 6,
+    "total": 14,
+    "confirmatory_p_values_permitted": false,
+    "included_in_confirmatory_holm_families": false,
+    "determines_formal_sample_size": false,
+    "allowed_outputs": [
+      "point estimates",
+      "block-level distributions",
+      "confidence intervals",
+      "sensitivity diagnostics",
+      "mechanism interpretation explicitly labeled exploratory"
+    ]
+  },
+  "engineering_pilot_exclusion": {
+    "canonical_block_ids": [
+      "P001",
+      "P002",
+      "P003",
+      "P004",
+      "P005"
+    ],
+    "excluded_from_formal_sample": true,
+    "may_be_used_for_offline_calibration": true
+  },
+  "formal_sample_size": {
+    "frozen": false,
+    "candidate_valid_block_counts": [
+      12,
+      16,
+      20,
+      24,
+      30,
+      40
+    ],
+    "candidate_set_frozen_for_next_calibration": true,
+    "direct_use_of_precision_n4_prohibited": true,
+    "direct_use_of_precision_n105_prohibited": true,
+    "selection_requires_offline_operating_characteristic_calibration": true
+  },
+  "next_stage_constraints": {
+    "stage": "TASK_005 Stage I.5C-2",
+    "purpose": "freeze offline operating-characteristic calibration design",
+    "real_llm_calls_permitted": false,
+    "formal_launch_permitted": false,
+    "must_freeze_before_calibration_run": [
+      "data-generating scenarios",
+      "variance stress scenarios",
+      "family definitions",
+      "multiplicity procedure",
+      "Monte Carlo replicate count",
+      "coverage criterion",
+      "family-wise error criterion",
+      "power criterion",
+      "stability criterion",
+      "candidate-N selection rule"
+    ]
+  },
+  "gates": {
+    "formal_target_n_frozen": false,
+    "formal_llm_launch_permitted": false,
+    "formal_data_collection_started": false,
+    "engineering_extension_complete": true,
+    "analysis_scope_amendment_frozen": true
+  }
+}

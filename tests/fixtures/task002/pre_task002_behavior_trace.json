@@ -1,0 +1,924 @@
+{
+  "fixture_version": "1.2",
+  "purpose": "pre-TASK_002 behavior baseline (trust/anchor/quiet/buy/post per tick)",
+  "generated_at": "2026-07-31T11:42:45",
+  "code_state": "pre-TASK_002 (TASK_001 applied)",
+  "router": "DeterministicRouter/v1",
+  "seed": 42,
+  "compare_tolerance": 0.0,
+  "compare_source": "runtime_state_unrounded",
+  "compared_fields": [
+    "trust_score",
+    "shock_anchor",
+    "quiet_ticks",
+    "is_buying",
+    "is_posting"
+  ],
+  "test_harness_sha256": "721e55ef34dcc177e9c0fb82868cdd8accdce545303ea7b21946e3e14ee9c9d1",
+  "generated_from_commit": "1861003e08c6cca98cca340338feaffa120555d4",
+  "git_branch": "audit/task002-observability",
+  "git_is_dirty": true,
+  "production_paths_checked": [
+    "run_experiments.py",
+    "simulation_core.py",
+    "experiment_config.py",
+    "node_selector.py",
+    "clarification_injector.py",
+    "metrics_calculator.py",
+    "generate_data.py",
+    "custom_controller.py",
+    "plugins",
+    "configs"
+  ],
+  "baseline_file_sha256": {
+    "plugins/agent/plan/ConsumerPlanPlugin.py": "d5b8a20dc31cce3f2eb1bc18922d93237c8aff9bf7f63b7a2b6f9b5b706f0627",
+    "plugins/agent/reflect/GreenCognitionPlugin.py": "e8fca6927152b01c0db11d148c243eb9de63ecd5e6ddae7df6b6b25ec71be705",
+    "plugins/agent/invoke/GreenInvokePlugin.py": "28841e45ac285f623a9ffeeb564c750de9a7923027a9015f8caece49ca817839"
+  },
+  "scenarios": [
+    {
+      "scenario": "immediate",
+      "cluster_type": "Active_Greens",
+      "initial_trust": 8.0,
+      "ticks": [
+        {
+          "tick": 5,
+          "trust_score": 8.8,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 6,
+          "trust_score": 9.6,
+          "shock_anchor": 9.6,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 7,
+          "trust_score": 9.522,
+          "shock_anchor": 9.6,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 8,
+          "trust_score": 9.448,
+          "shock_anchor": 9.6,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 9,
+          "trust_score": 9.377,
+          "shock_anchor": 9.6,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 10,
+          "trust_score": 10.0,
+          "shock_anchor": 10.0,
+          "quiet_ticks": 4,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 11,
+          "trust_score": 9.558,
+          "shock_anchor": 10.0,
+          "quiet_ticks": 5,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 12,
+          "trust_score": 9.482,
+          "shock_anchor": 10.0,
+          "quiet_ticks": 6,
+          "is_buying": false,
+          "is_posting": false
+        }
+      ]
+    },
+    {
+      "scenario": "immediate",
+      "cluster_type": "Convenient_Greens",
+      "initial_trust": 6.5,
+      "ticks": [
+        {
+          "tick": 5,
+          "trust_score": 6.98,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 6,
+          "trust_score": 7.46,
+          "shock_anchor": 7.46,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 7,
+          "trust_score": 7.395,
+          "shock_anchor": 7.46,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 8,
+          "trust_score": 7.335,
+          "shock_anchor": 7.46,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 9,
+          "trust_score": 7.278,
+          "shock_anchor": 7.46,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 10,
+          "trust_score": 7.706,
+          "shock_anchor": 7.706,
+          "quiet_ticks": 4,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 11,
+          "trust_score": 7.35,
+          "shock_anchor": 7.706,
+          "quiet_ticks": 5,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 12,
+          "trust_score": 7.292,
+          "shock_anchor": 7.706,
+          "quiet_ticks": 6,
+          "is_buying": false,
+          "is_posting": false
+        }
+      ]
+    },
+    {
+      "scenario": "immediate",
+      "cluster_type": "Dormant_Greens",
+      "initial_trust": 5.5,
+      "ticks": [
+        {
+          "tick": 5,
+          "trust_score": 5.82,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 6,
+          "trust_score": 6.14,
+          "shock_anchor": 6.14,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 7,
+          "trust_score": 6.079,
+          "shock_anchor": 6.14,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 8,
+          "trust_score": 6.024,
+          "shock_anchor": 6.14,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 9,
+          "trust_score": 5.974,
+          "shock_anchor": 6.14,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 10,
+          "trust_score": 6.249,
+          "shock_anchor": 6.249,
+          "quiet_ticks": 4,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 11,
+          "trust_score": 5.954,
+          "shock_anchor": 6.249,
+          "quiet_ticks": 5,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 12,
+          "trust_score": 5.911,
+          "shock_anchor": 6.249,
+          "quiet_ticks": 6,
+          "is_buying": false,
+          "is_posting": false
+        }
+      ]
+    },
+    {
+      "scenario": "immediate",
+      "cluster_type": "Non_Greens",
+      "initial_trust": 5.0,
+      "ticks": [
+        {
+          "tick": 5,
+          "trust_score": 5.12,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 6,
+          "trust_score": 5.24,
+          "shock_anchor": 5.24,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 7,
+          "trust_score": 5.209,
+          "shock_anchor": 5.24,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 8,
+          "trust_score": 5.181,
+          "shock_anchor": 5.24,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 9,
+          "trust_score": 5.158,
+          "shock_anchor": 5.24,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 10,
+          "trust_score": 5.257,
+          "shock_anchor": 5.257,
+          "quiet_ticks": 4,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 11,
+          "trust_score": 5.128,
+          "shock_anchor": 5.257,
+          "quiet_ticks": 5,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 12,
+          "trust_score": 5.111,
+          "shock_anchor": 5.257,
+          "quiet_ticks": 6,
+          "is_buying": false,
+          "is_posting": false
+        }
+      ]
+    },
+    {
+      "scenario": "delayed",
+      "cluster_type": "Active_Greens",
+      "initial_trust": 8.0,
+      "ticks": [
+        {
+          "tick": 5,
+          "trust_score": 8.8,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 6,
+          "trust_score": 8.761,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 7,
+          "trust_score": 8.724,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 8,
+          "trust_score": 8.689,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 9,
+          "trust_score": 8.655,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 4,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 10,
+          "trust_score": 9.455,
+          "shock_anchor": 9.455,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 11,
+          "trust_score": 9.384,
+          "shock_anchor": 9.455,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 12,
+          "trust_score": 9.317,
+          "shock_anchor": 9.455,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 13,
+          "trust_score": 9.252,
+          "shock_anchor": 9.455,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        }
+      ]
+    },
+    {
+      "scenario": "delayed",
+      "cluster_type": "Convenient_Greens",
+      "initial_trust": 6.5,
+      "ticks": [
+        {
+          "tick": 5,
+          "trust_score": 6.98,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 6,
+          "trust_score": 6.948,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 7,
+          "trust_score": 6.917,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 8,
+          "trust_score": 6.889,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 9,
+          "trust_score": 6.863,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 4,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 10,
+          "trust_score": 7.343,
+          "shock_anchor": 7.343,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 11,
+          "trust_score": 7.286,
+          "shock_anchor": 7.343,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 12,
+          "trust_score": 7.233,
+          "shock_anchor": 7.343,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 13,
+          "trust_score": 7.183,
+          "shock_anchor": 7.343,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        }
+      ]
+    },
+    {
+      "scenario": "delayed",
+      "cluster_type": "Dormant_Greens",
+      "initial_trust": 5.5,
+      "ticks": [
+        {
+          "tick": 5,
+          "trust_score": 5.82,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 6,
+          "trust_score": 5.79,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 7,
+          "trust_score": 5.762,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 8,
+          "trust_score": 5.737,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 9,
+          "trust_score": 5.715,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 4,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 10,
+          "trust_score": 6.035,
+          "shock_anchor": 6.035,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 11,
+          "trust_score": 5.984,
+          "shock_anchor": 6.035,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 12,
+          "trust_score": 5.938,
+          "shock_anchor": 6.035,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 13,
+          "trust_score": 5.896,
+          "shock_anchor": 6.035,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        }
+      ]
+    },
+    {
+      "scenario": "delayed",
+      "cluster_type": "Non_Greens",
+      "initial_trust": 5.0,
+      "ticks": [
+        {
+          "tick": 5,
+          "trust_score": 5.12,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 6,
+          "trust_score": 5.104,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 7,
+          "trust_score": 5.091,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 8,
+          "trust_score": 5.079,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 9,
+          "trust_score": 5.069,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 4,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 10,
+          "trust_score": 5.189,
+          "shock_anchor": 5.189,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 11,
+          "trust_score": 5.164,
+          "shock_anchor": 5.189,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 12,
+          "trust_score": 5.143,
+          "shock_anchor": 5.189,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 13,
+          "trust_score": 5.124,
+          "shock_anchor": 5.189,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        }
+      ]
+    },
+    {
+      "scenario": "no_clarification",
+      "cluster_type": "Active_Greens",
+      "initial_trust": 8.0,
+      "ticks": [
+        {
+          "tick": 5,
+          "trust_score": 8.8,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 6,
+          "trust_score": 8.761,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 7,
+          "trust_score": 8.724,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 8,
+          "trust_score": 8.689,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 9,
+          "trust_score": 8.655,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 4,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 10,
+          "trust_score": 8.623,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 5,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 11,
+          "trust_score": 8.593,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 6,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 12,
+          "trust_score": 8.564,
+          "shock_anchor": 8.8,
+          "quiet_ticks": 7,
+          "is_buying": false,
+          "is_posting": false
+        }
+      ]
+    },
+    {
+      "scenario": "no_clarification",
+      "cluster_type": "Convenient_Greens",
+      "initial_trust": 6.5,
+      "ticks": [
+        {
+          "tick": 5,
+          "trust_score": 6.98,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 6,
+          "trust_score": 6.948,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 7,
+          "trust_score": 6.917,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 8,
+          "trust_score": 6.889,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 9,
+          "trust_score": 6.863,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 4,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 10,
+          "trust_score": 6.838,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 5,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 11,
+          "trust_score": 6.815,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 6,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 12,
+          "trust_score": 6.794,
+          "shock_anchor": 6.98,
+          "quiet_ticks": 7,
+          "is_buying": false,
+          "is_posting": false
+        }
+      ]
+    },
+    {
+      "scenario": "no_clarification",
+      "cluster_type": "Dormant_Greens",
+      "initial_trust": 5.5,
+      "ticks": [
+        {
+          "tick": 5,
+          "trust_score": 5.82,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 6,
+          "trust_score": 5.79,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 7,
+          "trust_score": 5.762,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 8,
+          "trust_score": 5.737,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 9,
+          "trust_score": 5.715,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 4,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 10,
+          "trust_score": 5.694,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 5,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 11,
+          "trust_score": 5.676,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 6,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 12,
+          "trust_score": 5.659,
+          "shock_anchor": 5.82,
+          "quiet_ticks": 7,
+          "is_buying": false,
+          "is_posting": false
+        }
+      ]
+    },
+    {
+      "scenario": "no_clarification",
+      "cluster_type": "Non_Greens",
+      "initial_trust": 5.0,
+      "ticks": [
+        {
+          "tick": 5,
+          "trust_score": 5.12,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 0,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 6,
+          "trust_score": 5.104,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 1,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 7,
+          "trust_score": 5.091,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 2,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 8,
+          "trust_score": 5.079,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 3,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 9,
+          "trust_score": 5.069,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 4,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 10,
+          "trust_score": 5.06,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 5,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 11,
+          "trust_score": 5.052,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 6,
+          "is_buying": false,
+          "is_posting": false
+        },
+        {
+          "tick": 12,
+          "trust_score": 5.045,
+          "shock_anchor": 5.12,
+          "quiet_ticks": 7,
+          "is_buying": false,
+          "is_posting": false
+        }
+      ]
+    }
+  ]
+}

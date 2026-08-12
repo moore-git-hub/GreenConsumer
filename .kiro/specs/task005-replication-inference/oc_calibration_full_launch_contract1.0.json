@@ -1,0 +1,139 @@
+{
+  "classification": "full-offline-oc-execution-launch-contract",
+  "execution_profile": {
+    "adaptive_iteration_increase": false,
+    "candidate_n": [
+      12,
+      16,
+      20,
+      24,
+      30,
+      40
+    ],
+    "loo_candidate_cells": 30,
+    "loo_iterations_per_cell": 5000,
+    "loo_total_iterations": 150000,
+    "loo_variants": 5,
+    "primary_cells": 36,
+    "primary_iterations_per_cell_per_stream": 20000,
+    "primary_streams": {
+      "A": 202608071,
+      "B": 202608072
+    },
+    "primary_total_iterations": 720000,
+    "selection_enabled": true,
+    "total_sampled_block_draws_loo": 3550000,
+    "total_sampled_block_draws_primary": 17040000,
+    "variance_multipliers": [
+      1.0,
+      1.5,
+      2.0
+    ]
+  },
+  "frozen_inputs": {
+    "core_module": {
+      "relative_path": "oc_calibration.py",
+      "sha256": "8DF9F8D5FB1C7AE83C19BE906C9F79915C013251B17F95D8375375044992F1CB"
+    },
+    "full_executor_contract": {
+      "relative_path": ".kiro/specs/task005-replication-inference/oc_calibration_full_executor_contract1.0.json",
+      "sha256": "39783E56E989BA4E2864C6C9B80977C4D195DF24AC0B39B11A209316E058EA52"
+    },
+    "i5c0_evidence": {
+      "relative_path": "task005_stageI5C0_precision_stability.zip",
+      "sha256": "106638D4C6DE9D923798CEBF4E128CE4B4F95F5B03829443D2ED19036A33179D"
+    },
+    "oc_design": {
+      "relative_path": ".kiro/specs/task005-replication-inference/oc_calibration_design1.0.json",
+      "sha256": "D01AE3375CB59B27A6554DE2612469896B605FB10AA294AB77653D4C4728DF29"
+    },
+    "runner_contract": {
+      "relative_path": ".kiro/specs/task005-replication-inference/oc_calibration_runner_contract1.0.json",
+      "sha256": "3864F36F46BF1151A8C22F2F7398327B772C24FD5F8B1ADE009B80FF1DAEC3A5"
+    },
+    "runner_module": {
+      "relative_path": "oc_calibration_runner.py",
+      "sha256": "D0893B2EA33608DF5CDB3821A376DF9C4508227789C92FB1EA0EE8FFE50DCE06"
+    },
+    "scope_amendment": {
+      "relative_path": ".kiro/specs/task005-replication-inference/analysis_scope_amendment1.0.json",
+      "sha256": "C0925334381A16328843C7D39483BA65E3859EF1002B2383454C00BCC14B6C5F"
+    }
+  },
+  "git_gate": {
+    "exact_execution_head_frozen_in_next_stage_wrapper": true,
+    "implementation_parent_must_be_ancestor": true,
+    "local_upstream_must_be_0_0": true,
+    "required_branch": "refactor/task005-replication-inference",
+    "staging_area_clean": true,
+    "tracked_worktree_clean": true
+  },
+  "interpretation_rules": {
+    "diagnostic_selected_candidate_n_is_not_formal_n": true,
+    "engineering_pilot_effect_direction_used": false,
+    "engineering_pilot_observed_mean_used_as_truth": false,
+    "if_no_candidate_passes_formal_n_remains_unfrozen": true,
+    "if_selected_n_is_40_require_explicit_feasibility_decision": true,
+    "local_trust_effect_did_3_excluded_from_confirmatory_oc": true
+  },
+  "launcher": {
+    "authorization_token": "I5C3D_FULL_OC_20000_5000",
+    "execution_command": "execute",
+    "execution_requires_exact_head_wrapper_after_this_contract_is_committed": true,
+    "preflight_command": "preflight",
+    "relative_path": "run_oc_full_calibration.py",
+    "sha256": "5B80046065D73F7599878C01A2DBE6578B16708227DE309E33CA066E99E85821"
+  },
+  "output_contract": {
+    "deterministic_payloads": true,
+    "evidence_zip": "task005_stageI5C3D_oc_full_v1_evidence.zip",
+    "output_directory": "task005_stageI5C3D_oc_full_v1",
+    "refuse_existing_evidence_zip": true,
+    "refuse_existing_output_directory": true,
+    "required_payload_files": [
+      "oc_input_matrix.csv",
+      "oc_primary_cells.csv",
+      "oc_single_signal_power.csv",
+      "oc_dense_power.csv",
+      "oc_loo_sensitivity.csv",
+      "oc_candidate_gate_summary.csv",
+      "oc_summary.json",
+      "evidence_manifest.json"
+    ],
+    "runtime_seconds_is_stdout_only_not_frozen_payload": true,
+    "zip_crc_errors_required": 0
+  },
+  "parent": {
+    "full_executor_contract_sha256": "39783E56E989BA4E2864C6C9B80977C4D195DF24AC0B39B11A209316E058EA52",
+    "implementation_head": "7f04e2886d67f894595b4b946c40183e4b4b0013",
+    "runner_sha256": "D0893B2EA33608DF5CDB3821A376DF9C4508227789C92FB1EA0EE8FFE50DCE06"
+  },
+  "safety": {
+    "formal_inference_performed_by_oc": false,
+    "formal_llm_launch_permitted": false,
+    "network_access_permitted": false,
+    "real_llm_calls_permitted": false
+  },
+  "schema_version": "1.0",
+  "stage": "TASK_005 Stage I.5C-3C-3",
+  "stage_gate": {
+    "formal_llm_launch_permitted": false,
+    "formal_target_n_frozen": false,
+    "full_execution_allowed_only_after_contract_commit_is_pushed": true,
+    "full_execution_allowed_only_via_next_stage_exact_head_wrapper": true,
+    "full_execution_in_this_stage": false,
+    "launch_contract_frozen": true,
+    "preflight_must_pass_before_commit": true
+  },
+  "status": "frozen",
+  "stop_and_failure_rules": {
+    "do_not_adapt_iterations_after_observing_results": true,
+    "do_not_change_candidate_n_grid": true,
+    "do_not_change_effect_scenarios": true,
+    "do_not_change_hard_gates": true,
+    "manual_interruption_means_failed_attempt": true,
+    "no_wall_clock_timeout": true,
+    "partial_output_must_be_preserved_and_must_not_be_overwritten": true,
+    "rerun_after_failure_requires_new_reviewed_output_name_or_explicit_cleanup_decision": true
+  }
+}

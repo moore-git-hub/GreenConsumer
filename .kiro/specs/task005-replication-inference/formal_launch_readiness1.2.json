@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.2",
+  "stage": "TASK_005 Stage I.5C-4D launch-safety correction",
+  "formal_n": 24,
+  "sample_size_semantics": "exact",
+  "sampling_design": "fixed_predeclared_cohort",
+  "runner_exact_cohort_verified": true,
+  "runner_no_overshoot_verified": true,
+  "direct_real_mode_rejected": true,
+  "programmatic_real_mode_rejected": true,
+  "real_mode_batch_creation_blocked": true,
+  "real_mode_child_execution_blocked": true,
+  "real_llm_called_during_readiness": false,
+  "formal_launch_ready": true,
+  "formal_llm_launch_permitted": false,
+  "readiness_interpretation": "Engineering gates are ready for a later Stage 5A launch-contract freeze. This artifact does not authorize real LLM execution."
+}

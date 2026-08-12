@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "future_activation_schema_only",
+  "pilot_id": "task005-real-variance-pilot-v2",
+  "required_fields": [
+    "pilot_id",
+    "master_seed",
+    "replicate_ids",
+    "conditions",
+    "primary_estimands",
+    "model",
+    "temperature",
+    "EMPATHY_REPAIR_WEIGHT",
+    "independent_unit",
+    "activation_token",
+    "source_sha256",
+    "source_freeze_digest",
+    "ten_of_ten_pass_rule",
+    "no_replacement",
+    "no_optional_stopping",
+    "no_formal_reuse",
+    "no_p_values",
+    "no_power",
+    "no_mde"
+  ],
+  "frozen_values": {
+    "master_seed": 2026081002,
+    "replicate_ids": [
+      "R001",
+      "R002",
+      "R003",
+      "R004",
+      "R005",
+      "R006",
+      "R007",
+      "R008",
+      "R009",
+      "R010"
+    ],
+    "condition_count": 9,
+    "primary_estimands": [
+      "P1_OVERALL_CLARIFICATION_POST_TRUST",
+      "P2_CONTENT_POST_TRUST",
+      "P3_TIMING_EARLY_TRUST",
+      "P4_CHANNEL_REACH",
+      "P5_OVERALL_CLARIFICATION_PURCHASE"
+    ],
+    "model": "qwen-plus",
+    "temperature": 0.3,
+    "EMPATHY_REPAIR_WEIGHT": 0.5,
+    "independent_unit": "replication_block"
+  },
+  "authorization_created_by_this_artifact": false
+}

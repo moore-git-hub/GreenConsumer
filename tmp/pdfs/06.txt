@@ -1,0 +1,2745 @@
+
+
+===== PAGE 1 =====
+REVIEW ARTICLE
+Large language models empowered agent-based
+modeling and simulation: a survey and perspectives
+Chen Gao 1, Xiaochong Lan 1,2, Nian Li 1,2, Yuan Yuan 1,2, Jingtao Ding 1,2,
+Zhilun Zhou 1,2, Fengli Xu 1,2 & Yong Li 1,2 ✉
+Agent-based modeling and simulation have evolved as a powerful tool for modeling complex
+systems, offering insights into emergent behaviors and interactions among diverse agents.
+Recently, integrating large language models into agent-based modeling and simulation
+presents a promising avenue for enhancing simulation capabilities. This paper surveys the
+landscape of utilizing large language models in agent-based modeling and simulation,
+discussing their challenges and promising future directions. In this survey, since this is
+an interdisciplinary ﬁeld, we ﬁrst introduce the background of agent-based modeling and
+simulation and large language model-empowered agents. We then discuss the motivation for
+applying large language models to agent-based simulation and systematically analyze the
+challenges in environment perception, human alignment, action generation, and evaluation.
+Most importantly, we provide a comprehensive overview of the recent works of large language
+model-empowered agent-based modeling and simulation in multiple scenarios, which can be
+divided into four domains: cyber, physical, social, and hybrid, covering simulation of both real-
+world and virtual environments, and how these works address the above challenges. Finally,
+since this area is new and quickly evolving, we discuss the open problems and promising
+future directions. We summarize the representative papers along with their code repositories
+in https://github.com/tsinghua-ﬁb-lab/LLM-Agent-Based-Modeling-and-Simulation.
+Introduction
+S
+imulation, as a computational tool, encompasses the emulation of real-world processes or
+systems by employing mathematical formulas, algorithms, or computer-generated repre-
+sentations to imitate their behaviors or characteristics. Agent-based modeling and simu-
+lation focuses on modeling complex systems by simulating individual agents and their
+interactions within an environment (Macal and North, 2005). It operates by assigning speci ﬁc
+behaviors, attributes, and decision-making capabilities to these agents, enabling the examination
+of emergent phenomena resulting from agents ’ interactions and environment dynamics. The
+signiﬁcance of simulation spans various domains, serving as a valuable tool for understanding,
+analyzing, and predicting intricate phenomena that might be impractical or impossible to
+observe directly in real life. It facilitates experimentation, hypothesis testing, and scenario
+analysis, offering insights into systems ’ behaviors under diverse conditions and aiding in
+https://doi.org/10.1057/s41599-024-03611-3 OPEN
+1 BNRist, Tsinghua University, Beijing, China. 2 Department of Electronic Engineering, Tsinghua University, Beijing, China. ✉email: liyong07@tsinghua.edu.cn
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3 1
+1234567890():,;
+
+===== PAGE 2 =====
+decision-making processes across ﬁelds like economics, biology,
+sociology, and ecology. The capacity to acquire and use language
+is a key aspect that distinguishes humans from other beings
+(Hauser et al., 2002). The advent of large language models (LLMs)
+represents a recent milestone in machine learning, showcasing
+immense capabilities in natural language processing tasks and
+textual generation (Zhao et al., 2023). Leveraging their formidable
+abilities, LLMs have shown promise in enhancing agent-based
+simulations by enabling more nuanced and realistic representa-
+tions of agents ’ decision-making processes, communication, and
+adaptation within simulated environments. Integrating LLMs into
+agent-based modeling and simulation holds the potential to
+enrich the ﬁdelity and complexity of simulations, potentially
+yielding deeper insights into system-level behaviors and emergent
+phenomena for the following reasons: First, LLM agents can take
+actions even if there are no explicit instructions (Team, 2022;
+Yoheinakajima, 2023). Second, LLM agents can respond like a
+real human with adaptive planning (Schick et al., 2024; Wang
+et al., 2024b; Xi et al., 2023). Lastly, LLM agents can interact with
+other agents (or even real humans) (Park et al., 2023). Thus, LLM
+agents have achieved success in a lot of areas (Boiko et al., 2023;
+Bran et al., 2023; Gao et al., 2023; Jinxin et al., 2023; Kovač et al.,
+2023; Li et al., 2023c, 2023e; Lin et al., 2023; Park et al.,
+2023, 2022). From this perspective, it is clear that LLM agents can
+serve as a new paradigm for simulation with human-level
+intelligence.
+As a result of the massive potential of LLM agents, there has
+recently been a boom in research efforts in this area. However, as
+yet, there is no survey that systematically summarizes the relevant
+works, discusses the unresolved issues, and provides a glimpse
+into important research directions. In this survey, we analyze why
+large language models are essential in the fundamental problem
+of simulation, especially for agent-based simulation. After dis-
+cussing how to design agents in this new paradigm, we carefully
+and extensively discuss and introduce the existing works in var-
+ious areas, most of which have been published recently. The
+contribution of this survey can be summarized as follows.
+● We take the ﬁrst step to review the existing works of large
+language model-based agent modeling and simulation. We
+systematically analyze why large language models can serve
+as an advanced solution for agent-based modeling and
+simulation compared with existing approaches. Speci ﬁcally,
+we ﬁrst extensively explain the requirements of the agent
+capability for agent-based modeling and simulation from
+four aspects: autonomy, social ability, reactivity, and pro-
+activeness. Then, we analyze how large language models
+address these challenges, including perception, reasoning
+and decision-making, adaptivity, and heterogeneity.
+● We divide the agent-based modeling and simulation into
+four domains, physical, cyber, social, and hybrid, which can
+cover the mainstream simulation scenarios and tasks, after
+which we present the relevant works, providing a detailed
+discussion about how to design the simulation environ-
+ment and how to build simulation agents driven by large
+language models.
+● In addition to the existing works in this new area, we
+discuss four important research directions, including
+improving the simulation of scaling up, open simulation
+platform, robustness, ethical risks, etc., which we believe
+will inspire future research.
+Discussions on PRISMA . Following Preferred Reporting Items
+for Systematic Reviews and Meta-Analyses (PRISMA), we pro-
+vide more details of how we collect and organize the related
+works. (1) Eligibility criteria, Information sources, and Search
+strategy. For the eligibility criteria, we delineate the scope of the
+review, including (1) the usage of LLM agents and (2) the studied
+problem of agent-based modeling and simulation. Information
+sources for our paper are diverse, encompassing peer-reviewed
+journals, conference proceedings, preprint archives, and reputable
+databases like IEEE Xplore, ACM Digital Library, Elsevier,
+Clarivate Web of Science, arXiv preprint, SSRN preprint, etc. The
+search strategy we used incorporates a combination of keyword
+searches and controlled vocabulary terms related to LLMs,
+ABMS, and their intersection, of which the keywords include
+“large language models, ”“ agent-based simulation, ”“ intelligent
+agents,”“ AI-driven simulation, ” etc. We also use the citation
+tracking function of Google Scholar to identify cited/citing papers
+for those seminal works, ensuring a thorough and relevant lit-
+erature review. We believe this structured approach will facilitate
+a comprehensive understanding of the current landscape and
+emerging trends using LLM agents for ABMS. (2) Selection pro-
+cess, Data collection process, and Data items . After deploying the
+search strategy on the various information sources, we select the
+proper papers presented in this review. The ﬁltering process
+mainly focuses on two speci ﬁc problems: (1) double-checking
+whether the paper belongs to agent-based modeling simulation
+and uses LLM agents and (2) what kind of sub-category this
+paper belongs to. For the ﬁrst problem, we found some papers
+that use an LLM agent as an assistant or decision-making helper,
+which is close to agent-based modeling and simulation but,
+indeed, not the same. We ﬁlter out these papers (20 +) and
+reserve the remaining ones. For the second problem, we cate-
+gorize the papers based on two-dimension criteria: the domain
+and the environment.
+Background
+In this section, we will ﬁrst introduce the background of agent-
+based modeling and simulation, and large language models-
+empowered agents.
+Agent-based simulation
+Basic concepts of agent-based simulation . Agent-based simulation
+captures the intricate dynamics inherent in complex systems by
+concentrating on individual entities referred to as agents (Macal
+and North, 2005). These agents are heterogeneous, with speci ﬁc
+characteristics and states, and adaptively behave according to
+context and environment, making decisions and taking actions
+(Elsenbroich et al., 2014). The environment, whether static or
+evolving, introduces conditions, instigates competition, de ﬁnes
+boundaries, and occasionally supplies resources in ﬂuencing agent
+behaviors (Cipi and Cico, 2011). The interaction includes inter-
+actions with both the environment and other agents, and the goal
+is to mirror the behaviors in reality based on prede ﬁned or
+adaptive rules (Elliott and Kiel, 2002; Macal and North, 2005). To
+summarize, the basic components of agent-based simulation
+include:
+Agents: Agents are the fundamental entities in an agent-based
+simulation. They represent individuals, entities, or elements in the
+system being modeled. Each agent has its own set of attributes,
+behaviors, and decision-making processes.
+Environment: The environment is the space in which agents
+operate and interact. It includes the physical space, as well as any
+external factors, e.g., weather conditions, economic changes,
+political shifts, and natural disasters, that in ﬂuence agent beha-
+vior. Agents may be constrained or in ﬂuenced by the
+REVIEW ARTICLE HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3
+2 HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3
+
+===== PAGE 3 =====
+environment, and their interactions can have effects on the
+environment itself.
+Interaction: Agents interact with each other and their environ-
+ment through prede ﬁned mechanisms. Interactions can be direct
+(agent-to-agent) or indirect (agent-to-environment or environ-
+ment-to-agent).
+With the above components, agent-based modeling and
+simulation provide a bottom-up perspective to study the
+macro-level phenomenons and dynamics from the individual
+interactions.
+Agent capability. To achieve realistic simulation in a wide range of
+application domains, agents should have the following capabilities
+in terms of perception, decision, and action (Wooldridge and
+Jennings, 1995).
+Autonomy: Agents should be able to operate without the direct
+intervention of humans or others, which is important in real-
+world applications such as microscopic traf ﬁc ﬂow simulation
+(Lopez et al., 2018) and pedestrian movement simulation (Batty,
+2001).
+Social ability: Agents should be able to interact with other agents
+(and possibly humans) to complete the assigned goals. When
+studying social phenomena, group behavior, or social structures,
+the sociability of agents is key. This includes simulating the for-
+mation of social networks, the dynamics of opinions, the spread
+of culture, and more. The social interactions between agents can
+be either cooperative or competitive, which are critical when
+simulating economic activities such as market behavior, con-
+sumer decisions, etc.
+Reactivity: Agents should be able to perceive their environment
+and respond quickly to changes in the environment. This cap-
+ability is especially important in systems that need to simulate
+real-time responses, such as traf ﬁc control systems and auto-
+mated production lines, and in disaster response scenarios where
+agents need to be able to respond to environmental changes
+immediately to effectively conduct early warning and evacuation.
+More importantly, agents should be able to learn from previous
+experience and adaptively improve their responses, similar to the
+idea of reinforcement learning (Lin, 1992).
+Pro-activeness: Agents should be able to exhibit goal-directed
+behavior by taking the initiative instead of just responding to
+their environment. For example, agents need to proactively pro-
+vide help, advice, and information in applications such as intel-
+ligent assistants and actively explore their environment, plan
+paths, and perform tasks in ﬁelds such as autonomous robots and
+self-driving cars.
+It is worth mentioning that, like humans, agents cannot make
+perfectly rational choices due to limitations of knowledge and
+computational capacity (Simon, 1997). Instead, they can make
+suboptimal yet acceptable decisions based on imperfect information.
+This capability is particularly critical in achieving human-like
+simulations in the economic market (Arthur, 1991) and manage-
+ment organizations (Puranam et al.,2015). For example, considering
+agents’ bounded rationality when simulating consumer behavior,
+market transactions, and business decisions can more accurately
+reﬂect real economic activities. In addition, in simulating decision-
+making, teamwork, and leadershi p within organizations, bounded
+rationality helps reveal behavioral dynamics in real work settings.
+Applications of agent-based modeling and simulation .T h e ﬂex-
+ibility of agent-based modeling and simulation allows for the
+exploration of diverse scenarios and the study of emergent phe-
+nomena in a controlled simulation environment. Therefore, it offers
+researchers and practitioners a versatile tool for understanding and
+predicting the behavior of complex systems across various domains.
+Based on the four categories of the target systems, current
+works of agent-based simulation can be divided into four
+domains.
+Physical domain: This category refers to the natural system in the
+physical environment (An,
+2012). Typical applications include
+ecology and biology (Pereira et al., 2004; Zhang and DeAngelis,
+2020), such as modeling ecological systems (Heckbert et al., 2010;
+Lippe et al., 2019), species interactions (McLane et al. ( 2011), and
+the impact of environmental changes (Beltran et al., 2017; Per-
+toldi and Topping, 2004). Many simulation problems in urban
+environments also belong to the physical domain (An, 2012),
+such as transportation, human mobility, etc. Speci ﬁcally, for
+urban planning (Gaube and Remesch, 2013), agent-based mod-
+eling and simulation can aid in simulating urban growth
+(Arsanjani et al., 2013; Barros, 2004), traf ﬁc patterns (de Souza
+et al., 2019; Mastio et al., 2018), and the impact of urban policies
+(Ma et al., 2013; Maggi and Vallino, 2016; Widener et al., 2013).
+Another application is engineering and manufacturing (Barbosa
+and Leitão, 2011; Rolón and Martínez, 2012), in which agent-
+based molding and simulation can be applied to model supply
+chain dynamics (Schieritz and Grobler, 2003), production pro-
+cesses (Parv et al., 2019), and the interactions of entities within
+manufacturing systems.
+Social domain: The social domain mainly covers the social
+behavior simulation, which can be further divided into (1) social
+interaction that focuses on social networks, community interac-
+tions, or organizational behavior (Macy and Willer, 2002; Wall,
+2016) and (2) economic system that simulates economic systems,
+market dynamics, or ﬁnancial interactions (Samanidou et al.,
+2007). Speci ﬁcally, for social sciences (Conte and Paolucci, 2014;
+Gilbert, 2007b; Gilbert and Terna, 2000; Ternaet al., 1998), agent-
+based modeling and simulation are widely used to model social
+phenomena such as crowd behavior (Kountouriotis et al., 2014;
+Luo et al., 2008), opinion dynamics (Banisch et al., 2012; Li et al.,
+2020), and social network interactions (El-Sayed et al., 2012;
+Gilbert, 2004a; Madey et al., 2003). The agent-based modeling can
+simulate the emergence of societal patterns and trends (Helbing,
+2012). As for the research of economics (Hamill and Gilbert, 2015;
+Leombruni and Richiardi, 2005; Van Dinther, 2008), agent-based
+models are employed to study economic systems (Deguchi, 2011),
+market dynamics (Rouchier, 2017; Wang et al., 2018), and the
+behavior of individual economic agents (Mueller and Pyka, 2016).
+Cyber domain: Besides the physical world and human society, our
+daily life has been further extended into cyberspace. Therefore,
+agent-based simulation has also been applied in wide areas like
+web-based behaviors (Guyot and Honiden, 2006) and cyber-
+security applications (Alluhaybi et al., 2019).
+Hybrid domain: This category includes hybrid systems combining
+components covering the physical world, social life, and cyber-
+space. For example, an urban environment is a socio-physical
+environment that integrates social behavior with physical infra-
+structure. Moreover, it is also multi-layered after taking online
+social networks into account. That is, these applications involve
+more than one domain of physical, social, or cyber domains.
+Therefore, agent-based simulations within an urban environment,
+such as urban planning (Chen, 2012) and epidemic control (Silva
+et al., 2020), are far more complex and challenging than those in
+unitary environments. Moreover, for healthcare (Barnes et al.,
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3 REVIEW ARTICLE
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3 3
+
+===== PAGE 4 =====
+2013; Cabrera et al., 2011), agent-based modeling and simulation
+can be used to model the spread of infectious diseases (Perez and
+Dragicevic, 2009), healthcare systems (Silverman et al., 2015), and
+the effectiveness of interventions (Beheshti et al., 2017), which
+help in understanding and planning for public health scenarios.
+Methodologies of agent-based modeling and simulation . The
+development of modeling technologies utilized in agent-based
+simulation has also gone through the early stage of knowledge-
+driven approaches and the recent stage of data-driven approa-
+ches. Speci ﬁcally, the former includes various approaches based
+on predeﬁned rules or symbolic equations, and the latter includes
+stochastic models and machine learning models.
+● Predeﬁned rules : This approach involves de ﬁning explicit
+rules that govern agent behaviors. These rules are typically
+based on logical or conditional statements that dictate how
+agents react to speci ﬁc situations or inputs. The most well-
+known example is the cellular automata (Wolfram, 1984)
+that leverages simple, local rules to simulate complex global
+phenomena that exist not only in the natural world but also
+in complex urban systems.
+● Symbolic equations : Compared with prede ﬁned rules,
+symbolic equations are used to represent relationships or
+behaviors in a more formal, mathematical manner. These
+can include algebraic equations, differential equations, or
+other mathematical formulations. A typical example is the
+social force model widely used in pedestrian movement
+simulation (Helbing and Molnar, 1995). It assumes that
+pedestrian movements are driven by a Newton-like law
+decided by an attractive force driven by the destination and
+a repulsive force from neighboring pedestrians or obstacles.
+● Stochastic modeling: This approach introduces randomness
+and probability into agent decision-making, which is useful
+for capturing the uncertainty and variability inherent in
+many real-world systems (Feng et al., 2012). For example,
+to account for the impact of randomness originating from
+human decision-making, we can leverage discrete choice
+models for simulating pedestrian walking behaviors
+(Antonini et al., 2006).
+● Machine learning models : Machine learning models allow
+agents to learn from data or through interaction with their
+environment. Supervised learning approaches are generally
+used for estimating parameters of agent-based models,
+while reinforcement learning approaches are widely used in
+the simulation period, enhancing the adaptation capability
+of agents within dynamic environments (Kavak et al., 2018;
+Kim et al., 2021; Platas-López et al., 2023).
+Limitations. Early works on agent-based simulation are keen to
+design “deliberative architectures” that rely on explicit, often com-
+plex, internal models to make decisions, emphasizing the impor-
+tance of planning, reasoning, and decision-making processes
+(Wooldridge and Jennings,1995). However, optimizing the internal
+world model and planning-reasoning module based on symbolical
+AI approaches are generally intractable in practice. This leads to the
+prevalence of “reactive architectures” in agent-based simulations,
+which instead rely primarily on direct sense-action loops rather
+than complex internal models of the world or deep reasoning
+processes to make decisions. The subsequent development of AI,
+especially deep learning technology, does not fundamentally change
+this paradigm of agent-based simulation due to the poor inter-
+pretability and generalization capability. However, facing the need
+for realistic simulation of real-world processes or systems, current
+approaches still have several limitations, as described below.
+Simple agent architecture is not enough to cope with
+complex tasks: Although “reactive architectures ” are able to
+adapt to different environmental conditions, they may be limited
+in handling complex tasks or situations that require long-term
+planning. To achieve human-like simulation in real-world com-
+plex problems, current agent architecture requires redesigns that
+solve challenges in processing speed, resource ef ﬁciency, and task
+complexity. Speci ﬁcally, agents should be capable of complex
+planning and reasoning processes, like using internal models to
+predict the consequences of different courses of action and choose
+the best one, and able to develop and execute complex strategies
+to achieve long-term goals.
+It is dif ﬁcult to develop a general agent that can support
+simulations across environments: Different environments vary in
+dimensions like complexity, dynamics, and uncertainty. Due to
+this diversity, a speci ﬁc agent that is effective in one environment
+(like a ﬁnancial market simulation) might be completely inef-
+fective in another (like a social campaign simulation). In real-
+world applications where the target environment is often hybrid
+with signi ﬁcant dynamics and uncertainty, developing speci ﬁc
+agents case by case is highly inef ﬁcient and costly.
+Existing methods cannot support integrative simulation in real-
+world problems: A versatile agent-based simulation model should
+be able to describe how systems operate under known conditions,
+explain why certain patterns emerge, predict future states based
+on existing observations, and explore the outcomes of hypothe-
+tical scenarios. However, existing methods cannot support the
+above tasks simultaneously: rule-based methods are useful in
+descriptive problems, while symbolic or stochastic methods can
+provide explanations regarding underlying mechanisms that drive
+the system. Comparatively, machine learning models are better at
+predictive problems by learning hidden patterns from data but
+with less interpretability. Therefore, there remain challenges in
+developing methods that simultaneously capture the accuracy of
+behavioral modeling, interpretability of mechanisms, adaptability,
+and reliability under environmental changes.
+Large language models and LLM-empowered agents . Large
+language models (LLMs), such as ChatGPT (OpenAI, 2022
+),
+Gemini (DeepMind, 2023), LLaMA (Touvron et al., 2023), Alpaca
+(Taori et al., 2023), and GLM (Zeng et al., 2023), are the latest
+paradigm of language models, which evolve from early statistical
+language models (Bellegarda, 2004) to neural language models
+(Melis et al., 2017), then to pre-trained language models (Brown
+et al., 2020), and ﬁnally to large language models (Zhao et al.,
+2023c). With billions of parameters and extensive pre-training
+corpus, LLMs have shown astonishing abilities not only in natural
+language processing tasks (Li et al., 2023a; Zhang et al., 2024c)
+such as text generation, summarization, translation, etc., but also
+in complex reasoning and planning tasks, such as solving math-
+ematical problems (Arora et al., 2023), etc. Pre-training on large-
+scale corpora lays the foundation ability for zero-shot general-
+ization. Moreover, pre-trained models can be further ﬁne-tuned
+for speci ﬁc tasks, adapting to particular application scenarios
+(Jiang et al., 2023). In addition, the advances of large language
+models in the past year, such as ChatGPT and GPT-4 have
+achieved human-like reasoning ability, a milestone that is now
+being considered to be the seed of arti ﬁcial general intelligence
+(AGI). Speci ﬁcally, the capacity to acquire and use language is a
+key aspect of how we humans distinguish ourselves from other
+beings (Tomasello, 2010). Language is one of the most important
+mechanisms we have to interact with the environment, and
+REVIEW ARTICLE HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3
+4 HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3
+
+===== PAGE 5 =====
+language provides the basis for high-level abilities (Hauser et al.,
+2002).
+Thus, it is promising to construct large language model-
+empowered agents (Wang et al., 2024b; Xi et al., 2023) due to
+their human-like intelligence in perceiving the environment and
+making decisions. In the following, we have a short summary of
+the motivations to apply large language models to agent-based
+modeling and simulation.
+First, the LLM agent is able to adaptively react and perform
+tasks based on the environment without prede ﬁned explicit
+instructions (Team, 2022; Yoheinakajima, 2023). In addition,
+during the simulation process, the LLM agent can even form new
+ideas, solutions, goals, etc. (Franceschelli and Musolesi, 2023). For
+example, AutoGPT Team ( 2022) can automatically schedule
+plans when given a set of available tools and the ﬁnal task goal,
+exemplifying the signi ﬁcant potential of LLMs in constructing
+autonomous agents. Meanwhile, BabyAGI (Yoheinakajima, 2023)
+created an LLM-driven script running an in ﬁnite loop, which
+continuously maintains a task list, in which each task is
+completed the task by ChatGPT API (OpenAI, 2022) based on
+the task context. Second, the LLM agent has enough intelligence
+that it can respond like a human and even actively take actions
+with self-oriented planning and scheduling (Wang et al., 2024b;
+Xi et al., 2023). Actually, the input of the environment is not
+limited to text; rather, recent multi-modal fusion models can be
+fed other types of information, such as image or audio (Zhu et al.,
+2024). The action space of the LLM agent is neither limited to
+text, for which the tool-usage ability allows the agent to take more
+actions (Schick et al., 2024). Third, the LLM agent has the ability
+to interact and communicate with humans or other AI agents
+(Park et al., 2023). In the simulation, especially agent-based
+simulation, the agent ’s communication ability elevates individual
+simulation to the community level (Gilbert and Troitzsch, 2005).
+An LLM-driven agent can generate text, which can be received
+and understood by another agent, in turn providing the basis for
+interpretable communication among agents or between humans
+and agents (Park et al., 2023). Fourth, the simulation at the
+community level requires heterogeneity of agents, and the LLM
+agents can meet these requirements for playing different roles in
+society (Qian et al., 2024). An arti ﬁcial society constructed by
+LLM agents can further reveal the emergence of swarm
+intelligence with collective agent behaviors (Gao et al., 2023;
+Park et al., 2023), similar to wisdom-of-crowds in human society
+(Surowiecki, 2005).
+As mentioned above, the simulation system has widely utilized
+the paradigm of agent-based modeling, which requires agents
+with high-level abilities. This well motivates the use of large
+language model-empowered agents in simulation scenarios. In
+the following, we will discuss the critical abilities of a large
+language model for agent-based modeling and simulation in
+detail in the section “
+Critical abilities of LLM for agent-based
+modeling and simulation ”. Then, in the section “hallenges and
+approaches of LLM agent-based modeling and simulation ”,w e
+will elaborate on the recent advances of large language model
+agent-based modeling and simulation to further answer the
+question of how large language model agents meet the
+requirements (what kind of challenges and how to address them).
+Critical abilities of LLM for agent-based modeling and
+simulation
+As mentioned above, agent-based modeling and simulation serve
+as a basic approach for simulation in many areas (Elsenbroich
+et al., 2014; Macal and North, 2005), but it still suffers from
+several key challenges. Large language model-empowered agents
+not only meet the requirements for agent-based simulation but
+also address the limitations relying on their strong abilities in
+perception, reasoning, decision-making, and self-evolution, illu-
+strated in Figs. 1, 2.
+Perception. The core of agent-based modeling and simulation is
+to model how an individual agent interacts with an environment
+(Macal and North, 2005), which requires the agent to accurately
+sense various types of information from said environment. As for
+the large language model-empowered agents, the ability of lan-
+guage enables agents to comprehend and respond to diverse
+environments directly or indirectly. On the one hand, the basic
+ability to understand and generate text enables agents to engage
+in complex dialogs, negotiate, and exchange information, and
+support direct interaction. On the other hand, the interface
+between the agent and environment can be operated via texts
+(Team, 2024), which leads to indirect interaction. Of course, such
+ability also supports the communication between different agents,
+besides the agent-environment perspective.
+It is worth mentioning that the ability to interact with the
+environment and other agents is not adequate to achieve human-
+like simulations. To be more speci ﬁc, it is also required that large
+language model-based agents “put themselves in real humans ’
+shoes”, thereby allowing the agent to imagine that it is indeed in
+the environment . That is, LLM agents should be able to
+comprehend, perceive, and respond to diverse needs, emotions,
+and attitudes within different contexts, from the “ﬁrst-view sight”
+(Shanahan et al., 2023). This capability enables models to better
+understand the information from the environment or other
+agents and generate more real responses.
+Reasoning and decision making . One critical challenge in tra-
+ditional agent-based simulation is that rule-based or even neural
+network-based agents is not intelligent enough (Cipi and Cico,
+2011). That is, the agent is not able to make correct or optimal
+Fig. 1 Illustration of how large language model agents meet the requirements of agent-based modeling and simulation.
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3 REVIEW ARTICLE
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3 5
+
+===== PAGE 6 =====
+decisions, such as choosing a crowded road in the transportation
+simulation or sending an incorrect message in the social network
+simulation. This can be explained by the fact that traditional
+neural network-based arti ﬁcial intelligence is still not as intelli-
+gent as a real human (Hernández-Orallo et al., 2016; Hoshen and
+Werman, 2017; Liu et al., 2019;M ańdziuk and Ż ychowski, 2019).
+In contrast, large language model-empowered agents exhibit
+heightened reasoning capabilities, enabling them to make more
+informed decisions and choose suitable actions within the
+simulation. Despite making suitable decisions, another critical
+advantage of large language model-empowered agents to support
+better agent-based modeling and simulation is autonomy (Fu
+et al., 2024). With only limited guidance, regulations, and goals,
+agents equipped with large language models can autonomously
+take actions, make plans for the given goal, or even achieve new
+goals without the need for explicit programming or prede ﬁned
+rules (Park et al., 2023). That is, autonomy enables LLM agents to
+dynamically adjust their actions and strategies based on real
+circumstances, contributing to the realism of the simulation.
+Adaptive learning and evolution . For agent-based modeling and
+simulation, the system always has uncertainty and controllability
+(Macal and North, 2005). In other words, the environment and the
+agent’s state may be completely different compared with the initial
+stage of the simulation. As the old story of Rip Van Winkle tells, a
+man falls asleep in the mountains and awakens to ﬁnd that the
+world around him has drastically changed during his slumber. That
+is, the environment is continuously changing in a long-term social
+network simulation (Gao et al., 2023) ;t h ea g e n ts h o u l db ea b l et o
+adapt to the new environment, formulating decision policies that
+may deviate signi ﬁcantly from their original strategies. Obviously,
+adaptive learning and evolution are challenging for traditional
+approaches, but luckily, this can be addressed by large language
+model-based agents (Lu et al., 2023). Speciﬁcally, with the ability to
+continually learn from new data and adapt to changing contexts,
+LLM agents can evolve behaviors and decision-making strategies
+over time. Agents can assimilate new information, analyze emerging
+patterns in data, and modify their responses or actions accordingly
+based on in-context learning (Dong et al., 2022), mirroring the
+dynamic nature of real-world entities. This adaptability contributes
+to the simulation ’s realism by simulating the learning curve and
+evolution of agents’ behaviors in response to varying stimuli.
+Heterogeneity and personalizing . As the saying goes, one man’s
+meat is another man’s poison. Heterogeneity of agents is critical for
+agent-based simulation, with the complex society (Brown and
+Robinson, 2006) or economic system (Bohlmann et al., 2010) with
+heterogeneous individuals. Speci ﬁcally, in agent-based modeling
+and simulations, the heterogeneity of agents involves representing
+diverse characteristics, behaviors, and decision-making processes
+among individuals. Agent-based simulation stands out for its
+capacity to accommodate varied rules or parameters compared to
+traditional simulation methods, discussed as follows.
+The ﬁrst one is the extremely high complexity of parameter
+settings of the existing methods (Elliott and Kiel, 2002; Macal and
+North, 2005). In these models, the vast array of variables inﬂuencing
+an agent’s behavior-from personal traits to environmental factors-
+makes selecting and calibrating these parameters daunting. This
+complexity often leads to oversimpli ﬁcation, compromising the
+simulation’s accuracy in portraying true heterogeneity (Macal and
+North, 2005). Moreover, acquiring accurate and comprehensive data
+to inform parameter selection is another challenge. That is, real-
+world data capturing diverse individual behaviors across various
+contexts might be limited or challenging to collect. Furthermore,
+validating the chosen parameters against real-world observations to
+ensure their reliability adds another layer of complexity. Second, the
+rule or the model cannot cover all dimensions of heterogeneity, as
+real-world individuals are very complex (Macal and North, 2005).
+Using rules to drive agent behaviors only captures certain aspects of
+heterogeneity but could lack the depth to encapsulate the full
+spectrum of diverse behaviors, pre ferences, and decision-making
+processes. Furthermore, as the model capacity, trying to cover all
+dimensions of heterogeneity within a single model is too idealistic.
+Thus, balancing model simplicity and accurate modeling agents
+becomes a critical challenge in a gent-based modeling and simula-
+tion, resulting in oversimpliﬁcation or neglect of certain aspects of
+agent heterogeneity.
+Different from the traditional methods, the LLM-based agents
+support (1) capturing complex internal characteristics with
+internal human-like cognitive complexity and (2) specialized
+and customized characteristics with prompting, in-context
+learning, or ﬁne-tuning.
+An example of a better understanding . For a better understanding
+of the above abilities of large language model agents, we select the
+paradigm of a representative paper, S3 in the social domain, as a
+Fig. 2 Illustration of how large language model-empowered agents work based on four aspects of critical abilities ( ﬁgure edited from S3 Gao et al., 2023):
+perception, heterogeneity and personalizing, reasoning and decision-making, adaptive learning, and evolution.
+REVIEW ARTICLE HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3
+6 HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3
+
+===== PAGE 7 =====
+template and add more supplementary descriptions to construct a
+representative diagram. We have done some editing on the ori-
+ginal ﬁgure, and the improved ﬁgure illustrates a representative
+agent work ﬂow that reveals four critical abilities: perception,
+heterogeneity and personalizing, reasoning and decision-making,
+adaptive learning, and evolution. The overall structure is also very
+similar to Generative Agent (Park et al., 2023).
+Challenges and approaches of LLM agent-based modeling
+and simulation
+The core of agent-based modeling and simulation is how the
+agent reacts to the environment and how agents interact with
+each other, in which agents should behave close to real-world
+individuals with human knowledge and rules, as real as possible.
+Therefore, when constructing large language model-empowered
+agents for simulation, there are four major challenges, including
+perceiving the environment, aligning with human knowledge and
+rules, choosing suitable actions, and evaluating the simulation.
+We will discuss the solutions from a high-level perspective, and
+how the existing works address them will be elaborated on in
+detail in the next section.
+Environment construction and interface . For agent-based
+simulation with large language models, the ﬁrst step is to con-
+struct the environment, virtual or real, and then design how the
+agent interacts with the environment and other agents. Thus, we
+need to propose proper methods for an environment that LLM
+can perceive and interact with.
+Environment: de ﬁne the world and rules . The external environ-
+ment in agent-based simulation varies for different domains. In
+general, the environment built by existing works can be divided
+into two categories: virtual and real.
+● The virtual environment includes simulation applications
+with predeﬁned rules in prototype-level simulation, such as
+a virtual social system, game, etc. For example, Qian et al.
+(2024) designed a virtual software company with multiple
+agents for different roles, such as CEO, managers,
+programmers, etc. Wang et al. ( 2023b) constructed an
+environment of a virtual recommender system in which
+agents can browse the recommended contents and provide
+feedback. The sandbox environment is one kind of virtual
+environment where the principles and ideas conceptualized
+in a virtual environment can be tested and adapted to real-
+world applications. For example, Generative Agent Park
+et al. ( 2023) builds a Smallville sandbox world in which
+large language model-empowered agents plan their days,
+share news, form relationships, and coordinate group
+activities.
+● The real environment includes our real world. For example,
+Li et al. ( 2024b) deploy large language model-based agents
+to simulate economic activities, in which agents can
+represent both consumers and workers. WebAgent Gur
+et al. ( 2024) simulate a real human browsing and accessing
+online content of real websites. UGI (Xu et al., 2023a)
+proposed to build agents for the real-world urban
+environment, and the agents are expected to generate
+various human behaviors in the city, including navigation,
+social, economic, etc.
+Interface. The interface actually has two aspects, how the agent
+interacts with the environment and how agents communicate
+with each other.
+● Input and output of the environment. Most existing works
+use texts as the major interface, naturally due to the ability
+to understand and generate texts of large language models.
+Even if the environment is a sandbox with rich models,
+such as Smallville sandbox world (Park et al., 2023)i n
+which the environment is still represented with texts,
+relying on which the agent can perceive the context. In
+addition, the basic rules or domain-speci ﬁc knowledge,
+such as the game rule, is also summarized with texts, which
+are received by the large language model agents with
+prompt engineering. Due to the limitation of texts, the
+existing works construct various tools to interact with
+complex environments or data, but recalling or using these
+tools is still based on texts. For example, in Zhu et al.
+(2023c), the large language model ’s action is a phrase,
+which can be a parameter of the tool function to interact
+with the simulation environment.
+● Communication between agents. First, the direct commu-
+nication between agents is also focusing on the texts. For
+example, in agent-based simulation for social science, the
+textual information exchange represents the communica-
+tion between humans in the real world. Second, the agents
+can indirectly interact with others through prede ﬁned rules;
+for example, in economic simulation, the agents can work
+in the same factory, and the rule in the economic system
+makes them interact indirectly.
+In summary, the environment construction, along with
+deﬁning how agents interact with the environment, is the ﬁrst
+step of deploying large language model agents for agent-based
+modeling and simulation. Thanks to the multi-modal ability and
+usage of tools, the interface is not limited to pure texts,
+supporting more diverse and more realistic environments, with
+more complicated cross-agent interactions.
+Human alignment and personalization . Although LLMs have
+already demonstrated remarkable human-like characteristics in
+many aspects, agents based on LLMs still lack the necessary
+domain knowledge in speci ﬁc areas, leading to irrational deci-
+sions. Therefore, aligning LLM agents with human knowledge
+and values, especially those of domain experts, is an essential
+challenge to achieve more realistic domain simulations. However,
+the heterogeneity of agents, as a fundamental characteristic of
+ABM, is both an advantage and a challenge for traditional
+models. While, LLMs possess a powerful capability to simulate
+heterogeneous agents, ensuring controllable heterogeneity.
+However, enabling LLMs to play different roles to meet perso-
+nalized simulation requirements is a signi ﬁcant challenge. Next,
+we will explain the methods and technologies to address these two
+challenges from two perspectives: prompt engineering and tun-
+ing, and introduce the existing related work in these areas.
+Human alignment
+Prompt engineering: When simulating speci ﬁc agents, we can
+provide task instructions, background knowledge, generation
+patterns, and task examples speci ﬁc to certain domains or sce-
+narios, thereby aligning LLMs ’ output with human knowledge
+and values when deployed. For example, providing detailed
+descriptions of game rules and examples for the agent allows it to
+consider various factors it cares about, like humans when making
+decisions, such as self-interests, fairness, etc. (Akata et al., 2023).
+In addition, constructing modules such as re ﬂection and memory
+can improve agents ’ planning and reasoning capabilities, thereby
+giving them stronger gaming capabilities and creating a possible
+path towards human-intelligent gaming (Guo et al., 2023).
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3 REVIEW ARTICLE
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3 7
+
+===== PAGE 8 =====
+Tuning: Tuning requires constructing a training dataset for spe-
+ciﬁc domains, scenarios, or hiring domain experts. Based on the
+dataset or expert feedback, ﬁne-tuning the LLM can also
+empower the agents with more domain-speci ﬁc knowledge,
+producing outputs more in line with human knowledge and
+values. For example, Singhal et al. ( 2023) propose to achieve
+knowledge alignment in clinical medicine. The proposed Multi-
+MedQA benchmark combines six existing medical question-and-
+answer datasets covering professional medicine, research, and
+consumer inquiries. Additionally, Med-PaLM (Singhal et al.,
+2023), an LLM for the medical ﬁeld, is trained based on a
+foundational model PaLM (Chowdhery et al., 2023). In terms of
+implementation, the authors incorporate examples of medical
+question-and-answer and modify model prompts through the
+guidance of professional clinicians (involving ﬁve clinical doctors)
+for ﬁne-tuning. This guides the model to generate text consistent
+with clinical requirements. With this domain-speci ﬁc LLM, we
+can simulate agents (e.g., medical assistants) in real-world med-
+ical environments. In addition to collecting large-scale datasets
+with domain knowledge, other research (Dubois et al., 2024)
+directly uses LLMs to generate “human feedback ”, speci ﬁcally
+pair-wise feedback for instructions, for LLM ﬁne-tuning. Results
+show that the generated feedback enables LLM to achieve high
+human alignment 45× cheaper than hiring crowd workers to give
+feedback in experiments.
+Personalization
+Prompt engineering: The basic idea is to adapt to personalized
+needs by providing LLM agents with individual preferences,
+expected output patterns, background knowledge, etc., thereby
+making the output closer to the speci ﬁc needs or preferences of
+individuals when deployed. For example, in the well-known
+LLM-based social activity simulation, AI Town (Park et al., 2023),
+personalized interaction behaviors of agents in different scenar-
+ios, at different times, and with different other agents can be
+achieved by introducing professions, behavioral preferences, and
+interpersonal relationships in the prompts. In economic simula-
+tion, speci ﬁcally the simulation of canonical games, the agent ’s
+preferences can be speci ﬁed in the prompt, such as cooperative,
+selﬁsh, altruistic, etc., so that the agent will have different levels of
+cooperative tendencies during the game playing (Phelps and
+Russell, 2023).
+Tuning: Tuning for personalization requires selectively con-
+structing datasets or ﬁne-tuning multiple models based on feed-
+back from different users, with each model corresponding to one
+or a type of personalized needs. This can also be achieved by
+using speci ﬁc combinations to provide relevant, personalized
+requirements. Some research attempts to ef ﬁciently align LLMs
+with various preferences tailored to different users ’ distinct pre-
+ferences (Jang et al., 2023). Speci
+ﬁcally, user preferences are
+decomposed into standards across multiple aspects, with perso-
+nalized optimization based on RLHF targeted towards different
+aspects. In practical applications, the strategy of LLM response
+generation is based on linearly weighting strategies according to
+user preferences. When simulating agents with individual pre-
+ferences (e.g., users in recommender systems), this approach
+achieves a more accurate match for different preferences and is
+also easily generalizable to scenarios with a broader range of
+preferences.
+In summary, human alignment and personalization ensure the
+large language model-empowered agents cannot only simulate
+real human behaviors but also play a given role, making it
+possible to simulate the heterogeneity of real-world systems. The
+typical techniques in this component mainly involve prompt
+engineering and tuning.
+How to simulate actions . This section aims to delve into how
+LLM agents are designed to exhibit complex behaviors that are
+reﬂective of real-world cognitive processes. This involves under-
+standing and implementing the mechanisms by which these
+artiﬁcial agents can retain and utilize past experiences (memory)
+(Gao et al., 2023; Park et al., 2023; Zhu et al., 2023c), introspect
+and adjust their behavior based on their outcomes (re ﬂection)
+(Park et al., 2023; Shinn et al., 2023), and execute a sequence of
+interconnected tasks that mimic human work ﬂows (planning)
+(Wei et al., 2022).
+Planning. Here, we introduce the methodology by which LLM
+agents approach complex tasks through decomposition. Initially,
+an LLM assesses the task to understand its main objectives and
+context. It then breaks down the task into smaller, manageable
+subtasks, each contributing towards the overall goal. This seg-
+mentation leverages the LLM ’s training corpus to recognize pat-
+terns and apply relevant knowledge ef ﬁciently (Park et al., 2023;
+Sun et al., 2024); Wang et al., 2024a; Zhu et al., 2023c).
+Each subtask is executed sequentially, with the LLM agent
+applying its knowledge base to ensure logical progression and
+coherence. This approach not only simpli ﬁes complex tasks but
+also enhances the LLM ’s accuracy and adaptability. By tackling
+tasks incrementally, the LLM agent can adapt its strategies and
+ensure that each step is contextually relevant and logically
+structured. For example, GITM (Zhu et al., 2023c) showcase an
+LLM agent that decomposes the overarching goal of “Mining
+Diamond” into a series of sub-goals, constructing a sub-goal tree.
+This model uses its text-based knowledge and memory to
+navigate in a virtual environment, making strategic decisions at
+each tree node to achieve the main objective. Voyager Wang et al.
+(2024a) employ an automatic curriculum to aid the LLM agent in
+understanding the sequence of actions required to reach a goal.
+By reasoning with the available resources, the LLM agent can plan
+an ef ﬁcient course of action, like upgrading tools for better
+efﬁcacy and demonstrating adaptive problem-solving skills.
+AdaPlanner (Sun et al.,
+2024) introduces an LLM that re ﬁnes
+its action plan based on feedback, which has an in-plan re ﬁner for
+aligning actions with predictions and an out-of-plan re ﬁner to
+adjust when predictions do not match outcomes, showcasing the
+model’s ability to adapt and revise its plan dynamically in
+response to changing scenarios.
+In summary, advancements represent signi ﬁcant strides in task
+decomposition and strategic planning. They highlight the
+capability of LLMs to not only break down complex tasks into
+manageable sub-goals but also to dynamically adapt their
+strategies and re ﬁne plans based on ongoing feedback and
+changing scenarios, thereby enhancing decision-making and
+problem-solving ef ﬁciency in various contexts.
+Memory. Human behavior is largely in ﬂuenced by past experi-
+ences and insights, which are stored in memory. If LLM agents
+aim to mimic this aspect of human behavior, they also need to
+reference past experiences and insights when acting. However, the
+volume of this information is often immense, frequently
+exceeding the context window length of LLMs. Therefore, it ’s
+necessary to design a memory system that functions as an
+external database for LLM agents. This system should have
+appropriate mechanisms for organizing, updating, and retrieving
+information, enabling LLM agents to reference these memories
+for future actions.
+Generative Agents Park et al. ( 2023) showcase an LLM agent
+that develops a generative memory system, integrating sensory
+perceptions with a continuous stream of experiences. This system
+not only stores information but actively engages in planning and
+reﬂection, adapting its behavior based on past outcomes. Chen
+REVIEW ARTICLE HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3
+8 HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3
+
+===== PAGE 9 =====
+et al. ( 2023c) illustrate an LLM agent ’s strategic prowess in
+auction scenarios, where it adapts its bidding strategy by
+synthesizing new information with existing memories to max-
+imize pro ﬁts or meet speci ﬁc objectives.
+GITM (Zhu et al., 2023c) and Voyager (Wang et al., 2024a) are
+seen curating a skill library, updating its capabilities through
+practice and feedback. This approach re ﬂects an understanding of
+task requirements and environmental challenges, where the
+LLM’s memory serves as a dynamic repository of actions and
+strategies. The distinction between explicit and implicit memory
+comes into play in simulations that require the LLM to navigate
+complex tasks, such as resource management and goal-oriented
+action planning in open-world environments. Here, the LLM ’s
+memory functions extend beyond simple recall, enabling the
+agent to perform with a sense of history and progression.
+Lastly, the role of memory in social interactions is explored
+through simulations in S3 (Gao et al., 2023) that mimic the
+intricacies of human behavior. LLMs track and adapt to changing
+social cues and demographic shifts, employing memory not just
+as a record of past interactions but as a tool for future social
+navigation and decision-making. Li et al. ( 2024b) demonstrate
+how a memory module in LLMs can be crucial for understanding
+and adapting to dynamic social environments. They show that
+LLMs, equipped with a memory of past social interactions and
+trends, can more effectively predict and respond to future
+economic changes, enhancing their decision-making in complex
+social landscapes.
+Collectively, these studies contribute to our understanding of
+LLMs as agents capable of sophisticated memory management,
+crucial for their function in dynamic and unpredictable
+environments. They highlight the remarkable potential of LLMs
+to transcend traditional data storage, moving towards a more
+integrated and intelligent use of memory in arti ﬁcial cognition.
+Reﬂection. The section explores how LLM agents incorporate
+feedback mechanisms to enhance their memory systems,
+improving decision-making and learning processes. This re ﬂec-
+tion encompasses both short-term and long-term memory facets,
+enabling LLMs to adapt their behaviors and strategies
+dynamically.
+An exemplary implementation of this re ﬂective cycle is
+Reﬂexion (Shinn et al., 2023). In this work, the LLM leverages
+an integrated evaluator to internally assess the ef ﬁcacy of actions
+based on the rewards received. It also utilizes a prompt-based
+approach to self-re ﬂection, allowing the agent to internally
+simulate and critique its performance. This dual feedback system
+enables the agent to re ﬁne its memory and behavior in a nuanced
+and continuous learning process. The model captures short-term
+memory as trajectories of actions and observations, while long-
+term memory encompasses accumulated experiences. The inter-
+action between these memory types and the re ﬂective loop
+ensures that the agent ’s memory is not only a repository of past
+events but also a dynamic foundation for future improvement
+and learning. This system exempli ﬁes how LLMs can evolve from
+static knowledge bases to dynamic entities capable of self-
+improvement through iterative re ﬂection and adaptation. In S3
+(Gao et al., 2023), the LLMs ’ ability to re ﬂect is intricately tied to
+their simulation of human social interactions, where they
+continuously adjust their understanding and responses based on
+evolving social dynamics and cues. This re ﬂective capacity enables
+them to navigate complex social environments with greater
+ﬁnesse. In the work of Li et al. ( 2024b), re ﬂection is leveraged to
+reﬁne the LLMs ’ approach to socio-economic predictions. By
+reﬂecting on past interactions and trends, these models can adapt
+their predictive algorithms, leading to more accurate responses to
+future social and economic shifts.
+In summary, in the realm of simulating actions, LLMs stand
+out for their ability to integrate planning, memory, and re ﬂection.
+They employ a cyclical approach where planning dictates the
+course of action, memory provides a knowledge base derived
+from past experiences, and re ﬂection adjusts strategies based on
+feedback. This dynamic interplay allows LLMs to not only
+execute actions within varied simulations but also to continuously
+learn and adapt. By simulating these cognitive processes, LLMs
+demonstrate an advanced capacity for autonomous decision-
+making, which is increasingly indistinguishable from human-like
+behavior in complexity and adaptability.
+In summary, how the large language model agents generate
+actions are inspired by the mechanism of humans, including
+planning, memory, and re ﬂection, with similar and simpli ﬁed
+designs. These designs are independent of the speci ﬁc large
+language models but also signi ﬁcantly in ﬂuence the simulation
+performance.
+Evaluation of LLM agents
+Realness validation with real human data . The basic evaluation
+protocol for LLM-based agents is to compare the simulation ’s
+output with existing real-world data. The evaluation can be
+conducted at two levels: micro-level and macro-level. Speci ﬁcally,
+micro-level evaluation refers to evaluating the ability to simulate
+the individual agent ’s behavior or actions as realistically as pos-
+sible. For example, in S
+3 (Gao et al., 2023), the authors test the
+performance of the LLM agents in predicting the individual
+agent’s next state, given the current state and the environment
+context. On the other hand, since the agent-based simulation
+always pays more attention to the emerged phenomenon of the
+population, macro-level evaluation is of great signi ﬁcance, which
+aims to evaluate whether the simulated process has the same
+pattern, regularity, etc., as the real-world data. In S
+3 (Gao et al.,
+2023), one of the main goals is to accurately predict the dynamics
+of information, opinion, and attitude based on the collected real-
+world social media data. In economics simulation by Li et al.
+(2024b), the simulated economic system is evaluated on whether
+those most representative macroeconomic regularities, such as
+Okun’s law (Plosser and Schwert, 1979), etc. Furthermore, the
+generated behaviors ’ rationality can also be evaluated, such as
+logical consistency, adherence to established common sense, or
+following the given rule in the simulation environment. In
+addition, we can assess the simulated agent ’s performance against
+established benchmarks or standardized tasks relevant to its
+domain. For example, whether the agent can reach human-level
+evaluation scores in a web-browsing or game environment
+(Chang et al., 2024).
+Provide explanations for simulated behaviors . One of the main
+advantages of the large language model-based agent against the
+traditional rule-based or neural network-based agent is its strong
+ability to engage in interactive conversation and textual reason-
+ing. Therefore, to evaluate whether the agent has understood the
+simulation rules well, accurately perceived the environment,
+made a choice rationally, etc., we can directly obtain explanations
+from the large language model-based agent. We can evaluate
+whether the agent-based simulation is good by analyzing the
+explanations and comparing them with the human data or a well-
+established theory or model. For example, in economic simula-
+tion (Li et al., 2024b), the authors query the large language model
+agent about the reason for economic decision-making, which well
+explains the simulated actions and behaviors.
+Ethics evaluation . Besides the simulation accuracy or explain-
+ability of the large language model-empowered agent-based
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3 REVIEW ARTICLE
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3 9
+
+===== PAGE 10 =====
+simulation, the ethics issue is also of great importance. The ﬁrst
+one is bias and fairness, and it is essential to assess the simulation
+for biases in language, culture, gender, race, or other sensitive
+attributes to evaluate whether the generated content perpetuates
+or mitigates societal biases. Another concern is harmful output
+detection since the output of the generative arti ﬁcial intelligence
+is hard to control compared with traditional approaches. Thus,
+the practitioners of the large language model agent-based simu-
+lation should scrutinize the simulation ’s output for potentially
+harmful or inappropriate content, including hate speech, mis-
+information, or offensive material.
+In summary, the evaluation of the large language model for
+agent-based modeling and simulation mainly involves accuracy,
+explainability, and ethics. For accuracy, the evaluation can be
+conducted at both the individual level and population level, based
+on collected real ground-truth data; for explainability, the agent
+should be able to provide reliable reasons for their generated
+actions; for the ethics evaluation, the agent-based modeling and
+simulation system built with large language model agents may be
+faced with bigger concerns compared with traditional agent-based
+modeling methods, since LLM-empowered agents are much more
+intelligent.
+Recent advances in LLM agent-based modeling and
+simulation
+In the following, we elaborate on the recent advances in using
+large language models for agent-based modeling and simulation
+in social, physical, cyber, and hybrid domains. The typical
+applications in the ﬁrst three domains are illustrated in Fig. 3, and
+the details are shown in Table 1. We also illustrate the ratio of
+different domains and what to simulate in Fig. 4. From the per-
+spective of technical design, the statistics are as follows: about
+50% of the papers have considered planning when generating
+actions, 50% of the papers have used the re ﬂection strategy, 80%
+have conducted real-world evaluation, and about 40% have
+considered ethical evaluation. Note that almost all the papers
+have designed a memory mechanism.
+Social domain I: social sciences . This section discusses the
+application of LLM agent-based modeling and simulation in
+social sciences. Speci ﬁcally, the existing works examine and
+explore LLM agents ’ effectiveness in replicating human behaviors
+and interactions and their role in validating social theories. They
+focus on how LLM agents can serve as tools for understanding
+complex social dynamics, enhancing collaborative problem-
+solving, etc., offering insights into both individual and collective
+social behaviors, as illustrated in Fig. 5.
+Simulation of social network dynamics . The part discusses whe-
+ther LLM Agents, due to their human-like behavior, can be used
+to recreate and validate established social laws and patterns. This
+involves an analysis of how closely these agents can mimic human
+behavior and whether their actions can be quanti ﬁed to validate
+or challenge existing theories in social science.
+S3 (Gao et al., 2023) utilizes LLM-empowered agents to simulate
+individual and collective behaviors within the social network. This
+system effectively replicates human behaviors, including emotion,
+attitude, and interaction behaviors. It leverages real-world social
+network data to initialize the simulation environment, where
+information inﬂuences users’ emotions and subsequent behaviors.
+The study particularly focuses on scenarios of gender discrimination
+and nuclear energy, demonstrating the ability of LLMs to simulate
+complex social dynamics. The results underscore LLM ’s ability to
+capture real-world social phenomena. Speci ﬁcally, for the
+individual-level evaluation, the authors mainly focus on the
+prediction problem, i.e., whether the LLM agent can predict the
+next label (emotion, attitude, interaction). For example, whether the
+LLM agent can accurately predict whether the user will have a
+positive attitude toward one speci
+ﬁc event. For the population-level
+evaluation, the authors test whether the simulated results with large
+language model agents have the same trends as the ground-truth
+data, including the propagation speed/range, attitude dynamic, etc.
+Williams et al. ( 2023) study whether LLM agents can accurately
+reproduce the trend of epidemic spread. The results show that the
+LLM agent-based simulation system can replicate complex
+phenomena observed in the real world, such as multi-peak patterns.
+Xu et al. ( 2023b) examine LLMs ’ capabilities in simulating
+individual and collective behaviors in a rule-based Werewolf
+Game environment. It reveals that LLMs can effectively engage in
+strategic social interactions, generating behaviors such as trust
+and confrontation, thus offering insights into their potential for
+social simulations. Acerbi and Stubbers ﬁeld ( 2023) demonstrate
+that the information transmitted by large language models
+mirrors the biases inherent in human social communication.
+Speciﬁcally, LLM exhibits preferences for stereotype-consistent,
+negative, socially oriented, and threat-related content, re ﬂecting
+biases in its training data. The observation underscores that LLMs
+are not neutral agents; instead, they echo and potentially amplify
+existing human biases, shaping the information they generate and
+transmit. Zhang et al. ( 2023c) studied the impact of collaboration
+strategies on the performance of LLM agents. Speci ﬁcally, three
+Fig. 3 Illustration of LLM agent-based modeling and simulation in different domains.
+REVIEW ARTICLE HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3
+10 HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3
+
+===== PAGE 11 =====
+agents with distinct personalities (easy-going or overcon ﬁdent)
+formed four different societies, employing eight collaboration
+strategies over three rounds to solve mathematical problems. It
+means that strategies initiating a debate show better results than
+those relying solely on memory re ﬂection. That is, it highlights
+LLM agents ’ capability to exhibit human-like social phenomena
+of conformity and the Wisdom of Crowds effect, where collective
+intelligence tends to surpass individual capabilities. Kim and Lee
+Table 1 A list of representative works of agent-based modeling and simulation with large language models.
+Domain Environment Advance What to simulate
+Social Virtual Schwitzgebel et al. ( 2024) Conversation and interaction
+Social Virtual Xu et al. ( 2023b) Werewolf game
+Social Virtual Acerbi and Stubbers ﬁeld ( 2023) Information Propagation
+Social Virtual Zhang et al. ( 2023c) Collaboration Mechanism
+Social Virtual Suzuki and Arita ( 2024) Cooperation and defection
+Social Virtual de Zarzà et al. ( 2023) Social interaction
+Social Real Mukobi et al. ( 2023) Welfare diplomacy game
+Social Real S3 (Gao et al., 2023) Online social network
+Social Virtual SimReddit (Park et al., 2022) Online forum
+Social Real Cai et al. ( 2024) Social Media Langauge
+Social Real Papachristou and Yuan ( 2024) Social Network Dynamics
+Social Real COLA (Lan et al., 2024) Cooperative task solving
+Social Virtual MAD (Liang et al., 2023) Cooperative task solving
+Social Virtual CHATDEV (Qian et al., 2024) Cooperative task solving
+Social Virtual MetaGPT (Hong et al., 2024) Cooperative task solving
+Social Virtual ChatEval (Chan et al., 2024) Cooperative task solving
+Social Virtual CAMEL (Li et al., 2023d) Cooperative task solving
+Social Virtual AgentVerse (Chen et al., 2024) Cooperative task solving
+Social Virtual SPP (Wang et al., 2023d) Cooperative task solving
+Social Virtual CoELA (Zhang et al., 2024b) Cooperative task solving
+Social Real Agent Hospital (Li et al., 2024a) Cooperative task solving
+Social Virtual Humanoid Agents (Wang et al., 2023c) Individual social behavior
+Social Real SocioDojo (Cheng and Chin, 2024) Individual social behavior
+Social Virtual Liu et al. ( 2024a) Individual social behavior
+Social Virtual Argyle et al. ( 2023) Individual social behavior
+Social Virtual Hämäläinen et al. ( 2023) Individual social behavior
+Social Virtual Singh et al. ( 2023) Individual social behavior
+Social Virtual Binz and Schulz ( 2023) Individual social behavior
+Social Virtual Elyoseph et al. ( 2023) Individual social behavior
+Social Virtual Li et al. ( 2022) Individual social behavior
+Social Virtual Xie and Zou ( 2024) Individual social behavior
+Social Virtual Yoon et al. ( 2024) Individual social behavior
+Social Virtual Horton ( 2023) Economic system: individual behavior
+Social Virtual Chen et al. ( 2023e) Economic system: individual behavior
+Social Virtual Geerling et al. ( 2023) Economic system: individual behavior
+Social Real Xie et al. ( 2023) Economic system: market behavior
+Social Real Faria-e Castro and Leibovici ( 2023) Economic system: market behavior
+Social Real Bybee ( 2023) Economic system: market behavior
+Social Virtual Phelps and Russell ( 2023) Economic system: game theory
+Social Virtual Akata et al. ( 2023) Economic system: game theory
+Social Virtual Guo et al. ( 2023) Economic system: game theory
+Social Virtual Zhao et al. ( 2023b) Economic system: consumption market
+Social Virtual Han et al. ( 2023) Economic system: consumption market
+Social Virtual Zhao et al. Nascimento et al. ( 2023) Economic system: consumption market
+Social Virtual Chen et al. ( 2023c) Economic system: auction market
+Physical Real Shah et al. ( 2023a) Navigation behavior
+Physical Real NLMap (Chen et al., 2023b) Navigation behavior
+Physical Real Zou et al. ( 2023) Wireless network users
+Physical Real Cui et al. ( 2024) Vehicle drivers
+Physical Virtual GITM (Zhu et al., 2023c) Tool-usage simulation in sandbox game
+Cyber Real WebAgent (Gur et al., 2024) Human behaviors in Web
+Cyber Real Mind2Web (Deng et al., 2024) Human behaviors in Web
+Cyber Real Zhou et al. ( 2024a) Human behaviors in Web
+Cyber Real Park et al. ( 2023) Human behaviors in Web
+Cyber Virtual RecAgent (Wang et al., 2023b) Interaction with recommender system
+Cyber Virtual Agent4Rec (Zhang et al., 2024a) Interaction with recommender system
+Hybrid Virtual Williams et al. ( 2023) Epidemic spreading
+Hybrid Virtual Generative agents (Park et al., 2023) Sandbox social life
+Hybrid Real WarAgent (Hua et al., 2023) War simulation
+Hybrid Real Li et al. ( 2024b) Economic system: macroeconomics
+Hybrid Real UGI (Xu et al., 2023a) Human behaviors in real-world city
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3 REVIEW ARTICLE
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3 11
+
+===== PAGE 12 =====
+(2023) assessed the boundaries and effectiveness of LLMs in
+modeling personal actions and societal dynamics, shedding light
+on their applicability for believable social simulations. Suzuki and
+Arita ( 2024) and de Zarzà et al. ( 2023) constructed simulation
+systems with multiple agents, employing LLM as a generator of
+social strategy variations to simulate changes in cooperation/
+selﬁsh strategies among agents in social cooperation and
+variations in social network structures, among other factors.
+Park et al. ( 2022) investigated LLM agents ’ capacity to simulate
+online behaviors within forums. It demonstrates how LLMs can
+predict user interactions and responses by generating scenarios
+based on speci ﬁc forum rules and descriptions. This simulation
+assists in re ﬁning forum regulations, highlighting the potential of
+LLMs in understanding and shaping digital social environments.
+Fig. 4 Illustration of the ratio of different domains and simulation objectives of the recent works of large language model agent-based modeling and
+simulation.
+Trends, Message propagation Cooperative task solving Individual social behavior
+Profile Personality
+Long/short-term Memory
+Long/short-term Planning
+Reflection
+Fig. 5 Taxonomy of LLM-based modeling and simulation in social sciences. The representative works include (Gao et al., 2023), ChatDev (Qian et al.,
+2024), and Humanoid agents (Wang et al., 2023c).
+REVIEW ARTICLE HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3
+12 HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3
+
+===== PAGE 13 =====
+Cai et al. ( 2024) employed a multi-agent simulation framework
+using to study language evolution in regulated social media. It
+features LLM-driven supervisory and participant agents, simulat-
+ing communication under strict regulations. The framework
+evaluates scenarios from abstract to real-world, demonstrating
+LLMs’ ability to adapt language strategies, improving evasion of
+supervision and information accuracy. Papachristou and Yuan
+(2024) examined the behavior of LLM agents in forming social
+networks, comparing their dynamics to human social behaviors.
+The study highlights key principles such as preferential attach-
+ment, triadic closure, homophily, community structure, and the
+small-world phenomenon, revealing that LLMs ’ network forma-
+tion decisions are in ﬂuenced more by triadic closure and
+homophily than preferential attachment.
+Simulation of cooperation . Some other works pay attention to the
+human collaboration replicated by LLM agents. Speci ﬁcally, they
+focus on how these agents, assigned distinct roles and functions,
+can mimic the cooperative behaviors observed in real human
+societies. The mechanisms and cooperative frameworks designed
+for these agents can enable them to work together ef ﬁciently
+toward achieving goals.
+COLA (Lan et al., 2024) proposed to organize LLM agents to
+discuss and ﬁnally decide the stance on social media text, with
+three role-played agents: analyzer, debater, and summarizer. The
+analyzers dissect texts from linguistic, domain-speci ﬁc, and social
+media perspectives; the debaters propose logical links between
+text features and stances; ﬁnally, the summarizer considers all
+these discussions and determines the text ’s stance. The frame-
+work achieves SOTA performance on stance detection tasks.
+MAD (Liang et al., 2023) proposed to use LLM agents to engage
+in reasoning-intensive question answering through structured
+debates. LLMs adopt the roles of opposing debaters, each arguing
+for a different perspective on the solution ’s correctness. MAD
+enforces a “tit for tat ” debate dynamic, wherein each agent must
+argue against the other ’s viewpoint, leading to a more
+comprehensive exploration of potential solutions. A judge agent
+then evaluates these arguments to arrive at a ﬁnal conclusion.
+This work fosters divergent thinking and deep contemplation,
+addressing the degeneration-of-thought issue common in self-
+reﬂection methods. CHATDEV (Qian et al., 2024) is a virtual
+software development company where LLM Agents collaborate to
+develop computer software, with different roles for agents
+including CEO, CTO, designers, and programmers. The coopera-
+tion process encompasses designing, coding, testing, and
+documenting, with agents engaging in role-speci ﬁc tasks like
+brainstorming, code development, GUI designing, and documen-
+tation. MetaGPT (Hong et al., 2024) also introduced a novel
+framework for collaborative software development with LLM
+agents, simulating a software company. The roles the agents play,
+including Product Manager, Architect, Project Manager, Engi-
+neer, and QA Engineer, that follows the standardized operating
+procedures. Each role contributes sequentially, from requirement
+analysis and system design to task distribution, coding, and
+quality assurance, showcasing LLMs ’ potential in ef ﬁciently
+mimicking human cooperative behaviors and work ﬂows in
+complex software development. ChatEval (Chan et al., 2024)
+present a multi-agent framework for text quality evaluation,
+employing LLMs as diverse role-playing agents, in which key
+roles include the public, critics, journalists, philosophers, and
+scientists, each contributing unique perspectives. The agents
+engage in sequential debates, with access to all communication
+history. Finally, a judge gives a ﬁnal decision. It results in more
+accurate and human-aligned evaluations compared to single-
+agent methods. CAMEL (Li et al., 2023d) introduces a
+cooperative role-playing framework with communicative agents,
+focusing on tool development. It involves roles like Task Detailing
+Assistant, Commander, and Executor. Speci ﬁcally, Task Detailing
+Assistant speci ﬁes tasks in detail, Commander provides step-by-
+step instructions based on these speci ﬁcs, and Executor carries
+out these instructions. Li et al. ( 2024a) introduced Agent
+Hospital, a simulation of the entire process of treating illness
+using LLM agents, and proposed the MedAgent-Zero method,
+demonstrating improved treatment performance and real-world
+applicability.
+The above efforts involve designing speciﬁc types of agents, their
+roles, and the collaboration framework for certain tasks. The
+limitation lies in their lack of versatility, as the design of the agents
+is not ﬂexible or adaptable. To address it, some work focuses on
+adaptively performing tasks with automated generated LLM agents
+and cooperation framework. AgentVerse (Chen et al., 2024)
+simulated human group problem-solving focusing on adaptively
+generating LLM agents for diverse tasks. It involves four stages: (1)
+Expert Recruitment, where agent composition is determined and
+adjusted; (2) Collaborative Decision-Making, where agents plan
+problem-solving strategies; (3) Action Execution, where agents
+implement these strategies; (4) Evaluation, assessing progress, and
+guiding improvements. That is, it can effectively enhance agents ’
+capabilities across various tasks, from coding to embodied AI,
+demonstrating their versatility in collaborative problem-solving.
+Wang et al. ( 2023d) introduce solo performance prompting (SPP)
+to emulate human-like cognitive synergy, which transforms a
+single LLM into a multi-persona agent, enhancing problem-solving
+in tasks requiring complex reasoning and domain knowledge. For
+tasks like trivia creative writing and logic grid puzzles, SPP
+signiﬁcantly outperforms standard methods, showcasing its
+effectiveness in collaborative problem-solving. CoELA (Zhang
+et al., 2024b) integrates LLMs’ critical capabilities, including natural
+language processing, reasoning, and communication, into a novel
+cognitive-inspired modular framework. The authors evaluate
+CoELA in various embodied environments like C-WAH and
+TDW-MAT, demonstrating its pro ﬁciency in perceiving, reason-
+ing, communicating, and planning. The results show that CoELA
+surpasses traditional planning methods and exhibits effective
+cooperation and communication behaviors.
+In conclusion, simulating collaborative behaviors among LLM
+agents in various frameworks has shown their potential in
+emulating human cooperative behaviors to tackle a wide range of
+problem-solving tasks.
+Simulation of individual social behavior . In the simulation of
+social dynamics and cooperative problem-solving, LLM agents
+show a strong ability to replicate human behavior. However,
+achieving a closer approximation to real human responses from
+the individual perspective is also of great signi ﬁcance. In this
+section, we discuss how the recent works approach the problem
+how to better simulate the individual human behavior in a social
+context with LLM agents, enhancing their decision-making pro-
+cesses, interaction patterns, and emotional responses.
+Humanoid agents (Wang et al., 2023c) propose a novel
+approach to enhancing the realism of LLM agent simulations. By
+incorporating elements of human cognitive processing (System 1
+(Daniel, 2017)), such as basic needs, emotions, and relational
+closeness, Humanoid Agents are designed to behave more like
+humans. For each agent, the authors maintain an internal state
+(stored in ﬁles) including human needs and emotions. The
+human needs and emotions are generated by agents with role-
+playing prompts, and are updated according to the context and
+environment changes. These dynamic elements allow agents to
+adapt their activities and interactions based on their internal
+states, thereby bridging the gap between simulated and real
+human behavior. The platform also facilitates immersive
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3 REVIEW ARTICLE
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3 13
+
+===== PAGE 14 =====
+visualization and analysis of these behaviors, advancing the ﬁeld
+of social simulation and cooperative problem-solving. This
+approach demonstrates a signi ﬁcant leap in individual agent
+design, moving closer to replicating the complexities of human
+decision-making and interaction patterns. SocioDojo (Cheng and
+Chin, 2024) is a lifelong learning environment using real-world
+data for training agents in societal analysis and decision-making.
+It introduces an innovative Analyst –Assistant–Actuator frame-
+work and Hypothesis-Proof prompting, resulting in notable
+improvements in the time series forecasting task. Liu et al.
+(2024a) present a novel approach to optimizing LLM agents by
+reﬁning agents ’ decision-making processes, interaction patterns,
+and emotional responses through a three-stage alignment
+learning framework, Stable Alignment. This framework, which
+efﬁciently teaches social alignment to LLMs, is based on
+simulated social interactions, detailed feedback, and progressive
+reﬁnement of responses by autonomous social agents. Xie and
+Zou (2024) developed a human-like planning framework for LLM
+agents, focusing on the multi-phase travel planning problem. By
+simulating human planning patterns, the framework enables LLM
+agents to generate coherent outlines, integrate information
+collection, and provide essential details.
+Moreover, some studies use LLM agents to simulate human
+responses in social science research. Argyle et al. ( 2023) use LLM
+agents as proxies for speci ﬁc human populations to generate
+responses in social science research. The authors show that,
+conditioned on socio-demographic pro ﬁles, LLM agents can
+generate outputs similar to human counterparts. Hämäläinen
+et al. ( 2023) construct LLM agents to simulate real participants to
+ﬁll in open-ended questionnaires and analyze the similarity
+between the response and real data. The results show that
+synthetic responses generated by large language models cannot be
+easily distinguished from human data. Yoon et al. ( 2024)
+introduced a protocol to use LLM agents to simulate human
+behavior in conversational recommender systems. By assessing
+baseline simulators, the study identi ﬁes deviations between
+language models and human behavior, providing insights on
+improving model accuracy through better model selection and
+prompting strategies. In short, these works indicate that LLM
+agents can be useful in social science experiments to simulate
+human responses with much lower costs.
+Some researchers have also studied LLM agents ’ ability to
+simulate human behavior in social psychological experiments.
+Speciﬁcally, these works (Binz and Schulz, 2023; Singh et al.,
+2023) use psychological tests to simulate the human response to
+test the cognitive ability, emotional intelligence (Elyoseph et al.,
+2023), and psychological well-being (Li et al., 2022) of LLMs,
+demonstrating that LLM agents have human-like intelligence to a
+certain degree.
+Social domain II: economic system . This section discusses
+another important ﬁeld in the social domain, the economic sys-
+tem. Currently, LLM-driven economic simulations can be cate-
+gorized into three types based on the number of agents involved:
+individual behavior, interactive behavior, and economic system-
+level simulations. For individual behavior simulations, the pri-
+mary goal of related research is to simulate the human-like eco-
+nomic decision-making capabilities of LLMs (Bauer et al., 2023;
+Chen et al., 2023e; Geerling et al., 2023; Horton, 2023) or their
+understanding of economic phenomena (Bybee, 2023; Faria-e
+Castro and Leibovici, 2023; Xie et al., 2023). This provides an
+empirical foundation for the latter two types of economic simu-
+lations and is currently a more extensively researched area. In
+interactive behavior simulations, the focus is mainly on game
+theory, exploring widely focused behaviors of LLMs during game-
+playing, such as cooperative and reasoning behaviors (Akata
+et al., 2023; Guo S et al., 2024; Guo et al., 2023; Phelps and
+Russell, 2023). For system-level simulations, the research pri-
+marily targets market simulations, such as consumption markets
+or auction markets, and investigates the rationality or optimality
+of LLMs ’ economic behaviors within these markets (Weiss M
+et al., 2024;C h e ne ta l . , 2023c ;L ie ta l . , 2024b ;Z h a oe ta l . ,
+2023b ). The illustration is shown in Fig. 6.
+Individual economic behavior simulation . Considering the
+human-like characteristics of LLMs, many researchers attempted
+to replace humans in behavioral economics experiments with
+LLMs to observe the rational and irrational factors in their eco-
+nomic decision-making. Horton ( 2023) replicated classic beha-
+vioral economics experiments using LLMs, including unilateral
+dictator games, fairness constraints (Kahneman et al., 1986), and
+status quo bias (Samuelson and Zeckhauser, 1988), con ﬁrming
+the human-like nature of LLMs in aspects such as altruism,
+fairness preferences, and status quo bias (Horton, 2023).
+Although the experiment was conducted simply by asking GPT
+questions and analyzing responses, this represents a preliminary
+attempt to explore the use of LLMs for simulating human eco-
+nomic behavior. Chen et al. ( 2023e) have employed standard
+frameworks, revealed preference theory , to simulate the rationality
+in the economic decisions of GPTs. Results show that GPT per-
+forms largely rationally in risk, time, social, and food preferences
+domains in terms of budgetary decisions. Additionally, Geerling
+et al. ( 2023) have utilized the Test of Understanding in College
+Economics to simulate LLMs ’ comprehension of microeconomics
+and macroeconomics, with results indicating that LLMs outper-
+form most students who have taken economics courses.
+Another research line to test the economic capabilities of LLMs
+involves accurately understanding certain socio-economic phenom-
+ena, speciﬁcally by using external text information (such as news) to
+Fig. 6 Taxonomy of LLM-based modeling and simulation in economic systems.
+REVIEW ARTICLE HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3
+14 HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3
+
+===== PAGE 15 =====
+predict future economic changes. Xie et al. ( 2023) used LLM to
+predict stock market movements with historical stock data and
+related tweets based on the perception of investor sentiment.
+However, the predictive performance of LLMs is worse than that of
+state-of-the-art methods, and in some cases, it is even inferior to
+traditional linear regression. Faria-e Castro and Leibovici ( 2023)
+utilized LLMs for quarterly in ﬂation forecasts, achieving accuracy
+comparable to, if not surpassing, the results of the Survey of
+Professional Forecasters (SPF). Bybee (2023)t e s t e dL L M so nt h e i r
+predictions of ﬁnance and macroeconomics after reading speci ﬁc
+sections of The Wall Street Journal, with results equivalent to those
+of SPF. These results suggest that LLMs possess a basic under-
+standing of economic and ﬁnancial markets but still lack suf ﬁcient
+and precise perception for accurate prediction, requiring more
+domain-speciﬁc data for additional ﬁne-tuning.
+Interactive economic behavior simulation . These simulations
+mainly focus on game theory, where there are only two or a few
+agents as opponents. Observing and analyzing the interactive
+behavior and capabilities of LLMs in various classic games is a
+current research hotspot. Guo ( 2023) studied the behavior of
+large language model agents in the ultimatum game and pris-
+oner’s dilemma game and found that the agents exhibit some
+similar patterns as humans, such as the positive correlation
+between offered amounts and acceptance rates in the ultimatum
+game. Phelps and Russell ( 2023) found that incorporating indi-
+vidual preferences into prompts can in ﬂuence the level of coop-
+eration of LLMs. Speci ﬁcally, they construct LLM agents with
+different personalities like competitive, altruistic, self-interested,
+etc., via prompts. Then, they let the agents play the repeated
+prisoner’s dilemma game with bots with ﬁxed strategies (e.g.
+always cooperate, always defect, or tit-for-tat) and analyze the
+agents’ cooperation rate. They ﬁnd that competitive and self-
+interested LLM agents show a lower cooperation rate, while
+altruistic agents demonstrate a higher cooperation rate, indicating
+the feasibility of constructing agents with different preferences
+through natural language. However, LLM agents also have lim-
+itations in some capabilities, such as the inability to reasonably
+respond to opponents ’ actions, which may lead to higher coop-
+eration preferences with betraying opponents. The understanding
+of LLM social behaviors is very important for subsequent devel-
+opments in arti ﬁcial intelligence and its impact on human social
+behavior. Other research (Guo S et al., 2024) measured LLMs ’
+rationality and strategic reasoning ability using the second-price
+auction and the Beauty Contest game. In such games, fully
+rational players are assumed to choose the most bene ﬁcial choice
+from their point of view, which results in the Nash equilibrium.
+Therefore, the authors de ﬁne the deviation of LLMs ’ behavior
+from Nash equilibrium as the rationality degree. Moreover, they
+measure the strategic reasoning ability of LLMs by the ratio of the
+actual payoff to the optimal payoff. Experiments show that LLMs
+generally demonstrate rationality to some degree while they often
+cannot reach the Nash equilibrium. Among them, GPT-4 shows
+better strategic reasoning ability and can converge to Nash
+equilibrium faster than other LLMs like GPT-3.5 and text-
+davinci. The authors claim to provide a benchmark for testing the
+economic capabilities of the LLM research community. Akata
+et al. ( 2023) discovered through experiments in multiple game
+scenarios that LLMs are skilled in games valuing their self-interest
+but not as adept at coordinating with others. Speci ﬁcally, in the
+prisoner’s dilemma, GPT-4 will cooperate well with a cooperative
+opponent but will always choose to defect after the opponent
+defects once. In the Battle of the Sexes, GPT-4 cannot coordinate
+well with the opponent ’s choices to obtain maximum payoff.
+In addition to the observations on the cooperative behavior
+and reasoning abilities of LLM agents during gaming, there are
+also a few studies attempting to construct strong game-playing
+agents. Guo et al. ( 2023) go beyond simple measurement and
+enhance LLMs ’ gaming abilities through prompt engineering.
+This work, speci ﬁcally in an incomplete information game
+(namely Leduc Hold ’em), has created agents with higher-order
+theory of mind that can signi ﬁcantly outperform traditional
+algorithm-based opponents without the requirement for training.
+Meta Fundamental AI Research Diplomacy Team ( FAIR)† et al.,
+2022) proposed the ﬁrst AI agent Cicero combining a language
+model and reinforcement learning to play the Diplomacy game.
+After competing with real humans in online games anonymously,
+results show that Cicero can outperform 90% of players. Even
+without employing LLMs, it has been demonstrated that earlier
+language models can approach or even surpass human capabil-
+ities in the realm of strategic gaming. Moreover, Mao et al. ( 2023)
+developed a simulation framework named Alympics, consisting of
+a sandbox playground and several agent players. The sandbox
+playground serves as the environment that stores and executes
+game settings, and agent players interact with the environment.
+The framework enables controlled, scalable, and reproducible
+simulation of game theory experiments.
+The results from these simple simulation environments further
+validate the perception, reasoning, and planning capabilities of
+LLMs. In order to maximize their goals, LLMs consider their own
+beneﬁts and opponents ’ strategies when making economic
+decisions. It is worth noting that these goals can be customized
+through prompts, such as maximizing returns or maximizing
+fairness.
+Economic system-level simulation . In an economic system, agents
+often interact with each other, trade goods, and form a market.
+These agents may not be limited to individuals but can also
+represent entities such as companies and banks, as these are also
+important components of the market. Zhao et al. ( 2023b),
+through simple consumption market simulations, uncovered
+competitive behaviors of LLM agents in managing restaurants,
+which are aligned with well-known sociological and economic
+theories. Speci ﬁcally, the dish prices tend to be consistent with
+each other in the two simulated restaurants. Matthew effect also
+emerges during the simulation, i.e., one restaurant becomes more
+popular and popular while another has few consumers. Moreover,
+restaurants imitate competitors ’ behaviors, and at the same time,
+they try to make differentiation to attract more consumers.
+Similarly, Han et al. ( 2023) studied the collusion between ﬁrms’
+price strategies. They simulated the product pricing process of
+two ﬁrms in a market environment (i.e., Bertrand duopoly game)
+based on LLM. The results show that in the absence of com-
+munication, prices tend to approach the Bertrand equilibrium
+price. However, with communication, collusion between the
+companies tends to bring prices closer to the monopoly price.
+Nascimento et al. ( 2023) simulated a simple online book mar-
+ketplace and observed interesting phenomena such as price
+negotiation between sellers and buyers. Another work (Weiss M
+et al., 2024) attempts to have LLMs act as intermediaries in
+information trading markets to address the issue of information
+asymmetry between buyers and sellers. Speci ﬁcally, when a seller
+presents information and quotes a price as the response to the
+query from a buyer, an LLM agent, acting as an intermediary, can
+decide whether to purchase and, if choosing not to, forget the
+information seen, thus protecting the seller ’s interests. In
+experiments, the information to exchange is actually the ‘passage’
+from documents on the topic of LLMs from ArXiv. The results
+show that LLM can not only make rational purchasing decisions
+in this information market but also ensure the rationality of the
+overall market dynamics; for example, a higher budget can
+improve the quality of purchased answers (response to queries).
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3 REVIEW ARTICLE
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3 15
+
+===== PAGE 16 =====
+Chen et al. ( 2023c) have developed LLM agents with planning
+capabilities in constructed virtual auction markets to achieve
+higher proﬁts given limited budgets. Experiments show that LLM
+has the crucial abilities to participate in the auction, including
+managing budgets, considering long-term returns, etc, even
+through only simple prompts.
+Physical domain . For the physical domain, the applications for
+LLM agent-based modeling and simulation include mobility
+behaviors, transportation, wireless networks, etc.
+LLM agents for simulating mobility behaviors . Understanding
+real-world space and time is crucial to harness LLMs for agent-
+based modeling and simulation in human mobility behaviors.
+Researchers have delved into this issue through various investi-
+gations (Gurnee and Tegmark, 2024; Manvi et al., 2024). Gurnee
+and Tegmark ( 2024) focus on probing LLMs to extract repre-
+sentations of real-world locations and temporal events, and the
+results demonstrate that these models build spatial and temporal
+representations in the neural layers. Manvi et al. ( 2024) delve into
+the geospatial knowledge embedded in LLMs. By ﬁne-tuning
+LLMs on map-based prompts, substantial geospatial knowledge
+within LLMs is illustrated and shows improvements in tasks
+related to population density, asset wealth, and education. These
+investigations contribute valuable insights into the nuanced
+understanding of real-world space and time by LLMs, laying the
+groundwork for their application in agent-based simulations.
+Based on their fundamental abilities, LLMs have showcased
+remarkable capabilities in simulation for the physical domain. For
+simulating the human-like navigation behaviors in the physical
+environment, LM-Nav (Shah et al., 2023) combines large
+language models with image-language alignment algorithms.
+Following it, LLM-Planner (Song et al., 2023) harnesses large
+language models to achieve few-shot planning for embodied
+agents. Moving into the domain of real-world planning with large
+language models, Chen et al. ( 2023b) introduce NLMap, which
+creates an open-vocabulary and queryable scene representation,
+allowing language models to gather and integrate contextual
+information for context-conditioned planning. Additionally, Shah
+et al. ( 2023b) study training a general goal-conditioned model to
+simulate human-like vision-based navigation, demonstrating the
+broad generalization capabilities of LLMs in complex physical
+environments.
+LLM agent-based modeling and simulation for transportation . The
+possibility of using LLM agents for other applications in the
+physical domain, like transportation, has also been explored. Jin
+et al. (2023) design an LLM agent to simulate the driving behavior
+of human drivers. Speci ﬁcally, the agent interacts with a simulator
+named CARLA, where it receives information about the state of
+the car and environment from the simulator and decides what to
+do next, such as stop, speed up, change lanes, and so on, which
+will be fed back to the simulator. During the decision process, the
+agent will consider its recent behaviors using a memory module
+and also take into account safety criteria as well as guidelines
+learned from human expert drivers. Experiments show that the
+agent design can signi ﬁcantly reduce collision rate and make the
+agent’s behavior more human-like. Moreover, the agent manages
+to perform complex driving tasks such as overtaking.
+LLM agent-based modeling and simulation for wireless network .I n
+addition, some researchers focus on deploying LLM agents to
+simulate device users in the city infrastructure, such as the
+wireless network. Zou et al. ( 2023) propose a framework where
+multiple on-device LLM agents can interact with the environment
+and exchange knowledge to solve a complex task together. Spe-
+ciﬁcally, intents from humans or machines are provided to agents
+through wireless terminals, and the tasks are divided and planned
+collaboratively among multiple agents by leveraging the knowl-
+edge of different LLMs and device capabilities. On each device,
+the agent observes the environment and actors to execute deci-
+sions. On-device LLMs can extract semantic information from
+various data types and store it for future task planning. To deal
+with a speci ﬁc task, the agent can retrieve relevant information or
+create lower-level tasks and send them to other agents to achieve
+the goal. The authors demonstrate the ability of the framework by
+an example of a wireless energy-saving task, where four users aim
+to reduce the network energy consumption while keeping the
+transmission rate. In the experiment, the agents gradually
+decrease their own power level based on previous actions of other
+users and manage to achieve the target after a few iterations,
+which shows the potential of LLM agent-based modeling and
+simulation in solving wireless network problems.
+Cyber domain. Agent-based modeling and simulation cyberspace
+mainly involves various human behaviors such as information
+access, website visitation, network attack/defense, etc., in
+cyberspace.
+WebAgent (Gur et al., 2024) is introduced as an LLM-driven
+agent capable of learning from its experiences to simulate human
+behaviors on real websites based on natural language instructions.
+It strategizes by breaking down instructions into manageable sub-
+parts, condenses lengthy HTML documents into relevant sections
+for the task at hand, and interacts with websites using Python
+programs derived from this information. Mind2Web (Deng et al.,
+2024) further used large language models (LLMs) to construct
+these generalist web agents. While the sheer size of raw HTML
+from real websites poses a challenge for LLMs, Mind2Web
+demonstrates that pre- ﬁltering this data with a smaller language
+model substantially enhances the effectiveness and ef ﬁciency of
+the LLMs in generating human-like web browsing behaviors.
+Zhou et al. ( 2024a) further addressed the discrepancy between
+current language-guided autonomous agents, often tested in
+simpliﬁed synthetic environments and the complexity of real-
+world scenarios. The authors build a highly realistic and
+reproducible environment speci ﬁcally tailored for language-
+guided agents simulating human behaviors on the web. Park
+et al. ( 2023) simulate online decision-making scenarios, exploring
+the challenges individuals face when lacking domain expertise
+while searching for and making decisions using online informa-
+tion. Wang et al. ( 2023b) proposed to build large language models
+to interact with recommender systems by selecting from
+recommendation results and providing positive or negative
+feedback. It serves as the testing protocol for evaluating the
+recommender system ’s performance: whether it can satisfy the
+agents’ preferences well.
+In RecAgent (Wang et al., 2023b), the researchers explore the
+potential of LLMs in simulating user behaviors within online
+environments, particularly recommender systems. By creating an
+LLM-based autonomous agent framework, the study investigates
+how these agents can simulate complex human interactions and
+decisions in a virtual environment. This approach enables a novel
+method for studying user behavior, offering insights into how
+users might react to different scenarios in digital platforms, thus
+advancing our understanding of user dynamics in virtual spaces.
+Zhang et al. ( 2024a) proposed to build generative agents for the
+recommender system in which the authors design LLM-
+empowered generative agents equipped with user pro ﬁle,
+memory, and actions modules speci ﬁcally tailored for the
+recommender system. The proposed agents can emulate the ﬁlter
+REVIEW ARTICLE HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3
+16 HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3
+
+===== PAGE 17 =====
+bubble effect and discover the underlying causal relationships in
+recommendation tasks.
+Hybrid domain. In some studies, simulations are conducted that
+simultaneously consider more than one domain, such as physical
+and social, and we refer to these simulations as being within a
+hybrid domain.
+As a pioneering work, Generative Agents (Park et al., 2023)
+offers a compelling insight into the generation of believable
+individual and social behaviors. The research focuses on a central
+question: how can generative agents reliably produce human-like
+individual actions and social dynamics? It delves into an agent
+architecture that integrates memory (for storing past experi-
+ences), re ﬂection (to make rational present decisions), and
+planning (for future actions). This architecture is critically
+evaluated through crowd-sourced assessments, af ﬁrming the
+effectiveness of the memory, re ﬂection, and planning modules
+in generating rational behaviors. Notably, this approach led to
+complex social scenarios, such as Valentine ’s Day parties and
+mayoral elections, underscoring the agents ’ proﬁciency in
+simulating nuanced human interactions and societal events. This
+research offers a substantial contribution to social simulations,
+demonstrating the advanced potential of LLM agents in
+replicating the depth and complexity of human social behaviors.
+Williams et al. ( 2023) conducted an epidemic simulation
+within a hybrid domain. In this simulation, social relationships
+inﬂuenced individuals ’ perception of the epidemic, while
+individuals’ physical movements within spatial contexts affected
+their susceptibility to infection. Welfare Diplomacy (Mukobi
+et al., 2023) sets a benchmark, a nation-to-nation war/welfare
+equilibrium tabletop game designed to evaluate the collaborative
+capabilities of large language models.
+Hua et al. ( 2023) proposed to use LLM agents to represent
+countries and simulate their decisions and consequences, based
+on which the historical international con ﬂicts, including World
+War I, World War II, and the Warring States Period in Ancient
+China are selected for evaluation. In the LLM agent-based war
+simulations, the emergent interactions among countries help
+explain why the wars occur.
+Li et al. ( 2024b) simulate a hybrid macroeconomic system and
+expand the scale of simulation environments from tens to
+hundreds. Speci ﬁcally, they simulate LLM-empowered agents ’
+work and consumption behaviors in a macroeconomic market.
+The proposed perception, memory, and action modules endow
+the agents with real-world heterogeneity, the ability to grasp
+market dynamics, and decision-making considering multiple
+economic factors, respectively. Experimental results show the
+emergence of more reasonable and stable macroeconomic
+indicators (price in ﬂation, unemployment rate, GDP, and GDP
+growth rate) and regularities (Phillips curve and Okun ’s law)
+compared with traditional rule-based ABM (Gatti et al., 2011;
+Lengnick, 2013) and RL-based approaches (Zheng et al., 2022).
+Especially, only the simulation based on LLM agents can produce
+the correct Phillips curve, i.e., negative relationship between the
+unemployment rate and in ﬂation. This advantage is owned by
+LLM’s accurate perception of market dynamics, such as the
+deﬂation of labor markets.
+Urban generative intelligence (UGI) (Xu et al., 2023a)i sa
+platform that constructs a real-world urban environment
+provided by digital twins, which provide various interfaces for
+embodied agents to generate many behaviors, supported by a
+foundation model named CityGPT, which is trained on city-
+speciﬁc multi-source data. In this platform, multiple categories of
+LLM-based agents can simulate human-like behaviors, including
+social interactions, economic activities, mobility, street
+navigation, etc., showing promising abilities in simulating city
+activities based on embodied agents.
+Open problems and future directions
+Efﬁciency of scaling up . Many studies of LLM agents ﬁnd it
+advantageous to simultaneously simulate multiple personas and
+exploit the synergy effect by allowing them to communicate and
+vote for the ﬁnal output (Yao et al., 2024). For example,
+researchers ﬁnd LLM-based software development can be sig-
+niﬁcantly improved by simulating a virtual software company
+with diverse social identities, including chief of ﬁcers, professional
+programmers, test engineers, and art designers (Qian et al., 2024).
+This virtual company is capable of streamlining the development
+of complex software solutions in the stages of designing, coding,
+testing, and documenting. Moreover, researchers generally ﬁnd
+scaling up the number of simulated agents and deploying more
+diverse personas are bene ﬁcial in various tasks (Zhuge et al.,
+2023).
+However, simulating societies of large-scale LLM agents is very
+computationally expensive. Extensive research efforts are dedi-
+cated to optimizing the memory footprint (Sheng et al., 2023) and
+operation subroutines (Aminabadi et al., 2022) of language
+models. Researchers also develop several effective model
+compression techniques (Zhu et al., 2023d), such as knowledge
+distillation and quantization. In the context of LLM agent
+simulation, batch prompting (Cheng et al., 2023b) is a highly
+relevant technique that is capable of simulating multiple agents in
+batches. Experiments show batch prompting can achieve up to 5×
+efﬁciency improvement in inference token and time costs.
+Besides, MetaGPT is proposed to improve the ef ﬁciency of
+multi-agent collaboration in virtual software companies Hong
+et al. ( 2024). They leverage a shared message pool and subscribe
+mechanism to reduce the time and token cost of generating one
+line of code. Despite the previous efforts of accelerating LLM
+agents, simulating large-scale LLM agents remains a highly
+challenging task, which signi ﬁcantly hinders LLM agent simula-
+tion from reaching its full potential. Simulating large societies of
+LLM agents not only can effectively improve the performance in
+downstream tasks but also has the potential to mimic the
+emergence properties of human societies and, hence, reveal the
+underlying mechanisms (Caldarelli et al., 2023). Therefore, it is an
+important open problem to achieve full-process acceleration of
+LLM agent simulations.
+Benchmark. Benchmarks have signi ﬁcantly advanced the devel-
+opment of AI in the past decade. Landmark benchmarks like
+ImageNet (Russakovsky et al., 2015), GLUE (Wang et al., 2019),
+and the benchmarks in graph learning (Dwivedi et al., 2023;H u
+et al., 2020) have been pivotal to the rapid innovation in the ﬁelds
+of computer vision, natural language processing, and graph
+neural networks.
+Recently, there has been a surge in benchmarks that assess the
+capabilities of LLM-driven agents, highlighting the growing
+interest in this emerging area. For example, researchers
+Valmeekam et al. ( 2022) developed benchmarks to evaluate
+LLM’s capability in planning and reasoning about change,
+focusing on symbolic models and structured inputs compatible
+with such representations. Meanwhile, AgentBench develops a
+multi-dimensional benchmark with eight distinct environments
+to assess the capabilities of LLM-driven agents in various multi-
+turn open-ended generation settings (Liu et al., 2024b).
+MLAgentBench, on the other hand, designs a suite of ML tasks
+for benchmarking LLM-driven AI research agents, including
+tasks like image classi ﬁcation and sentiment classi ﬁcation (Huang
+et al., 2023). Researchers also propose to evaluate LLM-driven
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3 REVIEW ARTICLE
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3 17
+
+===== PAGE 18 =====
+agents with embodied tasks, using them as high-level planners in
+robotics setups or in textual environments, focusing on the
+interaction between planning and action, like ALFWorld
+(Shridhar et al., 2021) and ComplexWorld (Basavatia et al.,
+2023). On top of textual environments, online reinforcement
+learning approaches are developed to align LLM agents with
+human preferences and evaluate their performance (Carta et al.,
+2023).
+However, the previous benchmarks mainly focus on the
+decision and planning capability of LLM-driven agents, the
+assessment of LLM-driven agent simulation is still inadequate.
+On the one hand, there still exist challenges in evaluating the
+performance of agent simulations. Previous works often examine
+the statistics feature of simulated behavior (Feng et al., 2020),
+such as the spatial and temporal distribution. Recent studies also
+recruit human evaluators to gather feedback on the believability
+of the simulation (Park et al., 2023). However, developing
+benchmarks for quantitative and qualitative evaluation of LLM-
+driven agent-based simulation remains a largely open problem
+and a promising future research direction. On the other hand,
+LLM-driven simulation might serve as a realistic environment
+that provides high-quality feedback to train other AI models. For
+example, previous studies explore the simulations of social
+segregation (Sert et al., 2020), competing ﬁrms (Osoba et al.,
+2020), competitive games (Park et al., 2019), and coordination of
+different stakeholders (Bone and Dragi ćević, 2010). Such
+simulations can serve as a benchmark to train and evaluate the
+reinforcement learning models. A recent study by Wu et al.
+(2023) proposes a PET framework to leverage LLM-driven agents
+as a supervisor of low-level trainable models, which simpli ﬁes
+challenging control tasks by translating task descriptions into
+high-level sub-tasks and then tracking the accomplishment of
+these sub-tasks. Additionally, more research efforts should be
+dedicated to the benchmarks of AI for social good (Cowls et al.,
+2021).
+Open platform . Building open platforms for LLM-driven agents
+will play a pivotal role in this emerging research area that could
+substantially reduce the barriers of LLM-driven ABS and foster a
+vibrant community, echoing the calls for open-source software
+(Weber, 2004) and open science National Academies of Sciences
+et al. ( 2018). The recent advance of LLMs has led to the public
+release of several powerful pre-trained language models. For
+example, Bidirectional Encoder Representations from Transfor-
+mers (BERT) has been publicly released and gained huge in ﬂu-
+ence in the past few years (Devlin et al., 2019). GPT2, a
+predecessor to the current ChatGPT family, was released by
+OpenAI with limited model sizes for open-source use (Radford
+et al., 2019). Additionally, Meta AI recently released a collection
+of open foundation and ﬁne-tuned chat models named LLaMa 2
+(Touvron et al., 2023), which range in scale from 7 billion to 70
+billion parameters. These open-source LLMs demonstrate pow-
+erful capabilities in various natural language tasks, which can be
+further adapted for speci ﬁc downstream tasks with ef ﬁcient ﬁne-
+tuning methods such as Low-Rank Adaptation (LoRA) (Hu et al.,
+2021).
+The recent proliferation of LLM-driven agents has also resulted
+in several open-source platforms. Voyager is an example open-
+source framework of embodied LLM-driven agents, capable of
+continuously acquiring diverse skills and making novel discov-
+eries in Minecraft without human intervention (Xi et al., 2023).
+Researchers also develop open-source frameworks for real-world
+task-solving agents, such as XAgent Team ( 2024) that are
+designed as a general-purpose framework of automatic task-
+solving. Moreover, ModelScope-Agent (Li et al., 2023b)i s
+proposed as a general and customizable agent framework
+designed for real-world applications, which supports model
+training on multiple open-source LLMs and offers diversi ﬁed
+and comprehensive APIs. On top of the textual embodied
+environment ALFWorld, researchers developed BUTLER frame-
+work (Shridhar et al., 2021) that can operate across text and
+embodied environments with three main components, i.e., brain,
+vision, and body. This arrangement allows BUTLER to effectively
+bridge the gap between abstract language understanding and
+practical, embodied task execution in simulated virtual environ-
+ments. However, these previous works mainly focus on task-
+solving LLM agents, while the open platforms for LLM-driven
+ABS are still lacking. Such a gap can be largely attributed to the
+challenges of integrating LLM-driven agents with the complex
+environment of simulation. Urban generative intelligence (UGI)
+(Xu et al., 2023a) is a recently proposed open platform that
+integrates embodied agents with the digital twins of cities,
+offering the opportunity to evaluate urban problems with large-
+scale urban agent simulations and solve them with multi-
+disciplinary approaches. Despite this early attempt at urban
+system simulation, the development of an open platform for
+LLM-driven ABS is an emerging area that calls for more research
+attention.
+Robustness of LLM-driven agent-based simulation . The
+robustness problems of LLM agent simulation can be classi ﬁed
+into two main scenarios, adversarial attack and out-of-
+distribution generalization, which fundamentally stem from the
+robustness issues of the underlying language models (Wang et al.,
+2023a). The current methodologies to address out-of-distribution
+generalization problems primarily resort to classic machine
+learning techniques (Shen et al., 2021), such as unsupervised
+representation learning, supervised model learning, and optimi-
+zation methods. As for adversarial attacks, various defense tech-
+niques have been proposed in recent studies. For example,
+researchers propose to certify LLM safety with an erase-and-
+check ﬁlter that detects adversarial prompts (Kumar et al., 2023).
+Besides moving target defense, Chen et al. ( 2023a) aim to select
+safe answers from the responses generated by different LLMs to
+enhance the LLM system ’s robustness against jailbreaking attacks.
+Moreover, extensive benchmarks of adversarial prompts are for-
+mulated to evaluate LLM (Zhu et al., 2023b).
+As for the LLM agents, they often have tool-use capability (Qin
+et al., 2023) and engage in human interactive scenarios, such as
+the conﬂict simulation actor that helps users learn con ﬂict resolve
+through rehearsal (Shaikh et al., 2024), which makes the
+robustness of LLM agents have far-reaching consequences.
+Furthermore, in the context of multi-agent simulation, adversarial
+attacks might propagate among agents (Tian et al., 2023). More
+importantly, recent works show the simulations of multiple LLM
+agents show human-like collective behaviors (Aher et al., 2023;
+Zhou et al.,
+2024b), such as social conformity and homophily,
+which could be exploited by adversaries as weaknesses in the
+societies of LLM agents. Improving the robustness of LLM agent
+simulation at both the individual and collective levels is an open
+problem.
+The stability of LLM agents can also be regarded as one kind of
+robustness. Even if the LLM agents are fed the same prompts, the
+agent may generate odd responses due to the limitation of large
+language models, especially for smaller LLMs. This leads to a
+concern about the reproducibility of large language model-
+empowered agent-based modeling and simulation. Three poten-
+tial solutions exist based on the requirements of agent-based
+modeling and simulation and the characteristics of large language
+models. The ﬁrst solution is to develop specialized large language
+REVIEW ARTICLE HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3
+18 HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3
+
+===== PAGE 19 =====
+models tailored for simulation, improving environment consis-
+tency. The second solution may be a combination of large and
+smaller LLMs, reaching an acceptable trade-off between cost and
+robustness. The third promising future direction could be a better
+agent mechanism, with more powerful re ﬂection, memory, etc.
+Ethical risks in LLM agents . The advances of LLM unleash the
+unprecedented capability of hum an-like text generation and rea-
+soning, raising concerns about potential ethical risks of misuse, such
+as jailbreaking (Zhuo et al., 2023). For example, recent studies
+highlight the risks of generating malicious network payloads that
+could jeopardize cyber security at scale (Charan et al., 2023), and
+emphasize the concerns of accuracy, recency, coherence, and trans-
+parency of LLM agents in medical pra ctice (Thirunavukarasu et al.,
+2023). To gauge LLM agents ’ susceptibility to social bias and ste-
+reotype, researchers use semantic illusions and cognitive re ﬂection
+tests (Hagendorff et al., 2023), typically administered to human
+subjects, to quantify LLM’s tendency to produce intuitive yet erro-
+neous responses. They ﬁnd early models from the GPT family have
+an increasing tendency to generate intuitive errors as their size
+increases, while ChatGPT-3.5 and 4 have a pattern shift that radically
+eliminates these errors and achie ves superhuman accuracy. They
+speculate the pattern shift is driven by the employment of reinfor-
+cement learning from human feedback, a sophisticated technique
+only deployed in ChatGPT-3.5 and later models. These ﬁndings
+highlight the importance of embedding human preferences into the
+language models, instead of solely relying on web corpus. In the
+context of LLM-driven agent simulations, researchers ﬁnd when
+certain personas are assigned to ChatGPT it will generate output with
+6× toxicity, engaging in discriminatory stereotypes, harmful con-
+v e r s a t i o n ,a n do f f e n s i v el a n g u a g e( D e s h p a n d ee ta l . ,2023). Besides, a
+recent work by Acerbi and Stubbers ﬁeld (2023) shows LLM agent
+exhibits human-like biases that prefer gender-stereotype-consistent,
+negative, and biologically counter-intuitive content. More impor-
+tantly, such biases could be further ampli ﬁed in the transmission
+chain in multi-agent settings. The experimental results from previous
+studies emphasize the importance of ethical considerations in LLM-
+driven agent-based simulations, especially against the backdrop of the
+rapid proliferation of LLM agents in various domains.
+Extensive efforts have been made to mitigate the potential
+ethical risks of LLM agents. A primary focus is to fundamentally
+align language models with human values (Yao et al., 2023a;Y i
+et al., 2023). A recent survey classi ﬁes the alignment goals into
+three distinct levels, i.e., human instructions, human preferences,
+and human values. Besides, Moral Foundation theory is invoked
+to benchmark mainstream language models ’ alignment with the
+foundational ethical values of care, fairness, loyalty, authority, and
+sanctity (Yi et al., 2023). Researchers also ﬁnd LLM agents are
+susceptible to ﬂattened caricatures when speci ﬁc personas are
+assigned to them (Cheng et al.,
+2023a). The CoMPosT framework
+is proposed to evaluate the multidimensionality of simulated LLM
+agents and provide a measure for caricature in LLM agent
+simulations. They ﬁnd even the agents driven by the latest GPT-4
+in the simulation of political and marginalized demographic
+groups. Finally, to fundamentally address the potential ethical
+risks, many scholars advocate enhancing the interpretability of
+LLM agents, questioning the falsi ﬁability of any moral principles
+learned by black box LLM agents (Vijayaraghavan and Badea,
+2024). Therefore, they propose to benchmark and continuously
+improve LLM agents ’ interpretability (Zhao et al., 2024).
+Conclusion
+Agent-based modeling and simulation is one of the most
+important methods to model complex systems in various
+domains. The recent advances in large language models have
+reshaped the paradigm of agent-based modeling and simulation,
+providing a new perspective for constructing intelligent human-
+like agents rather than those driven by simple rules or limited-
+intelligence neural models. In this paper, we take the ﬁrst step to
+provide a survey of the agent-based modeling and simulation
+with large language models. We systematically analyze why the
+LLM agents are required for agent-based modeling and simula-
+tion and how to address the critical challenges. Afterward, we
+extensively summarize the existing works in four domains: cyber,
+physical, social, and hybrid, carefully describing how to design the
+simulation environment, how to construct the large language
+model-empowered agents, and what to observe and achieve based
+on agent-based simulation. Lastly, given the unresolved limita-
+tions of existing works and this new and fast-growing area, we
+discuss the open problems and point out the important research
+directions, which we hope can inspire future research.
+Data availability
+All data generated or analyzed during this study are included in
+this manuscript.
+Received: 19 December 2023; Accepted: 12 August 2024;
+References
+Acerbi A, Stubbersﬁeld JM (2023) Large language models show human-like content
+biases in transmission chain experiments. Proc Natl Acad Sci USA
+120:e2313790120
+Aher GV, Arriaga RI, Kalai AT (2023) Using large language models to simulate
+multiple humans and replicate human subject studies. In: International
+Conference on Machine Learning (PMLR). pp 337 –371
+Akata E et al. (2023) Playing repeated games with large language models. arXiv
+preprint arXiv:2305.16867
+Alluhaybi B, Alrahhal MS, Alzhrani A, Thayananthan V (2019) A survey: agent-
+based software technology under the eyes of cyber security, security controls,
+attacks and challenges Int J Adv Comput Sci Appl 10:211 –230
+Aminabadi RY et al. (2022) Deepspeed-inference: enabling ef ﬁcient inference of
+transformer models at unprecedented scale. In: SC22: international con-
+ference for high performance computing, networking, storage and analysis.
+IEEE, pp 1 –15, https://ieeexplore.ieee.org/abstract/document/10046087
+An L (2012) Modeling human decisions in coupled human and natural systems:
+review of agent-based models. Ecol Model 229:25 –36
+Antonini G, Bierlaire M, Weber M (2006) Discrete choice models of pedestrian
+walking behavior. Transp Res Part B: Methodol 40:667 –687
+Argyle LP et al. (2023) Out of one, many: using language models to simulate
+human samples. Political Anal 31:337 –351
+Arora D, Singh HG et al. (2023) Have LLMs advanced enough? A challenging
+problem solving benchmark for large language models. The 2023 Conference
+on Empirical Methods in Natural Language Processing, https://openreview.
+net/forum?id=YHWXlESeS8
+Arsanjani JJ, Helbich M, de Noronha Vaz E (2013) Spatiotemporal simulation of
+urban growth patterns using agent-based modeling: the case of Tehran. Cities
+32:33–42
+Arthur WB (1991) Designing economic agents that act like human agents: a
+behavioral approach to bounded rationality. Am Econ Rev 81:353 –359
+Bakhtin A, Brown N, Dinan E, Farina G, Flaherty C, Fried D, Goff A, Gray J, Hu H,
+Jacob APMeta Fundamental AI Research Diplomacy Team (FAIR) † (2022)
+Human-level play in the game of diplomacy by combining language models
+with strategic reasoning Science 378:1067 –1074
+Banisch S, Lima R, Araújo T (2012) Agent based models and opinion dynamics as
+Markov chains. Soc Netw 34:549 –561
+Barbosa J, Leitão P (2011) Simulation of multi-agent manufacturing systems using
+agent-based modelling platforms. In: Proceedings of the 2011 9th IEEE
+international conference on industrial informatics. IEEE, pp 477 –482
+Barnes S, Golden B, Price S (2013) Applications of agent-based modeling and
+simulation to healthcare operations management. In: Price CC & Gendreau
+M (eds) Handbook of healthcare operations management: methods and
+applications. Springer, pp. 45 –74. https://www.springer.com/series/6161
+Barros JX (2004) Urban growth in Latin American cities-exploring urban dynamics
+through agent-based simulation. University of London, University College
+London, UK
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3 REVIEW ARTICLE
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3 19
+
+===== PAGE 20 =====
+Basavatia S, Ratnakar S, Murugesan K (2023) Complexworld: a large language model-
+based interactive ﬁction learning environment for text-based reinforcement
+learning agents. International Joint Conference on Arti ﬁcial Intelligence 2023
+Workshop on Knowledge-Based Compositional Generalization
+Batty M (2001) Agent-based pedestrian modeling. Environ plan B: Plan Des
+28:321–326
+Bauer K, Liebich L, Hinz O, Kosfeld M (2023) Decoding GPT ’s Hidden ‘Ration-
+ality’ of Cooperation. SAFE Working Paper No. 401, https://doi.org/10.2139/
+ssrn.4576036
+Beheshti R, Jalalpour M, Glass TA (2017) Comparing methods of targeting obesity
+interventions in populations: an agent-based simulation. SSM-Popul Health
+3:211–218
+Bellegarda JR (2004) Statistical language model adaptation: review and perspec-
+tives. Speech Commun 42:93 –108
+Beltran RS, Testa JW, Burns JM (2017) An agent-based bioenergetics model for
+predicting impacts of environmental change on a top marine predator, the
+Weddell seal. Ecol Model 351:36 –50
+Binz M, Schulz E (2023) Using cognitive psychology to understand GPT-3. Proc
+Natl Acad Sci USA 120:e2218523120
+Bohlmann JD, Calantone RJ, Zhao M (2010) The effects of market network het-
+erogeneity on innovation diffusion: an agent-based modeling approach. J
+Product Innov Manag 27:741 –760
+Boiko DA, MacKnight R, Gomes G (2023) Emergent autonomous scienti ﬁc
+research capabilities of large language models. arXiv preprint
+arXiv:2304.05332
+Bone C, Dragi ćević S (2010) Simulation and validation of a reinforcement learning
+agent-based model for multi-stakeholder forest management. Comput
+Environ Urban Syst 34:162 –174
+Bran AM, Cox S, White AD, Schwaller P (2023) Chemcrow: augmenting large-
+language models with chemistry tools. arXiv preprint arXiv:2304.05376
+Brown T et al. (2020) Language models are few-shot learners. Adv Neural Inf
+Process Syst 33:1877 –1901
+Brown DG, Robinson DT (2006) Effects of heterogeneity in residential preferences
+on an agent-based model of urban sprawl. Ecol Soc 11
+Bybee L (2023) Surveying generative AI ’s economic expectations. arXiv preprint
+arXiv:2305.02823
+Cabrera E, Taboada M, Iglesias ML, Epelde F, Luque E (2011) Optimization of
+healthcare emergency departments by agent-based simulation. Procedia
+Comput Sci 4:1880 –1889
+Cai J et al. (2024) Language evolution for evading social media regulation via llm-
+based multi-agent simulation. IEEE WCCI, https://arxiv.org/abs/2405.02858
+Caldarelli G et al. (2023) The role of complexity for digital twins of cities. Nat
+Comput Sci 3:374 –381
+Carta T et al. (2023) Grounding large language models in interactive environments
+with online reinforcement learning. International Conference on Machine
+Learning. PMLR, pp 3676 –3713
+Chan C-M et al. (2024) ChatEval: towards better LLM-based evaluators through
+multi-agent debate. The Twelfth International Conference on Learning
+Representations. https://openreview.net/forum?id=FQepisCUWu
+Chang Y et al. (2024) A survey on evaluation of large language models. ACM Trans
+Intell Syst Technol 15:1 –45
+Charan P, Chunduri H, Anand PM, Shukla SK (2023) From text to mitre tech-
+niques: exploring the malicious use of large language models for generating
+cyber attack payloads. arXiv preprint arXiv:2305.15336
+Chen L (2012) Agent-based modeling in urban and architectural research: a brief
+literature review. Front Archit Res 1:166 –177
+Chen B et al. (2023b) Open-vocabulary queryable scene representations for real
+world planning. In 2023 IEEE International Conference on Robotics and
+Automation (ICRA). IEEE, pp 11509 –11522
+Chen B, Paliwal A, Yan Q (2023a) Jailbreaker in jail: moving target defense for
+large language models. In: Proceedings of the 10th ACM Workshop on
+Moving Target Defense. pp 29 –32
+Chen J, Yuan S, Ye R, Majumder BP, Richardson K (2023c) Put your money where
+your mouth is: evaluating strategic planning and execution of LLM agents in
+an auction arena. arXiv preprint arXiv:2310.05746
+Chen W et al. (2024) Agentverse: Facilitating multi-agent collaboration and
+exploring emergent behaviors in agents. The Twelfth International Conference
+on Learning Representations. https://openreview.net/forum?id=EHg5GDnyq1
+Chen Y, Liu TX, Shan Y, Zhong S (2023e) The emergence of economic rationality
+of GPT. In: Proceedings of the National Academy of Sciences. Vol 120.
+National Acad Sciences, p e2316205120
+Cheng J, Chin P (2024) SocioDojo: Building Lifelong Analytical Agents with Real-
+world Text and Time Series. The Twelfth International Conference on
+Learning Representations. https://openreview.net/forum?id=s9z0HzWJJp
+Cheng M, Piccardi T, Yang D (2023a) Compost: characterizing and evaluating
+caricature in LLM simulations. In: Proceedings of the 2023 Conference on
+Empirical Methods in Natural Language Processing. Association for Com-
+putational Linguistics, pp 10853 –10875
+Cheng Z, Kasai J, Yu T (2023b) Batch prompting: efﬁcient inference with large language
+model APIs. In: Proceedings of the 2023 Conference on Empirical Methods in
+Natural Language Processing. Association for Computational Linguistics, Singa-
+pore, pp 792–810, https://doi.org/10.18653/v1/2023.emnlp-industry.74
+Chowdhery A et al. (2023) Palm: scaling language modeling with pathways. J Mach
+Learn Res 24:1 –113
+Cipi E, Cico B (2011) Simulation of an agent based system behavior in a dynamic
+and unpredicted environment. Simulation 1:172 –176
+Conte R, Paolucci M (2014) On agent-based modeling and computational social
+science. Front Psychol 5:668
+Cowls J, Tsamados A, Taddeo M, Floridi L (2021) A de ﬁnition, benchmark and
+database of AI for social good initiatives. Nat Mach Intell 3:111 –115
+Cui C, Ma Y, Cao X, Ye W, Wang Z (2024) Drive as you speak: enabling human-
+like interaction with large language models in autonomous vehicles. In:
+Proceedings of the IEEE/CVF Winter Conference on Applications of Com-
+puter Vision, pp 902 –909
+de Souza F, Verbas O, Auld J (2019) Mesoscopic traf ﬁc ﬂow model for agent-based
+simulation. Procedia Comput Sci 151:858 –863
+de Zarzà I, de Curtò J, Roig G, Manzoni P, Calafate CT (2023) Emergent coop-
+eration and strategy adaptation in multi-agent systems: an extended coevo-
+lutionary theory with LLMs. Electronics 12:2722
+DeepMind G (2023) Introducing Gemini: our largest and most capable AI model.
+https://blog.google/technology/ai/google-gemini-ai. Accessed 7 Dec 2023
+Deguchi H (2011) Economics as an agent-based complex system: toward agent-
+based social systems sciences. Springer Science & Business Media
+Deng X et al. (2024) Mind2web: towards a generalist agent for the web. Adv Neural
+Inf Process Syst, 36
+D e s h p a n d eA ,M u r a h a r iV ,R a j p u r o h i tT ,K a l y a nA ,N a r a s i m h a nK( 2 0 2 3 )T o x i c i t yi n
+chatgpt: analyzing persona-assigned language models. Findings of the Association
+for Computational Linguistics: EMNLP 2023, Association for Computational
+Linguistics, pp 1236–1270. https://doi.org/10.18653/v1/2023.ﬁndings-emnlp.88
+Devlin J, Chang M-W, Lee K, Toutanova K (2019) Bert: pre-training of deep
+bidirectional transformers for language understanding. In: Proceedings of
+naacL-HLT Vol 1. pp 2
+Dong Q et al. (2022) A survey for in-context learning. arXiv preprint
+arXiv:2301.00234 (2022)
+Dubois Y et al. (2024) Alpacafarm: a simulation framework for methods that learn
+from human feedback. Adv Neural Inf Process Syst, 36
+Dwivedi VP et al. (2023) Benchmarking graph neural networks. J Mach Learn Res
+24:1–48
+Elliott E, Kiel LD (2002) Exploring cooperation and competition using agent-based
+modeling. Proc Natl Acad Sci USA 99:7193 –7194
+El-Sayed AM, Scarborough P, Seemann L, Galea S (2012) Social network analysis and
+agent-based modeling in social epidemiology. Epidemiol Perspect Innov 9:1 –9
+Elsenbroich C, Gilbert N, Elsenbroich C, Gilbert N (2014) Agent-based modelling.
+Modelling Norms, pp 65
+–84
+Elyoseph Z, Hadar-Shoval D, Asraf K, Lvovsky M (2023) Chatgpt outperforms
+humans in emotional awareness evaluations. Front Psychol 14:1199058
+Faria-e Castro M, Leibovici F (2023) Arti ﬁcial intelligence and in ﬂation forecasts.
+Technical Report, https://research.stlouisfed.org/wp/more/2023-015
+Feng L, Li B, Podobnik B, Preis T, Stanley HE (2012) Linking agent-based models
+and stochastic models of ﬁnancial markets. Proc Natl Acad Sci USA
+109:8388–8393
+Feng J et al. (2020) Learning to simulate human mobility. In: Proceedings of the
+26th ACM SIGKDD international conference on knowledge discovery & data
+mining. pp 3426 –3433
+Franceschelli G, Musolesi M (2023) On the creativity of large language models.
+arXiv preprint arXiv:2304.00008
+Fu D et al. (2024) Drive like a human: rethinking autonomous driving with large
+language models. In: Proceedings of the IEEE/CVF Winter Conference on
+Applications of Computer Vision, pp 910 –919
+Gao C et al. (2023) S3: social-network simulation system with large language
+model-empowered agents. arXiv preprint arXiv:2307.14984
+Gatti DD, Desiderio S, Gaffeo E, Cirillo P, Gallegati M (2011) Macroeconomics
+from the Bottom-up, Vol 1. Springer Science & Business Media
+Gaube V, Remesch A (2013) Impact of urban planning on household ’s residential
+decisions: an agent-based simulation model for Vienna. Environ Model Softw
+45:92–103
+Geerling W, Mateer GD, Wooten J, Damodaran N (2023) Chatgpt has aced the test
+of understanding in college economics: now what? Am Econ. 68. https://doi.
+org/10.1177/05694345231169654
+Gilbert N (2004a) Agent-based social simulation: dealing with complexity. Com-
+plex Syst Netw Excell 9:1 –14
+Gilbert N, Terna P (2000) How to build and use agent-based models in social
+science. Mind Soc 1:57 –72
+Gilbert N (2007b) Computational social science: agent-based social simulation. In:
+Phan D & Amblard F (eds) Agent-based modelling and simulation. Bardwell,
+Oxford, pp 115 –134
+REVIEW ARTICLE HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3
+20 HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3
+
+===== PAGE 21 =====
+Gilbert N, Troitzsch K (2005) Simulation for the social scientist. McGraw-Hill
+Education, UK
+Guo F (2023) GPT agents in game theory experiments. arXiv preprint
+arXiv:2305.05516
+Guo J et al. (2023) Suspicion-agent: Playing imperfect information games with
+theory of mind aware GPT-4. arXiv preprint arXiv:2309.17277
+Guo S et al. (2024) Large language mode ls as rational players in competitive
+economics games. In: Proceedings of the 12th international conference on
+learning representations. https://openreview.net/forum?id =
+NMPLBbjYFq
+Gur I et al. (2024) A real-world webagent with planning, long context under-
+standing, and program synthesis. The Twelfth International Conference
+on Learning Representations. https://openreview.net/forum?id =
+9JQtrumvg8
+Gurnee W, Tegmark M (2024) Language models represent space and time. The
+Twelfth International Conference on Learning Representations. https://
+openreview.net/forum?id=jE8xbmvFin
+Guyot P, Honiden S (2006) Agent-based participatory simulations: merging multi-
+agent systems and role-playing games. J Artif Soc Soc Simul 9
+Hagendorff T, Fabi S, Kosinski M (2023) Human-like intuitive behavior and rea-
+soning biases emerged in large language models but disappeared in ChatGPT.
+Nat Comput Sci, 3:833 –838
+Hämäläinen P, Tavast M, Kunnari A (2023) Evaluating large language models in
+generating synthetic HCI research data: a case study. In: Proceedings of the
+2023 CHI Conference on Human Factors in Computing Systems. ACM, pp
+1–19
+Hamill L, Gilbert N (2015) Agent-based modelling in economics. John Wiley & Sons
+Han X, Wu Z, Xiao C (2023) “Guinea pig trials ” utilizing GPT: a novel smart
+agent-based modeling approach for studying ﬁrm competition and collusion.
+arXiv preprint arXiv:2308.10974
+Hauser MD, Chomsky N, Fitch WT (2002) The faculty of language: what is it, who
+has it, and how did it evolve? science 298:1569 –1579
+Heckbert S, Baynes T, Reeson A (2010) Agent-based modeling in ecological eco-
+nomics. Ann N Y Acad Sci USA 1185:39 –53
+Helbing D, Molnar P (1995) Social force model for pedestrian dynamics. Phys Rev
+E 51:4282
+Helbing D (2012) Social self-organization: agent-based simulations and experi-
+ments to study emergent social behavior. Springer
+Hernández-Orallo J, Martínez-Plumed F, Schmid U, Siebers M, Dowe DL (2016)
+Computer models solving intelligence test problems: progress and implica-
+tions. Artif Intell 230:74 –107
+Hong S et al. (2024) MetaGPT: meta programming for multi-agent collaborative
+framework. The Twelfth International Conference on Learning Representa-
+tions. https://openreview.net/forum?id=VtmBAGCN7o
+Horton JJ (2023) Large language models as simulated economic agents: what can
+we learn from homo silicus? Technical Report, National Bureau of Economic
+Research
+Hoshen D, Werman M (2017) IQ of neural networks. arXiv preprint
+arXiv:1710.01692
+Hu W et al. (2020) Open graph benchmark: datasets for machine learning on
+graphs. Adv Neural Inf Process Syst 33:22118 –22133
+Hu EJ et al. (2022) Lora: low-rank adaptation of large language models. Interna-
+tional Conference on Learning Representations. https://openreview.net/
+forum?id=nZeVKeeFYf9
+Hua W et al. (2023) War and peace (waragent): Large language
+model-based multi-agent simulation of world wars. arXiv preprint
+arXiv:2311.17227
+Huang Q, Vora J, Liang P, Leskovec J (2023) Benchmarking large language models
+as AI research agents. arXiv preprint arXiv:2310.03302
+Jang J et al. (2023) Personalized soups: personalized large language model align-
+ment via post-hoc parameter merging. arXiv preprint arXiv:2310.11564
+Jiang LY et al. (2023) Health system-scale language models are all-purpose pre-
+diction engines. Nature 619:357 –362
+Jin Y et al. (2023) Surrealdriver: designing generative driver agent simulation
+framework in urban contexts based on large language model. arXiv preprint
+arXiv:2309.13193
+Jinxin S et al. (2023) CGMI: con ﬁgurable general multi-agent interaction frame-
+work. arXiv preprint arXiv:2308.12503
+Kahneman D (2017) Thinking, fast and slow[J]. Farrar, Straus and Giroux,
+2011
+Kahneman D, Knetsch JL, Thaler R (1986) Fairness as a constraint on pro ﬁt
+seeking: entitlements in the market. Am Econ Rev 76.4:728 –741
+Kavak H, Padilla JJ, Lynch CJ, Diallo SY (2018) Big data, agents, and machine
+learning: towards a data-driven agent-based modeling approach. In: Pro-
+ceedings of the annual simulation symposium. pp 1 –12
+Kim D, Yun T-S, Moon I-C, Bae JW (2021) Automatic calibration of dynamic and
+heterogeneous parameters in agent-based models. Autonomous Agents
+Multi-Agent Syst 35:46
+Kim J, Lee B (2023) AI-augmented surveys: leveraging large language models for
+opinion prediction in nationally representative surveys. arXiv preprint
+arXiv:2305.09620
+Kountouriotis V, Thomopoulos SC, Papelis Y (2014) An agent-based crowd
+behaviour model for real time crowd behaviour simulation. Pattern Recognit
+Lett 44:30 –38
+Kovač G, Portelas R, Dominey PF, Oudeyer P-Y (2023) The social AI school:
+Insights from developmental psychology towards arti ﬁcial socio-cultural
+agents. arXiv preprint arXiv:2307.07871
+Kumar A, Agarwal C, Srinivas S, Feizi S, Lakkaraju H (2023)
+Certifying llm safety against adversarial prompting. arXiv preprint
+arXiv:2309.02705
+Lan X, Gao C, Jin D, Li Y (2024) Stance detection with collaborative role-infused
+llm-based agents. In: Proceedings of the international AAAI conference on
+web and social media, AAAI, Vol 18. pp 891 –903
+Lengnick M (2013) Agent-based macroeconomics: a baseline model. J Econ Behav
+Organ 86:102 –120
+Leombruni R, Richiardi M (2005) Why are economists sceptical about agent-based
+simulations? Physica A 355:103 –109
+Li K, Liang H, Kou G, Dong Y (2020) Opinion dynamics model based on the
+cognitive dissonance: An agent-based simulation. Inf Fusion 56:1 –14
+Li B et al. (2023a) Seed-bench: benchmarking multimodal LLMs with generative
+comprehension. arXiv preprint arXiv:2307.16125
+Li C et al. (2023b) Modelscope-agent: building your customizable agent
+system with open-source large language models. In: Proceedings
+of the 2023 Conference on Empirical Methods in Natural Language
+Processing: System Demonstrations. Association for Computational
+Linguistics, Singapore, pp 566 –578 https://aclanthology.org/2023.emnlp-
+demo.51
+Li C et al. (2023c) Quantifying the impact of large language models on collective
+opinion dynamics. arXiv preprint arXiv:2308.03313
+Li G, Hammoud HAAK, Itani H, Khizbullin D, Ghanem B (2023d) Camel:
+Communicative agents for “mind” exploration of large language model
+society. Adv Neural Inf Process Syst 36:51991 –52008
+Li J et al. (2024a) Agent hospital: a simulacrum of hospital with evolvable medical
+agents. arXiv preprint arXiv:2405.02957
+Li N, Gao C, Li M, Li Y, Liao Q (2024b) Econagent: large language model-
+empowered agents for simulating macroeconomic activities. In: ACL
+Li S, Yang J, Zhao K (2023e) Are you in a masquerade? exploring the behavior and
+impact of large language model driven social bots in online social networks.
+arXiv preprint arXiv:2307.10337
+Li X, Li Y, Liu L, Bing L, Joty S (2022) Is GPT-3 a psychopath? evaluating large
+language models from a psychological perspective. arXiv preprint
+arXiv:2212.10529
+Liang T et al. (2023) Encouraging divergent thinking in large language models
+through multi-agent debate. arXiv preprint arXiv:2305.19118
+Lin L-J (1992) Self-improving reactive agents based on reinforcement learning,
+planning and teaching. Mach Learn 8:293 –321
+Lin J et al. (2023) Agentsims: an open-source sandbox for large language model
+evaluation. arXiv preprint arXiv:2308.04026
+Lippe M et al. (2019) Using agent-based modelling to simulate social-ecological
+systems across scales. GeoInformatica 23:269 –298
+Liu R et al. (2024a) Training socially aligned language models in simulated human
+society. The Twelfth International Conference on Learning Representations.
+https://openreview.net/forum?id=NddKiWtdUm
+Liu X et al. (2024b) Agentbench: evaluating LLMs as agents. The Twelfth Inter-
+national Conference on Learning Representations. https://openreview.net/
+forum?id=
+zAdUB0aCTQ
+Liu Y et al. (2019) How well do machines perform on IQ tests: a comparison study
+on a large-scale dataset. In: IJCAI. pp 6110 –6116
+Lopez PA et al. (2018) Microscopic traf ﬁc simulation using sumo. In: 2018 21st
+international conference on intelligent transportation systems (ITSC). IEEE,
+pp 2575 –2582
+Lu J et al. (2023) Self: language-driven self-evolution for large language model.
+arXiv preprint arXiv:2310.00533
+Luo L et al. (2008) Agent-based human behavior modeling for crowd simulation.
+Comput Animat Virtual Worlds 19:271 –281
+Ma Y, Zhenjiang S, Kawakami M (2013) Agent-based simulation of residential
+promoting policy effects on downtown revitalization. J Artif Soc Soc Simul
+16:2
+Macal CM, North MJ (2005) Tutorial on agent-based modeling and
+simulation. In: Proceedings of the Winter Simulation Conference. IEEE,
+14pp
+Macy MW, Willer R (2002) From factors to actors: computational sociology and
+agent-based modeling. Annu Rev Sociol 28:143 –166
+Madey G, Gao Y, Freeh V, Tynan R, Hoffman C (2003) Agent-based modeling and
+simulation of collaborative social networks. In: Proceedings Americas Con-
+ference on Information Systems (AMCIS) pp 1836 –1842
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3 REVIEW ARTICLE
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3 21
+
+===== PAGE 22 =====
+Maggi E, Vallino E (2016) Understanding urban mobility and the impact of
+public policies: the role of the agent-based models. Res Transp Econ
+55:50–59
+Mańdziuk J, Ż ychowski A (2019) Deepiq: a human-inspired AI system for solving
+IQ test problems. In: 2019 International Joint Conference on Neural Net-
+works (IJCNN). IEEE, pp 1 –8
+Manvi R et al. (2024) Geollm: extracting geospatial knowledge from large language
+models. The Twelfth International Conference on Learning Representations.
+https://openreview.net/forum?id=TqL2xBwXP3
+Mao S et al. (2023) Alympics: language agents meet game theory. arXiv preprint
+arXiv:2311.03220
+Mastio M, Zargayouna M, Scemama G, Rana O (2018) Distributed agent-based
+trafﬁc simulations. IEEE Intell Transp Syst Mag 10:145 –156
+McLane AJ, Semeniuk C, McDermid GJ, Marceau DJ (2011) The role of agent-
+based models in wildlife ecology and management. Ecol Model
+222:1544–1556
+Melis G, Dyer C, Blunsom P (2017) On the state of the art of evaluation in neural
+language models. arXiv preprint arXiv:1707.05589
+Mueller M, Pyka A (2016) Economic behaviour and agent-based modelling. In:
+Frantz R, Chen S-H, Dopfer K, Heukelom F, Mousavi S, (eds) Routledge
+handbook of behavioral economics. Routledge, pp 405 –415
+Mukobi G et al. (2023) Welfare diplomacy: benchmarking language model coop-
+eration. arXiv preprint arXiv:2310.08901
+Nascimento N, Alencar P, Cowan D (2023) Self-adaptive large language model
+(LLM)-based multiagent systems. 2023 IEEE International Conference on
+Autonomic Computing and Self-Organizing Systems Companion (ACSOS-
+C), IEEE, pp 104 –109
+National Academies of Sciences E Medicine et al. (2018) Open science by design:
+realizing a vision for 21st century research
+OpenAI (2022) Introducing ChatGPT. https://openai.com/blog/chatgpt. Accessed
+1 Dec 2023
+Osoba OA, Vardavas R, Grana J, Zutshi R, Jaycocks A (2020) Policy-focused
+agent-based modeling using RL behavioral models. arXiv preprint
+arXiv:2006.05048
+Papachristou M, Yuan Y (2024) Network formation and dynamics among multi-
+LLMs. arXiv preprint arXiv:2402.10659
+Park YJ, Cho YS, Kim SB (2019) Multi-agent reinforcement learning with
+approximate model learning fo r competitive games. PLoS ONE
+14:e0222215
+Park J, Min B, Ma X, Kim J (2023) Choicemates: supporting unfamiliar online
+decision-making with multi-agent conversational interactions. arXiv preprint
+arXiv:2310.01331
+Park JS et al. (2022) Social simulacra: Creating populated prototypes for social
+computing systems. In: Proceedings of the 35th annual ACM symposium on
+user interface software and technology. ACM, pp 1 –18
+Park JS et al. (2023) Generative agents: interactive simulacra of human behavior.
+In: Proceedings of the 36th annual ACM symposium on user interface
+software and technology. ACM, pp 1 –22
+Parv L, Deaky B, Nasulea MD, Oancea G (2019) Agent-based simulation of value
+ﬂow in an industrial production process. Processes 7:82
+Pereira A, Duarte P, Reis LP (2004) Agent-based simulation of ecological models.
+In: Proceedings 5th Workshop on Agent-Based Simulation
+Perez L, Dragicevic S (2009) An agent-based approach for modeling dynamics of
+contagious disease spread. Int J Health Geogr 8:1 –17
+Pertoldi C, Topping C (2004) Impact assessment predicted by means of genetic
+agent-based modeling. Crit Rev Toxicol 34:487 –498
+Phelps S, Russell YI (2023) Investigating emergent goal-like behaviour in large
+language models using experimental economics. arXiv preprint
+arXiv:2305.07970
+Platas-López A, Guerra-Hernández A, Quiroz-Castellanos M, Cruz-Ramirez N
+(2023) A survey on agent-based modelling assisted by machine learning.
+Expert Syst e13325. https://doi.org/10.1111/exsy.13325
+Plosser CI, Schwert GW (1979) Potential GNP: its measurement and signi ﬁcance: a
+dissenting opinion. In: Carnegie-Rochester conference series on public policy,
+Elsevier, Vol 10, pp 179 –186
+Puranam P, Stieglitz N, Osman M, Pillutla MM (2015) Modelling bounded
+rationality in organizations: progress and prospects. Acad Manag Ann
+9:337–392
+Qian C et al. (2024) Communicative agents for software development. In: Proceedings
+of the 62nd Annual Meeting of the Association for Computational Linguistics
+(Vol 1: Long Papers) Association for Computational Linguistics, Bangkok,
+Thailand, pp 15174–
+15186. https://aclanthology.org/2024.acl-long.810
+Qin Y et al. (2023) Tool learning with foundation models. arXiv preprint
+arXiv:2304.08354
+Radford A et al. (2019) Language models are unsupervised multitask learners.
+OpenAI Blog 1:9
+Rolón M, Martínez E (2012) Agent-based modeling and simulation of an auto-
+nomic manufacturing execution system. Comput Ind 63:53 –78
+Rouchier J (2017) Agent-based simulation as a useful tool for the study of markets.
+In: Simulating social complexity: a handbook. pp 671 –704
+Russakovsky O et al (2015) Imagenet large scale visual recognition challenge. Int J
+Comput Vis 115:211 –252
+Samanidou E, Zschischang E, Stauffer D, Lux T (2007) Agent-based models of
+ﬁnancial markets. Rep Prog Phys 70:409
+Samuelson W, Zeckhauser R (1988) Status quo bias in decision making. J Risk
+Uncertain 1:7 –59
+Schick T et al. (2024) Toolformer: language models can teach themselves to use
+tools. Adv Neural Inf Process Syst 36:68539 –68551
+Schieritz N, Grobler A (2003) Emergent structures in supply chains-a study
+integrating agent-based and system d ynamics modeling. In: Proceedings of
+the 36th Annual Hawaii Internation al Conference on System Sciences.
+IEEE, 9
+Schwitzgebel E, Schwitzgebel D, Strasser A (2024) Creating a large language model
+of a philosopher. Mind Lang 39:237 –259
+Sert E, Bar-Yam Y, Morales AJ (2020) Segregation dynamics with reinforcement
+learning and agent based modeling. Sci Rep 10:11771
+Shah D, Osi ński B, Levine S et al. (2023a) Lm-nav: robotic navigation with large
+pre-trained models of language, vision, and action. In: Conference on robot
+learning. PMLR, pp 492 –504
+Shah D, Sridhar A, Bhorkar A, Hirose N, Levine S (2023b) Gnm: a general navi-
+gation model to drive any robot. In: 2023 IEEE International Conference on
+Robotics and Automation (ICRA). IEEE, pp 7226 –7233
+Shaikh O, Chai V, Gelfand MJ, Yang D, Bernstein MS (2024) Rehearsal: simulating
+conﬂict to teach con ﬂict resolution. In: Proceedings of the CHI Conference
+on Human Factors in Computing Systems. pp 1 –20
+Shanahan M, McDonell K, Reynolds L (2023) Role play with large language
+models. Nature 623:493 –498
+Shen Z et al. (2021) Towards out-of-distribution generalization: a survey. arXiv
+preprint arXiv:2108.13624
+Sheng Y et al. (2023) High-throughput generative inference of large language
+models with a single gpu. International Conference on Machine Learning,
+PMLR, pp 31094 –31116
+Shinn N, Cassano F, Gopinath A, Narasimhan KR, Yao S (2023) Re ﬂexion: language
+agents with verbal reinforcement learning. In: 37th conference on Neural
+Information Processing Systems. https://doi.org/10.48550/arXiv.2303.11366
+Shridhar M et al. (2021) Alfworld: aligning text and embodied environments for
+interactive learning. International Conference on Learning Representations.
+https://openreview.net/forum?id=0IOX0YcCdTn
+Silva PC et al. (2020) Covid-abs: an agent-based model of COVID-19 epidemic to
+simulate health and economic effects of social distancing interventions.
+Chaos Solitons Fractals 139:110088
+Silverman BG, Hanrahan N, Bharathy G, Gordon K, Johnson D (2015) A systems
+approach to healthcare: agent-based modeling, community mental health,
+and population well-being. Artif Intell Med 63:61 –71
+Simon HA (1997) Models of bounded rationality: empirically grounded economic
+reason, Vol 3. MIT Press
+Singh M et al. (2023) Mind meets machine: unravelling GPT-4 ’s cognitive psy-
+chology. BenchCouncil Trans Benchmarks, Stand Eval 3:100139
+Singhal K et al. (2023) Large language models encode clinical knowledge. Nature
+620:172–180
+Song CH et al. (2023) LLM-planner: few-shot grounded planning for embodied
+agents with large language models. In: Proceedings of the IEEE/CVF inter-
+national conference on computer vision. pp 2998 –3009
+Sun H, Zhuang Y, Kong L, Dai B, Zhang C (2024) Adaplanner: adaptive planning from
+feedback with language models. Adv Neural Inf Process Syst 36:58202–58245
+Surowiecki J (2005) The wisdom of crowds. Anchor
+Suzuki R, Arita T (2024) An evolutionary model of personality traits related to
+cooperative behavior using a large language model. Sci Rep 14:5989
+Taori R et al. (2023) Stanford alpaca: an instruction-following llama model. https://
+github.com/tatsu-lab/stanford_alpaca
+Team A (2022) Autogpt: the heart of the open-source agent ecosystem. https://
+github.com/Signiﬁcant-Gravitas/AutoGPT. Accessed 1 Oct 2023
+Team X (2024) Xagent: an autonomous agent for complex task solving | XAgent
+(xagent.net)
+Terna P et al. (1998) Simulation tools for social scientists: building agent based
+models with swarm. J Artif Soc Soc Simul 1:1 –12
+Thirunavukarasu AJ et al. (2023) Large language models in medicine. Nat Med
+29:1930–1940
+Tian Y, Yang X, Zhang J, Dong Y, Su H (2023) Evil geniuses: delving into the safety
+of LLM-based agents. arXiv preprint arXiv:2311.11855
+Tomasello M (2010) Origins of human communication. MIT Press
+Touvron H et al. (2023) Llama: open and ef ﬁcient foundation language models.
+arXiv preprint arXiv:2302.13971
+Valmeekam K, Olmo A, Sreedharan S, Kambhampati S (2022) Large language
+models still can ’t plan (a benchmark for LLMs on planning and reasoning
+about change). arXiv preprint arXiv:2206.10498
+REVIEW ARTICLE HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3
+22 HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3
+
+===== PAGE 23 =====
+Van Dinther C (2008) Agent-based simulation for research in economics. In:
+Handbook on information technology in ﬁnance. Springer, pp 421 –442
+Vijayaraghavan A, Badea C (2024) Minimum levels of interpretability for arti ﬁcial
+moral agents. AI and Ethics, Springer, pp 1 –17
+Wall F (2016) Agent-based modeling in managerial science: an illustrative survey
+and study. Rev Manag Sci 10:135 –193
+Wang A et al. (2019) Glue: a multi-task benchmark and analysis platform for
+natural language understanding. 7th International Conference on Learning
+Representations, ICLR 2019
+Wang G et al. (2024a) Voyager: an open-ended embodied agent with large lan-
+guage models. Transactions on Machine Learning Research, pp 2835 –8856
+https://openreview.net/forum?id=ehfRiF0R3a
+Wang J et al. (2023a) On the robustness of ChatGPT: an adversarial and out-of-
+distribution perspective. arXiv preprint arXiv:2302.12095
+Wang L et al. (2023b) Recagent: a novel simulation paradigm for recommender
+systems. arXiv preprint arXiv:2306.02552
+Wang L et al. (2024b) A survey on large language model based autonomous agents.
+Front Comput Sci 18:186345
+Wang L, Ahn K, Kim C, Ha C (2018) Agent-based models in ﬁnancial market
+studies. J Phys Conf Ser 1039, 012022
+Wang Z, Chiu YY, Chiu YC (2023c) Humanoid agents: platform for simulating
+human-like generative agents. Proceedings of the 2023 Conference on
+Empirical Methods in Natural Language Processing: System Demonstrations,
+pp 167 –176
+Wang Z et al. (2023d) Unleashing cognitive synergy in large language models: A
+task-solving agent through multi-persona self-collaboration. arXiv preprint
+arXiv:2307.05300
+Weber S (2004) The success of open source. Harvard University Press
+Wei J et al. (2022) Chain-of-thought prompting elicits reasoning in large language
+models. Adv Neural Inf Process Syst 35:24824 –24837
+Weiss M et al. (2024) Rethinking the buyer’s inspection paradox in information markets
+with language agents. In: Proceedings of the 12th international conference on
+learning representations.https://openreview.net/forum?id=6werMQy1uz
+Widener MJ, Metcalf SS, Bar-Yam Y (2013) Agent-based modeling of policies to
+improve urban food access for low- income populations. Appl Geogr
+40:1–10
+Williams R, Hosseinichimeh N, Majumdar A, Ghaffarzadegan N (2023) Epidemic
+modeling with generative agents. arXiv preprint arXiv:2307.04986
+Wolfram S (1984) Cellular automata as models of complexity. Nature 311:419 –424
+Wooldridge M, Jennings NR (1995) Intelligent agents: theory and practice. Knowl
+Eng Rev 10:115 –152
+Wu Y et al. (2023) Plan, eliminate, and track –language models are good teachers
+for embodied agents. arXiv preprint arXiv:2305.02412
+Xi Z et al. (2023) The rise and potential of large language model based agents: A
+survey. arXiv preprint arXiv:2309.07864
+Xie C, Zou D (2024) A human-like reasoning framework for multi-phases planning
+task with large language models. arXiv preprint arXiv:2405.18208
+Xie Q, Han W, Lai Y, Peng M, Huang J (2023) The Wall Street Neophyte: a zero-
+shot analysis of chatgpt over multimodal stock movement prediction chal-
+lenges. arXiv preprint arXiv:2304.05351
+Xu F, Zhang J, Gao C, Feng J, Li Y (2023a) Urban generative intelligence (UGI):
+a foundational platform for em bodied agent and future city.
+arXiv:2312.11813
+Xu Y et al. (2023b) Exploring large language models for communication games: an
+empirical study on werewolf. arXiv preprint arXiv:2309.04658
+Yao S et al. (2024) Tree of thoughts: deliberate problem solving with large language
+models. Adv Neural Inf Process Syst 36:11809 –11822
+Yao J, Yi X, Wang X, Wang J, Xie X (2023a) From instructions to intrinsic human
+values—a survey of alignment goals for big models. arXiv preprint
+arXiv:2308.12014
+Yi X, Yao J, Wang X, Xie X (2023) Unpacking the ethical value alignment in big
+models. arXiv preprint arXiv:2310.17551
+Yoheinakajima (2023) Babyagi. https://github.com/yoheinakajima/babyagi. Acces-
+sed 1 Oct 2023
+Yoon S-E, He Z, Echterhoff JM, McAuley J (2024) Evaluating large language
+models as generative user simulators for conversational recommendation. In:
+Proceedings of the 2024 conference of the north american chapter of the
+association for computational linguistics: human language technologies (Vol
+1: Long Papers), Association for Computational Linguistics, pp 1490 –1504.
+https://doi.org/10.18653/v1/2024.naacl-long.83
+Zeng A et al. (2023) Glm-130b: an open bilingual pre-trained model. In: Pro-
+ceedings of the 11th international conference on learning representations
+Zhang B, DeAngelis DL (2020) An overview of agent-based models in plant biology
+and ecology. Ann Bot 126:539 –557
+Zhang A et al. (2024a) On generative agents in recommendation. In: Proceedings of
+the 47th international ACM SIGIR conference on research and development
+in Information Retrieval, pp 1807 –1817
+Zhang H et al. (2024b) Building cooperative embodied agents modularly with large
+language models. The Twelfth International Conference on Learning
+Representations. https://openreview.net/forum?id=EnXJfQqy0K
+Zhang J, Xu X, Deng S (2023c) Exploring collaboration mechanisms for LLM
+agents: a social psychology view. arXiv preprint arXiv:2310.02124
+Zhang T et al. (2024c) Benchmarking large language models for news summar-
+ization. Trans Assoc Comput Linguist 12:39 –57
+Zhao H et al. (2024) Explainability for large language models: a survey. ACM Trans
+intell Syst Technol 15:1 –38
+Zhao Q et al. (2023b) Competeai: understanding the competition behaviors in large
+language model-based agents. arXiv preprint arXiv:2310.17512
+Zhao WX et al. (2023c) A survey of large language models. arXiv preprint
+arXiv:2303.18223
+Zheng S, Trott A, Srinivasa S, Parkes DC, Socher R (2022) The AI economist:
+Taxation policy design via two-level deep multiagent reinforcement learning.
+Sci Adv 8:eabk2607
+Zhou S et al. (2024a) WebArena: A realistic Web Environment for Building
+Autonomous Agents. The Twelfth International Conference on Learning
+Representations. https://openreview.net/forum?id=oKn9c6ytLx
+Zhou X et al. (2024b) Sotopia: interactive evaluation for social intelligence in
+language agents. The Twelfth International Conference on Learning Repre-
+sentations. https://openreview.net/forum?id=mM7VurbA4r
+Zhu D, Chen J, Shen X, Li X, Elhoseiny M (2024) Minigpt-4: enhancing vision-
+language understanding with advanced large language models. The Twelfth
+International Conference on Learning Representations. https://openreview.
+net/forum?id=1tZbq88f27
+Zhu K et al. (2023b) Promptbench: towards evaluating the robustness of large
+language models on adversarial prompts. arXiv preprint arXiv:2306.04528
+Zhu X et al. (2023c) Ghost in the minecraft: generally capable agents for open-
+world environments via large language models with text-based knowledge
+and memory. arXiv preprint arXiv:2305.17144
+Zhu X, Li J, Liu Y, Ma C, Wang W (2023d) A survey on model compression for
+large language models. arXiv preprint arXiv:2308.07633
+Zhuge M et al. (2023) Mindstorms in natural language-based societies of mind.
+arXiv preprint arXiv:2305.17066
+Zhuo TY, Huang Y, Chen C, Xing Z (2023) Exploring ai ethics of ChatGPT: a
+diagnostic analysis. arXiv preprint arXiv:2301.12867
+Zou H, Zhao Q, Bariah L, Bennis M, Debbah M (2023) Wireless multi-agent
+generative AI: from connected intelligence to collective intelligence. arXiv
+preprint arXiv:2307.02757)
+Acknowledgements
+This work is supported by the National Natural Science Foundation of China under
+62272262 and U23B2030.
+Author contributions
+C. Gao contributed to the structure of this survey paper, searching and organizing all
+relevant related papers, as well as all the content throughout the whole paper. X. Lan
+partly contributed to the content relevant to the social domain; N. Li and Z. Zhou partly
+contributed to the content relevant to the economic domain; Y. Yuan and J. Ding partly
+contributed to the content relevant to agent-based modeling and the physical domain. F.
+Xu partly contributed to the section on perspectives of this research direction. Y. Li
+contributed to the whole structure, motivation, and taxonomy. All authors contributed to
+the writing of this manuscript.
+Competing interests
+The authors declare no competing interests.
+Ethical approval
+This article does not contain any studies with human participants performed by any of
+the authors.
+Informed consent
+This article does not contain any studies with human participants performed by any of
+the authors.
+Additional information
+Correspondence and requests for materials should be addressed to Yong Li.
+Reprints and permission information is available at http://www.nature.com/reprints
+Publisher’s note Springer Nature remains neutral with regard to jurisdictional claims in
+published maps and institutional af ﬁliations.
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3 REVIEW ARTICLE
+HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3 23
+
+===== PAGE 24 =====
+Open Access This article is licensed under a Creative Commons
+Attribution 4.0 International License, which permits use, sharing,
+adaptation, distribution and reproduction in any medium or format, as long as you give
+appropriate credit to the original author(s) and the source, provide a link to the Creative
+Commons licence, and indicate if changes were made. The images or other third party
+material in this article are included in the article ’s Creative Commons licence, unless
+indicated otherwise in a credit line to the material. If material is not included in the
+article’s Creative Commons licence and your intended use is not permitted by statutory
+regulation or exceeds the permitted use, you will need to obtain permission directly from
+the copyright holder. To view a copy of this licence, visit http://creativecommons.org/
+licenses/by/4.0/.
+© The Author(s) 2024
+REVIEW ARTICLE HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS | https://doi.org/10.1057/s41599-024-03611-3
+24 HUMANITIES AND SOCIAL SCIENCES COMMUNICATIONS |         (2024) 11:1259 | https://doi.org/10.1057/s41599-024-03611-3

@@ -1,0 +1,37 @@
+{
+  "P3_P4_p_values_computed": false,
+  "confirmatory_analysis_available": true,
+  "confirmatory_family": [
+    "P1_OVERALL_CLARIFICATION_POST_TRUST_V32",
+    "P2_CONTENT_POST_TRUST_V32",
+    "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32"
+  ],
+  "confirmatory_test": "block-level two-sided one-sample t-test vs 0; Holm FWER 0.05 across exactly P1/P2/P5",
+  "engineering_blocks_reused": false,
+  "exploratory_family": [
+    "P3_TIMING_PRE_DELAY_TRUST_V32",
+    "P4_CHANNEL_REACH_V32"
+  ],
+  "formal_batch_id": "task005-fmcg-v32-formal-n10",
+  "formal_result_interpretation_scope": "stochastic replication uncertainty within the frozen GABM; not direct validation of real-world population effects",
+  "invalid_or_missing_frozen_block_ids": [],
+  "natural_trust_recovery_allowed": true,
+  "planned_N_achieved": true,
+  "planned_attempt_blocks": 10,
+  "replacement_blocks_added": false,
+  "schema_version": "task005_fmcg_v32_formal_analysis_result1.0",
+  "status": "PASS_PLANNED_N_ACHIEVED",
+  "valid_blocks": 10,
+  "valid_formal_block_ids": [
+    "F001",
+    "F002",
+    "F003",
+    "F004",
+    "F005",
+    "F006",
+    "F007",
+    "F008",
+    "F009",
+    "F010"
+  ]
+}

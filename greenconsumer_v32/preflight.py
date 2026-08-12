@@ -1,7 +1,7 @@
 """运行前零调用检查。
 
-检查 Python 依赖、模型配置和（可选）DashScope API key。该模块本身不会
-向任何外部模型发请求。
+检查 Python 依赖、模型配置、AgentKernel bootstrap 配置，以及（可选）
+DashScope API key。该模块本身不会向任何外部模型发请求。
 """
 from __future__ import annotations
 
@@ -52,6 +52,57 @@ def ensure_dashscope_key() -> bool:
     return False
 
 
+def _check_builder_bootstrap_config() -> tuple[bool, list[str]]:
+    """静态检查 Builder 配置是否仍引用已经删除的 legacy 数据。
+
+    v3.2 runtime 只借用 AgentKernel ``Builder`` 来生成经过 Pydantic 验证的
+    AgentConfig。社会网络由 ``simulation_core.py`` 中的
+    ``SocialNetworkPlugin`` 直接构建，所以 relation/map 静态文件不属于当前
+    runtime 依赖。这个检查专门防止代码清理后 YAML 仍残留旧路径。
+    """
+    errors: list[str] = []
+    try:
+        yaml = importlib.import_module("yaml")
+    except Exception:
+        return False, ["yaml module unavailable"]
+
+    simulation_path = PROJECT_ROOT / "configs" / "simulation_config.yaml"
+    environment_path = PROJECT_ROOT / "configs" / "environment_config.yaml"
+    if not simulation_path.exists():
+        errors.append("configs/simulation_config.yaml missing")
+    if not environment_path.exists():
+        errors.append("configs/environment_config.yaml missing")
+    if errors:
+        return False, errors
+
+    try:
+        simulation_cfg = yaml.safe_load(
+            simulation_path.read_text(encoding="utf-8-sig")
+        ) or {}
+        environment_cfg = yaml.safe_load(
+            environment_path.read_text(encoding="utf-8-sig")
+        ) or {}
+    except Exception as exc:
+        return False, [f"bootstrap YAML parse failed: {type(exc).__name__}"]
+
+    expected_data = {"agent_profiles": "data/agents/profiles.jsonl"}
+    declared_data = simulation_cfg.get("data", {})
+    if declared_data != expected_data:
+        errors.append(
+            "simulation_config.data must contain only agent_profiles; "
+            "legacy relation/map data are not v3.2 runtime dependencies"
+        )
+
+    # Builder still validates EnvironmentConfig, so keep a legal empty environment.
+    if environment_cfg.get("components") != {}:
+        errors.append(
+            "environment_config.components must be empty; v3.2 builds the social "
+            "network directly with SocialNetworkPlugin"
+        )
+
+    return not errors, errors
+
+
 def run_preflight(*, require_real_llm: bool = False) -> dict:
     """执行零 API 预检并返回机器可读结果。"""
     missing = []
@@ -72,18 +123,27 @@ def run_preflight(*, require_real_llm: bool = False) -> dict:
             and "__FROM_ENV_DASHSCOPE_API_KEY__" in model_text
         )
 
+    builder_config_ok, builder_config_errors = _check_builder_bootstrap_config()
     key_present = ensure_dashscope_key() if require_real_llm else False
+
     status = "PASS"
-    if missing or not model_ok or (require_real_llm and not key_present):
+    if (
+        missing
+        or not model_ok
+        or not builder_config_ok
+        or (require_real_llm and not key_present)
+    ):
         status = "FAIL"
 
     return {
-        "schema_version": "task005_fmcg_v32_clean_preflight1.1",
+        "schema_version": "task005_fmcg_v32_clean_preflight1.2",
         "status": status,
         "python": sys.version.split()[0],
         "project_root": str(PROJECT_ROOT),
         "missing_dependencies": missing,
         "model_config_verified": model_ok,
+        "builder_bootstrap_config_verified": builder_config_ok,
+        "builder_bootstrap_config_errors": builder_config_errors,
         "real_llm_required": require_real_llm,
         "dashscope_api_key_present": key_present if require_real_llm else "not-required",
         "external_api_calls": 0,

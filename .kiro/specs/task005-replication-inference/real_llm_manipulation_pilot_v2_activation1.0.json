@@ -1,0 +1,40 @@
+{
+  "activation_token": "TASK005_REAL_MANIPULATION_V2_ACTIVATE_20260809_01",
+  "artifact": "real_llm_manipulation_pilot_v2_activation1.0",
+  "conditions": [
+    "NoClarification-Control",
+    "Rational-Hub-Immediate",
+    "Empathy-Hub-Immediate"
+  ],
+  "created_at_utc": "2026-08-09T15:27:23.270511+00:00",
+  "formal_inference": false,
+  "master_seed": 2026080903,
+  "model": "qwen-plus",
+  "optional_stopping": false,
+  "p_values": false,
+  "pilot_id": "task005-real-manipulation-pilot-v2",
+  "progression_rule": "engineering manipulation check only; no p-values; no formal inference",
+  "provider": "OpenAIProvider",
+  "readiness_head": "1d92d0378e05f915470887afb0ac8b2d4c03d0ef",
+  "real_llm_called_during_readiness": false,
+  "replacement_replicates": false,
+  "replicates": [
+    "R001",
+    "R002"
+  ],
+  "retry_policy": "none",
+  "source_sha256": {
+    ".kiro/specs/task005-replication-inference/manipulation_construct_validity_amendment2.0.json": "aa07cf8d380519ee58ba8b72124c355d1a95889b900f0cb952b3dfe0af15ded8",
+    ".kiro/specs/task005-replication-inference/mechanism_auditability_schema_amendment1.1.json": "2f771c4ba7abf233b118999c274beecf6db5a1a2957eca1df0b9d6413c73fce2",
+    ".kiro/specs/task005-replication-inference/real_llm_manipulation_check_pilot_v2_contract1.0.json": "ae9517bc35596d951cfe49e2e8f43943e321802dd6ae13bf8aade5b44682656f",
+    "clarification_injector.py": "def9699bab0b682613e07f46dee6fe5e26f61312b833520d1467670a356b94c6",
+    "experiment_config.py": "8b33b2f9032fbf44542dc4efd2d6cc947323dc2e2b8e438cb2f914ce0c9fe87d",
+    "mechanism_v2.py": "39700f7e68658e87cdb59003be2734569049bc44d5481658e81007ebf94462c7",
+    "plugins/agent/reflect/GreenCognitionPlugin.py": "4775b63c0065e77c8102bc9c90cbe06a2d058d5f0b1bb6e69bee5b3124a2b1e8",
+    "replication_config.py": "a3430810849e418b5ff9feda3fbd4df071b942e59b9a0d02e4d0e19bcce3aa0c",
+    "run_experiments.py": "d595a35badac1f675a2bbd1c2365c6db0f76e5fb8c838210504cb3fead2e4cf5",
+    "run_task005_real_manipulation_pilot_v2.py": "89acf3220a3f0d9ee6ffeb70bcc04de2bb033144ed7bdef21174ab648c6992a4",
+    "simulation_core.py": "2f76cd7cca353b97f67900b44a90621c7fa687c9b10db780e7cd3cf8765b56be"
+  },
+  "temperature": 0.3
+}

@@ -1,0 +1,183 @@
+{
+  "schema_version": "2.0",
+  "stage": "TASK_005 treatment-mechanism redesign",
+  "status": "frozen-before-post-amendment-outcomes",
+  "parent_code_head": "4b41a9affe0f33ff62e35f084ac436c9138837cb",
+  "redesign_branch": "redesign/task005-mechanism-v2",
+  "scientific_problem": {
+    "observed": "Across repeated pre-amendment runs, enterprise clarification trajectories were often nearly indistinguishable from the no-clarification control.",
+    "code_diagnosis": [
+      "quiet days mechanically move trust from shock_anchor toward baseline",
+      "clarification persistence uses cluster-specific fixed lift ratios",
+      "enterprise clarification directly reaches only budget_k seed nodes",
+      "behavior is decided directly by LLM binary buy/post outputs",
+      "current implementation does not explicitly operationalize the thesis TPB state chain Att/SN/PBC -> intention"
+    ]
+  },
+  "research_integrity": {
+    "goal": "create identifiable, persistent, managerially interpretable treatment contrasts and adequate prospective statistical power",
+    "target_p_value": null,
+    "significance_guaranteed": false,
+    "winner_hardcoding_prohibited": true,
+    "iterative_tuning_until_p_lt_0_05_prohibited": true,
+    "post_amendment_outcomes_may_inform": [
+      "variance estimation",
+      "power/OC sizing",
+      "sensitivity analysis",
+      "mechanism validation"
+    ],
+    "post_amendment_outcomes_may_not_inform": [
+      "repeated coefficient changes whose stopping rule is statistical significance",
+      "hard-coding Rational/Empathy/Hub/Random/Immediate/Delayed as the winner"
+    ]
+  },
+  "theory_to_code_requirements": {
+    "semantic_layer": [
+      "valence",
+      "arousal",
+      "credibility",
+      "evidence_strength",
+      "topic_relevance_or_consistency",
+      "hypocrisy_perception"
+    ],
+    "psychological_state_layer": [
+      "brand_trust",
+      "attitude_Att",
+      "subjective_norm_SN",
+      "perceived_behavioral_control_PBC",
+      "emotion_valence",
+      "emotion_arousal",
+      "crisis_memory",
+      "repair_memory"
+    ],
+    "decision_layer": [
+      "purchase_intention",
+      "posting_or_sharing_intention",
+      "seeded stochastic behavior using frozen simulation RNG"
+    ],
+    "network_layer": [
+      "public/paid exposure must be distinguished from seed selection",
+      "Hub vs Random must operate through actual topology/reach",
+      "organic UGC diffusion must remain endogenous"
+    ],
+    "timing_layer": [
+      "Immediate vs Delayed must operate through accumulated crisis/social memory before clarification",
+      "timing effect must not be implemented as an arbitrary multiplier"
+    ]
+  },
+  "management_intervention_mapping": {
+    "content": {
+      "rational_evidence": "primarily enters credibility/evidence/attitude/trust channels",
+      "emotional_empathy": "primarily enters valence/arousal/identification/trust channels",
+      "hardcoded_ordering": false
+    },
+    "channel": {
+      "hub": "select structurally central paid-amplification seeds",
+      "random": "select random paid-amplification seeds under the same budget",
+      "effect_source": "realized network reach and downstream interaction"
+    },
+    "timing": {
+      "immediate": "clarification shortly after scandal",
+      "delayed": "clarification after additional crisis/social-memory accumulation",
+      "effect_source": "state of crisis/repair memory at intervention time"
+    },
+    "control": {
+      "clarification": false,
+      "mechanical_full_return_to_precrisis_baseline": false
+    }
+  },
+  "source_registry": [
+    {
+      "source": "Forrester's Green Consumer Segmentation For 2026",
+      "source_origin": "user-uploaded prior file",
+      "use_permitted": [
+        "four-type consumer heterogeneity structure",
+        "qualitative differences in green-consumer orientation and trust/greenwashing sensitivity"
+      ],
+      "not_permitted_without_additional_evidence": [
+        "copying report population shares as simulation shares",
+        "inventing numeric trust/TPB coefficients from the report"
+      ],
+      "citation_status": "available from prior user material; exact page citation should be checked against the uploaded PDF before thesis submission"
+    },
+    {
+      "source": "Generative Agent-Based Modeling with Large Language Models for insider threat detection",
+      "doi": "10.1016/j.engappai.2025.111343",
+      "use_permitted": [
+        "GABM/LLM multi-agent architecture precedent",
+        "methodological motivation for generative agents"
+      ],
+      "not_permitted_without_additional_evidence": [
+        "green-consumer behavioral parameters",
+        "trust-repair effect sizes"
+      ],
+      "citation_status": "publisher record verified"
+    },
+    {
+      "source": "An agent-based approach for the automatic generation of valid SysMLv2 Models in industrial contexts",
+      "doi": "10.1016/j.compind.2025.104350",
+      "use_permitted": [
+        "closed-loop validation/verification design precedent",
+        "structured retrieval plus validation as reliability architecture"
+      ],
+      "not_permitted_without_additional_evidence": [
+        "consumer behavior coefficients"
+      ],
+      "citation_status": "publisher record verified"
+    },
+    {
+      "source": "Validating generative agent-Based modeling in social media simulations through the lens of the friendship paradox",
+      "doi": "10.1016/j.ipm.2026.104636",
+      "use_permitted": [
+        "macro/network-level validation of GABM",
+        "emergent social-network pattern validation precedent"
+      ],
+      "not_permitted_without_additional_evidence": [
+        "treatment effect size calibration"
+      ],
+      "citation_status": "publisher record verified"
+    },
+    {
+      "source": "米加宁、李大宇、董昌其（2025）《管理世界》此前用户提供/讨论的LLM知识生产与决策范式论文",
+      "citation_status": "prior user material remembered, but exact current full-text/bibliographic record must be re-opened or re-uploaded before page-specific quotation",
+      "rule": "do not fabricate title/page/quote"
+    },
+    {
+      "source": "此前讨论的 Bail (2024) PNAS source",
+      "citation_status": "exact bibliographic match not currently verified",
+      "rule": "do not cite or attribute a specific claim until the exact paper is re-identified"
+    }
+  ],
+  "parameter_policy": {
+    "empirically_identified_parameters": "use source-backed values when available",
+    "assumption_parameters": "label explicitly as model assumptions and subject them to sensitivity analysis",
+    "unsupported_numeric_values": "prohibited from being presented as literature-derived"
+  },
+  "old_formal_run": {
+    "batch_id": "task005-formal-v1",
+    "R001_R008": "succeeded; historical pre-amendment diagnostic evidence only",
+    "R009": "externally terminated; stale running status is preserved as raw evidence",
+    "R010_R024": "never started",
+    "formal_inference_permitted": false,
+    "pool_with_post_amendment_sample": false
+  },
+  "old_freezes": {
+    "formal_n_24_reusable": false,
+    "formal_launch_contract_reusable": false,
+    "execution_authorization_reusable": false,
+    "reason": "scientific mechanism and effect distribution are being changed"
+  },
+  "required_sequence": [
+    "freeze this redesign contract",
+    "implement theory-aligned mechanism changes",
+    "offline deterministic unit/mechanism tests",
+    "deterministic/mock sanity experiment",
+    "new engineering real pilot using new IDs only",
+    "variance decomposition and sensitivity analysis",
+    "re-run OC/power sizing",
+    "freeze new N and new formal launch contract",
+    "run new formal sample"
+  ],
+  "real_llm_calls_in_contract_freeze": false,
+  "formal_execution_permitted_at_this_stage": false
+}

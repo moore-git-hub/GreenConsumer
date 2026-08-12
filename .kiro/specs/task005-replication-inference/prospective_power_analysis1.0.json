@@ -1,0 +1,274 @@
+{
+  "schema_version": "prospective_power_analysis1.0",
+  "task": "TASK_005",
+  "stage": "managerial-mde-and-prospective-power-v1",
+  "MDE_HEAD": "9b29ee285a539e9ab82f26279630044bf6c18623",
+  "INFERENCE_HEAD": "d011a8a38b92edc45d90aaf24757f87c80eadfc6",
+  "variance_source": "task005-real-variance-pilot-v3",
+  "variance_source_head": "1b50913519f09f7eee1341b988862b9229eb5265",
+  "variance_input_artifact": ".kiro/specs/task005-replication-inference/formal_power_variance_input1.0.json",
+  "primary_family_size": 5,
+  "familywise_alpha": 0.05,
+  "final_multiplicity_procedure": "Holm step-down",
+  "power_planning_alpha": 0.01,
+  "power_planning_alpha_sided": "two-sided",
+  "target_marginal_power": 0.9,
+  "mde": {
+    "P1_OVERALL_CLARIFICATION_POST_TRUST": 0.15,
+    "P2_CONTENT_POST_TRUST": 0.15,
+    "P3_TIMING_EARLY_TRUST": 0.15,
+    "P4_CHANNEL_REACH": 0.15,
+    "P5_OVERALL_CLARIFICATION_PURCHASE": 0.05
+  },
+  "planning_sd": {
+    "P1_OVERALL_CLARIFICATION_POST_TRUST": 0.04530601637893493,
+    "P2_CONTENT_POST_TRUST": 0.06217591793752763,
+    "P3_TIMING_EARLY_TRUST": 0.10032208105734379,
+    "P4_CHANNEL_REACH": 0.25262055167236663,
+    "P5_OVERALL_CLARIFICATION_PURCHASE": 0.02561279056195533
+  },
+  "required_n": {
+    "P1_OVERALL_CLARIFICATION_POST_TRUST": {
+      "required_N": 5,
+      "achieved_power_at_N": 0.943910711100933,
+      "power_at_N_minus_1": 0.7055328244171782,
+      "validation": {
+        "method_a": "scipy.stats.nct",
+        "method_b": "chi-square-integrated shifted normal",
+        "fallback_method_for_scipy_nonfinite": "higher-precision chi-square-integrated shifted normal",
+        "max_abs_diff": 3.221728439584126e-13,
+        "passed": true,
+        "scipy_nonfinite_candidates_before_minimal_n": 2,
+        "fallback_validation_used": true
+      }
+    },
+    "P2_CONTENT_POST_TRUST": {
+      "required_N": 6,
+      "achieved_power_at_N": 0.9000078412770552,
+      "power_at_N_minus_1": 0.7247721656847366,
+      "validation": {
+        "method_a": "scipy.stats.nct",
+        "method_b": "chi-square-integrated shifted normal",
+        "fallback_method_for_scipy_nonfinite": "higher-precision chi-square-integrated shifted normal",
+        "max_abs_diff": 3.2211733280718136e-13,
+        "passed": true,
+        "scipy_nonfinite_candidates_before_minimal_n": 0,
+        "fallback_validation_used": false
+      }
+    },
+    "P3_TIMING_EARLY_TRUST": {
+      "required_N": 11,
+      "achieved_power_at_N": 0.9358422019420987,
+      "power_at_N_minus_1": 0.8935544064819015,
+      "validation": {
+        "method_a": "scipy.stats.nct",
+        "method_b": "chi-square-integrated shifted normal",
+        "fallback_method_for_scipy_nonfinite": "higher-precision chi-square-integrated shifted normal",
+        "max_abs_diff": 3.2187794096749656e-13,
+        "passed": true,
+        "scipy_nonfinite_candidates_before_minimal_n": 0,
+        "fallback_validation_used": false
+      }
+    },
+    "P4_CHANNEL_REACH": {
+      "required_N": 46,
+      "achieved_power_at_N": 0.9034116361006245,
+      "power_at_N_minus_1": 0.8953550004109875,
+      "validation": {
+        "method_a": "scipy.stats.nct",
+        "method_b": "chi-square-integrated shifted normal",
+        "fallback_method_for_scipy_nonfinite": "higher-precision chi-square-integrated shifted normal",
+        "max_abs_diff": 2.114992209145683e-13,
+        "passed": true,
+        "scipy_nonfinite_candidates_before_minimal_n": 0,
+        "fallback_validation_used": false
+      }
+    },
+    "P5_OVERALL_CLARIFICATION_PURCHASE": {
+      "required_N": 8,
+      "achieved_power_at_N": 0.9404485962328444,
+      "power_at_N_minus_1": 0.865602669355895,
+      "validation": {
+        "method_a": "scipy.stats.nct",
+        "method_b": "chi-square-integrated shifted normal",
+        "fallback_method_for_scipy_nonfinite": "higher-precision chi-square-integrated shifted normal",
+        "max_abs_diff": 2.208788707491749e-13,
+        "passed": true,
+        "scipy_nonfinite_candidates_before_minimal_n": 0,
+        "fallback_validation_used": false
+      }
+    }
+  },
+  "N_REQUIRED": 46,
+  "N_DRIVER": [
+    "P4_CHANNEL_REACH"
+  ],
+  "oc_master_seed": 2026081102,
+  "monte_carlo_reps": 200000,
+  "oc_results": {
+    "SCENARIO_NULL": {
+      "mean_vector": {
+        "P1": 0.0,
+        "P2": 0.0,
+        "P3": 0.0,
+        "P4": 0.0,
+        "P5": 0.0
+      },
+      "holm_detection_probability": {
+        "P1": 0.01066,
+        "P2": 0.0103,
+        "P3": 0.010095,
+        "P4": 0.010375,
+        "P5": 0.01029
+      },
+      "any_primary_detected": 0.04588,
+      "all_five_detected": 0.0,
+      "empirical_FWER": 0.04588,
+      "engineering_check_passed": true
+    },
+    "SCENARIO_ALL_MDE": {
+      "mean_vector": {
+        "P1": 0.15,
+        "P2": 0.15,
+        "P3": 0.15,
+        "P4": 0.15,
+        "P5": 0.05
+      },
+      "holm_detection_probability": {
+        "P1": 1.0,
+        "P2": 1.0,
+        "P3": 1.0,
+        "P4": 0.97619,
+        "P5": 1.0
+      },
+      "any_primary_detected": 1.0,
+      "all_five_detected": 0.97619
+    },
+    "SINGLE_ACTIVE_P1": {
+      "mean_vector": {
+        "P1": 0.15,
+        "P2": 0.0,
+        "P3": 0.0,
+        "P4": 0.0,
+        "P5": 0.0
+      },
+      "holm_detection_probability": {
+        "P1": 1.0,
+        "P2": 0.013275,
+        "P3": 0.01326,
+        "P4": 0.01235,
+        "P5": 0.01314
+      },
+      "any_primary_detected": 1.0,
+      "all_five_detected": 5e-06,
+      "target_detection_probability": 1.0,
+      "false_positive_family_probability": 0.046965
+    },
+    "SINGLE_ACTIVE_P2": {
+      "mean_vector": {
+        "P1": 0.0,
+        "P2": 0.15,
+        "P3": 0.0,
+        "P4": 0.0,
+        "P5": 0.0
+      },
+      "holm_detection_probability": {
+        "P1": 0.013155,
+        "P2": 1.0,
+        "P3": 0.0135,
+        "P4": 0.012895,
+        "P5": 0.01303
+      },
+      "any_primary_detected": 1.0,
+      "all_five_detected": 7e-05,
+      "target_detection_probability": 1.0,
+      "false_positive_family_probability": 0.047105
+    },
+    "SINGLE_ACTIVE_P3": {
+      "mean_vector": {
+        "P1": 0.0,
+        "P2": 0.0,
+        "P3": 0.15,
+        "P4": 0.0,
+        "P5": 0.0
+      },
+      "holm_detection_probability": {
+        "P1": 0.01281,
+        "P2": 0.012735,
+        "P3": 1.0,
+        "P4": 0.01285,
+        "P5": 0.01309
+      },
+      "any_primary_detected": 1.0,
+      "all_five_detected": 3.5e-05,
+      "target_detection_probability": 1.0,
+      "false_positive_family_probability": 0.047095
+    },
+    "SINGLE_ACTIVE_P4": {
+      "mean_vector": {
+        "P1": 0.0,
+        "P2": 0.0,
+        "P3": 0.0,
+        "P4": 0.15,
+        "P5": 0.0
+      },
+      "holm_detection_probability": {
+        "P1": 0.012305,
+        "P2": 0.01246,
+        "P3": 0.01294,
+        "P4": 0.90447,
+        "P5": 0.012475
+      },
+      "any_primary_detected": 0.90922,
+      "all_five_detected": 2.5e-05,
+      "target_detection_probability": 0.90447,
+      "false_positive_family_probability": 0.044555
+    },
+    "SINGLE_ACTIVE_P5": {
+      "mean_vector": {
+        "P1": 0.0,
+        "P2": 0.0,
+        "P3": 0.0,
+        "P4": 0.0,
+        "P5": 0.05
+      },
+      "holm_detection_probability": {
+        "P1": 0.01286,
+        "P2": 0.013015,
+        "P3": 0.013225,
+        "P4": 0.01384,
+        "P5": 1.0
+      },
+      "any_primary_detected": 1.0,
+      "all_five_detected": 1.5e-05,
+      "target_detection_probability": 1.0,
+      "false_positive_family_probability": 0.04655
+    },
+    "SINGLE_ACTIVE_P2_NEGATIVE": {
+      "mean_vector": {
+        "P1": 0.0,
+        "P2": -0.15,
+        "P3": 0.0,
+        "P4": 0.0,
+        "P5": 0.0
+      },
+      "holm_detection_probability": {
+        "P1": 0.01313,
+        "P2": 1.0,
+        "P3": 0.01346,
+        "P4": 0.013185,
+        "P5": 0.01282
+      },
+      "any_primary_detected": 1.0,
+      "all_five_detected": 7.5e-05,
+      "target_detection_probability": 1.0,
+      "false_positive_family_probability": 0.04708
+    }
+  },
+  "observed_variance_pilot_means_used_for_mde": false,
+  "observed_variance_pilot_means_used_for_power_alternative": false,
+  "p_values_from_pilot_used": false,
+  "formal_execution": false,
+  "formal_execution_authorized": false,
+  "real_llm_calls": 0
+}

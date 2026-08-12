@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "stage": "TASK_005 variance-v2 true-production-path activation readiness",
+  "created_for_head": "f87d99666b9eb604817c3c6f908671bd444233a2",
+  "activation_policy": {
+    "real_llm_calls_in_this_stage": false,
+    "variance_v2_real_execution_authorized": false,
+    "formal_execution_authorized": false,
+    "power_computed": false,
+    "mde_computed": false,
+    "p_values_computed": false
+  },
+  "ACTIVE_REQUIRED": [
+    {
+      "gate_id": "mechanism_v2_core",
+      "evidence": "tests/test_task005_mechanism_v2_core.py",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "mechanism_audit_schema_1_2",
+      "evidence": "tests/test_task005_mechanism_auditability_v2.py",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "empathy_relational_repair",
+      "evidence": "tests/test_task005_empathy_relational_repair_sensitivity_v1.py",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "stimulus_integrity",
+      "evidence": "tests/test_task005_stimulus_integrity_v1.py",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "seed_subset_writer",
+      "evidence": "tests/test_task005_seed_subset_writer.py",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "manipulation_v3_immutable_evidence",
+      "evidence": "tests/test_task005_real_manipulation_pilot_v3.py",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "variance_v1_estimand_tests",
+      "evidence": "tests/test_task005_real_variance_pilot_v1.py",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "variance_v1_forensic_consistency",
+      "evidence": ".kiro/specs/task005-replication-inference/variance_v1_forensic_report1.0.json",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "variance_v2_audited_execution_tests",
+      "evidence": "tests/test_task005_real_variance_pilot_v2.py",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "variance_v2_true_production_path_fake_acceptance",
+      "evidence": "run_task005_real_variance_pilot_v2.py --offline-test",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "network_tripwire",
+      "evidence": "tests/test_task005_real_variance_pilot_v2.py",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "secret_scan",
+      "evidence": "tests/test_task005_real_variance_pilot_v2.py",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "py_compile",
+      "evidence": "python -m py_compile selected active files",
+      "required_result": "PASS"
+    },
+    {
+      "gate_id": "git_diff_check",
+      "evidence": "git diff --check",
+      "required_result": "PASS"
+    }
+  ],
+  "EXPECTED_SUPERSEDED": [
+    {
+      "gate_id": "TASK003_frozen_hash_schema_legacy",
+      "reason": "Frozen before approved Reflect semantic schema and mechanism_records schema evolution."
+    },
+    {
+      "gate_id": "TASK004_S9_legacy_import_fallback",
+      "classification": "EXPECTED_SUPERSEDED_BY_TASK005_AUDIT_FAIL_CLOSED",
+      "reason": "TASK005 requires fail-closed direct mechanism schema import and must not restore try/except ImportError fallback."
+    }
+  ],
+  "PLATFORM_TEST_DEFECT": [
+    {
+      "gate_id": "TASK003_Windows_py_compile_NUL",
+      "reason": "Windows os.devnull/NUL py_compile discovery artifact; not a current production behavior regression."
+    }
+  ],
+  "UNRESOLVED_ACTIVE_FAILURE": []
+}

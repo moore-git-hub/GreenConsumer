@@ -1,0 +1,6 @@
+estimand,label,role,N_valid_blocks,mean,SD,ci95_low,ci95_high,raw_p,holm_adjusted_p,holm_reject_FWER_0_05,managerial_MDE,managerially_relevant_by_abs_mean,confirmatory_claim_permitted
+P1_OVERALL_CLARIFICATION_POST_TRUST_V32,Overall clarification post-trust,Confirmatory,10,0.353969483186737,0.0645820998794657,0.307770232035874,0.4001687343376001,3.1969135484749895e-08,9.590740645424966e-08,True,0.15,True,True
+P2_CONTENT_POST_TRUST_V32,Rational minus Empathy post-trust,Confirmatory,10,0.0672436594111542,0.0648152912802765,0.0208775931813081,0.1136097256410003,0.0095177804198281,0.0095177804198281,True,0.15,False,True
+P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32,Overall clarification expected repeat-choice,Confirmatory,10,0.0199531972624611,0.0047148020905686,0.0165804310266879,0.0233259634982343,3.0254600309164386e-07,6.050920061832877e-07,True,0.05,False,True
+P3_TIMING_PRE_DELAY_TRUST_V32,"Immediate minus Delayed trust, T6-T9",Exploratory/mechanistic,10,0.56936295457253,0.1314027735396474,,,,,,,,False
+P4_CHANNEL_REACH_V32,Hub minus Random clarification reach,Exploratory/mechanistic,10,0.365,0.2147996482513155,,,,,,,,False

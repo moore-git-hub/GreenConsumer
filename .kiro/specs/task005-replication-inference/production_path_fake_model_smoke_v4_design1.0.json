@@ -1,0 +1,17 @@
+{
+  "artifact": "production_path_fake_model_smoke_v4_design1.0",
+  "purpose": "Versioned deterministic fake-model production-path diagnostic for mechanism records schema 1.1 with perceived_empathy.",
+  "historical_results_immutable": true,
+  "supersedes_for_new_schema_only": [
+    "production_path_fake_model_smoke_v2_result1.0.json",
+    "production_path_fake_model_smoke_v3_result1.0.json"
+  ],
+  "result_artifact": "production_path_fake_model_smoke_v4_result1.0.json",
+  "schema_expectations": {
+    "mechanism_records_schema_version": "1.1",
+    "requires_semantic_perceived_empathy": true,
+    "fake_router": "DeterministicSemanticFakeRouter",
+    "real_llm_calls": false
+  },
+  "immutability_rule": "Future schema evolution must create a new versioned diagnostic result artifact instead of overwriting v2, v3, or v4 results."
+}

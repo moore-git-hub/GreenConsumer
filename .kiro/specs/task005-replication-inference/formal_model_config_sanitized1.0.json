@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "stage": "TASK_005 Stage I.5C-5A",
+  "source_file": "configs/models_config.yaml",
+  "source_sha256": "9d0c9a8347024bc029f65827a9bdb53da1320c5ad20493bd622321248d7177f9",
+  "chat_model_count": 1,
+  "model_binding_verified": true,
+  "binding_rule": "single chat-capable entry selected by run_experiments._build_real_router",
+  "chat_model_index": 0,
+  "selected_chat_model": {
+    "name": "OpenAIProvider",
+    "model": "qwen-plus",
+    "api_key_present": true,
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "capabilities": [
+      "chat"
+    ],
+    "temperature": 0.3,
+    "seed": 42
+  },
+  "credential_policy": "No secret values are included; only presence booleans are recorded."
+}

@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0",
+  "stage": "TASK_005 Stage I.5B-1",
+  "status": "frozen-candidate",
+  "classification": "engineering-pilot-extension-decision",
+  "review_packet": {
+    "filename": "task005_stageI5B1_extension_review_packet.zip",
+    "sha256": "C14341B194B91450C885C5181C8D9F2050AADFFBE478E34211097975B0801F50",
+    "size_bytes": 20902,
+    "zip_entries": 9,
+    "inventory_rows": 8,
+    "crc_errors": 0,
+    "inventory_mismatches": 0
+  },
+  "frozen_head": "2fc992a56da3659ef60224a2068565165402358b",
+  "runner_sha256": "A2D70BFA2908DE138F949019F0C31B6CCDDEE3B63FA50D4CA5C70DDBAC49F146",
+  "replication_config_sha256": "A3430810849E418B5FF9FEDA3FBD4DF071B942E59B9A0D02E4D0E19BCCE3AA0C",
+  "decision": {
+    "selected_option": "B",
+    "selected_option_name": "independent-extension-batch",
+    "option_a_permitted": false,
+    "option_b_required": true,
+    "reason_codes": [
+      "existing-ledger-length-must-equal-requested-num-replicates",
+      "existing-metadata-num-replicates-must-equal-request",
+      "existing-batch-loader-has-no-append-branch",
+      "manual-ledger-or-metadata-rewrite-would-violate-frozen-evidence"
+    ]
+  },
+  "base_batch": {
+    "replication_id": "task005-real-pilot-v1",
+    "master_seed": 20260802,
+    "num_replicates": 3,
+    "canonical_block_map": {
+      "R001": "P001",
+      "R002": "P002",
+      "R003": "P003"
+    },
+    "immutable": true,
+    "include_in_engineering_n5": true,
+    "include_in_formal_sample": false
+  },
+  "extension_batch": {
+    "replication_id": "task005-real-pilot-extension-v1",
+    "num_replicates": 2,
+    "llm_mode": "real",
+    "llm_seed_supported": "unknown",
+    "provider_model": "qwen-plus",
+    "provider_system_fingerprint": "",
+    "max_parallel": 1,
+    "initial_retry_failed": false,
+    "master_seed_derivation": {
+      "function": "derive_seed",
+      "source_master_seed": 20260802,
+      "replicate_index": 1,
+      "namespace": "pilot-extension-master-v1",
+      "derived_master_seed": 188668086
+    },
+    "physical_to_canonical_block_map": {
+      "R001": "P004",
+      "R002": "P005"
+    },
+    "seed_ledger_expected": [
+      {
+        "replicate_index": 1,
+        "replicate_id": "R001",
+        "canonical_block_id": "P004",
+        "simulation_seed": 4187293815,
+        "requested_llm_seed": 836958817,
+        "python_hash_seed": 227373458
+      },
+      {
+        "replicate_index": 2,
+        "replicate_id": "R002",
+        "canonical_block_id": "P005",
+        "simulation_seed": 4272437146,
+        "requested_llm_seed": 3270415158,
+        "python_hash_seed": 1090171497
+      }
+    ]
+  },
+  "launch_contract": {
+    "initial_launch_permitted_after_stage": "I.5B-2",
+    "initial_launch_retry_failed_flag": false,
+    "resume_only_same_extension_batch": true,
+    "resume_requires_exact_same_arguments": true,
+    "resume_retry_failed_flag": true,
+    "base_batch_must_not_change": true,
+    "latest_must_not_change": true,
+    "serial_execution_only": true,
+    "smoke_inclusion_prohibited": true
+  },
+  "analysis_contract": {
+    "engineering_unit": "canonical_pilot_block",
+    "target_engineering_blocks": 5,
+    "merge_batches": [
+      "task005-real-pilot-v1",
+      "task005-real-pilot-extension-v1"
+    ],
+    "canonical_block_ids": [
+      "P001",
+      "P002",
+      "P003",
+      "P004",
+      "P005"
+    ],
+    "final_successful_attempts_only": true,
+    "pair_by_exp_id_within_block": true,
+    "control_local_did_structurally_na": true,
+    "strategy_and_factorial_inference_performed": false,
+    "purpose": "re-estimate pilot SD and precision feasibility only"
+  },
+  "gates": {
+    "engineering_extension_launched": false,
+    "formal_target_n_frozen": false,
+    "formal_llm_launch_permitted": false,
+    "statistical_inference_performed": false
+  }
+}

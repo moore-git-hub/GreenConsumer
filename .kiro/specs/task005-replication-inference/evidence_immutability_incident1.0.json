@@ -1,0 +1,12 @@
+{
+  "artifact": "evidence_immutability_incident1.0",
+  "incident": "historical diagnostic result overwritten during schema evolution",
+  "history_rewritten": false,
+  "historical_result_restored": true,
+  "new_schema_result_versioned": true,
+  "scientific_outcomes_affected": false,
+  "real_llm_data_affected": false,
+  "historical_result": "production_path_fake_model_smoke_v2_result1.0.json",
+  "new_schema_result": "production_path_fake_model_smoke_v4_result1.0.json",
+  "created_for": "TASK_005 pilot-v2 activation readiness"
+}

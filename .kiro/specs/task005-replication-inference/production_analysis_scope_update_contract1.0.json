@@ -1,0 +1,158 @@
+{
+  "analysis_schema": {
+    "current": "1.0",
+    "reason": "Schema 1.0 encoded all three metrics as primary/confirmatory. Schema 1.1 encodes two confirmatory primary metrics plus one exploratory mechanism metric.",
+    "required_after_update": "1.1"
+  },
+  "classification": "production-analysis-scope-update-contract",
+  "factorial_estimands": {
+    "confirmatory_contrasts": [
+      "Content",
+      "Channel",
+      "Timing",
+      "Content_x_Channel",
+      "Content_x_Timing",
+      "Channel_x_Timing"
+    ],
+    "confirmatory_family": "factorial_confirmatory_12",
+    "confirmatory_rows": 12,
+    "local_did_confidence_interval": true,
+    "local_did_holm_p_value": false,
+    "local_did_raw_p_value": false,
+    "local_did_rows_all_contrasts": 7,
+    "local_did_targeted_mechanism_rows": 6,
+    "three_way_analysis_tier": "exploratory_secondary",
+    "three_way_confirmatory_metric_rows": 2,
+    "three_way_family": "factorial_three_way_2",
+    "three_way_holm_reporting_permitted": true,
+    "total_rows": 21
+  },
+  "formal_sample_contract": {
+    "engineering_block_ids_forbidden_in_formal_batch": [
+      "P001",
+      "P002",
+      "P003",
+      "P004",
+      "P005"
+    ],
+    "invalid_or_failed_attempts_count_toward_valid_target": false,
+    "must_equal_frozen_target": true,
+    "target_valid_blocks": 24
+  },
+  "inference_contract": {
+    "alpha": 0.05,
+    "ci": "95% Student-t mean CI",
+    "confirmatory_holm_families": {
+      "factorial_confirmatory_12": 12,
+      "strategy_primary_16": 16
+    },
+    "exploratory_three_way_holm_family": {
+      "factorial_three_way_2": 2
+    },
+    "local_did_confirmatory_p_values_permitted": false,
+    "local_did_in_confirmatory_holm": false,
+    "test": "two-sided one-sample Student-t against 0"
+  },
+  "metadata_contract": {
+    "must_report_confirmatory_holm_families": true,
+    "must_report_confirmatory_primary_metrics": true,
+    "must_report_engineering_blocks_excluded": true,
+    "must_report_exploratory_mechanism_metrics": true,
+    "must_report_formal_target_n_24": true,
+    "must_report_local_did_confirmatory_false": true
+  },
+  "metric_roles": {
+    "all_analysis_metrics": [
+      "final_trust_gain_vs_control",
+      "post_scandal_auc_gain_vs_control",
+      "local_trust_effect_did_3"
+    ],
+    "confirmatory_primary_metrics": [
+      "final_trust_gain_vs_control",
+      "post_scandal_auc_gain_vs_control"
+    ],
+    "exploratory_mechanism_metrics": [
+      "local_trust_effect_did_3"
+    ]
+  },
+  "parent": {
+    "current_replication_analysis_sha256": "57300D2C3D5111CCD25AE85F38F0C181536ABF4FB9FEFD52CEC639C10E60237E",
+    "formal_n_freeze_head": "5f0c5e9db45692a731fbd3a7d4d59ae3fe09141b",
+    "formal_n_freeze_sha256": "05C04F8762E816A616631055DCC684A7E2CB1B2BB3A28C114E5AA6EA3E6EACF6",
+    "scope_amendment_sha256": "C0925334381A16328843C7D39483BA65E3859EF1002B2383454C00BCC14B6C5F"
+  },
+  "pareto_and_ranking": {
+    "confirmatory_significance_claim": false,
+    "legacy_output_filename_formal_pareto_csv_may_be_retained": true,
+    "local_did_may_drive_composite_rank": false,
+    "may_drive_formal_sample_size": false,
+    "metric_basis_after_update": [
+      "final_trust_gain_vs_control",
+      "post_scandal_auc_gain_vs_control"
+    ],
+    "status": "exploratory_secondary"
+  },
+  "preimplementation_expected_defects": [
+    "analysis_schema_version_is_1.0",
+    "all_three_metrics_are_primary",
+    "strategy_family_is_strategy_primary_24",
+    "factorial_confirmatory_family_is_factorial_confirmatory_18",
+    "three_way_family_is_factorial_three_way_3",
+    "local_did_receives_raw_p_values",
+    "local_did_participates_in_confirmatory_holm",
+    "pareto_and_rank_use_local_did",
+    "target_valid_blocks_not_enforced_as_24",
+    "P001_P005_not_explicitly_forbidden_as_formal_block_ids"
+  ],
+  "preregistration_contract": {
+    "analysis_schema_version": "1.1",
+    "exploratory_metrics_exact": [
+      "local_trust_effect_did_3"
+    ],
+    "primary_metrics_exact": [
+      "final_trust_gain_vs_control",
+      "post_scandal_auc_gain_vs_control"
+    ],
+    "target_valid_blocks_exact": 24
+  },
+  "purpose": "Freeze the exact production replication-analysis behavior required by the pre-formal scope amendment and N=24 freeze before editing replication_analysis.py.",
+  "regression_requirements": {
+    "preserve_atomic_output_publish": true,
+    "preserve_condition_count_9": true,
+    "preserve_factorial_contrasts_7": true,
+    "preserve_offline_no_network_behavior": true,
+    "preserve_strategy_count_8": true,
+    "preserve_student_t_inference_for_confirmatory_estimands": true,
+    "preserve_whole_block_bootstrap": true,
+    "preserve_whole_block_independent_unit": true
+  },
+  "schema_version": "1.0",
+  "stage": "TASK_005 Stage I.5C-4A",
+  "stage_gates": {
+    "formal_llm_launch_permitted": false,
+    "formal_target_n_frozen": true,
+    "formal_valid_block_target_n": 24,
+    "production_analysis_acceptance_passed": false,
+    "production_analysis_updated": false,
+    "real_llm_calls_permitted_in_this_stage": false,
+    "scope_update_contract_frozen": true
+  },
+  "status": "frozen",
+  "strategy_estimands": {
+    "confirmatory_family": "strategy_primary_16",
+    "confirmatory_rows": 16,
+    "confirmatory_rows_holm_p_value": true,
+    "confirmatory_rows_raw_p_value": true,
+    "exploratory_local_did_rows": 8,
+    "local_did_confidence_interval": true,
+    "local_did_holm_p_value": false,
+    "local_did_point_summary": true,
+    "local_did_raw_p_value": false,
+    "required_role_columns": [
+      "analysis_tier",
+      "confirmatory",
+      "p_value_reporting_permitted"
+    ],
+    "total_rows": 24
+  }
+}

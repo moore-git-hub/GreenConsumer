@@ -1,0 +1,41 @@
+{
+  "activation_token": "TASK005_REAL_MANIPULATION_V1_ACTIVATE_20260809_01",
+  "authorized_timeline": "Tick5 crisis only",
+  "auto_retry": false,
+  "clarification_tick": 6,
+  "conditions": [
+    "NoClarification-Control",
+    "Rational-Hub-Immediate",
+    "Empathy-Hub-Immediate"
+  ],
+  "conditions_per_block": 3,
+  "content_interpretation": "composite message archetypes",
+  "credential": "environment only",
+  "formal_inference": false,
+  "master_seed": 2026080902,
+  "model": "qwen-plus",
+  "optional_stopping": false,
+  "p_values": false,
+  "pilot_id": "task005-real-manipulation-pilot-v1",
+  "provider": "OpenAIProvider",
+  "provider_seed_determinism": "UNKNOWN_NOT_GUARANTEED",
+  "replacement_replicates": false,
+  "replicates": [
+    "R001",
+    "R002"
+  ],
+  "schema_version": "1.0",
+  "source_sha256": {
+    ".kiro/specs/task005-replication-inference/mechanism_auditability_schema_amendment1.0.json": "300b629eeefab38ab4214f31e6351aec394189f38c1d6fcca4fe1ba25d5bbe99",
+    ".kiro/specs/task005-replication-inference/real_llm_manipulation_check_pilot_contract1.0.json": "0c2d4dbbeded14b63d0128111fb26500b2532cc323b6482e4f9a22f1aa9d04a1",
+    ".kiro/specs/task005-replication-inference/stimulus_integrity_amendment1.0.json": "4fe6cae60f790aacd7a4aa7e4ef274117c6306bde60df206eedc6f74a8a1ddd0",
+    "clarification_injector.py": "def9699bab0b682613e07f46dee6fe5e26f61312b833520d1467670a356b94c6",
+    "experiment_config.py": "8b33b2f9032fbf44542dc4efd2d6cc947323dc2e2b8e438cb2f914ce0c9fe87d",
+    "mechanism_v2.py": "39700f7e68658e87cdb59003be2734569049bc44d5481658e81007ebf94462c7",
+    "replication_config.py": "a3430810849e418b5ff9feda3fbd4df071b942e59b9a0d02e4d0e19bcce3aa0c",
+    "run_experiments.py": "d595a35badac1f675a2bbd1c2365c6db0f76e5fb8c838210504cb3fead2e4cf5",
+    "run_task005_real_manipulation_pilot_v1.py": "00bfa10930da4fb9b62272e11833cb0d28c043600532d0e994c7ae969a9bbd5e",
+    "simulation_core.py": "d24f0e8eae05b992e7d214ebce02164b16b9767f37ccfd7bd65c739ba7b548c4"
+  },
+  "temperature": 0.3
+}

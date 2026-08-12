@@ -1,0 +1,299 @@
+[
+  {
+    "index": 1,
+    "file": "Acerbi和Stubbersfield - 2023 - Large language models show human-like content biases in transmission chain experiments.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Acerbi和Stubbersfield - 2023 - Large language models show human-like content biases in transmission chain experiments.pdf",
+    "pages": 5,
+    "chars": 30702,
+    "status": "ok",
+    "text_file": "01.txt"
+  },
+  {
+    "index": 2,
+    "file": "Adornetto 等 - 2025 - Generative Agents in Agent-Based Modeling Overview, Validation, and Emerging Challenges.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Adornetto 等 - 2025 - Generative Agents in Agent-Based Modeling Overview, Validation, and Emerging Challenges.pdf",
+    "pages": 20,
+    "chars": 125784,
+    "status": "ok",
+    "text_file": "02.txt"
+  },
+  {
+    "index": 3,
+    "file": "Bail - 2024 - Can Generative AI improve social science.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Bail - 2024 - Can Generative AI improve social science.pdf",
+    "pages": 10,
+    "chars": 75571,
+    "status": "ok",
+    "text_file": "03.txt"
+  },
+  {
+    "index": 4,
+    "file": "Cibrián 等 - 2025 - An agent-based approach for the automatic generation of valid SysMLv2 Models in industrial contexts.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Cibrián 等 - 2025 - An agent-based approach for the automatic generation of valid SysMLv2 Models in industrial contexts.pdf",
+    "pages": 12,
+    "chars": 80129,
+    "status": "ok",
+    "text_file": "04.txt"
+  },
+  {
+    "index": 5,
+    "file": "Ferraro 等 - 2025 - Generative Agent-Based Modeling with Large Language Models for insider threat detection.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Ferraro 等 - 2025 - Generative Agent-Based Modeling with Large Language Models for insider threat detection.pdf",
+    "pages": 11,
+    "chars": 66860,
+    "status": "ok",
+    "text_file": "05.txt"
+  },
+  {
+    "index": 6,
+    "file": "Gao 等 - 2024 - Large language models empowered agent-based modeling and simulation a survey and perspectives.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Gao 等 - 2024 - Large language models empowered agent-based modeling and simulation a survey and perspectives.pdf",
+    "pages": 24,
+    "chars": 166972,
+    "status": "ok",
+    "text_file": "06.txt"
+  },
+  {
+    "index": 7,
+    "file": "Li 等 - 2025 - Position Simulating Society Requires Simulating Thought.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Li 等 - 2025 - Position Simulating Society Requires Simulating Thought.pdf",
+    "pages": 15,
+    "chars": 59762,
+    "status": "ok",
+    "text_file": "07.txt"
+  },
+  {
+    "index": 8,
+    "file": "Lu 等 - 2024 - LLMs and generative agent-based models for complex systems research.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Lu 等 - 2024 - LLMs and generative agent-based models for complex systems research.pdf",
+    "pages": 11,
+    "chars": 59492,
+    "status": "ok",
+    "text_file": "08.txt"
+  },
+  {
+    "index": 9,
+    "file": "Rahwan 等 - 2019 - Machine behaviour.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Rahwan 等 - 2019 - Machine behaviour.pdf",
+    "pages": 10,
+    "chars": 80983,
+    "status": "ok",
+    "text_file": "09.txt"
+  },
+  {
+    "index": 10,
+    "file": "Rand和Rust - 2011 - Agent-based modeling in marketing Guidelines for rigor.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Rand和Rust - 2011 - Agent-based modeling in marketing Guidelines for rigor.pdf",
+    "pages": 13,
+    "chars": 93877,
+    "status": "ok",
+    "text_file": "10.txt"
+  },
+  {
+    "index": 11,
+    "file": "SadeqiArani和Roozmand - 2023 - A Review of Three Decades Using Agent-Based Modelling and Simulation in Marketing and Consumer Behav.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\SadeqiArani和Roozmand - 2023 - A Review of Three Decades Using Agent-Based Modelling and Simulation in Marketing and Consumer Behav.pdf",
+    "pages": 17,
+    "chars": 57926,
+    "status": "ok",
+    "text_file": "11.txt"
+  },
+  {
+    "index": 12,
+    "file": "Song和Li - 2025 - Improving Price Generation A Novel Agent-Based Model for Capturing Persistent Jumps in Asset Prices.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Song和Li - 2025 - Improving Price Generation A Novel Agent-Based Model for Capturing Persistent Jumps in Asset Prices.pdf",
+    "pages": 32,
+    "chars": 86745,
+    "status": "ok",
+    "text_file": "12.txt"
+  },
+  {
+    "index": 13,
+    "file": "Von Hoene 等 - 2025 - Synthetic population generation with public health characteristics for spatial agent-based models.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Von Hoene 等 - 2025 - Synthetic population generation with public health characteristics for spatial agent-based models.pdf",
+    "pages": 22,
+    "chars": 80639,
+    "status": "ok",
+    "text_file": "13.txt"
+  },
+  {
+    "index": 14,
+    "file": "Wang - 2010 - The emergence of intelligent enterprises from CPS to CPSS.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Wang - 2010 - The emergence of intelligent enterprises from CPS to CPSS.pdf",
+    "pages": 5,
+    "chars": 12458,
+    "status": "ok",
+    "text_file": "14.txt"
+  },
+  {
+    "index": 15,
+    "file": "Xin 等 - 2025 - Prompts to layouts Hybrid graph neural network and agent-based model for generative architectural d.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Xin 等 - 2025 - Prompts to layouts Hybrid graph neural network and agent-based model for generative architectural d.pdf",
+    "pages": 21,
+    "chars": 103772,
+    "status": "ok",
+    "text_file": "15.txt"
+  },
+  {
+    "index": 16,
+    "file": "Zhang 等 - 2025 - LLM-AIDSim LLM-Enhanced Agent-Based Influence Diffusion Simulation in Social Networks.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\Zhang 等 - 2025 - LLM-AIDSim LLM-Enhanced Agent-Based Influence Diffusion Simulation in Social Networks.pdf",
+    "pages": 28,
+    "chars": 99235,
+    "status": "ok",
+    "text_file": "16.txt"
+  },
+  {
+    "index": 17,
+    "file": "于同洋 等 - 2010 - 基于多智能体的网游产品扩散特性.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\于同洋 等 - 2010 - 基于多智能体的网游产品扩散特性.pdf",
+    "pages": 9,
+    "chars": 189,
+    "status": "low_text",
+    "text_file": "17.txt"
+  },
+  {
+    "index": 18,
+    "file": "从ABM到GABM——生成式人工智能对社会模拟的重塑_王志超.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\从ABM到GABM——生成式人工智能对社会模拟的重塑_王志超.pdf",
+    "pages": 21,
+    "chars": 25909,
+    "status": "ok",
+    "text_file": "18.txt"
+  },
+  {
+    "index": 19,
+    "file": "基于Multi-agent的消费者风险感知偏差演化模型与仿真_张景祥.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\基于Multi-agent的消费者风险感知偏差演化模型与仿真_张景祥.pdf",
+    "pages": 3,
+    "chars": 6846,
+    "status": "ok",
+    "text_file": "19.txt"
+  },
+  {
+    "index": 20,
+    "file": "复杂网络上消息竞争传播与传染病扩散耦合模型研究_刘非凡.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\复杂网络上消息竞争传播与传染病扩散耦合模型研究_刘非凡.pdf",
+    "pages": 12,
+    "chars": 28266,
+    "status": "ok",
+    "text_file": "20.txt"
+  },
+  {
+    "index": 21,
+    "file": "复杂网络上竞争信息传播对绿色消费的影响_刘佼.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\复杂网络上竞争信息传播对绿色消费的影响_刘佼.pdf",
+    "pages": 9,
+    "chars": 15531,
+    "status": "ok",
+    "text_file": "21.txt"
+  },
+  {
+    "index": 22,
+    "file": "复杂网络中信息传播规律及管理应用研究_张青敏.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\复杂网络中信息传播规律及管理应用研究_张青敏.pdf",
+    "pages": 6,
+    "chars": 12667,
+    "status": "ok",
+    "text_file": "22.txt"
+  },
+  {
+    "index": 23,
+    "file": "大语言模型引致知识生产方式变革与决策范式的重构_米加宁.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\大语言模型引致知识生产方式变革与决策范式的重构_米加宁.pdf",
+    "pages": 21,
+    "chars": 59678,
+    "status": "ok",
+    "text_file": "23.txt"
+  },
+  {
+    "index": 24,
+    "file": "孟晓飞 等 - 2003 - 网络环境下知识扩散的多智能体模型研究.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\孟晓飞 等 - 2003 - 网络环境下知识扩散的多智能体模型研究.pdf",
+    "pages": 6,
+    "chars": 10373,
+    "status": "ok",
+    "text_file": "24.txt"
+  },
+  {
+    "index": 25,
+    "file": "智能体仿真模拟_推进行动与结构互构研究_吕鹏.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\智能体仿真模拟_推进行动与结构互构研究_吕鹏.pdf",
+    "pages": 25,
+    "chars": 31831,
+    "status": "ok",
+    "text_file": "25.txt"
+  },
+  {
+    "index": 26,
+    "file": "李德智 等 - 2025 - 智慧城市建设市民安全感的动态仿真研究.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\李德智 等 - 2025 - 智慧城市建设市民安全感的动态仿真研究.pdf",
+    "pages": 7,
+    "chars": 13299,
+    "status": "ok",
+    "text_file": "26.txt"
+  },
+  {
+    "index": 27,
+    "file": "生成式人工智能对高校图书馆的影响及应对策略——以ChatGPT大型语言模型为例_邱瑾.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\生成式人工智能对高校图书馆的影响及应对策略——以ChatGPT大型语言模型为例_邱瑾.pdf",
+    "pages": 9,
+    "chars": 30342,
+    "status": "ok",
+    "text_file": "27.txt"
+  },
+  {
+    "index": 28,
+    "file": "社会网络视角下消费者行为建模与仿真研究_徐华 (1).pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\社会网络视角下消费者行为建模与仿真研究_徐华 (1).pdf",
+    "pages": 47,
+    "chars": 96945,
+    "status": "ok",
+    "text_file": "28.txt"
+  },
+  {
+    "index": 29,
+    "file": "绿色消费会传染吗_——绿色消费的社会扩散效应及其形成机制_王建明.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\绿色消费会传染吗_——绿色消费的社会扩散效应及其形成机制_王建明.pdf",
+    "pages": 14,
+    "chars": 33470,
+    "status": "ok",
+    "text_file": "29.txt"
+  },
+  {
+    "index": 30,
+    "file": "艾滋病传播的智能体与GIS的集成模型研究_杨昆.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\艾滋病传播的智能体与GIS的集成模型研究_杨昆.pdf",
+    "pages": 7,
+    "chars": 12524,
+    "status": "ok",
+    "text_file": "30.txt"
+  },
+  {
+    "index": 31,
+    "file": "负面口碑、社会互动与创新扩散：基于小世界网络的仿真_邢梦珏.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\负面口碑、社会互动与创新扩散：基于小世界网络的仿真_邢梦珏.pdf",
+    "pages": 8,
+    "chars": 19938,
+    "status": "ok",
+    "text_file": "31.txt"
+  },
+  {
+    "index": 32,
+    "file": "邢绍艳和朱侯 - 2018 - 信息变异下的谣言传播及其漂移机制研究.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\邢绍艳和朱侯 - 2018 - 信息变异下的谣言传播及其漂移机制研究.pdf",
+    "pages": 7,
+    "chars": 16612,
+    "status": "ok",
+    "text_file": "32.txt"
+  },
+  {
+    "index": 33,
+    "file": "魏莹 等 - 2018 - 线上社交网络上信息扩散中“隐形”关键节点的识别及影响力评价.pdf",
+    "path": "C:\\Users\\Ziye_Li\\Desktop\\新建文件夹\\魏莹 等 - 2018 - 线上社交网络上信息扩散中“隐形”关键节点的识别及影响力评价.pdf",
+    "pages": 6,
+    "chars": 16419,
+    "status": "ok",
+    "text_file": "33.txt"
+  }
+]

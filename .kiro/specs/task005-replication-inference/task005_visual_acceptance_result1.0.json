@@ -1,0 +1,120 @@
+{
+  "schema_version": "task005_visual_acceptance_result1.0",
+  "status": "frozen_post_data_descriptive_diagnostic",
+  "task": "TASK_005",
+  "purpose": "Assess auditability, temporal coherence, dynamic non-degeneracy and visual face validity before formal-v2 release work resumes.",
+  "source": {
+    "pilot_id": "task005-real-variance-pilot-v3",
+    "pilot_blocks": 10,
+    "conditions_per_block": 9,
+    "source_real_llm_calls": 1896,
+    "real_llm_calls_added_for_visual_review": 0,
+    "source_archive_sha256": "f2c1d769b25d3c74bad47b07b2de6fdc534852ef511b64771a3d717326e81694",
+    "all_block_estimands_sha256": "9c687287fe00c57bab933f00f1d77bb41d607190c074996204662673f943bfed",
+    "all_condition_metrics_sha256": "3ed01acc6f99da6921b3f8f9e2c41ca3da3f46fc0270062883eb9fc31c5d8519",
+    "recomputation_script": "analysis/task005_visual_acceptance.py"
+  },
+  "scientific_firewall": {
+    "descriptive_only": true,
+    "formal_inference": false,
+    "p_values": false,
+    "strategy_winner_selection": false,
+    "pilot_effect_used_to_change_mde_or_n": false,
+    "mechanism_or_stimulus_tuning_until_desired_direction": false,
+    "formal_reuse": false,
+    "diagnostic_rules_were_created_after_pilot_data_generation": true
+  },
+  "gates": {
+    "audit_integrity": "PASS",
+    "temporal_onset_and_pretreatment_alignment": "PASS",
+    "trust_bounds_and_finiteness": "PASS",
+    "purchase_endpoint_resolution": "PASS_WITH_LOW_RESPONSE",
+    "visual_acceptance": "PASS_WITH_SCOPE_LOCK"
+  },
+  "dynamic_checks": {
+    "pretreatment_max_within_block_condition_range": 0.0,
+    "control_tick4_to_tick5_trust_change": -0.23774,
+    "strategy_tick4_to_tick5_trust_change": -0.23774,
+    "overall_clarification_minus_control_trust_tick30": 0.07526875,
+    "rational_minus_empathy_trust_tick30": 0.0733875,
+    "immediate_minus_delayed_trust_tick6": 0.2267225,
+    "immediate_minus_delayed_trust_tick10": 0.076975,
+    "immediate_minus_delayed_trust_tick30": 0.0588375,
+    "purchase_strategy_minus_control_tick30": 0.00625,
+    "trust_range": [
+      5.6567,
+      6.2562
+    ]
+  },
+  "primary_descriptives": {
+    "P1_OVERALL_CLARIFICATION_POST_TRUST": {
+      "mean": 0.10555988298484129,
+      "sd": 0.0308323595637223,
+      "mde": 0.15,
+      "positive_blocks": 10,
+      "blocks": 10,
+      "descriptive_mean_over_mde": 0.7037325532322752
+    },
+    "P2_CONTENT_POST_TRUST": {
+      "mean": 0.09557045208687595,
+      "sd": 0.042312929082541625,
+      "mde": 0.15,
+      "positive_blocks": 10,
+      "blocks": 10,
+      "descriptive_mean_over_mde": 0.6371363472458397
+    },
+    "P3_TIMING_EARLY_TRUST": {
+      "mean": 0.19133684558286915,
+      "sd": 0.06827275321383339,
+      "mde": 0.15,
+      "positive_blocks": 10,
+      "blocks": 10,
+      "descriptive_mean_over_mde": 1.275578970552461
+    },
+    "P4_CHANNEL_REACH": {
+      "mean": 0.27,
+      "sd": 0.17191729277636836,
+      "mde": 0.15,
+      "positive_blocks": 10,
+      "blocks": 10,
+      "descriptive_mean_over_mde": 1.8
+    },
+    "P5_OVERALL_CLARIFICATION_PURCHASE": {
+      "mean": 0.006249999999999989,
+      "sd": 0.017430417219459902,
+      "mde": 0.05,
+      "positive_blocks": 5,
+      "zero_blocks": 4,
+      "negative_blocks": 1,
+      "blocks": 10,
+      "descriptive_mean_over_mde": 0.125,
+      "blocks_abs_ge_mde": 0
+    }
+  },
+  "secondary_descriptives": {
+    "hub_reach_mean": 0.875,
+    "random_reach_mean": 0.605,
+    "channel_post_trust_mean": 0.022091362558053884,
+    "channel_purchase_t30_mean": -0.01,
+    "strategy_purchase_cells_equal_matched_control": 57,
+    "strategy_purchase_cells_total": 80,
+    "strategy_purchase_equal_share": 0.7125
+  },
+  "construct_warning": {
+    "rational_hypocrisy_perceived_rate": 1.0,
+    "empathy_hypocrisy_perceived_rate": 1.0,
+    "implication": "The present data cannot support a differential hypocrisy-mediation claim."
+  },
+  "scope_locks": [
+    "P5 may be unsupported; a weak or null purchase result is not a licence to retune the frozen model.",
+    "P4 identifies reach, not downstream trust or purchase conversion.",
+    "Universal hypocrisy saturation forbids a differential hypocrisy-mediation claim in the present design.",
+    "Pilot means and signs cannot alter the frozen MDEs, N=46, P1-P5 family or failure policy."
+  ],
+  "decision": {
+    "visual_mechanism_face_validity": "ACCEPTABLE_WITH_SCOPE_LOCK",
+    "formal_v2_execution_authorized": false,
+    "formal_v2_release_chain_repair_still_required": true,
+    "new_pilot_authorized": false
+  }
+}

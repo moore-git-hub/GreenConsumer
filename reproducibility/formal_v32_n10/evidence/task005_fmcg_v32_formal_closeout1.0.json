@@ -1,0 +1,117 @@
+{
+  "confirmatory_family": {
+    "P1": {
+      "ci95": [
+        0.307770232035874,
+        0.4001687343376001
+      ],
+      "holm_adjusted_p": 9.590740645424966e-08,
+      "holm_reject": true,
+      "managerial_MDE": 0.15,
+      "managerially_relevant": true,
+      "mean": 0.353969483186737
+    },
+    "P2": {
+      "ci95": [
+        0.0208775931813081,
+        0.1136097256410003
+      ],
+      "holm_adjusted_p": 0.0095177804198281,
+      "holm_reject": true,
+      "managerial_MDE": 0.15,
+      "managerially_relevant": false,
+      "mean": 0.0672436594111542
+    },
+    "P5": {
+      "ci95": [
+        0.0165804310266879,
+        0.0233259634982343
+      ],
+      "holm_adjusted_p": 6.050920061832877e-07,
+      "holm_reject": true,
+      "managerial_MDE": 0.05,
+      "managerially_relevant": false,
+      "mean": 0.0199531972624611
+    },
+    "estimands": [
+      "P1_OVERALL_CLARIFICATION_POST_TRUST_V32",
+      "P2_CONTENT_POST_TRUST_V32",
+      "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32"
+    ],
+    "test": "block-level two-sided one-sample t-test vs 0; Holm FWER 0.05 across exactly P1/P2/P5"
+  },
+  "execution": {
+    "F011_or_later_forbidden": true,
+    "attempt_blocks": 10,
+    "engineering_blocks_reused": false,
+    "formal_block_ids": [
+      "F001",
+      "F002",
+      "F003",
+      "F004",
+      "F005",
+      "F006",
+      "F007",
+      "F008",
+      "F009",
+      "F010"
+    ],
+    "no_further_formal_blocks_permitted": true,
+    "optional_stopping_used": false,
+    "planned_N_achieved": true,
+    "provider_request_ceiling": 3000,
+    "real_provider_requests": 2051,
+    "replacement_used": false,
+    "valid_blocks": 10
+  },
+  "exploratory_mechanistic": {
+    "P3": {
+      "SD": 0.1314027735396474,
+      "max": 0.7620313201161224,
+      "mean": 0.56936295457253,
+      "median": 0.5951625430801641,
+      "min": 0.3677398087708665,
+      "p_values_computed": false
+    },
+    "P4": {
+      "SD": 0.2147996482513155,
+      "claim_scope": "clarification reach mechanism only; not direct persuasion or purchase",
+      "max": 0.7,
+      "mean": 0.365,
+      "median": 0.3499999999999999,
+      "min": -0.05,
+      "p_values_computed": false
+    },
+    "estimands": [
+      "P3_TIMING_PRE_DELAY_TRUST_V32",
+      "P4_CHANNEL_REACH_V32"
+    ]
+  },
+  "external_api_calls_during_closeout": 0,
+  "formal_batch_id": "task005-fmcg-v32-formal-n10",
+  "frozen_design_artifact_sha256": {
+    "task005_fmcg_v32_formal_analysis_contract1.0.json": "98e62fdb4e691b8479c9ae6fe01aa614e67c2cec4e90ea6e1f56f62ca8569a1d",
+    "task005_fmcg_v32_formal_execution_authorization1.0.json": "96e2c83565abac9a6ad6997e2cb2b7ba30993f316fdcc46f8b4a523ed80c9cbb",
+    "task005_fmcg_v32_formal_launch_contract1.0.json": "d4368a2fa7e22cec724323071d986fcdca9feb006c8e44bf1a632204fc62c73c",
+    "task005_fmcg_v32_formal_runtime_contract1.0.json": "c587c51bf760faa94b4d96d0463f249723bd1941549da9c1bafb2a3b285c47ad",
+    "task005_fmcg_v32_formal_scope_freeze1.0.json": "74c1d06b84b0677d7681be429e11a614860de3abdc7a46b247140c9e5593b16e",
+    "task005_fmcg_v32_formal_seed_ledger1.0.csv": "686053552ce77833bd2ade93f0ba33057293d7fe7888836d6d2744624c852781",
+    "task005_fmcg_v32_n10_design_power_check1.0.json": "c06dc93f191f5edcb10f932e4c3dddc522e6a0f778a1d28443d25b34fba71572"
+  },
+  "input_sha256": {
+    "formal_analysis_summary.json": "99feb7153e2ad8c29e715c830c451ed99f951e78cb5c38dab0a516d35a363109",
+    "formal_attempt_marker.json": "3bbeee391ec413098477754ca0dae95992acd608c8698ff5aaedb6d4b7bfc535",
+    "formal_batch_summary.json": "19383467109324fd5bad6a105dde6079fc654eff68f8a4b23e52c255f1b37eac",
+    "formal_block_estimands.csv": "1c023d4c1ef50e4a8dfa53be1dab78a776ceadbf69768346bab396633b104129",
+    "formal_confirmatory_results.csv": "17c8ad54d26e815b28d22d76c0093466714d84a80c39b719bab61412f6cd179a",
+    "formal_exploratory_results.csv": "3316784906b6dc14c761ad55430a9e76842a5d46f125cedd6d2ca46ab53f6903"
+  },
+  "interpretation_scope": "stochastic replication uncertainty within the frozen GABM; not direct validation of real-world population effects",
+  "real_llm_calls_during_closeout": 0,
+  "scenario": "fmcg-scenario-3.2",
+  "schema_version": "task005_fmcg_v32_formal_closeout1.0",
+  "source_branch": "redesign/task005-mechanism-v2",
+  "source_head": "ef6567adaafcafcf3b9f6884295f509a05ed727e",
+  "status": "CLOSED_VALID_N10",
+  "task": "TASK_005"
+}

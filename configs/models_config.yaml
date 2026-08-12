@@ -1,6 +1,6 @@
-- name: OpenAIProvider
+﻿- name: OpenAIProvider
   model: qwen-plus
-  api_key: "sk-6647818e5c0a47bdbd8fd0d7e308deb9"
+  api_key: "__FROM_ENV_DASHSCOPE_API_KEY__"
   base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
   capabilities: ["chat"]
   temperature: 0.3

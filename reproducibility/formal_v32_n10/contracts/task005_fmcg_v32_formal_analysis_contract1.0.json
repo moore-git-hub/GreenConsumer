@@ -1,0 +1,69 @@
+{
+  "confirmatory": {
+    "directional_winner_assumption": false,
+    "estimands": [
+      "P1_OVERALL_CLARIFICATION_POST_TRUST_V32",
+      "P2_CONTENT_POST_TRUST_V32",
+      "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V32"
+    ],
+    "multiplicity": "Holm step-down FWER 0.05 across exactly P1, P2, P5",
+    "report": [
+      "N valid blocks",
+      "mean",
+      "SD",
+      "SE",
+      "95% ordinary CI",
+      "raw p",
+      "Holm-adjusted p",
+      "Holm reject",
+      "managerial MDE",
+      "managerial relevance classification"
+    ],
+    "test": "one-sample two-sided t-test versus 0 at block level"
+  },
+  "exploratory": {
+    "confirmatory_significance_claims": false,
+    "estimands": [
+      "P3_TIMING_PRE_DELAY_TRUST_V32",
+      "P4_CHANNEL_REACH_V32"
+    ],
+    "holm": false,
+    "p_values": false,
+    "report": [
+      "individual block values",
+      "mean",
+      "SD",
+      "median",
+      "IQR",
+      "min",
+      "max",
+      "trajectory/reach visualization"
+    ]
+  },
+  "failure_policy": {
+    "if_valid_blocks_below_10": "analyze only valid frozen attempts; mark planned_N_not_achieved=true; do not add F011",
+    "maximum_attempts": 10,
+    "minimum_valid_blocks_for_t_test": 3,
+    "optional_stopping": false,
+    "replacement": false
+  },
+  "formal_batch_id": "task005-fmcg-v32-formal-n10",
+  "formal_blocks_must_not_include": [
+    "visual preview engineering blocks",
+    "pilot3 R001-R003",
+    "variance continuation R004-R010"
+  ],
+  "independent_unit": "formal replication block",
+  "schema_version": "task005_fmcg_v32_formal_analysis_contract1.0",
+  "status": "FROZEN",
+  "task": "TASK_005",
+  "valid_block_rule": {
+    "18_offline_demand_conditions_complete": true,
+    "600_mechanism_rows_each": true,
+    "all_semantic_audits_pass": true,
+    "block_valid_only_if_all_9_cognitive_conditions_complete": true,
+    "opportunity_schedule_and_draw_invariant": true,
+    "precrisis_alignment": true,
+    "zero_pretreatment_replay_misses": true
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0",
+  "stage": "TASK_005 Stage I.5C-3A",
+  "status": "frozen",
+  "classification": "preimplementation-synthetic-fixture-acceptance-contract",
+  "parent": {
+    "git_head": "7d9b9f534d35a4c250b73c31265d6bfcc5e55938",
+    "oc_design_sha256": "D01AE3375CB59B27A6554DE2612469896B605FB10AA294AB77653D4C4728DF29",
+    "fixture_sha256": "3D4F4C3CA596B2B42E4E4A5C5E7EBC573D2CF62CA9A6149E696423F18854AEA9"
+  },
+  "target_implementation": {
+    "module": "oc_calibration.py",
+    "cli": "run_oc_calibration.py",
+    "must_not_exist_at_preimplementation_baseline": true,
+    "required_public_api": [
+      "holm_adjust",
+      "wilson_interval",
+      "center_residual_matrix",
+      "draw_synthetic_blocks",
+      "one_sample_t_pvalues",
+      "student_t_confidence_intervals"
+    ]
+  },
+  "api_contract": {
+    "holm_adjust": {
+      "input": "1-D finite p-values in [0,1]",
+      "output": "same-length Holm-adjusted p-values in original order",
+      "properties": [
+        "monotone step-down adjustment",
+        "clipped to [0,1]"
+      ]
+    },
+    "wilson_interval": {
+      "input": "successes, trials, confidence=0.95",
+      "output": "two finite bounds in [0,1]"
+    },
+    "center_residual_matrix": {
+      "input": "2-D finite matrix with rows=blocks, columns=estimands",
+      "output": "same shape; each column mean zero within numerical tolerance"
+    },
+    "draw_synthetic_blocks": {
+      "signature": "draw_synthetic_blocks(centered_residuals, n_blocks, stress_multiplier, rng_seed, truth_vector=None)",
+      "rng": "numpy.random.Generator(numpy.random.PCG64(rng_seed))",
+      "draw_order": [
+        "row_indices = rng.integers(0, n_source_blocks, size=n_blocks)",
+        "sign_bits = rng.integers(0, 2, size=n_blocks)",
+        "signs = where(sign_bits==0, -1.0, +1.0)"
+      ],
+      "formula": "truth_vector + stress_multiplier * centered_residuals[row_indices] * signs[:,None]",
+      "whole_block_required": true,
+      "same_sign_for_all_28_coordinates_of_one_sampled_block": true
+    },
+    "one_sample_t_pvalues": {
+      "test": "two-sided one-sample Student-t against null 0",
+      "zero_variance_policy": "if all sample values equal 0 -> p=1; if zero variance with nonzero mean -> p=0"
+    },
+    "student_t_confidence_intervals": {
+      "confidence": 0.95,
+      "output": "lower and upper vectors by estimand"
+    }
+  },
+  "fixture_acceptance": {
+    "confirmatory_estimands": 28,
+    "strategy_family_size": 16,
+    "factorial_family_size": 12,
+    "source_blocks": 5,
+    "candidate_n": [
+      12,
+      16,
+      20,
+      24,
+      30,
+      40
+    ],
+    "variance_stress": [
+      1.0,
+      1.5,
+      2.0
+    ],
+    "deterministic_replay_required": true,
+    "whole_block_identity_test_required": true,
+    "stress_scaling_test_required": true,
+    "truth_shift_test_required": true,
+    "holm_known_case_test_required": true,
+    "wilson_known_case_test_required": true,
+    "t_test_reference_test_required": true,
+    "ci_reference_test_required": true,
+    "invalid_input_rejection_required": true,
+    "no_network_static_gate_required": true
+  },
+  "preimplementation_baseline": {
+    "expected_exit_code": 1,
+    "expected_pass": 31,
+    "expected_fail": 12,
+    "expected_warn": 0,
+    "failure_reason": "target implementation files intentionally absent"
+  },
+  "next_stage": {
+    "stage": "TASK_005 Stage I.5C-3B",
+    "action": "implement offline OC calibration engine against this frozen baseline",
+    "real_llm_calls_permitted": false,
+    "formal_target_n_frozen": false,
+    "formal_launch_permitted": false
+  },
+  "gates": {
+    "synthetic_fixture_frozen": true,
+    "acceptance_contract_frozen": true,
+    "implementation_complete": false,
+    "full_oc_calibration_permitted": false,
+    "formal_target_n_frozen": false,
+    "formal_llm_launch_permitted": false
+  }
+}

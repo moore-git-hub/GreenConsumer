@@ -1,0 +1,101 @@
+{
+  "schema_version": "2.0",
+  "status": "frozen-model-assumptions-before-post-amendment-pilot",
+  "rule": "defaults are model assumptions, not literature-derived coefficients",
+  "integrity": {
+    "tune_until_p_lt_0_05": false,
+    "hardcode_strategy_winner": false
+  },
+  "parameters": {
+    "memory_retention_per_tick": {
+      "default": 0.97,
+      "range": [
+        0.94,
+        0.99
+      ],
+      "source_type": "model_assumption"
+    },
+    "attitude_update_rate": {
+      "default": 0.25,
+      "range": [
+        0.1,
+        0.4
+      ],
+      "source_type": "model_assumption"
+    },
+    "subjective_norm_update_rate": {
+      "default": 0.2,
+      "range": [
+        0.1,
+        0.35
+      ],
+      "source_type": "model_assumption"
+    },
+    "trust_crisis_weight": {
+      "default": 1.0,
+      "range": [
+        0.5,
+        1.5
+      ],
+      "source_type": "model_assumption"
+    },
+    "trust_repair_weight": {
+      "default": 1.0,
+      "range": [
+        0.5,
+        1.5
+      ],
+      "source_type": "model_assumption"
+    },
+    "purchase_opportunity_rate": {
+      "default": 0.1,
+      "range": [
+        0.05,
+        0.15
+      ],
+      "source_type": "model_assumption"
+    },
+    "posting_opportunity_rate": {
+      "default": 0.45,
+      "range": [
+        0.2,
+        0.7
+      ],
+      "source_type": "model_assumption"
+    },
+    "posting_cooldown_ticks": {
+      "default": 2,
+      "range": [
+        1,
+        4
+      ],
+      "source_type": "model_assumption"
+    },
+    "public_exposure_rate": {
+      "default": 0.25,
+      "range": [
+        0.1,
+        0.5
+      ],
+      "source_type": "model_assumption",
+      "meaning": "baseline organic exposure to a public clarification; condition-blocked within replication"
+    },
+    "paid_seed_budget_k": {
+      "default": 3,
+      "range": [
+        2,
+        5
+      ],
+      "source_type": "model_assumption",
+      "meaning": "equal paid-amplification seed budget for Hub and Random"
+    }
+  },
+  "channel_mechanism": {
+    "public_exposure_condition_blocked": true,
+    "paid_seed_budget_equal_across_channels": true,
+    "paid_amplification": "one-hop downstream neighbors of paid seeds",
+    "hardcoded_hub_multiplier": false,
+    "hardcoded_random_multiplier": false,
+    "note": "Defaults are model assumptions, not literature-derived effect sizes; sensitivity test before formal freeze."
+  }
+}

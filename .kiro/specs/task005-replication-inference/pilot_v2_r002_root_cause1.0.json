@@ -1,0 +1,22 @@
+{
+  "artifact": "pilot_v2_r002_root_cause1.0",
+  "pilot_id": "task005-real-manipulation-pilot-v2",
+  "replicate_id": "R002",
+  "root_cause_identified": true,
+  "root_cause": "full-ledger validator incorrectly reused for standalone replicate subset serialization",
+  "provider_failure": false,
+  "network_failure": false,
+  "credential_failure": false,
+  "failure_stage": "after CALL_LOG_CREATED before SEED_LEDGER_WRITTEN",
+  "source_code_evidence": {
+    "runner_call": "write_seed_ledger_csv([dict(ledger_row)], block_dir / \"seed_ledger.csv\")",
+    "writer_contract": "write_seed_ledger_csv calls validate_seed_ledger(rows)",
+    "validator_contract": "validate_seed_ledger enumerates sorted rows with expected_index=1..N and requires replicate_index == expected_index",
+    "standalone_R002_case": "replicate_index=2 with subset length=1 necessarily raises ValueError"
+  },
+  "pilot_v1_R002_consistency": "pilot-v1 R002 used the same serialization pattern and is consistent with the same engineering defect",
+  "pilot_v1_retry_authorized": false,
+  "pilot_v2_retry_authorized": false,
+  "replacement_authorized": false,
+  "R003_authorized": false
+}

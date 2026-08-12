@@ -1,0 +1,505 @@
+{
+  "schema_version": "task005_purchase_demand_v31_replay1.0",
+  "created_at_utc": "2026-08-11T03:43:27.514330+00:00",
+  "status": "offline_structural_replay_not_formal_inference",
+  "source": {
+    "pilot_id": "task005-real-variance-pilot-v3",
+    "replication_blocks": 10,
+    "contract_path": ".kiro/specs/task005-replication-inference/purchase_demand_redesign_contract3.1.json",
+    "contract_sha256": "391fd8f773c5d4e31c7a6148b7812ae6d9ce03a6c33965d9a894f44aa3ce3eac",
+    "all_block_estimands_sha256": "9c687287fe00c57bab933f00f1d77bb41d607190c074996204662673f943bfed"
+  },
+  "firewall": {
+    "real_llm_calls_added": 0,
+    "p_values": false,
+    "formal_inference": false,
+    "winner_selection": false,
+    "coefficient_tuning": false,
+    "v2_rows_reusable_for_v31_formal": false
+  },
+  "legacy_structure_audit": {
+    "cognitive_agents_per_condition": 20,
+    "unique_recorded_pbc_values": [
+      0.5
+    ],
+    "pbc_is_constant": true,
+    "subjective_norm_update_code_fact": "mechanism_v2.py updates SN toward the combined message valence when at least one social observation exists; it does not measure perceived peer approval",
+    "mean_old_v3_post_crisis_opportunities_per_condition": 71.7,
+    "post_crisis_intention_contrast_vs_control_by_strategy": {
+      "Empathy-Hub-Delayed": -0.0038936736937585925,
+      "Empathy-Hub-Immediate": 0.003935450510798355,
+      "Empathy-Random-Delayed": -0.002502004458359963,
+      "Empathy-Random-Immediate": 0.004979305980802373,
+      "Rational-Hub-Delayed": 0.008246541766558424,
+      "Rational-Hub-Immediate": 0.02095602818035841,
+      "Rational-Random-Delayed": 0.009096538836608214,
+      "Rational-Random-Immediate": 0.015948335415276793
+    },
+    "min_strategy_intention_contrast": -0.0038936736937585925,
+    "max_strategy_intention_contrast": 0.02095602818035841
+  },
+  "v31_reference_parameters": {
+    "micro_buyers_per_archetype": 25,
+    "opportunity_intervals": [
+      5,
+      7,
+      10,
+      14
+    ],
+    "preference_sd": 0.6,
+    "baseline_pbc_sd": 0.4,
+    "initial_loyalty_sd": 0.6,
+    "pbc_behavior_weight": 1.0,
+    "loyalty_weight": 0.5,
+    "loyalty_retention": 0.85,
+    "loyalty_learning_rate": 0.2,
+    "facilitation_signal": 0.35,
+    "facilitation_start_tick": 6,
+    "facilitation_end_tick": 19
+  },
+  "structural_gates": {
+    "condition_invariant_opportunity_schedule": true,
+    "pre_treatment_max_absolute_curve_difference": 0.0,
+    "pre_treatment_curves_identical": true,
+    "reference_crisis_reduces_expected_choice": true,
+    "no_effect_probability_minus_intention": 0.0,
+    "no_effect_setting_collapses_to_intention": true,
+    "communication_directly_changes_pbc": false,
+    "facilitation_changes_trust_att_sn": false,
+    "p_values_computed": false,
+    "real_llm_calls_added": 0,
+    "all_required_gates_pass": true
+  },
+  "event_resolution": {
+    "old_v3_mean_post_crisis_opportunities_per_condition": 71.7,
+    "v31_mean_post_crisis_opportunities_per_condition": 1601.3,
+    "opportunity_count_multiplier": 22.333333333333332,
+    "old_full_period_event_resolution_percentage_points": 1.3947001394700138,
+    "v31_full_period_event_resolution_percentage_points": 0.06244925997626928,
+    "interpretation": "Resolution changes the granularity and Monte Carlo noise of realized curves; it does not enlarge the expected treatment effect."
+  },
+  "reference_decomposition_per_1000_opportunities": {
+    "by_strategy": [
+      {
+        "exp_id": "Empathy-Hub-Delayed",
+        "communication_only_per_1000": -3.843800699207478,
+        "facilitation_only_per_1000": 38.30904874144908,
+        "combined_total_per_1000": 34.43469370213881,
+        "interaction_per_1000": -0.03055434010279523
+      },
+      {
+        "exp_id": "Empathy-Hub-Immediate",
+        "communication_only_per_1000": 3.724803652412567,
+        "facilitation_only_per_1000": 38.30904874144908,
+        "combined_total_per_1000": 42.234223755711284,
+        "interaction_per_1000": 0.20037136184963833
+      },
+      {
+        "exp_id": "Empathy-Random-Delayed",
+        "communication_only_per_1000": -2.5083234926184805,
+        "facilitation_only_per_1000": 38.30904874144908,
+        "combined_total_per_1000": 35.86854751455437,
+        "interaction_per_1000": 0.06782226572377148
+      },
+      {
+        "exp_id": "Empathy-Random-Immediate",
+        "communication_only_per_1000": 4.580001312408544,
+        "facilitation_only_per_1000": 38.30904874144908,
+        "combined_total_per_1000": 43.147678472739926,
+        "interaction_per_1000": 0.2586284188823007
+      },
+      {
+        "exp_id": "Rational-Hub-Delayed",
+        "communication_only_per_1000": 7.782270098002197,
+        "facilitation_only_per_1000": 38.30904874144908,
+        "combined_total_per_1000": 46.208629944806454,
+        "interaction_per_1000": 0.11731110535517786
+      },
+      {
+        "exp_id": "Rational-Hub-Immediate",
+        "communication_only_per_1000": 20.15814298889218,
+        "facilitation_only_per_1000": 38.30904874144908,
+        "combined_total_per_1000": 58.804780535858356,
+        "interaction_per_1000": 0.33758880551709725
+      },
+      {
+        "exp_id": "Rational-Random-Delayed",
+        "communication_only_per_1000": 8.584094362812046,
+        "facilitation_only_per_1000": 38.30904874144908,
+        "combined_total_per_1000": 47.06032561547468,
+        "interaction_per_1000": 0.16718251121355943
+      },
+      {
+        "exp_id": "Rational-Random-Immediate",
+        "communication_only_per_1000": 15.27177675208219,
+        "facilitation_only_per_1000": 38.30904874144908,
+        "combined_total_per_1000": 53.850183451159495,
+        "interaction_per_1000": 0.26935795762822456
+      }
+    ],
+    "average_across_eight_strategies": {
+      "communication_only_per_1000": 6.718620621847971,
+      "facilitation_only_per_1000": 38.30904874144908,
+      "combined_total_per_1000": 45.201132874055425,
+      "interaction_per_1000": 0.1734635107583718
+    }
+  },
+  "sensitivity_scenarios": [
+    {
+      "scenario": "reference",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 0.6,
+      "baseline_pbc_sd": 0.4,
+      "initial_loyalty_sd": 0.6,
+      "pbc_behavior_weight": 1.0,
+      "loyalty_weight": 0.5,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.35,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.01766888343381051,
+      "control_post_expected_choice_share": 0.42277748527027975,
+      "communication_only_per_1000": 6.718620621847971,
+      "facilitation_only_per_1000": 38.30904874144908,
+      "combined_total_per_1000": 45.201132874055425,
+      "interaction_per_1000": 0.1734635107583718
+    },
+    {
+      "scenario": "preference_sd_0.00",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 0.0,
+      "baseline_pbc_sd": 0.4,
+      "initial_loyalty_sd": 0.6,
+      "pbc_behavior_weight": 1.0,
+      "loyalty_weight": 0.5,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.35,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.02590449942396056,
+      "control_post_expected_choice_share": 0.41569388425097226,
+      "communication_only_per_1000": 7.283665697119024,
+      "facilitation_only_per_1000": 41.70255906803483,
+      "combined_total_per_1000": 49.22643673002106,
+      "interaction_per_1000": 0.2402119648672041
+    },
+    {
+      "scenario": "preference_sd_1.00",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 1.0,
+      "baseline_pbc_sd": 0.4,
+      "initial_loyalty_sd": 0.6,
+      "pbc_behavior_weight": 1.0,
+      "loyalty_weight": 0.5,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.35,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.009175129949709093,
+      "control_post_expected_choice_share": 0.4316438415068952,
+      "communication_only_per_1000": 5.956181427871513,
+      "facilitation_only_per_1000": 34.143959848812635,
+      "combined_total_per_1000": 40.181952267088235,
+      "interaction_per_1000": 0.08181099040408674
+    },
+    {
+      "scenario": "baseline_pbc_sd_0.00",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 0.6,
+      "baseline_pbc_sd": 0.0,
+      "initial_loyalty_sd": 0.6,
+      "pbc_behavior_weight": 1.0,
+      "loyalty_weight": 0.5,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.35,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.0186285251605548,
+      "control_post_expected_choice_share": 0.42266538916769036,
+      "communication_only_per_1000": 6.743901461181701,
+      "facilitation_only_per_1000": 38.3741911219081,
+      "combined_total_per_1000": 45.278058305172465,
+      "interaction_per_1000": 0.15996572208266946
+    },
+    {
+      "scenario": "baseline_pbc_sd_0.80",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 0.6,
+      "baseline_pbc_sd": 0.8,
+      "initial_loyalty_sd": 0.6,
+      "pbc_behavior_weight": 1.0,
+      "loyalty_weight": 0.5,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.35,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.0167069098422421,
+      "control_post_expected_choice_share": 0.4228835829594061,
+      "communication_only_per_1000": 6.787919095587395,
+      "facilitation_only_per_1000": 38.33550507194411,
+      "combined_total_per_1000": 45.2396282062271,
+      "interaction_per_1000": 0.11620403869559703
+    },
+    {
+      "scenario": "initial_loyalty_sd_0.00",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 0.6,
+      "baseline_pbc_sd": 0.4,
+      "initial_loyalty_sd": 0.0,
+      "pbc_behavior_weight": 1.0,
+      "loyalty_weight": 0.5,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.35,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.016007848939469826,
+      "control_post_expected_choice_share": 0.4225165247182051,
+      "communication_only_per_1000": 6.791995112049872,
+      "facilitation_only_per_1000": 38.48786420991524,
+      "combined_total_per_1000": 45.37645870468583,
+      "interaction_per_1000": 0.09659938272072593
+    },
+    {
+      "scenario": "initial_loyalty_sd_1.00",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 0.6,
+      "baseline_pbc_sd": 0.4,
+      "initial_loyalty_sd": 1.0,
+      "pbc_behavior_weight": 1.0,
+      "loyalty_weight": 0.5,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.35,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.018388400123769744,
+      "control_post_expected_choice_share": 0.42282516130838943,
+      "communication_only_per_1000": 6.7345308622220745,
+      "facilitation_only_per_1000": 38.2258285071298,
+      "combined_total_per_1000": 45.08731660499404,
+      "interaction_per_1000": 0.1269572356421625
+    },
+    {
+      "scenario": "pbc_behavior_weight_0.00",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 0.6,
+      "baseline_pbc_sd": 0.4,
+      "initial_loyalty_sd": 0.6,
+      "pbc_behavior_weight": 0.0,
+      "loyalty_weight": 0.5,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.35,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.01766888343381051,
+      "control_post_expected_choice_share": 0.42277748527027975,
+      "communication_only_per_1000": 6.718620621847971,
+      "facilitation_only_per_1000": 14.247963084782157,
+      "combined_total_per_1000": 21.056088902725918,
+      "interaction_per_1000": 0.08950519609578905
+    },
+    {
+      "scenario": "pbc_behavior_weight_1.50",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 0.6,
+      "baseline_pbc_sd": 0.4,
+      "initial_loyalty_sd": 0.6,
+      "pbc_behavior_weight": 1.5,
+      "loyalty_weight": 0.5,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.35,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.01766888343381051,
+      "control_post_expected_choice_share": 0.42277748527027975,
+      "communication_only_per_1000": 6.718620621847971,
+      "facilitation_only_per_1000": 50.4988425936263,
+      "combined_total_per_1000": 57.304584768763114,
+      "interaction_per_1000": 0.08712155328884086
+    },
+    {
+      "scenario": "loyalty_weight_0.00",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 0.6,
+      "baseline_pbc_sd": 0.4,
+      "initial_loyalty_sd": 0.6,
+      "pbc_behavior_weight": 1.0,
+      "loyalty_weight": 0.0,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.35,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.016007848939469826,
+      "control_post_expected_choice_share": 0.4263842930454751,
+      "communication_only_per_1000": 6.497862387868612,
+      "facilitation_only_per_1000": 35.839756219461286,
+      "combined_total_per_1000": 42.43275953248731,
+      "interaction_per_1000": 0.09514092515741646
+    },
+    {
+      "scenario": "loyalty_weight_1.00",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 0.6,
+      "baseline_pbc_sd": 0.4,
+      "initial_loyalty_sd": 0.6,
+      "pbc_behavior_weight": 1.0,
+      "loyalty_weight": 1.0,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.35,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.01920365420605591,
+      "control_post_expected_choice_share": 0.41960418388903536,
+      "communication_only_per_1000": 7.073842259913969,
+      "facilitation_only_per_1000": 40.645341360771084,
+      "combined_total_per_1000": 47.80048465253009,
+      "interaction_per_1000": 0.08130103184503246
+    },
+    {
+      "scenario": "facilitation_signal_0.20",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 0.6,
+      "baseline_pbc_sd": 0.4,
+      "initial_loyalty_sd": 0.6,
+      "pbc_behavior_weight": 1.0,
+      "loyalty_weight": 0.5,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.2,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.01766888343381051,
+      "control_post_expected_choice_share": 0.42277748527027975,
+      "communication_only_per_1000": 6.718620621847971,
+      "facilitation_only_per_1000": 21.81618559300774,
+      "combined_total_per_1000": 28.637797181394294,
+      "interaction_per_1000": 0.10299096653858253
+    },
+    {
+      "scenario": "facilitation_signal_0.50",
+      "micro_buyers_per_archetype": 25,
+      "opportunity_intervals": [
+        5,
+        7,
+        10,
+        14
+      ],
+      "preference_sd": 0.6,
+      "baseline_pbc_sd": 0.4,
+      "initial_loyalty_sd": 0.6,
+      "pbc_behavior_weight": 1.0,
+      "loyalty_weight": 0.5,
+      "loyalty_retention": 0.85,
+      "loyalty_learning_rate": 0.2,
+      "facilitation_signal": 0.5,
+      "facilitation_start_tick": 6,
+      "facilitation_end_tick": 19,
+      "crisis_drop_reference_block": -0.01766888343381051,
+      "control_post_expected_choice_share": 0.42277748527027975,
+      "communication_only_per_1000": 6.718620621847971,
+      "facilitation_only_per_1000": 54.93194185804856,
+      "combined_total_per_1000": 61.78705421982478,
+      "interaction_per_1000": 0.1364917399282531
+    }
+  ],
+  "files": {
+    "curves": ".kiro/specs/task005-replication-inference/task005_purchase_demand_v31_curves1.0.csv",
+    "condition_metrics": ".kiro/specs/task005-replication-inference/task005_purchase_demand_v31_condition_metrics1.0.csv",
+    "segment_metrics": ".kiro/specs/task005-replication-inference/task005_purchase_demand_v31_segment_metrics1.0.csv",
+    "sensitivity": ".kiro/specs/task005-replication-inference/task005_purchase_demand_v31_sensitivity1.0.csv",
+    "decomposition": ".kiro/specs/task005-replication-inference/task005_purchase_demand_v31_decomposition1.0.csv"
+  },
+  "decision": {
+    "production_promotion": "NOT_AUTHORIZED",
+    "real_llm_pilot": "NOT_AUTHORIZED",
+    "formal_v2": "REMAINS_PAUSED",
+    "next_required_work": [
+      "correct subjective-norm measurement in the cognitive production path",
+      "obtain empirical calibration or retain a prospectively frozen sensitivity design",
+      "add v3.1 audit fields and run Windows-Kernel regression tests",
+      "only then design a new independent engineering pilot"
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": "formal_inference_scope_contract1.0",
+  "task": "TASK_005",
+  "stage": "managerial-mde-and-prospective-power-v1",
+  "statistical_unit": "replication_block",
+  "inference_scope": "stochastic uncertainty across independent frozen-GABM replications/seeds",
+  "not_in_scope": [
+    "real-world consumer sampling uncertainty",
+    "population-representative human causal inference"
+  ],
+  "primary_family": [
+    "P1_OVERALL_CLARIFICATION_POST_TRUST",
+    "P2_CONTENT_POST_TRUST",
+    "P3_TIMING_EARLY_TRUST",
+    "P4_CHANNEL_REACH",
+    "P5_OVERALL_CLARIFICATION_PURCHASE"
+  ],
+  "family_size": 5,
+  "formal_test": {
+    "type": "one-sample",
+    "estimand_level": "block-level",
+    "null_value": 0,
+    "sided": "two-sided"
+  },
+  "familywise_alpha": 0.05,
+  "final_multiplicity_procedure": "Holm step-down",
+  "power_planning": {
+    "alpha_per_estimand": 0.01,
+    "alpha_source": "0.05 / 5 Bonferroni bound",
+    "sided": "two-sided",
+    "target_marginal_power": 0.9,
+    "n_driver_rule": "max required N across P1-P5"
+  },
+  "practical_significance_interpretation": {
+    "A": "Holm-significant and effect magnitude >= MDE: statistically detectable and managerially meaningful",
+    "B": "Holm-significant but |effect| < MDE: statistically detectable but below pre-specified managerial relevance threshold",
+    "C": "not Holm-significant but point estimate >= MDE: managerially sized point estimate with insufficient confirmatory precision",
+    "D": "neither: no confirmatory evidence of managerially meaningful effect"
+  },
+  "consumer_population_claims_permitted": false,
+  "p_value_real_world_population_claim_permitted": false,
+  "real_llm_calls_authorized_by_this_artifact": false,
+  "formal_execution_authorized": false
+}

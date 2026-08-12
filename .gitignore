@@ -33,3 +33,6 @@ __pycache__/
 
 # Local formal run workspaces (archived summaries live under reproducibility/)
 results/formal/
+
+# Clean v3.2 engineering/demo workflow outputs
+results/v32_runs/

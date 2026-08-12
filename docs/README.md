@@ -1,6 +1,7 @@
 # Documentation index
 
 ## Architecture
+- `architecture/WORKFLOW_V32.md` — 当前唯一人工入口与全过程代码链
 - `architecture/CODEBASE_MAP_V32.md`
 - `architecture/MODEL_TO_CODE_TRACEABILITY.md`
 - `architecture/REPOSITORY_CONSOLIDATION_PLAN.md`

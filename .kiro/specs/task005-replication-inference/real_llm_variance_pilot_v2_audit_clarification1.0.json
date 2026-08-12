@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "artifact": "real_llm_variance_pilot_v2_audit_clarification",
+  "pilot_id": "task005-real-variance-pilot-v2",
+  "historical_artifacts_byte_immutable": true,
+  "frozen_attempt_counts": {
+    "R001": 1,
+    "R002": 1,
+    "R003": 1,
+    "R004": 1,
+    "R005": 1,
+    "R006": 1,
+    "R007": 1,
+    "R008": 1,
+    "R009": 1,
+    "R010": 1
+  },
+  "attempt_marker_present": {
+    "R001": 0,
+    "R002": 0,
+    "R003": 0,
+    "R004": 0,
+    "R005": 0,
+    "R006": 0,
+    "R007": 0,
+    "R008": 0,
+    "R009": 0,
+    "R010": 0
+  },
+  "attempt_count_interpretation": "attempt_count field reflects batch-level real router factory invocation, not successful entry into the frozen attempt-marker-controlled scientific block lifecycle",
+  "historical_quality_gate_fields": [
+    "agent_key_integrity",
+    "exposure_key_integrity",
+    "pretreatment_alignment",
+    "network_identity_alignment",
+    "profile_identity_alignment",
+    "raw_semantic_validation"
+  ],
+  "condition_execution_count": 0,
+  "audit_log_rows": 0,
+  "quality_gate_interpretation": "NOT_EVALUATED despite historical PASS placeholders",
+  "frozen_attempt_count_must_not_be_changed_to_zero": true,
+  "ROUTER_CONSTRUCTION_CONTEXT_V2": "synchronous / outside execute_variance_block coroutine"
+}

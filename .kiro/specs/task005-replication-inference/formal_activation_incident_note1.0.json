@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "stage": "TASK_005 Stage I.5C-5B-1A independent review correction",
+  "status": "frozen-evidence-note",
+  "incident_class": "nonformal-network-access-during-draft-acceptance",
+  "disclosure": "One earlier failed draft acceptance test accidentally triggered HuggingFace metadata access before offline controls were corrected.",
+  "real_llm_provider_calls": 0,
+  "formal_model_calls": 0,
+  "formal_output_created": false,
+  "formal_data_produced": false,
+  "network_calls_in_final_validated_runs": 0,
+  "final_acceptance_offline_controls": {
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "HF_DATASETS_OFFLINE": "1",
+    "HF_HUB_DISABLE_TELEMETRY": "1"
+  },
+  "interpretation": "authorization1.0 is preserved unchanged; authorization1.1 supersedes it and records the drafting-history disclosure.",
+  "real_formal_execution_started": false
+}

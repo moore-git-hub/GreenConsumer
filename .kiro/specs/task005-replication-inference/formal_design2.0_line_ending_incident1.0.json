@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "artifact": "formal_design2.0_line_ending_incident",
+  "task": "TASK_005",
+  "stage": "formal-v2-preauthorization-review",
+  "review_date": "2026-08-11",
+  "reviewed_head": "e9926ebfbc25d06ccbaaac895a3b32a1f8eaa54e",
+  "status": "DISCLOSED_BEFORE_FORMAL_V2_EXECUTION",
+  "affected_artifact": ".kiro/specs/task005-replication-inference/formal_seed_ledger2.0.csv",
+  "parent_design": ".kiro/specs/task005-replication-inference/task005_formal_design2.0.json",
+  "parent_design_sha256_lf_checkout": "3430dfd6c1d1a5bdbb5da1378705952df1f9a54ef1d22244c20dade9ea3fb6f8",
+  "declared_ledger_sha256": "ade2dbed14ef7d11c6a4f89f658829e9b90258b7789687d5dceff008f7c12086",
+  "declared_hash_matches": "Windows CRLF serialization",
+  "repository_ledger_sha256_lf_checkout": "8efc346fffc1d757b005cef75a511892ea566e9a2b96980f282cbc83fa999984",
+  "diagnosis": {
+    "content_mutation_detected": false,
+    "row_count": 46,
+    "seed_reconstruction_passed": true,
+    "pilot_seed_collision_count": 0,
+    "cause": "The CSV was hashed before Git text normalization. The declared digest matches CRLF bytes, while the repository blob and Linux checkout use LF bytes.",
+    "cross_platform_byte_hash_contract_valid": false
+  },
+  "disposition": {
+    "task005_formal_design2_0_must_remain_unchanged_as_historical_evidence": true,
+    "formal_v2_launch_may_use_declared_hash_without_correction": false,
+    "required_successor": "Freeze a versioned design/launch amendment with an explicit cross-platform canonical hash algorithm or a repository-pinned EOL policy.",
+    "silent_hash_substitution_permitted": false
+  },
+  "formal_execution": false,
+  "formal_execution_authorized": false,
+  "real_llm_calls": 0
+}

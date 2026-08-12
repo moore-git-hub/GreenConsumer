@@ -1,0 +1,21 @@
+{
+  "schema_version": "variance_stage_closure1.0",
+  "task": "TASK_005",
+  "stage": "managerial-mde-and-prospective-power-v1",
+  "official_variance_source": "task005-real-variance-pilot-v3",
+  "result_head": "1b50913519f09f7eee1341b988862b9229eb5265",
+  "result_artifact": ".kiro/specs/task005-replication-inference/real_llm_variance_pilot_v3_result1.0.json",
+  "result": "PASS",
+  "blocks": 10,
+  "blocks_pass": 10,
+  "independent_unit": "replication_block",
+  "formal_reuse": false,
+  "variance_v1_use": false,
+  "variance_v2_use": false,
+  "variance_v3_use": "variance/covariance/power-planning only",
+  "additional_variance_pilot_authorized": false,
+  "variance_v4_authorized": false,
+  "variance_v4_policy": "No additional variance pilot is authorized to seek a smaller SD or reduce formal N.",
+  "real_llm_calls_authorized_by_this_artifact": false,
+  "formal_execution_authorized": false
+}

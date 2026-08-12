@@ -1,0 +1,105 @@
+{
+  "artifact": "real_llm_manipulation_pilot_v3_result1.0",
+  "pilot_id": "task005-real-manipulation-pilot-v3",
+  "result": "PASS",
+  "master_seed": 2026080904,
+  "replicates": [
+    {
+      "attempt_count": 1,
+      "matched_agents": 20,
+      "real_llm_calls": 78,
+      "replay_miss_count": 0,
+      "replicate_id": "R001",
+      "status": "PASS"
+    },
+    {
+      "attempt_count": 1,
+      "matched_agents": 20,
+      "real_llm_calls": 79,
+      "replay_miss_count": 0,
+      "replicate_id": "R002",
+      "status": "PASS"
+    }
+  ],
+  "real_llm_calls": 157,
+  "primary_dimensions": [
+    "D_evidence",
+    "D_credibility",
+    "D_empathy"
+  ],
+  "descriptive_dimensions": [
+    "D_arousal_descriptive",
+    "D_valence_descriptive"
+  ],
+  "per_replicate_means": {
+    "R001": {
+      "D_evidence": 0.297,
+      "D_credibility": 0.12050000000000001,
+      "D_empathy": 0.12299999999999997,
+      "D_arousal_descriptive": -0.027000000000000003,
+      "D_valence_descriptive": -0.12
+    },
+    "R002": {
+      "D_evidence": 0.286,
+      "D_credibility": 0.131,
+      "D_empathy": 0.12999999999999998,
+      "D_arousal_descriptive": -0.0014999999999999972,
+      "D_valence_descriptive": -0.14250000000000002
+    }
+  },
+  "all_blocks_direction_pass": true,
+  "pooled_primary_dimensions": {
+    "D_evidence": {
+      "expected_direction_proportion": 1.0,
+      "max": 0.46,
+      "mean": 0.2915,
+      "median": 0.24,
+      "min": 0.07999999999999996,
+      "passes_direction": true,
+      "passes_engineering_floor": true
+    },
+    "D_credibility": {
+      "expected_direction_proportion": 0.775,
+      "max": 0.36,
+      "mean": 0.12575,
+      "median": 0.09499999999999997,
+      "min": -0.030000000000000027,
+      "passes_direction": true,
+      "passes_engineering_floor": true
+    },
+    "D_empathy": {
+      "expected_direction_proportion": 0.825,
+      "max": 0.31999999999999995,
+      "mean": 0.1265,
+      "median": 0.13,
+      "min": -0.020000000000000018,
+      "passes_direction": true,
+      "passes_engineering_floor": true
+    }
+  },
+  "engineering_floor": 0.05,
+  "manipulation_strength": "PASS",
+  "direction_gate": "PASS",
+  "p_values": false,
+  "formal_inference": false,
+  "progression_authorized": true,
+  "topic_relevance_warning": "",
+  "rational_topic_relevance_mean": 0.8744999999999999,
+  "empathy_topic_relevance_mean": 0.818,
+  "rational_hypocrisy_perceived_rate": 1.0,
+  "empathy_hypocrisy_perceived_rate": 1.0,
+  "arousal_role": "descriptive",
+  "valence_role": "descriptive",
+  "stimulus_text_changed": false,
+  "behavioral_transition_changed": false,
+  "retry_authorized": false,
+  "replacement_authorized": false,
+  "R003_authorized": false,
+  "stdout_sha256": "47cb24b2963b53da370b402d9569903c60681dd5042069d6a687ecbb1b4eb20e",
+  "stderr_sha256": "c8143a598e50816ea8bc420444700962fffe6c1a25b606c964508685d49cc0c0",
+  "output_dir": "results/pilots/task005-real-manipulation-pilot-v3",
+  "construct_v3_head": "91a49aacd5802d22bc5735a15b982d8cad84316d",
+  "seed_fix_head": "c6e58e546f8f06ea798beaddd4d0b3e19bf5ea4f",
+  "v3_prep_head": "7b46de3aefc3ed26b55d995a270a55382b65291d",
+  "activation_head": "21d62a7589157a94cf6a7ff0d1378e165db0db50"
+}

@@ -11,6 +11,10 @@ class SocialNetworkPlugin(EnvironmentPlugin):
         self.graph = nx.DiGraph()
         # "上帝通讯录"：Agent ID -> Agent 实例
         self.agent_registry = {}
+        # ── TASK_002 纯审计属性：只记录实际建图分支，不参与任何建图决策 ──
+        self.network_type: str = "uninitialized"
+        self.network_params: Dict[str, Any] = {}
+        self.network_fallback_reason: str = ""
 
     async def init(self):
         print("🌐 [Network] 社交网络插件初始化...")
@@ -29,18 +33,32 @@ class SocialNetworkPlugin(EnvironmentPlugin):
         agent_ids = list(self.agent_registry.keys())
         n = len(agent_ids)
 
+        # 纯审计：默认按空网络登记，下面在真实分支内覆盖（不改变任何建图逻辑）
+        self.network_type = "empty"
+        self.network_params = {"n": n}
+        self.network_fallback_reason = ""
+
         if n > 0:
             if n < 5:
                 # 节点过少时使用完全图作为有向化底图
                 undirected = nx.complete_graph(n)
                 print(f"🌐 [Network] 节点过少 ({n})，采用完全图底图。")
+                self.network_type = "complete"
+                self.network_params = {"n": n}
             else:
                 try:
                     undirected = nx.barabasi_albert_graph(n, m=2, seed=seed)
                     print(f"🌐 [Network] 已构建 BA 无标度网络底图 (n={n}, m=2, seed={seed})。")
+                    self.network_type = "barabasi_albert"
+                    self.network_params = {"n": n, "m": 2, "seed": seed}
                 except Exception as e:
                     print(f"⚠️ [Network] BA 图构建失败 ({e})，回退到随机图。")
                     undirected = nx.erdos_renyi_graph(n, p=0.3, seed=seed)
+                    self.network_type = "erdos_renyi"
+                    self.network_params = {"n": n, "p": 0.3, "seed": seed}
+                    self.network_fallback_reason = (
+                        f"barabasi_albert_failed: {type(e).__name__}: {e}"
+                    )
 
             # 映射整数索引 → Agent ID
             mapping = {i: agent_ids[i] for i in range(n)}
@@ -76,6 +94,22 @@ class SocialNetworkPlugin(EnvironmentPlugin):
     def get_neighbors(self, agent_id: str) -> List[str]:
         """兼容旧接口，返回出向邻居（等同于 get_successors）"""
         return self.get_successors(agent_id)
+
+    # ── TASK_002 只读审计访问器：不修改任何状态，只按确定性顺序导出图结构 ──
+    def export_edges(self) -> List[tuple]:
+        """导出全部有向边，按 (source, target) 字典序排序以保证落盘可复现。"""
+        return sorted((str(u), str(v)) for u, v in self.graph.edges())
+
+    def export_node_degrees(self) -> Dict[str, Dict[str, int]]:
+        """导出每个节点的出度/入度（无向图时两者相同），按节点 ID 排序。"""
+        is_dir = self.graph.is_directed()
+        out_view = dict(self.graph.out_degree()) if is_dir else dict(self.graph.degree())
+        in_view = dict(self.graph.in_degree()) if is_dir else dict(self.graph.degree())
+        return {
+            str(n): {"out_degree": int(out_view.get(n, 0)),
+                     "in_degree": int(in_view.get(n, 0))}
+            for n in sorted(str(x) for x in self.graph.nodes())
+        }
 
     async def broadcast_message(self, sender_id: str, content: str):
         """

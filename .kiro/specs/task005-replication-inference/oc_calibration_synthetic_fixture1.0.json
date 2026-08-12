@@ -1,0 +1,478 @@
+{
+  "schema_version": "1.0",
+  "stage": "TASK_005 Stage I.5C-3A",
+  "classification": "synthetic-fixture-for-oc-implementation-acceptance",
+  "purpose": "A fully synthetic, effect-direction-neutral fixture used only to test the offline OC calibration implementation before real engineering evidence is consumed.",
+  "parent_design": {
+    "git_head": "7d9b9f534d35a4c250b73c31265d6bfcc5e55938",
+    "oc_calibration_design_sha256": "D01AE3375CB59B27A6554DE2612469896B605FB10AA294AB77653D4C4728DF29"
+  },
+  "dimensions": {
+    "engineering_blocks": 5,
+    "confirmatory_estimands": 28
+  },
+  "block_ids": [
+    "F001",
+    "F002",
+    "F003",
+    "F004",
+    "F005"
+  ],
+  "estimands": [
+    {
+      "estimand_id": "final_trust_gain_vs_control::Empathy-Hub-Delayed",
+      "metric": "final_trust_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Empathy-Hub-Delayed"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Empathy-Hub-Immediate",
+      "metric": "final_trust_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Empathy-Hub-Immediate"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Empathy-Random-Delayed",
+      "metric": "final_trust_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Empathy-Random-Delayed"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Empathy-Random-Immediate",
+      "metric": "final_trust_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Empathy-Random-Immediate"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Rational-Hub-Delayed",
+      "metric": "final_trust_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Rational-Hub-Delayed"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Rational-Hub-Immediate",
+      "metric": "final_trust_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Rational-Hub-Immediate"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Rational-Random-Delayed",
+      "metric": "final_trust_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Rational-Random-Delayed"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Rational-Random-Immediate",
+      "metric": "final_trust_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Rational-Random-Immediate"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Empathy-Hub-Delayed",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Empathy-Hub-Delayed"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Empathy-Hub-Immediate",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Empathy-Hub-Immediate"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Empathy-Random-Delayed",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Empathy-Random-Delayed"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Empathy-Random-Immediate",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Empathy-Random-Immediate"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Rational-Hub-Delayed",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Rational-Hub-Delayed"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Rational-Hub-Immediate",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Rational-Hub-Immediate"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Rational-Random-Delayed",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Rational-Random-Delayed"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Rational-Random-Immediate",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "strategy_primary_16",
+      "kind": "strategy_primary",
+      "label": "Rational-Random-Immediate"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Content",
+      "metric": "final_trust_gain_vs_control",
+      "family": "factorial_confirmatory_12",
+      "kind": "factorial_confirmatory",
+      "label": "Content"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Channel",
+      "metric": "final_trust_gain_vs_control",
+      "family": "factorial_confirmatory_12",
+      "kind": "factorial_confirmatory",
+      "label": "Channel"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Timing",
+      "metric": "final_trust_gain_vs_control",
+      "family": "factorial_confirmatory_12",
+      "kind": "factorial_confirmatory",
+      "label": "Timing"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Content_x_Channel",
+      "metric": "final_trust_gain_vs_control",
+      "family": "factorial_confirmatory_12",
+      "kind": "factorial_confirmatory",
+      "label": "Content_x_Channel"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Content_x_Timing",
+      "metric": "final_trust_gain_vs_control",
+      "family": "factorial_confirmatory_12",
+      "kind": "factorial_confirmatory",
+      "label": "Content_x_Timing"
+    },
+    {
+      "estimand_id": "final_trust_gain_vs_control::Channel_x_Timing",
+      "metric": "final_trust_gain_vs_control",
+      "family": "factorial_confirmatory_12",
+      "kind": "factorial_confirmatory",
+      "label": "Channel_x_Timing"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Content",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "factorial_confirmatory_12",
+      "kind": "factorial_confirmatory",
+      "label": "Content"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Channel",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "factorial_confirmatory_12",
+      "kind": "factorial_confirmatory",
+      "label": "Channel"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Timing",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "factorial_confirmatory_12",
+      "kind": "factorial_confirmatory",
+      "label": "Timing"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Content_x_Channel",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "factorial_confirmatory_12",
+      "kind": "factorial_confirmatory",
+      "label": "Content_x_Channel"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Content_x_Timing",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "factorial_confirmatory_12",
+      "kind": "factorial_confirmatory",
+      "label": "Content_x_Timing"
+    },
+    {
+      "estimand_id": "post_scandal_auc_gain_vs_control::Channel_x_Timing",
+      "metric": "post_scandal_auc_gain_vs_control",
+      "family": "factorial_confirmatory_12",
+      "kind": "factorial_confirmatory",
+      "label": "Channel_x_Timing"
+    }
+  ],
+  "families": {
+    "strategy_primary_16": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "factorial_confirmatory_12": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+    ]
+  },
+  "candidate_valid_block_counts": [
+    12,
+    16,
+    20,
+    24,
+    30,
+    40
+  ],
+  "variance_stress_multipliers": [
+    1.0,
+    1.5,
+    2.0
+  ],
+  "primary_stream_seeds": [
+    202608071,
+    202608072
+  ],
+  "fixture_matrix_is_already_centered": true,
+  "centered_residual_matrix": [
+    [
+      -0.0081,
+      -0.0104,
+      -0.0124,
+      -0.0084,
+      -0.0167,
+      -0.0187,
+      -0.0147,
+      -0.0069,
+      -0.0092,
+      -0.0112,
+      -0.0132,
+      -0.0155,
+      -0.0175,
+      -0.0135,
+      -0.0057,
+      -0.014,
+      -0.015,
+      -0.018,
+      -0.02145,
+      -0.02445,
+      -0.02745,
+      -0.00675,
+      -0.0192,
+      -0.0132,
+      -0.0162,
+      -0.02865,
+      -0.02265,
+      -0.02565
+    ],
+    [
+      -0.0048,
+      -0.0037,
+      -0.0032,
+      -0.0147,
+      -0.0016,
+      -0.0011,
+      -0.0126,
+      -0.0072,
+      -0.0061,
+      -0.0056,
+      -0.0051,
+      -0.004,
+      -0.0035,
+      -0.015,
+      -0.0096,
+      0.0035,
+      -0.012,
+      -0.01125,
+      -0.0096,
+      -0.00885,
+      -0.0081,
+      -0.018,
+      0.00165,
+      -0.0156,
+      -0.01485,
+      0.0048,
+      -0.01245,
+      -0.0117
+    ],
+    [
+      -0.0048,
+      0.0024,
+      -0.0024,
+      0.0048,
+      0.0,
+      -0.0048,
+      0.0024,
+      -0.0024,
+      0.0048,
+      0.0,
+      -0.0048,
+      0.0024,
+      -0.0024,
+      0.0048,
+      -0.0,
+      -0.0048,
+      0.0036,
+      -0.0036,
+      0.0072,
+      -0.0,
+      -0.0072,
+      0.0036,
+      -0.0036,
+      0.0072,
+      0.0,
+      -0.0072,
+      0.0036,
+      -0.0036
+    ],
+    [
+      0.0144,
+      -0.0011,
+      0.008,
+      0.0051,
+      0.0016,
+      0.0107,
+      0.0078,
+      0.012,
+      -0.0035,
+      0.0056,
+      0.0147,
+      -0.0008,
+      0.0083,
+      0.0054,
+      0.0096,
+      0.0061,
+      0.0048,
+      0.01845,
+      -0.0048,
+      0.00885,
+      0.0225,
+      0.0108,
+      0.00555,
+      0.0012,
+      0.01485,
+      0.0096,
+      0.00525,
+      0.0189
+    ],
+    [
+      0.0033,
+      0.0128,
+      0.01,
+      0.0132,
+      0.0167,
+      0.0139,
+      0.0171,
+      0.0045,
+      0.014,
+      0.0112,
+      0.0084,
+      0.0179,
+      0.0151,
+      0.0183,
+      0.0057,
+      0.0092,
+      0.0186,
+      0.0144,
+      0.02865,
+      0.02445,
+      0.02025,
+      0.01035,
+      0.0156,
+      0.0204,
+      0.0162,
+      0.02145,
+      0.02625,
+      0.02205
+    ]
+  ],
+  "expected_column_sample_sd": [
+    0.009082125301932,
+    0.008553654189877,
+    0.009134549797335,
+    0.011290925559935,
+    0.011862756846534,
+    0.013054118124178,
+    0.013544925248963,
+    0.008207618412183,
+    0.009396009791395,
+    0.008854377448471,
+    0.011290925559935,
+    0.012073317688192,
+    0.012461540835707,
+    0.01409201901787,
+    0.007894618420164,
+    0.009396009791395,
+    0.013701824696003,
+    0.015900353769649,
+    0.019026067644156,
+    0.018386476008197,
+    0.021138028526804,
+    0.012311427618274,
+    0.012830481284815,
+    0.014891608375189,
+    0.015539666984849,
+    0.019026067644156,
+    0.018692311253561,
+    0.020317387873445
+  ],
+  "synthetic_truth_scenarios": {
+    "global_null": {
+      "standardized_effect_d": 0.0
+    },
+    "single_signal_moderate": {
+      "standardized_effect_d": 0.5
+    },
+    "single_signal_strong": {
+      "standardized_effect_d": 0.8
+    },
+    "dense_moderate": {
+      "standardized_effect_d": 0.5
+    }
+  },
+  "invariants": {
+    "column_means_zero_tolerance": 1e-12,
+    "all_column_sample_sd_positive": true,
+    "whole_block_resampling_required": true,
+    "single_rademacher_sign_per_sampled_block": true,
+    "independent_coordinate_resampling_forbidden": true,
+    "observed_pilot_mean_as_truth_forbidden": true,
+    "observed_pilot_direction_as_truth_forbidden": true,
+    "real_llm_calls_forbidden": true,
+    "network_access_forbidden": true
+  }
+}

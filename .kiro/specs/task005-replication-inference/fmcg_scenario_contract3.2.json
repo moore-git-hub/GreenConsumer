@@ -1,0 +1,50 @@
+{
+  "schema_version": "fmcg_scenario_contract3.2",
+  "task": "TASK_005",
+  "status": "frozen_before_scenario32_llm_output",
+  "brand": "VerdantCo Oat",
+  "brand_is_fictional": true,
+  "category": "plant-based milk / oat milk",
+  "target_population": "regular plant-based-milk category buyers",
+  "time_horizon_days": 30,
+  "inference_scope": "short-run repeat brand choice during a reputation crisis",
+  "cognitive_agents": {
+    "count": 20,
+    "role": "balanced engineering panel for mechanism coverage",
+    "representative_sample": false,
+    "required_profile_fields": [
+      "green_orientation",
+      "category_purchase_frequency",
+      "prior_brand_relationship",
+      "price_sensitivity",
+      "availability_friction",
+      "social_posting_role"
+    ]
+  },
+  "experimental_factors": {
+    "crisis_tick": 5,
+    "communication_content": ["rational-evidence", "emotional-empathy"],
+    "communication_timing_tick": [6, 10],
+    "communication_channel": ["hub", "random"],
+    "conversion_support": ["absent", "present"],
+    "conversion_support_active_ticks_inclusive": [6, 19]
+  },
+  "subjective_norm": {
+    "construct": "perceived peer approval",
+    "required_semantic_field": "perceived_peer_approval",
+    "updated_only_from_actual_social_observations": true,
+    "global_news_direct_update": false,
+    "enterprise_statement_direct_update": false
+  },
+  "conversion_support_exclusion_restriction": {
+    "changes_pbc": true,
+    "changes_trust": false,
+    "changes_attitude": false,
+    "changes_subjective_norm": false,
+    "assumption_requires_sensitivity_test": true
+  },
+  "old_variance_v3_rows_reusable_for_scenario32_validation": false,
+  "real_llm_calls_authorized": false,
+  "production_promotion_authorized": false,
+  "formal_inference_authorized": false
+}

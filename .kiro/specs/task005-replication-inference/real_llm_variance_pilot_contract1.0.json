@@ -1,0 +1,159 @@
+{
+  "artifact": "real_llm_variance_pilot_contract1.0",
+  "task": "TASK_005",
+  "stage": "real-LLM variance pilot design freeze",
+  "pilot_id": "task005-real-variance-pilot-v1",
+  "master_seed": 2026081001,
+  "replication_blocks": 10,
+  "replicate_ids": [
+    "R001",
+    "R002",
+    "R003",
+    "R004",
+    "R005",
+    "R006",
+    "R007",
+    "R008",
+    "R009",
+    "R010"
+  ],
+  "conditions_per_block": 9,
+  "condition_source": "generate_experiment_matrix()",
+  "condition_set": {
+    "control_count": 1,
+    "strategy_count": 8,
+    "control_exp_id": "NoClarification-Control",
+    "matrix_version": "3.0"
+  },
+  "reference_model": {
+    "MECHANISM_SCHEMA": "2.0",
+    "MECHANISM_RECORDS_SCHEMA": "1.2",
+    "EMPATHY_REPAIR_WEIGHT": 0.5,
+    "forbidden_weights_in_variance_pilot": [
+      0.0,
+      0.25,
+      0.75,
+      1.0
+    ],
+    "weight_reselection_from_variance_outcome": false
+  },
+  "independent_unit": "replication_block",
+  "agent_count_per_condition": 20,
+  "agent_level_n_used_for_power": false,
+  "execution": {
+    "current_stage_real_execution_authorized": false,
+    "future_output_root": "results/pilots/task005-real-variance-pilot-v1",
+    "execution_order": "replication_config.EXECUTION_ORDER",
+    "control_router": "RecordingRouter",
+    "strategy_router": "ReplayRouter",
+    "replay_until_tick_semantics": "current_tick < replay_until",
+    "immediate_replay": "Tick < 6",
+    "delayed_replay": "Tick < 10",
+    "attempt_count_max_per_block": 1,
+    "replacement_blocks": false,
+    "optional_stopping": false,
+    "formal_reuse": false
+  },
+  "pre_treatment_alignment_gates": {
+    "immediate_strategy_vs_control": "Tick5 exact alignment",
+    "delayed_strategy_vs_control": "Tick9 exact alignment",
+    "agent_level_fields": [
+      "trust_final",
+      "attitude_att",
+      "subjective_norm_sn",
+      "pbc",
+      "crisis_memory",
+      "repair_memory",
+      "purchase_intention"
+    ],
+    "network_identity_hash_required": true,
+    "profile_identity_hash_required": true
+  },
+  "real_llm_quality_gates": {
+    "conditions_per_block": 9,
+    "agents_per_condition": 20,
+    "ticks_per_condition": 30,
+    "expected_mechanism_rows_per_block": 5400,
+    "expected_mechanism_rows_per_condition": 600,
+    "replay_miss_count": 0,
+    "semantic_fallback_used": 0,
+    "plan_fallback_used": 0,
+    "raw_semantic_validation_failures": 0,
+    "mechanism_join_key_coverage": "PASS",
+    "any_hard_gate_failure_marks_block": "INCOMPLETE"
+  },
+  "crash_safe_resume": {
+    "attempt_marker_required_before_child_start": true,
+    "restart_is_not_retry": true,
+    "passed_blocks_skip_immutable": true,
+    "failed_or_incomplete_blocks_skip_immutable": true,
+    "only_future_blocks_without_attempt_marker_may_continue": true
+  },
+  "channel_saturation_diagnostic": {
+    "reports_hub_union_reach_counts": true,
+    "reports_random_union_reach_counts": true,
+    "warning_label": "CHANNEL_REACH_NEAR_SATURATION",
+    "diagnostic_only": true,
+    "may_change_public_exposure_rate": false,
+    "may_change_budget_k": false,
+    "may_change_network_topology": false
+  },
+  "outputs": {
+    "block": [
+      "attempt_marker.json",
+      "seed_ledger.csv",
+      "condition_manifest.json",
+      "sanitized_model_config.json",
+      "pilot_llm_calls.jsonl",
+      "replicate_lifecycle.jsonl",
+      "agent_records.csv",
+      "mechanism_records.csv",
+      "clarification_exposure.csv",
+      "condition_metrics.csv",
+      "block_estimands.csv",
+      "child_stdout_sanitized.log",
+      "child_stderr_sanitized.log",
+      "block_execution_summary.json"
+    ],
+    "batch_root": [
+      "pilot_manifest.csv",
+      "all_condition_metrics.csv",
+      "all_block_estimands.csv",
+      "variance_summary.json",
+      "primary_covariance_matrix.csv",
+      "primary_correlation_matrix.csv",
+      "leave_one_out_sd.csv",
+      "channel_saturation_summary.json",
+      "pilot_execution_summary.json"
+    ]
+  },
+  "source_freeze_future_activation": [
+    "mechanism_v2.py",
+    "plugins/agent/plan/ConsumerPlanPlugin.py",
+    "plugins/agent/reflect/GreenCognitionPlugin.py",
+    "simulation_core.py",
+    "clarification_injector.py",
+    "experiment_config.py",
+    "replication_config.py",
+    "run_experiments.py",
+    "run_task005_real_variance_pilot_v1.py",
+    ".kiro/specs/task005-replication-inference/task005_estimand_contract1.0.json",
+    ".kiro/specs/task005-replication-inference/real_llm_variance_pilot_contract1.0.json",
+    ".kiro/specs/task005-replication-inference/empathy_relational_repair_amendment1.0.json",
+    ".kiro/specs/task005-replication-inference/mechanism_auditability_schema_amendment1.2.json",
+    ".kiro/specs/task005-replication-inference/manipulation_stage_closure1.0.json"
+  ],
+  "firewalls": {
+    "real_llm_calls_in_this_stage": false,
+    "external_api": false,
+    "formal_execution": false,
+    "formal_reuse": false,
+    "p_values": false,
+    "power_calculation": false,
+    "sample_size_recommendation": false,
+    "mde_tuning": false,
+    "mechanism_tuning": false,
+    "stimulus_tuning": false,
+    "strategy_winner_selection": false
+  }
+}

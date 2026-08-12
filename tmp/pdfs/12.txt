@@ -1,0 +1,1400 @@
+
+
+===== PAGE 1 =====
+Vol.:(0123456789)
+Computational Economics (2025) 66:421–452
+https://doi.org/10.1007/s10614-024-10724-z
+Improving Price Generation: A Novel Agent‑Based Model 
+for Capturing Persistent Jumps in Asset Prices
+Shijia Song1 · Handong Li2 
+Accepted: 13 September 2024 / Published online: 21 September 2024 
+© The Author(s), under exclusive licence to Springer Science+Business Media, LLC, part of Springer Nature 
+2024
+Abstract
+Persistent jumps in asset prices are a widely observed phenomenon, yet their under -
+lying causes remain unexplored from a market microstructure perspective. To 
+address this gap, we propose an improved agent-based model incorporating continu-
+ous double auctions, which simulates traders’ behavior under bounded rationality. 
+Our model generates price series that replicate stylized facts such as leptokurtosis, 
+long-term memory, and heteroscedasticity, while also successfully reproducing fre-
+quent persistent jumps, which benchmark models cannot achieve. Sensitivity analy -
+sis and model calibration further confirm the robustness of our model, demonstrat-
+ing that the simulated series are closer to actual financial asset prices compared to 
+benchmark models. Based on our model, the evolution process of agents suggests 
+that the elimination of fundamentalists, under pressure from random traders and 
+chartists, leads to more frequent persistent jumps, providing a possible explana-
+tion for the occurrence of persistent jumps and offering new insights for market risk 
+management.
+Keywords Agent-based models · Price jumps · Continuous double auctions · 
+Heterogeneous agents · Stylized facts
+JEL Classification C63 · D01 · G41
+ * Handong Li 
+ lhd@bnu.edu.cn
+ Shijia Song 
+ ssj@cqu.edu.cn
+1 School of Management Science & Real Estate, Chongqing University, Chongqing 400044, 
+China
+2 School of Systems Science, Beijing Normal University, Beijing 100875, China
+
+===== PAGE 2 =====
+422 S. Song, H. Li 
+1 Introduction
+The macroscopic motion law and microscopic intrinsic generation mechanism of 
+asset prices have always been core issues in financial economics. This is because 
+price changes lead to fluctuations of financial market and extreme risks, which 
+are of great concern to economists, financial practitioners, and policymakers. 
+The volatility and risk of financial markets are inherently complex, influenced by 
+various factors including macroeconomic elements, political events, market senti-
+ment, and technological innovation. Particularly in the past few decades, financial 
+crises or market collapses have been frequent, including the 2008 subprime cri-
+sis and the market turmoil triggered by the global spread of COVID-19 in 2020. 
+These crises demonstrate that the extreme risks not only exist but can also emerge 
+at any time, thereby causing significant impacts on the market and the global 
+economy. Therefore, a deep understanding of changes in financial asset prices is 
+particularly important for effective risk management.
+Theoretical models of prices emphasize the use of mathematical tools to cap-
+ture the “result” of prices, that is, the motion laws presented by the final observa-
+tion of prices. There has been a considerable amount of research that has delved 
+into the process of financial asset prices. By simply combing through the evo-
+lution history of price theory models, we find that its development process is 
+essentially a process in which the complexity of model assumptions changes from 
+weak to strong according to demand. Initially, viewing the changes in stock prices 
+as continuous and following geometric Brownian motion was the consensus of 
+early price models (Bachelier, 1900; Black & Scholes, 1973; Samuelson, 1965). 
+However, such models usually cannot well depict the sudden and significant 
+changes in prices in a short period, i.e., the so-called price jumps. Subsequently, 
+(Merton, 1976) proposed the jump-diffusion model, which uses Brownian motion 
+to capture the continuous process of prices and uses the compound Poisson pro-
+cess to depict the jump process. This model can capture extreme price fluctua-
+tions in the market, thus better describing the phenomenon of leptokurtosis. Its 
+implied assumption is that jumps are instantaneous components. In other words, 
+it is believed that the impact of jumps on the price process is instantaneous. In 
+the following decades, most research on price models focused on improvements 
+in volatility estimation (Andersen & Bollerslev, 1997; Andersen et  al., 2001a, 
+2001b; Barndorff-Nielsen et  al., 2006; Jawadi et  al., 2019, 2020; Kou, 2002), 
+while the theoretical framework of price models remained largely unchanged, 
+with the view of price changes as a jump-diffusion process becoming the basic 
+assumption of modern financial price theory and applied research (Aït-Sahalia 
+et al., 2015; Andersen & Bollerslev, 1997; Barndorff-Nielsen & Shephard, 2006; 
+Bollerslev, 1986; Hull & White, 1987).
+However, models established under the traditional jump-diffusion framework 
+still perform poorly in handling sudden large-scale price fluctuations of assets 
+(Andersen et al., 2003), and various risk measures based on existing price models 
+and methods generally underestimate risk under extreme conditions (Bee et al., 
+2019), while the means of predicting extreme risk are still not perfect (Harvey & 
+
+===== PAGE 3 =====
+423
+Improving Price Generation: A Novel Agent‑Based Model for…
+Ito, 2020). In this context, Song et al. (2022) observed the persistence of jumps in 
+high-frequency observations and thus proposed the persistent-jump-diffusion pro-
+cess, highlighting that the impact of a single jump on prices is time-varying rather 
+than instantaneous. This model uses a filtered Poisson process (or shot noise pro-
+cess) to depict the process of jumps with persistence and proves its superiority 
+in accurately capturing risk and identifying risk (Song & Li, 2023). We will also 
+explore the intrinsic generation mechanism of prices under the theoretical frame-
+work of Song et al. (2022), aiming to provide a possible explanation for the origin 
+of the phenomenon of jump persistence.
+The generation mechanism of prices emphasizes exploring the “cause” of prices 
+from the perspective of market microstructure, that is, the intrinsic formation pro-
+cess of prices. Kortian (1995) delved deeply into the various reasons for changes in 
+asset prices, first criticizing the traditional efficient market hypothesis and emphasiz-
+ing from a micro perspective the impact of traders’ irrational behavior, herd mental-
+ity, and other seemingly irrational influences on prices. The study also discussed 
+rational bubble theory and explored how market participants’ self-fulfilling expec-
+tations about the future and how these expectations affect asset prices. This indi-
+cates that in order to more comprehensively understand the dynamic laws of asset 
+prices, it is necessary to combine traditional market models with real micro-market 
+behavior and consider various complex factors in the market. Mainstream econo-
+metric models and dynamic stochastic general equilibrium models (DSGE) often 
+fail to integrate theoretical models with the actual situation of the market, making 
+it difficult to reproduce extreme changes in asset prices (Farmer & Foley, 2009). 
+Against this background, the application of agent-based models (ABMs) in the field 
+of financial economics has seen significant development in the past two decades, 
+providing scholars with a more realistic perspective for studying the intrinsic gen-
+eration mechanism of asset prices. These models simulate interactions between mul-
+tiple decision-makers and between decision-makers and institutions, and do not rely 
+on the assumption that the economy will tend toward a so-called equilibrium state. 
+They offer new possibilities for understanding and simulating the real-world price 
+forming process and have become a major tool for verifying whether certain presup-
+posed operating mechanisms in the micro market are reasonable.
+Early ABMs only qualitatively matched financial data, but later models were able 
+to quantitatively reproduce the empirical statistical properties of real markets, includ-
+ing the autocorrelation of returns, the volatility clustering (heteroscedasticity), and 
+the marginal distribution of price changes (Cont et al., 2007; Farmer, 2002; LeBaron, 
+2001, 2002; Levy et al., 2000; Lux, 1998; Lux & Marchesi, 1999). By then, whether 
+an agent-based price model could reproduce the stylized facts of prices or returns had 
+become a basic standard for judging the rationality of the model. Chiarella et al., (2006) 
+proposed a model named after their initials, the CHH model, which provides a more 
+complete framework for simulating prices from the perspective of market microstruc-
+ture. This model is essentially a continuous double auction (CDA) model. The distinc-
+tive feature of CHH is its introduction of a stochastic dynamic model in which asset 
+demand incorporates both fundamental analysis and technical analysis. While CHH 
+model was able to replicate some typical features of returns, it included some unrealis-
+tic assumptions, including a fixed length for the moving average window, unconstrained 
+
+===== PAGE 4 =====
+424 S. Song, H. Li 
+short selling and borrowing, trading non-integer shares, and no intraday trading. Impor-
+tantly, they assumed that two groups in the model, fundamentalists and chartists, were 
+homogeneous. Chiarella et al., (2012) proposed an improved CHH model, which this 
+paper refers to as the CHP model. This model abandons these unrealistic assumptions, 
+allowing market prices to be determined by CDA and emphasizing that traders are het-
+erogeneous and will choose their trading strategies according to their heterogeneous 
+probabilities. The results of the study show that the return series obtained based on the 
+CHP model could also reflect the stylized facts including volatility clustering, insig-
+nificant autocorrelation of returns, and significant autocorrelation of the absolute values 
+of returns. Therefore, the CHP model provides a more standard model framework for 
+reproducing the behavioral characteristics of traders and the real microstructure.
+Nevertheless, although the CHP model can better reproduce some typical character-
+istics of asset prices, an ABM without considering the jump phenomenon is obviously 
+limited from the perspective of risk management. In terms of agent-based models that 
+emphasize the jump phenomenon, (Cao et al., 2018) found that the intervals between 
+adjacent jumps follows a power-law distribution and built an agent-based price model 
+on this basis. McGroarty et al., (2019) proposed a new algorithmic trading based on 
+agents that can reproduce extreme price events, but it corresponds to peaks and troughs 
+in financial cycles, not the common sense of price jumps. Shi et al., (2019) assumed 
+that the expectations of agents are entirely driven by exogenous factors and simulated 
+price series with jump characteristics under the trading behavior of two types of agents. 
+However, the agents in this model are representative agents, meaning they are homoge-
+neous, which easily attracts criticism for neglecting heterogeneity in agent preferences 
+and interactions (Gatti et al., 2005).
+Overall, current research on the intrinsic generation mechanism of price jumps is not 
+sufficient, and the explanations for the causes of jumps based on the micro-level are not 
+applicable to the explanation of jumps with persistence. Therefore, we will propose an 
+improved agent-based price model under the framework of CHP (hereinafter referred 
+to as “our model”), by improving the rules for switching the roles of agents under the 
+assumption of bounded rationality. We hope to explore the generation process of prices 
+from a micro-level and explain the occurrence of the jump persistence through the 
+evolution and feedback of multiple agents. Our work not only extends the research by 
+Song and Li (2022) but also, to some extent, addresses the shortcomings of models like 
+the CHP model, which are unable to reproduce frequent jumps with persistence and 
+explain their occurrences.
+The remainder of this paper is structured as follows: Sect. 2 provides a detailed over-
+view of the methodology of our model; Sect. 3 presents the results of agent-based evo-
+lution and the possible explanation of the occurrence of the jumps with persistence; 
+Sect.  4 provides the detailed results of the sensitivity analysis and model calibration; 
+and Sect. 5 concludes.
+
+===== PAGE 5 =====
+425
+Improving Price Generation: A Novel Agent‑Based Model for…
+2  Model
+We consider a queue comprising N agents, where each agent i initially possesses Si
+0 
+units of stocks without dividends and Ci
+0 cash, where i = 1, … , N . Whenever an agent 
+engages in trading, their holdings Si
+t and Ci
+t are updated at time t . During the trading 
+process, agents are prohibited from short-selling stocks or borrowing money. In other 
+words, agents are constrained from submitting bid prices higher than the cash available 
+in their accounts, and conversely, if they have no stocks in their account, they cannot 
+submit sell orders. Given these constraints, bankruptcy does not occur. Let t = 1, … , T 
+represent calendar trading days, and let /u1D70F∈ R+ denote moments within a trading day. 
+Thus, p/u1D70F defaults to the last cleared price before a new trade occurs. Agents are allowed 
+to submit a limit order for one unit of stock each day, with this order applicable at any 
+time t <𝜏<t + 1 during the given trading day. At the start of each day, a random per-
+mutation Pt is drawn from the set {1,… , N} . Agents then take trading actions in the 
+order specified by Pt . In other words, each agent has one trading opportunity per day, 
+and the order of trading is independently randomized each day.
+Within the CDA framework that constructs the market microstructure, each agent 
+is only permitted to buy ( +) or sell ( −) one unit of stock with a valid limit price 
+order. All orders are sorted in a book in descending order of ask and bid prices. 
+When a new ask order appears, if it represents the lowest price among all current ask 
+orders, it matches and completes a trade with the highest bid order at that moment. 
+If the ask price is higher than the lowest ask price, it queues up and waits for match-
+ing with all lower ask orders. Similarly, when a new bid order is submitted, if it rep-
+resents the highest bid price among all current bid orders, it matches and completes 
+a trade with the lowest ask order. If the bid price is lower than the highest bid price, 
+it queues up and waits for matching with all higher bid orders. We assume, follow -
+ing the Tokyo Stock Exchange’s setup, that the order book is completely cleared at 
+the end of each trading day, meaning there are no queued orders at the start of the 
+next trading day.
+2.1  Types of Traders and Their Strategies
+During the trading process, agents exhibit heterogeneity in their choice of funda-
+mental analysis or technical analysis. If they opt for the fundamental analysis strat-
+egy, traders focus solely on whether the current stock price is undervalued or over -
+valued relative to its fundamental value. If the stock is undervalued (overvalued), 
+they attempt to buy (sell) the stock. This type of traders is referred to as fundamental 
+traders. The fundamental value of the stock is exogenously given and subject to ran-
+dom fluctuations, following the evolution rule:
+where /u1D70Ef ≥ 0 represents the constant volatility of fundamental returns, and 
+vt ∼ N(1, 0) follows a standard normal distribution. Each fundamental trader sub-
+mits orders with probability s/u1D70F
+t = min/parenleft.s11, /u1D6FC/uni007C.x/uni007C.xp∗
+t − p/u1D70F−1 /uni007C.x/uni007C.x
+/parenright.s1 , where 𝛼> 0 indicates sensi-
+tivity to deviations between the latest cleared price and the fundamental value. 
+(1)p∗
+t+1 = p∗
+t e/u1D70Ef vt ,
+
+===== PAGE 6 =====
+426 S. Song, H. Li 
+When such deviations are substantial, the probability to submit orders increases. 
+Formally, an agent i ’s order 
+/parenleft.s1q/u1D70F
+it, l/u1D70F
+it
+/parenright.s1
+ is submitted with probability s/u1D70F
+t  and satisfies 
+q/u1D70F
+it = sgn/parenleft.s1p∗
+t − p/u1D70F−1
+/parenright.s1 , where sgn denotes the sign function (positive for buy orders 
+and negative for sell orders). The limit price submitted is uniformly drawn from the 
+interval between the fundamental value and the previous closing price pclose
+t−1  , result-
+ing in l𝜏
+it =
+/braceleft.s3U/parenleft.s1pclose
+t−1 , p∗
+t
+/parenright.s1ifpclose
+t−1 < p∗
+t
+U/parenleft.s1p∗
+t , pclose
+t−1
+/parenright.s1ifp∗
+t < pclose
+t−1
+.
+If traders opt for the trend-following strategy, they use a moving average price (with 
+varying window lengths) to decide whether to buy or sell. This type of traders is 
+referred to as chartists. Each chartist submits orders with probability 
+r/u1D70F
+t = /uni007C.x/uni007C.x/uni007C.xtanh/parenleft.s1a/u1D711/u1D70F,Li
+t
+/parenright.s1/uni007C.x/uni007C.x/uni007C.x , where a > 0 measures the strength of participation in trading for 
+chartists, and /u1D711/u1D70F,Li
+t = p/u1D70F−1 − maLi
+t = p/u1D70F−1 − 1
+Li
+Li∑
+j=1
+pclose
+t−j  represents the difference 
+between the most recent updated price and the moving average of closing prices with a 
+window length ofLi , serving as the basis for making trading decisions. Chartists submit 
+limit orders with probability r/u1D70F
+t  , and these orders are denoted as (q/u1D70F
+it, l/u1D70F
+it) , 
+whereq/u1D70F
+it = sgn(/u1D711/u1D70F,Li
+t ) . Similarly, positive values represent buy orders, and negative val-
+ues represent sell orders. The submitted limit order price is given byl/u1D70F
+it = p/u1D70F−1 (1+Δ /u1D4CF/u1D70F
+t ) , 
+where/u1D4CF/u1D70F
+t ∼ N(0,1) , and the standard deviation Δ > 0 is related to the aggressiveness of 
+traders in increasing their bid or lowering their ask prices relative to the current 
+pricep/u1D70F−1.
+Within this framework, at certain times, all agents may adopt a passive stance, 
+with no one willing to accept the orders. To ensure market liquidity and ensure the 
+continuous operation of the CDA under all circumstances, we set a certain propor -
+tion of random traders among the agents who engage in random trading. In some 
+evolutionary scenarios, there may be a greater number of random traders. To miti-
+gate the possibility that prices exhibit a completely random walk pattern by massive 
+random trading, we assume that even when the current trader is a random trader, 
+they have a probability pr of choosing to trade. When they choose to trade, agents 
+issue a random order with a quantity q/u1D70F
+it of ± 1, and the probability of choosing to 
+buy or sell is equal. The submitted limit price l/u1D70F
+it is p/u1D70F−1 + /u1D70E/u1D716/u1D4CF/u1D70F
+t  , where /u1D4CF/u1D70F
+t ∼ N(0,1).
+2.2  Update Mechanism of Trading Strategy
+In the framework of this model, traders’ types are not fixed. At the end of each trad-
+ing day, traders can choose to switch their strategies, and when the closing price is 
+known, they can evaluate their realized profits, if any. Let It ⊆ {1,… , N} be the set 
+of agents who traded on day t at a certain price p/u1D70Fi
+t  , where Xit ∈{ f , c} , and i ∈ It 
+denotes the strategy they adopted, where f  represents the fundamental strategy, and 
+c represents the trend-following strategy. They calculate their realized profits based 
+on the following formula:
+(2)/u1D70Bit =
+/braceleft.s3
+pclose
+t − p/u1D70Fi
+t iﬁ ∈ It is a buyer
+p/u1D70Fi
+t − pclose
+t if ∈ It is a seller
+
+===== PAGE 7 =====
+427
+Improving Price Generation: A Novel Agent‑Based Model for…
+Subsequently, agents calculate their cumulative profits based on 
+U/u1D70Bit
+(i, t)= /u1D70Bit + /u1D702U/u1D70Bit
+(i, t − 1), i ∈ It, where /u1D702∈ [0, 1] is a memory parameter. Only 
+the agents who engage in trading adjust their current cumulative profit measure, 
+while other agents j ∉ It keep their cumulative profit measure unchanged, i.e., 
+U/u1D70Bjt
+(j, t) = U/u1D70Bjt
+(j, t − 1) . Agents who adopt the fundamental strategy may switch to 
+chartists with a probability nc,i,t ., which is computed as follows:
+where i = 1, … , N . Similarly, chartists may switch to the fundamentalists with a 
+probability nf ,i,t = 1 − nc,i,t, where 𝛽> 0 is a parameter related to the strength of 
+switching: a larger /u1D6FD makes agents more likely to switch to the most profitable strat-
+egy at t + 1.
+As mentioned earlier, the current trading mechanism captures typical features 
+such as the clustering volatility of returns, heteroscedasticity, and long memory. 
+However, it struggles to replicate the persistence of sudden price changes, i.e., jump 
+persistence. One possible reason for jump phenomena is that most traders adopt 
+homogeneous strategies when the market faces endogenous or exogenous shocks. 
+Persistence might arise from the varying response speed of different traders to this 
+market volatility. Substantial empirical research has shown that prices are influenced 
+by individual and institutional investor sentiment. These studies employ either indi-
+rect or direct indicators to measure sentiment and demonstrate that investor senti-
+ment, especially that of random traders, plays a crucial role in asset pricing (Baker 
+& Wurgler, 2006; Chen et  al., 1993; Elton et  al., 1998; Sias et  al., 2001). If the 
+fundamental value of an asset remains unchanged but its price experiences sig-
+nificant shifts, this may be attributed to traders adopting irrational trading strate-
+gies due to emotional factors. This aligns with the theoretical framework proposed 
+by many researchers describing the role of emotions in asset pricing (Black, 1986; 
+Hong & Stein, 1999; Shefrin & Statman, 1994; Shleifer & Summers, 1990; True-
+man, 1988). In other words, when traders’ confidence is severely shaken, they are 
+less likely to adhere to the rational actor assumption and follow fundamental value-
+based or trend-driven trading strategies. Thus, we assume that when market feed-
+back falls below traders’ minimum expectations, the fundamentalists and chartists 
+will switch to random traders. We set a threshold for traders i ’s historical realized 
+profit /braceleft.s1/u1D70Bit−
+/braceright.s1t−1
+1  at the 5th percentile before day t , denoted as /u1D70B∗
+it . When their profit 
+/u1D70Bit on day t falls below this threshold, indicating a rare loss occurrence, they will no 
+longer adhere to any strategies under the rational assumption and switch to random 
+trading strategies from day t onwards.
+Starting from the essence of traders’ bounded rationality, this paper aims to pro-
+pose an improved agent-based price model to replicate the frequent occurrence of 
+jumps with persistence. Simultaneously, it aims to capture stylized facts such as 
+leptokurtosis, long memory, and volatility clustering. Our model, in contrast to the 
+CHP model by Chiarella et al., (2012), has several differences: firstly, it allows fun-
+damentalists and chartists to switch to random traders, whereas the latter are set as a 
+fixed proportion of random traders. Fundamental value traders and technical traders 
+(3)nc,i,t = e/u1D6FDUc (i,t)
+e/u1D6FDUc (i,t)+e /u1D6FDUf (i,t) ,
+
+===== PAGE 8 =====
+428 S. Song, H. Li 
+can only switch between each other. Secondly, to control the behavior of random 
+traders and considering that random traders also have restrictions on cash flows and 
+stock holdings, they are set to trade with a certain probability,otherwise, they choose 
+to observe. In contrast, random traders in the latter always trade with a probability of 
+1. The mechanism of our model is illustrated in Fig. 1.
+The proposed framework differs from the CHP model in several key aspects. 
+Firstly, the former allows fundamentalists and chartists to switch to random traders, 
+whereas the latter imposes a fixed proportion of random traders. Secondly, in order 
+to control the behavior of random traders, random traders also have constraints in 
+the former model. They are permitted to engage in trading only with a certain prob-
+ability; otherwise, they opt for non-trading. In contrast, random traders in the latter 
+model always engage in trading with a probability of 1. The operating mechanism of 
+our model is illustrated in Fig. 1.
+3  Simulation Analysis
+3.1  Parameter Selection 
+Chiarella et al., (2012) provided a feasible selection of parameters for CHP model, 
+which have been proven to enable the CHP model to stably generate simulated price 
+Fig. 1  Flowchart of our model
+
+===== PAGE 9 =====
+429
+Improving Price Generation: A Novel Agent‑Based Model for…
+sequences exhibiting stylized facts. Therefore, the parameter ranges chosen in this 
+paper align with those in Chiarella and He (2012), as detailed in Table  1. Addition-
+ally, we introduce several new parameters for the strategies proposed in this paper, 
+which include the probability of random traders choosing to engage in trading, 
+denoted as pr , as well as the initial proportions of fundamentalists, chartists, and 
+random traders, denoted as f F
+0 , f C
+0  and f R
+0 ,respectively.
+The values of a , a , /u1D6FD , and /u1D702 in Table  1 are essentially empirical values, which 
+have been thoroughly discussed by Chiarella et al., (2006), Chiarella et al. (2009), 
+and Chiarella et  al., (2012). Since they are not the main source of noise affecting 
+the model results, we attempt to randomly select the value of these four parameters 
+within a small range around their empirical values during simulation experiments 
+to demonstrate that minor variations in these parameters do not impact the robust-
+ness of the final outcomes. The range of choices for the parameter Li has already 
+taken into account the commonly used lengths of moving averages, and a random 
+selection from the given range will be made in each simulation. In our case, we set 
+pr = 0.5 , indicating that each random trader has only a 50% chance of submitting 
+orders. We set f F
+0 , f C
+0  and f R
+0  to be 0.49, 0.49, and 0.02. Later in the study, we will 
+perform sensitivity analysis on the initial proportions of these three types of trad-
+ers to examine their impact on the evolution. Although (Chiarella et al., 2012) have 
+already conducted a sensitivity analysis on the important parameters Δ and /u1D70Ef  , we 
+will also conduct additional sensitivity analyses on Δ , /u1D70Ef  and pr.
+Since the calculation of the moving average needs a certain values of historical 
+closing prices, we generate 100 initial fundamental values before running the model. 
+Table 1  Parameters in simulation
+Parameter Value Description
+N 1000 Number of agents
+Si
+0 {1,2,…,9} Initial number of shares of stocks
+Ci
+0 1000 Si
+0 Initial amount of cash
+pclose
+0 1000 Initial price
+p∗
+0 990 Initial fundamental price
+/u1D6FC { 17
+1000 , 18
+1000 , 19
+1000} Intensity of participation in transactions of fundamentalists
+a {0.15,0.2,0.25} Intensity of participation in transactions of chartists
+Li {20,21,…,100} Length of moving average windows
+Δ 0.005 Aggressiveness of chartists
+/u1D6FD { 1
+18 , 1
+17 , 1
+16} Intensity of switching of traders
+/u1D702 {0.15,0.2,0.25} Memory parameter
+/u1D70Ef 0.005 Volatility of fundamental price
+/u1D70E/u1D716 /u1D70Ef p∗
+0 Volatility of random offset by random traders
+pr 0.5 Probability of random traders to issue a random order
+f F
+0 0.49 Initial fraction of fundamentalists
+f C
+0 0.49 Initial fraction of chartists
+f R
+0 0.02 Initial fraction of random traders
+
+===== PAGE 10 =====
+430 S. Song, H. Li 
+Subsequently, for each run, we generate T = 2400 simulated prices (approximately 
+ten years’ length) and correspondingly obtain a return series with a length of 2399. 
+To eliminate the randomness in model outcomes, we conduct a total of 100 simula-
+tion experiments and base our comprehensive analysis on the results.
+3.2  Results Analysis
+3.2.1  Descriptive Statistics
+Agent-based price simulation series need to exhibit stylized facts found in real asset 
+price data. These characteristics include, but are not limited to, leptokurtic distribu-
+tions of returns, weak autocorrelation in absolute returns (long memory), and vola-
+tility clustering in returns (heteroscedasticity). Based on these features, we analyze 
+the sequences generated by the CHP model and our model, both under the same 
+parameter settings. Returns in this study refer to daily returns, which correspond to 
+the logarithmic difference between closing prices, i.e., rt = logpclose
+t − logpclose
+t−1 .
+Table  2 presents the descriptive statistics of the returns series generated by the 
+two models. These statistics provide the mean and median values of the maximum, 
+minimum, standard deviation, kurtosis, and skewness of returns for 100 simula-
+tion experiments. From Table  2, it can be observed that the returns generated under 
+the mechanism proposed in this paper exhibit higher kurtosis overall compared to 
+the returns generated by the CHP model. This indicates a more pronounced peak 
+in the distribution of returns. In terms of extreme values, they are more likely to 
+exhibit extreme positive and negative returns, suggesting a higher likelihood of jump 
+phenomena.
+On the left of Fig.  2 presents the distribution of 20 return series generated by our 
+model. On the right, it displays the normal distribution based on the mean and vari-
+ance of each return sequence. It can be observed that the simulated return distribu-
+tions exhibit clear leptokurtosis. Specifically, they have higher peaks and their tails 
+extend further along the horizontal axis compared to the normal distribution. This 
+suggests a higher likelihood of extreme values occurring in the simulated returns.
+3.2.2  Long Memory
+In this section, we conduct 100 simulation experiments using both the CHP 
+model and our model, considering the former as the benchmark, to compare their 
+Table 2  Results of descriptive statistics
+Model Mean SD Min Max Skew Kurtosis
+Original model Mean  − 6.49E–06 0.004523  − 0.02456 0.023373  − 0.0135 3.923272
+Median 1.68E–05 0.004237  − 0.02477 0.022739  − 0.01969 3.643348
+Updated model Mean 4.56E–05 0.02256  − 0.21318 0.256728 0.286206 17.0396
+Median 0.000104 0.017364  − 0.09475 0.091509 0.034363 5.766782
+
+===== PAGE 11 =====
+431
+Improving Price Generation: A Novel Agent‑Based Model for…
+performance in replicating typical features of financial price or return series. All 
+parameters in the simulation experiments are kept consistent. We first examine 
+whether the two models could replicate the long memory in the absolute returns. 
+We calculate the autocorrelation coefficients of each return sequence and the 
+absolute return sequence with their lagged sequences from lag 1 to 100. Figures  3 
+and 4 present the results from both models using box plots.
+As seen in Fig.  3b, regardless of the lag order, the autocorrelation coefficients 
+of return sequences generated by CHP model primarily fall within the range 
+of − 0.05 and 0.05. This suggests that these sequences lack significant autocorre-
+lation, indicating a lack of predictability in returns. For the absolute return series 
+in Fig.  3a, over 50% of the simulated series exhibit significant autocorrelation 
+only at lag 1, while for lag orders greater than 5, over 75% of the absolute return 
+series show no significant autocorrelation. Therefore, it can be concluded that the 
+simulated price series obtained from CHP model seem to exhibit stable “short 
+memory” rather than stable long memory characteristics. This differs from what 
+Chiarella and He (2012) claimed, as they suggested that the autocorrelation in 
+their simulated absolute returns slowly decays over 20–30 lags. The discrepancy 
+could be attributed to the fact that they did not emphasize different initial pro-
+portions of traders during their simulation experiments, and it might be the case 
+that typical long memory only emerges under certain initial conditions. Under the 
+parameter settings in Table  1, the CHP model’s performance appears to be unsat-
+isfactory. This underscores the necessity of conducting sensitivity analysis on the 
+initial trader proportion parameters, which will be emphasized in Sect. 3.2.6.
+Figure  4 displays the autocorrelation of return series and absolute return series 
+based on our model. It is evident from the figure that for most lag orders, over 
+50% of the autocorrelation coefficients of absolute return sequences are slightly 
+higher than 0.05, and the mean autocorrelation coefficient slowly decays with 
+increasing lag order. This demonstrates that the proposed mechanism in this 
+study can effectively replicate the weak autocorrelation (long memory) of abso-
+lute return sequences. At the same time, return series do not exhibit significant 
+autocorrelation, indicating that simulated price sequences are fundamentally effi-
+cient and lack significant residual predictability.
+Fig. 2  Distribution of simulated returns based on our model (left) and the corresponding normal distribu-
+tions (right)
+
+===== PAGE 12 =====
+432 S. Song, H. Li 
+Fig. 3  Autocorrelation of absolute returns and returns corresponding to the benchmark. The x-axis rep-
+resents the lag order, and for each lag, the y-axis presents the mean, upper quartile, lower quartile, as 
+well as larger and smaller autocorrelation coefficients considered as outliers for the 100 series at that 
+lag, using a box plot format. The blue lines represent autocorrelation coefficients of 0.05 or − 0.05. If the 
+autocorrelation coefficient exceeds the blue lines, it is considered to indicate significant autocorrelation 
+in the corresponding return sequence or absolute return sequence
+Fig. 4  Autocorrelation of absolute returns and returns corresponding to the proposed improved agent-
+based price model. The x-axis represents the lag order, and for each lag, the y-axis presents the mean, 
+upper quartile, lower quartile, as well as larger and smaller autocorrelation coefficients considered as 
+outliers for the 100 series at that lag, using a box plot format. The blue lines represent autocorrelation 
+coefficients of 0.05 or − 0.05. If the autocorrelation coefficient exceeds the blue lines, it is considered to 
+indicate significant autocorrelation in the corresponding return sequence or absolute return sequence
+
+===== PAGE 13 =====
+433
+Improving Price Generation: A Novel Agent‑Based Model for…
+3.2.3  Heteroscedasticity
+This study employs the Ljung-Box test to detect the ARCH effect in the squared 
+return series. If a significant ARCH effect exists, it is considered to have conditional 
+heteroscedasticity. Figures  5 and 6 respectively present the distribution and box 
+plots of the ARCH test results for the corresponding return series generated by the 
+two models. As seen in Fig.  5, in the squared return series generated by CHP model, 
+over 75% of them show the significance in the ARCH test, evidenced by the p-val-
+ues of Ljung-Box test less than 0.05. The remaining 25% of p-values are distrib-
+uted fairly evenly between 0 and 0.8. This indicates that the simulated return series 
+from the benchmark generally exhibit heteroscedasticity, aligning with the findings 
+Fig. 5  Heteroskedasticity test results for squared returns of the benchmark. a displays a histogram of the 
+p-values of Ljung-Box test for different simulated sequences, while b shows a box plot of the p-values, 
+with the blue line indicating p = 0.05. The two subplots together illustrate the distribution of test results
+Fig. 6  Heteroskedasticity test results for squared returns of our proposed model. a displays a histogram 
+of the p-values of Ljung-Box test for different simulated sequences, while b shows a box plot of the 
+p-values, with the blue line indicating p = 0.05. The two subplots together illustrate the distribution of 
+test results
+
+===== PAGE 14 =====
+434 S. Song, H. Li 
+of Chiarella and He (2012). Similarly, Fig.  6 demonstrates that in the return squared 
+series generated by our model, over 75% of them have p-values less than 0.05, with 
+the majority of p-values being less than 0.1. This suggests that this model can also 
+effectively capture the typical heteroscedasticity present in squared returns. Thus, 
+our model meets the basic criteria as a price mechanism model by successfully rep-
+licating the typical characteristics of asset prices.
+3.2.4  Jump Persistence
+As emphasized earlier, there is limited research in ABMs of prices that focus on 
+jumps, especially jumps with persistence. The primary focus of our model is to cap-
+ture the presence of these frequent jumps with persistence observed in real markets. 
+A jump is typically defined as a sudden change in prices over a short period. In 
+classical price dynamics models like the Jump-Diffusion Model, jumps are usually 
+assumed to be instantaneous. However, this contradicts the observations of signifi-
+cant and persistent price changes in the same direction during financial crashes or 
+bubbles. Rather than instantaneous jumps or isolated outliers in individual returns, 
+this study is more concerned with persistent abnormal returns in the same direction. 
+We believe that such persistent jumps better represent stock market crashes or finan-
+cial bubbles, consistent with the need of risk management.
+Quantifying and identifying price jumps typically require discussions within 
+the framework of price dynamics models. Correspondingly, econometric tools 
+for detecting individual jumps, such as the BNS method developed by Barndorff-
+Nielsen and Shephard (2004, 2006), the ABD test by Andersen et al. (2007), and 
+the LM test proposed by Lee and Mykland (2008), rely on the assumptions of price 
+dynamics models. While (Song & Li, 2023) have also proposed methods for iden-
+tifying jumps with persistence, they are based on high-frequency price data and 
+assume the availability of price dynamics models. These methods are not directly 
+applicable to ABM-simulated price sequences, which are not actual prices and are 
+low-frequency in nature.
+To identify the number of jumps and the duration of jump persis-
+tence in ABM-simulated price sequences, we propose a simple method: 
+we consider the 95th percentile of returns as a threshold (separately for 
+positive and negative returns). If, within a continuous time interval 
+[𝜑,𝜑 + 𝜔](0<𝜑<T − 1,0 <𝜔<T − 1,0 <𝜑 + 𝜔<T − 1;𝜑, 𝜔 ∈ N∗ ) , the 
+returns maintain the same direction and are all above the upper threshold (below 
+the lower quantile), then we consider a jump with persistence to have occurred at 
+time [/u1D711,/u1D711+ /u1D714+ 1] . We apply this jump detection to each simulated price series and 
+record the corresponding number of jumps and the average duration of jumps. Fig-
+ure  7 presents the jump detection results for simulated prices obtained from the two 
+models.
+The implications of Fig.  7 suggest that the prices generated based on our 
+model exhibit a higher frequency of jumps with persistence. Approximately 25% 
+of the price sequences identify more than 8 persistent jumps, and over 75% of the 
+sequences recognize 4 persistent jumps. Among these, roughly 75% of the jumps 
+have an average duration of 2 units of time. In contrast, for the price sequences 
+
+===== PAGE 15 =====
+435
+Improving Price Generation: A Novel Agent‑Based Model for…
+generated by CHP model, although the average duration of identified jumps is com-
+parable to that of the improved model, the number of identified persistent jumps is 
+significantly lower. In 75% of the price sequences, 4 or fewer jumps are identified, 
+and 50% of the sequences contain less than 2 persistent jumps. This suggests that 
+CHP model has shortcoming in characterizing frequent extreme risks. In light of this 
+phenomenon, our model offers valuable improvements and complements to better 
+capture these dynamics.
+3.2.5  Intrinsic Mechanism of the Frequent Jumps with Persistence
+From a statistical perspective, our model demonstrates a degree of effectiveness. To 
+underscore its role in explaining price generation and investigating the underlying 
+causes of frequent persistent jumps, we further analyze the behavioral dynamics of 
+multiple agents during the evolutionary process, drawing insights from two simu-
+lated price sequences from CHP model and our model.
+Figure  8 illustrates price trends generated by the two ABM models under 
+T = 2400 , along with the transformation of roles among agents during the trad-
+ing process. Initially, due to identical parameter settings and similar proportions of 
+the three types of traders, the price trends driven by the two ABM mechanisms in 
+Fig.  8a exhibit minimal divergence. However, under the improved mechanism, some 
+fundamentalists and chartists switch into random traders, leading to conspicuous 
+differences in the two simulated price sequences. At t∗�
+1  , a downward spike in the 
+blue line marks the onset of several rounds of significant volatility, resulting in 5 
+instances of persistent jumps until t∗�
+3  . Subsequently, prices briefly stabilize between 
+t∗�
+3  and t∗�
+4  . However, starting from t∗�
+4  , the blue line exhibits continuous fluctuations, 
+yielding five more instances of persistent jumps until the end of the observation 
+period. This indicates that the improved ABM mechanism successfully replicates 
+Fig. 7  Results of jump detection in the simulated price series obtained from the two models. The left 
+panel displays a boxplot of the average duration of jumps with persistence, while the right panel shows 
+a boxplot of the number of jumps. The red boxes correspond to the results based on the benchmark, and 
+the blue boxes represent the results based on the proposed model
+
+===== PAGE 16 =====
+436 S. Song, H. Li 
+the frequent occurrence of jumps with persistence. The underlying cause of this phe-
+nomenon is elucidated in Fig.  8b—the evolutionary process of agents corresponding 
+to our model. The initial turning point occurs at t∗�
+1  , coinciding with the complete 
+disappearance of fundamentalists in the market. Despite the equal initial proportions 
+of fundamentalists and chartists, along with a low proportion of random traders, as 
+time passes, an increasing number of fundamentalists experience setbacks when 
+implementing fundamental strategies. Consequently, they transition into chartists. 
+On a day when negative returns surpass the maximum loss of traders, these agents 
+transform into irrational random traders. This leads to the extinction of fundamen-
+talists at t∗�
+1  , resulting in a market entirely dominated by random and chartists. Sub-
+sequently, after t∗�
+1  , prices undergo significant fluctuations, accompanied by several 
+instances of persistent jumps.
+However, some chartists also struggle to profit in such a market environment. At 
+t∗�
+3  , these traders revert to being fundamentalists, injecting stability into the market 
+and causing prices to return to their original levels. However, this period of stabil-
+ity is short-lived. As the number of random traders increases once more, disrupting 
+Fig. 8  Simulated price series and evolution of trader roles based on two models (Scenario 1). a Depicts 
+the price trends obtained from a single simulation run. The gray line represents the simulation results of 
+CHP model, while the blue line represents the results corresponding to our model. Various colored lines 
+indicate identified instances of persistent jumps, with two distinct colors used for differentiation. Blue-
+colored blocks indicate time intervals in which the prices of our model do not exhibit persistent jumps, 
+while cyan-colored blocks denote time intervals in which the prices of CHP model do not exhibit persis-
+tent jumps. b and c Respectively illustrate the changes in agent numbers for our model and CHP model. 
+Curves of different colors represent different types of agents
+
+===== PAGE 17 =====
+437
+Improving Price Generation: A Novel Agent‑Based Model for…
+the normal bidding order in the market, fundamentalists extinct again at t∗�
+4  . This 
+signifies that the market no longer includes fully rational traders focused solely on 
+the asset’s fundamental value. Consequently, prices experience substantial volatility, 
+accompanied by noticeable persistent jumps. Subsequently, sporadic appearances 
+of fundamentalists temporarily enter and exit the market, failing to restore rela-
+tive price stability. In contrast, the evolutionary process in Fig.  8c of CHP model 
+reveals an upward trajectory in the number of chartists and a gradual decline in fun-
+damentalists over time. Fundamentalists become entirely extinct at t∗�
+2  and do not 
+re-emerge until t∗�
+5  . At t∗�
+2  , the gray line representing price sequences exhibits a sig-
+nificant upward trend, leading to two instances of persistent jumps between t∗�
+2  and 
+t∗�
+5  . Following t∗�
+5  , the number of fundamentalists in the market stabilizes, resulting in 
+a period of price stability.
+In summary, our analysis of the first scenario yields two key conclusions. Firstly, 
+irrespective of the mechanism employed, the complete disappearance of funda-
+mentalists from the market appears to be the primary driver of price volatility and 
+subsequent persistent jumps. However, under the framework of CHP model, the 
+time interval between the disappearance and reappearance of fundamentalists only 
+reproduces odd price jumps. This discrepancy with the frequent persistent jumps 
+observed in real markets highlights a potential misalignment between CHP model 
+and the underlying dynamics of the real market. In contrast, our proposed mecha-
+nism results in the frequent occurrence of persistent jumps following the extinction 
+of fundamentalists, possibly mirroring the market crashes or abnormal surges stem-
+ming from traders’ irrational homogenized behavior. Secondly, ensuring the pres-
+ence of a certain number of fundamentalists in the market is crucial for maintain-
+ing relative price stability. When the market faces extreme risk, restoring confidence 
+among fundamentalists and encouraging their re-entry into the market may consti-
+tute an effective measure to stabilize the market.
+Relying solely on Scenario 1 may not be sufficient to fully substantiate the afore-
+mentioned view points. Firstly, this is because the results may exhibit randomness. 
+Secondly, in Scenario 1, the number of random traders remains consistently low. 
+Some might question whether, with a higher number of random traders, market order 
+could be completely disrupted and frequent persistent jumps could occur regardless 
+of the disappearance of fundamentalists. Therefore, to complement and provide fur -
+ther clarification of these conclusions, we employ Scenario 2, as depicted in Fig. 9.
+Figure  9 displays the price series and corresponding trader role evolution patterns 
+for Scenario 2 in the two different models. In Fig.  9a, it is evident that, prior to the 
+time point denoted by the first black dashed line at t∗
+1 , under the same parameters, 
+the price trends driven by the two mechanisms do not differ significantly. However, 
+after t∗
+1 , the prices generated by our model suddenly deviate significantly from those 
+produced by CHP model, showing a pronounced upward trend. Subsequently, after 
+several rounds of continuous fluctuations, the prices return to a level close to that 
+of t∗
+1 around t∗
+3 . During the period between t∗
+1 and t∗
+3 , our model generates 9 persis-
+tent jumps. The evolution graph of the number of agents in this model illustrates 
+that t∗
+1 is precisely the moment when the number of fundamentalists becomes zero 
+in this framework. At t∗
+3 , a significant portion of chartists transition back to being 
+
+===== PAGE 18 =====
+438 S. Song, H. Li 
+fundamentalists. Following this, the number of fundamentalists gradually decreases 
+to single digits but does not completely extinct, while the number of random traders 
+continues to increase, surpassing 75% of the total number of agents in the market. 
+However, between t∗
+3 and the observation endpoint, apart from the jumps observed at 
+t∗
+3 due to the entry of fundamentalists, no other consistent jumps are detected in the 
+price series represented by the blue line. This indicates that even with a large num-
+ber of random traders and very few fundamentalists, prices remain within a certain 
+range of normal fluctuations, without exhibiting frequent jump phenomena. This 
+may be attributed to the constraints imposed on random traders in our model, where 
+they cannot have unlimited cash flows and cannot engage in unlimited short selling. 
+Additionally, they have a 50% chance of remaining in a waiting state, reducing the 
+possibility of prices following a purely random walk. The simulated results of CHP 
+model are similar to the corresponding results in Scenario 1. Until t∗
+2 , the number of 
+fundamentalists remains non-zero, and during this period, the price remains rela-
+tively stable, with no persistent jumps detected. However, at t∗
+2 , fundamentalists are 
+completely replaced by chartists, and this situation continues until the end of the 
+Fig. 9  Simulated price series and evolution of trader roles based on two models (Scenario 2). a Depicts 
+the price trends obtained from a single simulation run. The gray line represents the simulation results of 
+CHP model, while the blue line represents the results corresponding to our model. Various colored lines 
+indicate identified instances of persistent jumps, with two distinct colors used for differentiation. Blue-
+colored blocks indicate time intervals in which the prices of our model do not exhibit persistent jumps, 
+while cyan-colored blocks denote time intervals in which the prices of CHP model do not exhibit persis-
+tent jumps. b and c Respectively illustrate the changes in agent numbers for our model and CHP model. 
+Curves of different colors represent different types of agents
+
+===== PAGE 19 =====
+439
+Improving Price Generation: A Novel Agent‑Based Model for…
+observation period. Consequently, after t∗
+2 , the price exhibits a pronounced down-
+ward trend, and a total of 4 persistent jumps are observed within the observation 
+interval. In conclusion, based on the analysis of Scenarios 1 and 2, we can draw the 
+following fundamental conclusions: In our model, non-random traders can decide 
+whether to become random traders based on their daily earnings. When market 
+feedback shatters their confidence, they become completely irrational noise traders. 
+However, it is not these noise traders that directly lead to the frequent occurrence of 
+persistent price jumps. Instead, it is the expulsion of fundamentalists by both noise 
+traders and chartists that directly causes the increased frequency of persistent jumps. 
+As long as fundamentalists exist in the market, even if the number of random traders 
+is relatively high, prices will remain in a relatively stable state, exhibiting normal 
+fluctuations. It is also worth emphasizing that, as set in CHP model, when random 
+traders in the market are set to be constant, prices will not exhibit frequent persistent 
+jumps, even when there are no fundamentalists left in the market.
+4  Sensitivity Analysis and Model Calibration
+Our model’s randomness is primarily manifested in five aspects: First, the order 
+of traders’ transactions at the start of each day is randomly arranged. Second, the 
+submitted prices of fundamentalists are randomly chosen between the fundamental 
+value and actual prices. Third, the ask and bid prices of chartists are determined by 
+an offset with a standard deviation Δ . Fourth, the volatility process of the price’s 
+fundamental value is determined by /u1D70Ef  . Lastly, compared to the CHP model, the 
+newly added parameters in our model—Probability of random traders to issue a ran-
+dom order and the initial proportions of the three types of traders—also influence 
+the outcomes. If we consider the uncertainty affecting the final outcomes as noise, 
+the main sources of this noise are likely from the latter three aspects; thus, the focus 
+of the sensitivity analysis should be on Δ , /u1D70Ef  , pr , f F
+0  , f C
+0  , and f R
+0 .
+In this section, we will first analyze the impact of different initial ratios of trad-
+ers on simulation results. For each type of trader’s initial ratio, we let f F
+0 , f C
+0  and 
+f R
+0  vary in increments of 0.1 within the range [0, 1] . This results in 1331 possible 
+parameter combinations, of which only 66 combinations satisfy the constraint 
+f F
+0 + f C
+0 + f R
+0 = 1 . Due to computational complexity, we will perform only 10 simu-
+lation experiments for any of these 66 parameter combinations, while keeping other 
+parameters consistent with Table  1. We will examine the average performance of 
+the 10 simulation sequences for each parameter combination as a basis for assessing 
+whether that combination is reasonable. Figures  10, 11, 12 and 13 present the per -
+formance of simulation series corresponding to different parameter combinations in 
+terms of distribution shape, long memory, heteroskedasticity, and jump tests.
+When examining the distribution shape of returns, we calculate the kurtosis 
+of each return series. If the kurtosis is greater than 3, we consider the distribu-
+tion to exhibit approximately leptokurtosis. We only consider a parameter com-
+bination to be capable of consistently generating return series with leptokurtic 
+shape when half of the simulated series have values of kurtosis greater than 3. 
+
+===== PAGE 20 =====
+440 S. Song, H. Li 
+Figure  10a presents the results of each parameter combination in a three-dimen-
+sional scatter plot. It can be observed that among the initial ratio combinations 
+that satisfy the constraint, regardless of the chosen initial ratio scheme, they can 
+Fig. 10  The impact of initial trader ratios on producing returns with leptokurtic shape. a Presents the 
+impact of different parameter combinations on simulation results in the form of a three-dimensional scat-
+ter plot. b–d display histograms of the reasonable initial ratios for random traders, fundamentalists and 
+chartists, respectively
+Fig. 11  The impact of initial trader ratios on producing returns whose absolute values are with long 
+memory. a Presents the impact of different parameter combinations on simulation results in the form of a 
+three-dimensional scatter plot. b–d Display histograms of the reasonable initial ratios for random traders, 
+fundamentalists and chartists, respectively
+
+===== PAGE 21 =====
+441
+Improving Price Generation: A Novel Agent‑Based Model for…
+all generate returns with leptokurtic shapes. The three histograms on the right 
+side, i.e., (b)–(d), show the distribution of reasonable parameters for f R
+0 , f F
+0  and 
+f C
+0  , respectively, under the condition of producing the stylized facts. Due to the 
+constraint f F
+0 + f C
+0 + f R
+0 = 1 , the quantity of parameters with smaller values is 
+Fig. 12  The impact of initial trader ratios on producing returns with heteroskedasticity. a Presents the 
+impact of different parameter combinations on simulation results in the form of a three-dimensional scat-
+ter plot. b–d Display histograms of the reasonable initial ratios for random traders, fundamentalists and 
+chartists, respectively
+Fig. 13  The impact of initial trader ratios on producing returns with frequent persistent jumps. a Presents 
+the impact of different parameter combinations on simulation results in the form of a three-dimensional 
+scatter plot. b–d Display histograms of the reasonable initial ratios for random traders, fundamentalists 
+and chartists, respectively
+
+===== PAGE 22 =====
+442 S. Song, H. Li 
+naturally higher in the sample space. Therefore, the frequency of the histograms 
+is irrelevant; we only care about whether reasonable parameter values can cover 
+the range of [0,1] . These three graphs also intuitively demonstrate that our model 
+could steadily generate prices with leptokurtosis, and it is not sensitive to changes 
+in the initial ratios of the three types of traders.
+Next, we examine the influence of the initial trader ratios on the autocorrela-
+tion of absolute return sequences. Combining the results from Fig.  4, we deter -
+mine that when the lag is greater than or equal to 10, if the ACF test results are 
+significantly different from zero—meaning the autocorrelation coefficients exceed 
+the threshold—we consider the absolute returns to exhibit long memory. There-
+fore, during the sensitivity analysis, we calculate the autocorrelation coefficient at 
+lag = 10 for each return series and determine if it is significant. In each parameter 
+combination, only if more than 50% of the return sequences exhibit long memory, 
+i.e., the corresponding ACF test results are not significant, do we consider the 
+parameter combination as reasonable. Figure  11 presents the results. In Fig.  11a, 
+red dots indicate that for the corresponding initial ratio combination, half of the 
+return sequences exhibit long memory, while open dots indicate that the corre-
+sponding initial ratio combination cannot steadily generate return sequences with 
+long memory. It is evident that when the initial ratio of random traders exceeds 
+60%, the returns, regardless of how the initial ratios of the other two types of trad-
+ers change, will not exhibit long memory in their absolute values. Correspond-
+ingly, 0.8 and 0.7 are the thresholds for the reasonable initial ratios of fundamen-
+talists and chartists, respectively. All three histograms indicate that when any one 
+of the following conditions occurs: f R
+0 > 0.6, f F
+0 > 0.8 , or f C
+0 > 0.7 , it significantly 
+affects the realization of long memory in simulated returns. Among these condi-
+tions, the requirement for the initial ratio of random traders is the most stringent.
+When exploring the sensitivity of heteroskedasticity to parameter changes, 
+similarly, we perform Ljung-Box heteroskedasticity tests on the 10 return 
+sequences for each parameter combination, considering the parameter combina-
+tion as reasonable only if more than half of the return sequences have significant 
+test results. From the phase space in Fig.  12a, it can be observed that when the 
+initial ratio of random traders exceeds 0.5, there will be no red dots. However, the 
+distribution of red dots on the other axes is relatively uniform. This implies that 
+the heteroskedasticity of returns is sensitive to the initial ratio of random traders, 
+while it is not sensitive to changes in the initial ratios of the other two types of 
+traders. The right plots in Fig. 12 provides additional clarification of this result.
+Finally, we examine the impact of different initial ratio combinations on rep-
+licating a certain frequency of persistent jumps. From the results in Fig.  7, it can 
+be observed that when f F
+0 , f C
+0  and f R
+0  are 0.49, 0.49, and 0.02, respectively, more 
+than 75% of the simulated price sequences detected at least 4 persistent jumps. 
+Therefore, for the 66 initial ratio combinations, we perform jump tests on the 
+corresponding 10 simulated price sequences. Only when more than half of the 
+sequences detect at least 4 persistent jumps, we consider the corresponding ini-
+tial ratio combination can replicate frequent persistent jumps, which are marked 
+by red dots in Fig.  13a. From Fig.  13a, it can be seen that the red dots are evenly 
+
+===== PAGE 23 =====
+443
+Improving Price Generation: A Novel Agent‑Based Model for…
+distributed on each axis, and Fig.  13b–d further reveals that the available initial 
+ratio values for the three types of traders cover the range of 0–0.8. This suggests 
+that extreme values should be avoided for the initial ratio of any type of trader.
+In summary, based on the results from Figs.  10, 11, 12, and 13, we find that 
+changes in the initial ratio of the three types of traders have an impact on the long 
+memory, heteroskedasticity, and jump frequency in returns. Among them, the 
+results are most sensitive to the initial ratio of random traders. It can be inferred that 
+when f R
+0 > 0.5 , regardless of the initial ratios of the other two types of traders, it is 
+not possible to generate prices with robust stylized facts. The values of f C
+0  and f F
+0  
+should also not exceed 0.7 and 0.8, respectively. Therefore, the optimal ranges for 
+these three parameters are: f R
+0 ∈ [0,0.5] , f F
+0 ∈ [0,0.8] and f C
+0 ∈ [0,0.7],while satisfy-
+ing the condition f F
+0 + f C
+0 + f R
+0 = 1.
+Table  3 displays the average time it takes for fundamentalists to become com-
+pletely extinct (their numbers falling to zero) in 100 simulations when the initial 
+ratios of fundamentalists and chartists vary. In these simulations, the ratio of random 
+traders is set at 0.02, since they primarily serve as a source of noise in the system 
+and their proportion should be kept low. According to Table  3, when the initial dis-
+parity between fundamentalists and chartists exceeds 0.4, fundamentalists rapidly 
+go extinct, depicting an unrealistic scenario. This makes it challenging to deduce 
+reasons for the persistence of jumps from such outcomes. Thus, although sensitivity 
+tests for f F
+0  , f C
+0  , and f R
+0  have shown that they can produce price sequences exhibiting 
+typical stylized facts over a wide range, this paper only presents the analysis for set-
+tings where f F
+0 = 0.49 , f C
+0 = 0.49 , and f R
+0 = 0.02.
+For the parameters Δ , /u1D70Ef  and pr , we will evaluate the number of simulations 
+in which the results demonstrate stylized facts, including leptokurtosis, long 
+memory (where the adf test results for lags ≥ 10 are significant), heteroscedas-
+ticity (with significant Ljung-box test results), and widespread persistent jumps 
+(with the number of persistent jumps ≥ 4) under various settings. Given that these 
+parameters are primary sources of return volatility, we will also assess the aver -
+age volatility of the return series generated under different parameter values, cal-
+culated as the mean of the standard deviations from 100 return series. To present 
+Table 3  Impact of parameter 
+variations on the evolution of 
+fundamentalists
+Parameter settings The average time required for 
+the extinction of fundamentalists
+f F
+0 = 0.08, f C
+0 = 0.9, f R
+0 = 0.02 212
+f F
+0 = 0.18, f C
+0 = 0.8, f R
+0 = 0.02 268
+f F
+0 = 0.28, f C
+0 = 0.7, f R
+0 = 0.02 589
+f F
+0 = 0.38, f C
+0 = 0.6, f R
+0 = 0.02 1009
+f F
+0 = 0.48, f C
+0 = 0.5, f R
+0 = 0.02 1680
+f F
+0 = 0.58, f C
+0 = 0.4, f R
+0 = 0.02 1501
+f F
+0 = 0.68, f C
+0 = 0.3, f R
+0 = 0.02 1033
+f F
+0 = 0.78, f C
+0 = 0.2, f R
+0 = 0.02 698
+f F
+0 = 0.88, f C
+0 = 0.1, f R
+0 = 0.02 311
+
+===== PAGE 24 =====
+444 S. Song, H. Li 
+this volatility more intuitively, we will multiply it by the square root of the num-
+ber of annual trading days ( 
+√
+252 ) to derive the mean annual volatility.
+We uniformly increased Δ from 0.001 to 0.01 in increments of 0.001, and 
+Fig.  14 displays the simulation results for each setting of Δ . The figure reveals 
+that lowering Δ significantly diminishes the stylized facts observed in the simu-
+lations, particularly when Δ is below 0.003. At this level, fewer than 80% of the 
+simulations exhibit the desired heteroscedasticity and long memory. Increasing 
+Δ beyond 0.005 does not notably enhance the simulation outcomes. Moreover, 
+when Δ exceeds 0.007, the average annual volatility of the simulated returns sur -
+passes 40%, a rarity in real stock markets. Thus, maintaining Δ within the range 
+of 0.003–0.007 is advisable.
+Similarly, we increased /u1D70Ef  from 0.001 to 0.01 in increments of 0.001, and 
+Fig.  15 shows the results of this sensitivity analysis. The figure reveals that vari-
+ations in /u1D70Ef  significantly affect both the heteroscedasticity and long memory 
+observed in the simulation results. Specifically, when /u1D70Ef  is below 0.005, fewer 
+than 80 simulations exhibit long memory, representing less than 80% of the total. 
+When /u1D70Ef  exceeds 0.006, the number of simulations meeting the criteria of het-
+eroscedasticity decreases sharply. Additionally, higher /u1D70Ef  significantly increase 
+annual volatility. These findings suggest that the most realistic simulation out-
+comes occur when /u1D70Ef  ranges between 0.005 and 0.006. For pr , we incremented 
+it uniformly from 0.1 to 1 by 0.1, with Fig.  16 illustrating these outcomes. 
+According to Fig.  16, apart from long memory, the other stylized facts are rela-
+tively insensitive to changes in pr . When pr is set between 0.5 and 0.7, more 
+than 80 simulations successfully reproduce the long memory of absolute returns, 
+Fig. 14  The simulation results of each setting of Δ
+
+===== PAGE 25 =====
+445
+Improving Price Generation: A Novel Agent‑Based Model for…
+demonstrating that the model’s results are stable when pr is within this range. 
+This paper specifically reports results for Δ=0.005  , /u1D70Ef = 0.005 and pr = 0.5 for 
+reference.
+Fig. 15  The simulation results of each setting of /u1D70Ef
+Fig. 16  The simulation results of each setting of pr
+
+===== PAGE 26 =====
+446 S. Song, H. Li 
+Section  3.2 has already explained in detail that the simulated prices generated by 
+our model exhibit the basic statistical characteristics of actual financial asset prices, 
+such as long memory, volatility clustering, and leptokurtosis. However, this is essen-
+tially a qualitative validation. To quantitatively understand the characteristics and 
+advantages of our model, it is necessary to analyze how closely the simulated data 
+generated by the model aligns with real-world data. Therefore, this section will 
+further discuss the issue of model calibration and the applicability of our model in 
+describing real market situations. In short, the purpose of sensitivity analysis is to 
+show under which parameter ranges the model’s output remains robust. The purpose 
+of model calibration, on the other hand, is to adjust key model parameters (those 
+resulting in randomness) to minimize the difference between the distribution of sim-
+ulated returns and that of the actual financial returns, which serves as the target. We 
+will apply this process to both our model and the CHP model, which serves as a 
+benchmark, and then compare which model’s simulated returns are closer to actual 
+financial returns under their respective optimal parameter combinations.
+Specifically, we select the daily closing prices of Shanghai Composite Index 
+(SSE) and Shenzhen Component Index (SZI) from the China’s stock market, and the 
+S&P 500 Index (SPX) and NASDAQ Index from the U.S. stock market as targets, as 
+they reflect the overall market volatility and the stylized facts of financial prices. At 
+different lengths (1 year, 2 years, 3 years) of simulations, we calibrate the two mod-
+els, with the corresponding observed price series starting from January 4, 2021, to 
+December 31, 2021, January 4, 2021, to December 30, 2022, and January 4, 2021, 
+to December 29, 2023, respectively. The task of calibration is to select parameter 
+values that make the empirical distribution of the simulated returns similar to the 
+distribution of actual returns (Wiesinger et  al., 2013). We use Kullback–Leibler 
+(KL) divergence to asymmetrically measure the difference between the two prob-
+ability distributions, which is primarily based on information theory to describe the 
+difference in entropy between the two distributions and is applicable to both discrete 
+and continuous random variables. The KL divergence is defined as follows:
+Thus, the goal of model calibration is to vary the key parameters within a certain 
+range to determine their relatively optimal values, minimizing the divergence and, 
+in turn, minimizing the difference in uncertainty between the two sets of samples 
+(simulated and observed). We employ a genetic algorithm to achieve this optimiza-
+tion process. For our model, we consider Δ , /u1D70Ef  and pr as the key parameters contrib-
+uting to the model’s uncertainty, while for the CHP model, pr is not involved; there-
+fore, only Δ and /u1D70Ef  are treated as the corresponding key parameters for calibration. 
+The selection of the other parameters remained consistent with Table  1. Since some 
+parameters are randomly selected and are not the main sources of model uncer -
+tainty, we conduct 10 simulation experiments and assess the comprehensive calibra-
+tion performance based on the results of these experiments. In each experiment, the 
+genetic algorithm runs 50 iterations to find the relatively optimal combination of key 
+parameters and the corresponding divergence value. We then average the optimized 
+(4)DKL(p, q) = ∑
+x
+p(x)ln p(x)
+q(x)
+
+===== PAGE 27 =====
+447
+Improving Price Generation: A Novel Agent‑Based Model for…
+divergence values from all 10 simulation experiments to measure the average differ-
+ence between the simulated returns and the actual financial returns. Table  4 presents 
+the results of model calibration.
+From the results in the table, we can see that, overall, when the length of the sim-
+ulated series is relatively short, such as a 1-year period, the calibrated CHP model 
+generates data that more closely matches the actual price series compared to our 
+model, as indicated by the smaller divergence between the distributions of simulated 
+returns and the actual index returns. However, as the simulation length increases, 
+our model consistently produces simulated results with return distributions that bet-
+ter align with the actual index returns, thereby demonstrating its advantage. A pos-
+sible reason for this is that, in shorter time windows, there are fewer persistent jump 
+phenomena in the actual index prices. Therefore, the CHP model, which does not 
+aim to capture such phenomena, can generate simulated sequences that are closer to 
+reality. In contrast, over longer periods, jump persistence emerges, and our model is 
+better at accurately capturing this common phenomenon, demonstrating its practical 
+value in real-world applications.
+Figure  17 intuitively shows the comparison between the distributions of simu-
+lated returns generated by different models and the actual index returns under the 
+minimum divergence after model calibration, along with the calibrated values of 
+the key parameters. We also show the corresponding calibrated values in Table  5. 
+It is worth noting that, due to computational complexity, we only consider a limited 
+number of trials and iterations. Therefore, these calibration results are not strictly 
+global optima. Increasing the number of trials and iterations, as well as including 
+more parameters in the genetic algorithm’s optimization process, would further 
+reduce the difference between the simulated and actual return series. The current 
+results are presented to illustrate the practical value of the proposed model and to 
+compare its performance with that of the benchmark model in real-world scenarios.
+Table 4  Results of model 
+calibration Index Reference year (length) Post-optimization KL 
+divergence (mean)
+Our model CHP model
+SSE 2021 (243) 0.0643 0.0408
+2021–2022 (485) 0.0882 0.0946
+2021–2023 (727) 0.1145 0.1532
+SZI 2021 (243) 0.0925 0.1043
+2021–2022 (485) 0.0589 0.0648
+2021–2023 (727) 0.1206 0.1664
+SPX 2021 (252) 0.0482 0.0402
+2021–2022 (503) 0.0743 0.1014
+2021–2023 (753) 0.0926 0.1125
+NASDAQ 2021 (252) 0.0998 0.0897
+2021–2022 (503) 0.0533 0.0805
+2021–2023 (753) 0.1124 0.1435
+
+===== PAGE 28 =====
+448 S. Song, H. Li 
+5  Conclusion
+The CHP model based on continuous double auction model and heterogeneous 
+agents provides a framework that retains the behavior characteristics of traders and 
+the real microstructure, and can reproduce several statistical properties and stylized 
+Fig. 17  Density distributions of simulated returns generated by two models and returns of indices. a–d 
+Show the results of SSE, SZI, SPX, NASDAQ, respectively
+
+===== PAGE 29 =====
+449
+Improving Price Generation: A Novel Agent‑Based Model for…
+facts of financial asset prices. Therefore, we regard it as the standard agent-based 
+model for studying the price generation process from a micro perspective. However, 
+in the context of frequent financial crises, the phenomenon of persistent jumps in 
+prices has emerged as another stylized fact, which traditional heterogeneous agent-
+based frameworks fail to objectively reflect. To address the contemporary demand 
+for effective risk management, we propose an improved continuous double auction 
+model based on heterogeneous agents, aiming to reproduce many stylized facts of 
+prices, including the phenomenon of persistent jumps, and to explain the intrinsic 
+mechanism behind the persistence of price jumps.
+Our model emphasizes the mechanism of role transitions from fundamentalists 
+and chartists to random traders. In the simulated price series generated by the evolu-
+tion of agents’ behavior under the new mechanism, more jumps with persistence can 
+be detected, and their returns exhibit characteristics of leptokurtosis, long memory, 
+and heteroscedasticity. Compared with the CHP model, our model can more stably 
+output simulated price series with the aforementioned characteristics. The results of 
+model calibration also quantitatively confirm that, compared to the CHP model, the 
+Table 5  Minimum KL divergence and the corresponding calibrated parameters among multiple simula-
+tion experiments
+Index Reference year (length) Our model CHP model
+Minimum KL divergence ( Δ , 
+pr , /u1D70Ef )
+Minimum KL divergence ( Δ , /u1D70Ef )
+SSE 2021 (243) 0.0561 
+(0.001371,0.257778,0.007722)
+0.0392 (0.001102,0.008001)
+2021–2022 (485) 0.0761 
+(0.002848,0.107953,0.008731)
+0.0902 (0.003526,0.006695)
+2021–2023 (727) 0.0931 
+(0.003526,0.106016,0.006695)
+0.1427 (0.004260,0.006245)
+SZI 2021 (243) 0.0825 
+(0.003387,0.293056,0.009946)
+0.0894 (0.003226, 0.009391)
+2021–2022 (485) 0.0535 
+(0.009154,0.132353,0.009553)
+0.0623 (0.001083,0.007243)
+2021–2023 (727) 0.1156 
+(0.005478,0.173328,0.009277)
+0.1543 (0.005321,0.008723)
+SPX 2021 (252) 0.0413 
+(0.009045,0.290590,0.007864)
+0.0384 (0.009154,0.007673)
+2021–2022 (503) 0.0690 
+(0.005758,0.252282,0.008824)
+0.0979 (0.006543,0.007046)
+2021–2023 (753) 0.0807 
+(0.002250,0.398558,0.006329)
+0.1026 (0.007361,0.004151)
+NASDAQ 2021 (252) 0.0902 
+(0.005663,0.519232,0.004034)
+0.0823 (0.002136,0.004821)
+2021–2022 (503) 0.0442 
+(0.001628,0.192572,0.007243)
+0.0774 (0.002628,0.006043)
+2021–2023 (753) 0.1048 
+(0.003387,0.293056,0.009946)
+0.004768,0.007985)
+
+===== PAGE 30 =====
+450 S. Song, H. Li 
+simulated return series generated by our model exhibit smaller differences from the 
+actual financial return series, especially when the simulation time window is longer. 
+Additionally, the results of sensitivity analysis also show that the simulation results 
+under this updated mechanism are insensitive to the initial proportion of traders 
+within a certain parameter range. Lastly, from the evolution of the quantity of three 
+types of traders, a basic conclusion can be drawn: when the squeeze out of funda-
+mentalists by random traders and chartists leads to more frequent persistent jumps 
+in prices, and when fundamentalists re-enter the market, regardless of the amount of 
+the other two types of traders, prices will be in a relatively stable state and exhibit 
+normal fluctuations. Thus, ensuring the number of fundamentalists is key to main-
+taining market stability, providing a theoretical basis for real-world “market-saving” 
+actions.
+It is emphasized that the purpose of proposing this improved agent-based model 
+is not to create jumps with persistence directly but is based on the theory that ran-
+dom traders themselves can affect market stability and efficiency. Our model allows 
+rational traders in the market to unidirectionally convert to noise traders, to meet the 
+needs to objectively describe the microstructure of real market. Therefore, the intrin-
+sic mechanism of prices is essentially a hypothesis about the market microstructure, 
+verified by the simulated price series with stylized facts based on the agent-based 
+model. Further, the evolution process driven by the updated mechanism reveals the 
+reasons for the frequent occurrence of jumps with persistence from a micro per -
+spective, serving as a practical reference to help institutions and individuals avoid 
+extreme risks.
+Certainly, this study also has some limitations. We monitor the trading mecha-
+nisms and behaviors of different traders in the market using a continuous double 
+auction model based on heterogeneous agents, and the closing prices formation 
+process is restored through the continuous bidding process. However, the intrinsic 
+mechanism of price formation in the real market is far more complex than the mech-
+anism corresponding to this model. If more micro or macro factors could be con-
+sidered, it would describe the process of interaction among different entities more 
+accurately. For example, based on existing behavioral economics theories, we only 
+consider the unidirectional conversion of fundamentalists and chartists to random 
+traders, without considering the conversion of random traders to other types of trad-
+ers. At the same time, we do not take into account the impact of macro policies and 
+market news announcements on prices. In future research, we hope to further refine 
+the price generation mechanism based on agents, helping practitioners gain a uni-
+fied, universal, and systematic understanding of asset prices.
+Author Contribution S.S. undertook the following work: conceptualization, methodology, software, 
+formal analysis, writing the original draft. H.L. undertook the following work: resources, supervision, 
+review and editing.
+Funding The author(s) received no financial support for the research, authorship, or publication of this 
+article.
+Data Availability The data that support the findings of this study are available from the authors, upon 
+reasonable request.
+
+===== PAGE 31 =====
+451
+Improving Price Generation: A Novel Agent‑Based Model for…
+Declarations 
+Conflict of interest The authors report no conflicts of interest. The authors alone are responsible for the 
+content and writing of the paper.
+References
+Aït-Sahalia, Y., Cacho-Diaz, J., & Laeven, R. J. A. (2015). Modeling financial contagion using mutu-
+ally exciting jump processes. Journal of Financial Economics, 117(3), 585–606. https:// doi. org/ 10. 
+1016/j. jfine co. 2015. 03. 002
+Andersen, T. G., & Bollerslev, T. (1997). Intraday periodicity and volatility persistence in financial mar -
+kets. Journal of Empirical Finance, 4(2), 115–158. https:// doi. org/ 10. 1016/ S0927- 5398(97) 00004-2
+Andersen, T. G., Bollerslev, T., Diebold, F. X., & Ebens, H. (2001a). The distribution of realized stock 
+return volatility. Journal of Financial Economics, 61(1), 43–76. https:// doi. org/ 10. 1016/ S0304- 
+405X(01) 00055-1
+Andersen, T. G., Bollerslev, T., Diebold, F. X., & Labys, P. (2001b). The distribution of realized exchange 
+rate volatility. Journal of the American Statistical Association, 96(453), 42–55. https:// doi. org/ 10. 
+1198/ 01621 45017 50332 965
+Andersen, T. G., Bollerslev, T., Diebold, F. X., & Labys, P. (2003). Modeling and forecasting realized 
+volatility. Econometrica, 71(2), 579–625. https:// doi. org/ 10. 1111/ 1468- 0262. 00418
+Bachelier, L. (1900). Théorie de la spéculation. Annales Scientifiques De L’école Normale Supérieure, 
+17, 21–86. https:// doi. org/ 10. 24033/ asens. 476
+Baker, M., & Wurgler, J. (2006). Investor sentiment and the cross-section of stock returns. The Journal of 
+Finance, 61(4), 1645–1680. https:// doi. org/ 10. 1111/j. 1540- 6261. 2006. 00885.x
+Barndorff-Nielsen, O. E., & Shephard, N. (2006). Econometrics of testing for jumps in financial econom-
+ics using bipower variation. Journal of Financial Econometrics, 4(1), 1–30. https:// doi. org/ 10. 1093/ 
+jjfin ec/ nbi022
+Barndorff-Nielsen, O. E., Shephard, N., & Winkel, M. (2006). Limit theorems for multipower variation 
+in the presence of jumps. Stochastic Processes and Their Applications, 116(5), 796–806. https:// doi. 
+org/ 10. 1016/j. spa. 2006. 01. 007
+Bee, M., Dupuis, D. J., & Trapin, L. (2019). Realized peaks over threshold: A time-varying extreme 
+value approach with high-frequency-based measures*. Journal of Financial Econometrics, 17(2), 
+254–283. https:// doi. org/ 10. 1093/ jjfin ec/ nbz003
+Black, F., & Scholes, M. (1973). The pricing of options and corporate liabilities. Journal of Political 
+Economy, 81(3), 637–654. https:// doi. org/ 10. 1086/ 260062
+Bollerslev, T. (1986). Generalized autoregressive conditional heteroskedasticity. Journal of Economet-
+rics, 31(3), 307–327. https:// doi. org/ 10. 1016/ 0304- 4076(86) 90063-1
+Cao, H., Ouyang, H., Li, Y., Li, X., & Chen, Y. (2018). The power law characteristics of stock price jump 
+intervals: An empirical and computational experimental study. Entropy, 20(4), 4. https:// doi. org/ 10. 
+3390/ e2004 0304
+Chen, N.-F., Kan, R., & Miller, M. H. (1993). Are the discounts on closed-end funds a sentiment index? 
+The Journal of Finance, 48(2), 795–800. https:// doi. org/ 10. 2307/ 23289 26
+Chiarella, C., He, X. Z., & Hommes, C. (2006). A dynamic analysis of moving average rules. Journal 
+of Economic Dynamics and Control, 30(9), 1729–1753. https:// doi. org/ 10. 1016/j. jedc. 2005. 08. 014
+Chiarella, C., He, X.-Z., & Pellizzari, P. (2012). A dynamic analysis of the microstructure of moving 
+average rules in a double auction market. Macroeconomic Dynamics, 16(4), 556–575. https:// doi. 
+org/ 10. 1017/ S1365 10051 00007 4X
+Cont, R. (2007). Volatility Clustering in Financial Markets: Empirical Facts and Agent-Based Models. In 
+G. Teyssière & A. P. Kirman (Eds.), Long Memory in Economics (pp. 289–309). Cham: Springer.
+Elton, E. J., Gruber, M. J., & Busse, J. A. (1998). Do investors care about sentiment? The Journal of 
+Business, 71(4), 477–500. https:// doi. org/ 10. 1086/ 209754
+Farmer, J. D. (2002). Market force, ecology and evolution. Industrial and Corporate Change, 11(5), 895–
+953. https:// doi. org/ 10. 1093/ icc/ 11.5. 895
+Farmer, J. D., & Foley, D. (2009). The economy needs agent-based modelling. Nature. https:// doi. org/ 10. 
+1038/ 46068 5a
+
+===== PAGE 32 =====
+452 S. Song, H. Li 
+Gatti, D. D., Guilmi, C. D., Gaffeo, E., Giulioni, G., Gallegati, M., & Palestrini, A. (2005). A new 
+approach to business fluctuations: Heterogeneous interacting agents, scaling laws and financial fra-
+gility. Journal of Economic Behavior & Organization, 56(4), 489–512. https:// doi. org/ 10. 1016/j. 
+jebo. 2003. 10. 012
+Harvey, A., & Ito, R. (2020). Modeling time series when some observations are zero pdf. Journal of 
+Econometrics, 214(1), 33–45.
+Hull, J., & White, A. (1987). The pricing of options on assets with stochastic volatilities. The Journal of 
+Finance, 42(2), 281–300. https:// doi. org/ 10. 1111/j. 1540- 6261. 1987. tb025 68.x
+Jawadi, F., Ftiti, Z., & Louhichi, W. (2020). Forecasting energy futures volatility with threshold aug-
+mented heterogeneous autoregressive jump models. Econometric Reviews, 39(1), 54–70. https:// doi. 
+org/ 10. 1080/ 07474 938. 2019. 16901 90
+Jawadi, F., Louhichi, W., Ameur, H. B., & Ftiti, Z. (2019). Do jumps and co-jumps improve volatility 
+forecasting of oil and currency markets? The Energy Journal, 40(2), 131–156. https:// doi. org/ 10. 
+5547/ 01956 574. 40. SI2. fjaw
+Kortian, T. (1995). Modern Approaches to Asset Price Formation: A Survey of Recent Theoretical Litera-
+ture. https:// www. seman ticsc holar. org/ paper/ Modern- Appro aches- to- Asset- Price- Forma tion% 3A-A- 
+of- Korti an/ fd44c a3ec5 de750 3eae6 9e930 f20e9 5a303 5c32b
+Kou, S. G. (2002). A jump-diffusion model for option pricing. Management Science, 48(8), 1086–1101. 
+https:// doi. org/ 10. 1287/ mnsc. 48.8. 1086. 166
+LeBaron, B. (2001). Evolution and time horizons in an agent-based stock market. Macroeconomic 
+Dynamics, 5(02), 225–254. https:// doi. org/ 10. 1017/ S1365 10050 10190 58
+LeBaron, B. (2002). Short-memory traders and their impact on group learning in financial markets. Pro -
+ceedings of the National Academy of Sciences, 99(3), 7201–7206. https:// doi. org/ 10. 1073/ pnas. 
+07207 9699
+Levy, H., Solomon, S., & Levy, M. (2000). Microscopic Simulation of Financial Markets: From Investor 
+Behavior to Market Phenomena.
+Lux, T. (1998). The socio-economic dynamics of speculative markets: Interacting agents, chaos, and the 
+fat tails of return distributions. Journal of Economic Behavior & Organization, 33(2), 143–165. 
+https:// doi. org/ 10. 1016/ S0167- 2681(97) 00088-7
+Lux, T., & Marchesi, M. (1999). Scaling and criticality in a stochastic multi-agent model of a financial 
+market. Nature. https:// doi. org/ 10. 1038/ 17290
+McGroarty, F., Booth, A., Gerding, E., & Chinthalapati, V. L. R. (2019). High frequency trading strate-
+gies, market fragility and price spikes: An agent based model perspective. Annals of Operations 
+Research, 282(1), 217–244. https:// doi. org/ 10. 1007/ s10479- 018- 3019-4
+Merton, R. C. (1976). Option pricing when underlying stock returns are discontinuous. Journal of Finan-
+cial Economics, 3(1), 125–144. https:// doi. org/ 10. 1016/ 0304- 405X(76) 90022-2
+Samuelson, P. A. (1965). Proof that properly anticipated prices fluctuate randomly. Industrial Manage-
+ment Review, 6(2), 41.
+Shi, Y., Luo, Q., & Li, H. (2019). An agent-based model of a pricing process with power law, volatility 
+clustering, and jumps. Complexity, 2019, e3429412. https:// doi. org/ 10. 1155/ 2019/ 34294 12
+Sias, R. W., Starks, L. T., & Tiniç, S. M. (2001). Is noise trader risk priced? Journal of Financial 
+Research, 24(3), 311–329. https:// doi. org/ 10. 1111/j. 1475- 6803. 2001. tb007 72.x
+Song, S., & Li, H. (2022). Price jumping mechanism and parameter estimation based on filtered poisson 
+process. International Journal of Modern Physics C. https:// doi. org/ 10. 1142/ S0129 18312 35001 10
+Song, S., & Li, H. (2023). Is a co-jump in prices a sparse jump? The North American Journal of Econom-
+ics and Finance. https:// doi. org/ 10. 1016/j. najef. 2023. 101923
+Wiesinger, J., Sornette, D., & Satinover, J. (2013). Reverse engineering financial markets with majority 
+and minority games using genetic algorithms. Computational Economics, 41(4), 475–492. https:// 
+doi. org/ 10. 1007/ s10614- 011- 9312-9
+Publisher’s Note Springer Nature remains neutral with regard to jurisdictional claims in published maps 
+and institutional affiliations.
+Springer Nature or its licensor (e.g. a society or other partner) holds exclusive rights to this article under 
+a publishing agreement with the author(s) or other rightsholder(s); author self-archiving of the accepted 
+manuscript version of this article is solely governed by the terms of such publishing agreement and 
+applicable law.

@@ -1,0 +1,10 @@
+{
+  "engineering_pilot_authorized": false,
+  "error_type": "ModuleNotFoundError",
+  "external_api_calls": 0,
+  "formal_execution_authorized": false,
+  "missing_module": "networkx",
+  "real_llm_calls": 0,
+  "schema_version": "fmcg_v32_kernel_fake_smoke_blocker1.0",
+  "status": "BLOCKED_MISSING_DEPENDENCY"
+}

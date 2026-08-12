@@ -1,0 +1,33 @@
+{
+  "auto_retry": false,
+  "behavioral_mechanism_changed": false,
+  "conditions": [
+    "NoClarification-Control",
+    "Rational-Hub-Immediate",
+    "Empathy-Hub-Immediate"
+  ],
+  "conditions_per_block": 3,
+  "formal_inference": false,
+  "master_seed": 2026080903,
+  "p_values": false,
+  "pilot_id": "task005-real-manipulation-pilot-v2",
+  "pilot_v1_cannot_be_pooled_with_pilot_v2": true,
+  "pilot_v1_cannot_be_reclassified_as_pass": true,
+  "pilot_v1_raw_responses_reused": false,
+  "primary_gates": {
+    "D_arousal": "Empathy semantic_arousal - Rational semantic_arousal > 0",
+    "D_credibility": "Rational semantic_credibility - Empathy semantic_credibility > 0",
+    "D_empathy": "Empathy semantic_perceived_empathy - Rational semantic_perceived_empathy > 0",
+    "D_evidence": "Rational semantic_evidence_strength - Empathy semantic_evidence_strength > 0"
+  },
+  "provider_seed_determinism": "UNKNOWN_NOT_GUARANTEED",
+  "real_llm_calls_in_this_stage": false,
+  "replicates": [
+    "R001",
+    "R002"
+  ],
+  "replacement_replicates": false,
+  "schema_version": "1.0",
+  "semantic_valence_role": "descriptive_only",
+  "stimulus_text_changed": false
+}

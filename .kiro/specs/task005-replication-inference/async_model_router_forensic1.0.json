@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "artifact": "async_model_router_forensic",
+  "python_executable": "D:\\Python\\Anaconda\\envs\\Kernel\\python.exe",
+  "module_path": "D:\\Python\\Anaconda\\envs\\Kernel\\Lib\\site-packages\\agentkernel_standalone\\toolkit\\models\\async_router.py",
+  "package_version": "1.1.0",
+  "source_file_sha256": "aa8631f4f9401675f9eb18777f0501e5b458bbbb521ffd981572854eab8b9f19",
+  "signature": "(models_configs: 'Optional[List[Dict[str, object]]]' = None) -> 'None'",
+  "constructor_relevant_facts": {
+    "mentions_asyncio_get_running_loop": false,
+    "mentions_asyncio_get_event_loop": false,
+    "mentions_aiohttp_ClientSession": true,
+    "mentions_session_assignment": true,
+    "has_close": true,
+    "has_aclose": false,
+    "del_mentions_session": true
+  },
+  "zero_network_reproduction": {
+    "SYNC_CONSTRUCTION": "FAIL",
+    "sync_exception_type": "RuntimeError",
+    "sync_exception_text_sanitized": "no running event loop",
+    "ASYNC_CONSTRUCTION": "PASS",
+    "async_exception_type": "",
+    "EXTERNAL_NETWORK_CALLS": 0
+  },
+  "ROOT_CAUSE_CONFIDENCE": "CONFIRMED",
+  "ROOT_CAUSE": "AsyncModelRouter constructed outside a running async lifecycle",
+  "destructor_attribute_error": "secondary cleanup symptom",
+  "original_constructor_exception_type": "RuntimeError",
+  "real_chat_performed": false,
+  "credential_value_recorded": false
+}

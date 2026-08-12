@@ -1,0 +1,107 @@
+{
+  "FORMAL_INFERENCE": false,
+  "FORMAL_REUSE": false,
+  "MDE_SELECTED": false,
+  "OPTIONAL_STOPPING": false,
+  "POWER": false,
+  "P_VALUES": false,
+  "REPLACEMENT_BLOCKS": false,
+  "RESULT": "PASS",
+  "activation_code_head": "e6786567dd38f0c60231b166abbdf2003007a225",
+  "activation_head": "42fcf8b137405ea0f676ae4147282f250995ce94",
+  "artifact": "real_llm_variance_pilot_v3_result",
+  "attempt_counts": {
+    "R001": 1,
+    "R002": 1,
+    "R003": 1,
+    "R004": 1,
+    "R005": 1,
+    "R006": 1,
+    "R007": 1,
+    "R008": 1,
+    "R009": 1,
+    "R010": 1
+  },
+  "audit_log_rows": 1896,
+  "block_statuses": {
+    "R001": "PASS",
+    "R002": "PASS",
+    "R003": "PASS",
+    "R004": "PASS",
+    "R005": "PASS",
+    "R006": "PASS",
+    "R007": "PASS",
+    "R008": "PASS",
+    "R009": "PASS",
+    "R010": "PASS"
+  },
+  "blocker": "none",
+  "blocks_incomplete": [],
+  "blocks_pass": 10,
+  "channel_saturation": {
+    "CHANNEL_REACH_NEAR_SATURATION": false,
+    "hub_cells_proportion_reach_ge_18_of_20": 0.4,
+    "hub_mean_reach": 0.875,
+    "random_cells_proportion_reach_ge_18_of_20": 0.0,
+    "random_mean_reach": 0.605
+  },
+  "correlation_matrix_generated": true,
+  "covariance_matrix_generated": true,
+  "empathy_repair_weight": 0.5,
+  "master_seed": 2026081003,
+  "model": "qwen-plus",
+  "model_calls": 1896,
+  "official_variance_status": "COMPUTED",
+  "pilot_id": "task005-real-variance-pilot-v3",
+  "power_planning_use": true,
+  "primary_estimand_loo_sd_range": {
+    "P1_OVERALL_CLARIFICATION_POST_TRUST": [
+      0.026687486575296158,
+      0.03270265366171809
+    ],
+    "P2_CONTENT_POST_TRUST": [
+      0.016716970953205502,
+      0.04487933494934203
+    ],
+    "P3_TIMING_EARLY_TRUST": [
+      0.04654421356645805,
+      0.07238721552802843
+    ],
+    "P4_CHANNEL_REACH": [
+      0.14953632037438633,
+      0.18219342590896204
+    ],
+    "P5_OVERALL_CLARIFICATION_PURCHASE": [
+      0.012103072956898185,
+      0.018487749322186296
+    ]
+  },
+  "primary_estimand_sd": {
+    "P1_OVERALL_CLARIFICATION_POST_TRUST": 0.0308323595637223,
+    "P2_CONTENT_POST_TRUST": 0.042312929082541625,
+    "P3_TIMING_EARLY_TRUST": 0.06827275321383339,
+    "P4_CHANNEL_REACH": 0.17191729277636836,
+    "P5_OVERALL_CLARIFICATION_PURCHASE": 0.017430417219459902
+  },
+  "progression_authorized": true,
+  "quality_gates": {
+    "agent_key_integrity": "PASS",
+    "async_router_build_context": "PASS",
+    "block_seed_injection": "PASS",
+    "exposure_key_integrity": "PASS",
+    "network_identity_alignment": "PASS",
+    "plan_fallbacks": 0,
+    "pretreatment_alignment": "PASS",
+    "profile_identity_alignment": "PASS",
+    "raw_semantic_validation": "PASS",
+    "semantic_fallbacks": 0
+  },
+  "real_call_audit_equal": true,
+  "real_llm_calls": 1896,
+  "replay_miss_total": 0,
+  "result_created_at_utc": "2026-08-10T16:37:17.292907+00:00",
+  "schema_version": "1.0",
+  "source_freeze_digest": "2fa0916b2a298e89d1fe46725e97f75b0a7f88f37e48c69f9632563f69ca8409",
+  "status": "frozen",
+  "temperature": 0.3
+}

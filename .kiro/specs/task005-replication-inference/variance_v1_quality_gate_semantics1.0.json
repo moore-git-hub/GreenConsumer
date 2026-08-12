@@ -1,0 +1,11 @@
+{
+  "agent_integrity_actual": "to_be_forensically_checked",
+  "exposure_integrity_actual": "to_be_forensically_checked",
+  "frozen_status_preserved": true,
+  "network_identity_actual": "to_be_forensically_checked",
+  "pilot_id": "task005-real-variance-pilot-v1",
+  "pretreatment_alignment_actual": "to_be_forensically_checked",
+  "profile_identity_actual": "to_be_forensically_checked",
+  "schema_version": "1.0",
+  "status_proxy_bug": "parent wrote quality flags as PASS if block status PASS else FAIL"
+}

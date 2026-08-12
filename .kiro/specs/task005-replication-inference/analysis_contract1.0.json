@@ -1,0 +1,132 @@
+{
+  "schema_version": "1.0",
+  "stage": "TASK_005 Stage I.1C",
+  "status": "candidate_frozen_baseline",
+  "anchors": {
+    "git_head": "1447fea7e7669e6828a5e21b0c49fb07f38310bb",
+    "stage_h2_evidence_sha256": "0E8D0D8C8D627FFA1DEB409538C5ECD2927821CDBBAC43352A0B5A3FE07D3F6F",
+    "stage_i1b_inputs_sha256": "78EEDD31B0B84F41870D0B002C1AB898DBAF98F5E963AD97165FFF868BBC3435",
+    "missing_value_contract": "I0-NA-01"
+  },
+  "independent_unit": "replication_block",
+  "control_exp_id": "NoClarification-Control",
+  "strategy_count": 8,
+  "condition_count": 9,
+  "primary_metrics": [
+    "final_trust_gain_vs_control",
+    "post_scandal_auc_gain_vs_control",
+    "local_trust_effect_did_3"
+  ],
+  "metric_direction": "higher_is_better",
+  "control_missing_rule": {
+    "final_trust_gain_vs_control": "finite_required",
+    "post_scandal_auc_gain_vs_control": "finite_required",
+    "local_trust_effect_did_3": "blank_required_structural_not_applicable"
+  },
+  "strategy_missing_rule": "all_primary_metrics_finite_required",
+  "block_eligibility": {
+    "final_succeeded_attempt_only": true,
+    "validation_passed": true,
+    "condition_success_count": 9,
+    "batch_exit_code": 0,
+    "run_completed": true,
+    "partial_block_policy": "reject_whole_block",
+    "imputation": "forbidden",
+    "join_key": "exp_id"
+  },
+  "pilot_and_smoke": {
+    "task005-real-smoke-v2": "exclude_engineering_reference_only",
+    "task005-real-pilot-v1": "exclude_engineering_pilot_only"
+  },
+  "factor_coding": {
+    "content": {
+      "+1": "Empathy",
+      "-1": "Rational"
+    },
+    "channel": {
+      "+1": "Hub",
+      "-1": "Random"
+    },
+    "timing": {
+      "+1": "Immediate",
+      "-1": "Delayed"
+    },
+    "effect_scale_divisor": 4
+  },
+  "factorial_contrasts": {
+    "confirmatory": [
+      "Content",
+      "Channel",
+      "Timing",
+      "Content_x_Channel",
+      "Content_x_Timing",
+      "Channel_x_Timing"
+    ],
+    "exploratory": [
+      "Content_x_Channel_x_Timing"
+    ]
+  },
+  "estimation": {
+    "ci_level": 0.95,
+    "ci_method": "student_t_mean_interval",
+    "test": "two_sided_one_sample_t",
+    "alpha": 0.05,
+    "priority": "effect_size_and_ci_before_p_value"
+  },
+  "multiplicity": {
+    "strategy_primary_24": {
+      "method": "holm",
+      "size": 24,
+      "confirmatory": true
+    },
+    "factorial_confirmatory_18": {
+      "method": "holm",
+      "size": 18,
+      "confirmatory": true
+    },
+    "factorial_three_way_3": {
+      "method": "holm_optional_report",
+      "size": 3,
+      "confirmatory": false
+    }
+  },
+  "pareto": {
+    "metrics": "all_primary_metrics",
+    "direction": "maximize_all",
+    "tolerance": 1e-12,
+    "force_single_winner": false
+  },
+  "bootstrap": {
+    "unit": "whole_replication_block",
+    "iterations": 20000,
+    "ci_level": 0.95,
+    "seed_namespace": "task005|replication-analysis|rank-bootstrap|v1.0",
+    "score": "equal_weight_after_within_resample_metric_minmax",
+    "zero_range_metric_value": 0.5,
+    "tie_rank": "average",
+    "tie_top1_credit": "fractional"
+  },
+  "sample_size": {
+    "final_target_frozen": false,
+    "stage_for_final_freeze": "I.5",
+    "candidate_half_widths": {
+      "final_trust_gain_vs_control": 0.02,
+      "post_scandal_auc_gain_vs_control": 0.3,
+      "local_trust_effect_did_3": 0.015
+    },
+    "pilot_sd_rule": "maximum_sample_sd_across_all_confirmatory_estimands_per_metric",
+    "formula": "smallest_n_with_t_0.975_nminus1_times_s_over_sqrt_n_le_h",
+    "launch_before_stage_i5": "forbidden",
+    "if_required_n_exceeds_nmax": "block_launch_and_make_explicit_design_decision"
+  },
+  "formal_completion": {
+    "target_valid_blocks_preregistered": true,
+    "max_attempted_blocks_preregistered": true,
+    "result_based_stopping": "forbidden",
+    "replacement_seed_rule": "next_unused_replicate_index",
+    "incomplete_policy": "descriptive_only"
+  },
+  "statistical_inference_performed": false,
+  "real_llm_run_launched": false,
+  "production_analysis_implemented": false
+}

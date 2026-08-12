@@ -1,10 +1,5 @@
-name: EasyEnvironment
-components:
-  relation:
-    plugin:
-      EasyRelationPlugin:
-        relations: 'agents_relation'
-  space:
-    plugin:
-      EasySpacePlugin:
-        agents: 'map_agents'
+# TASK_005 FMCG v3.2 不通过 AgentKernel Builder 构造 relation/space 环境组件。
+# simulation_core.py 会显式创建 Environment，并注册 SocialNetworkPlugin；
+# 因此这里保留一个合法的空 EnvironmentConfig，仅用于 Builder/Pydantic 解析。
+name: V32RuntimeEnvironment
+components: {}

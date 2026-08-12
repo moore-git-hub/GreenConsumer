@@ -1,9 +1,0 @@
-{
-  "actual_real_llm_calls": "UNKNOWN_NOT_AUDITED",
-  "child_execution_used": "run_experiments.py --llm-mode real",
-  "frozen_result_REAL_LLM_CALLS_field": 0,
-  "interpretation": "NOT_AUDITED / NOT_VALID_ZERO",
-  "pilot_id": "task005-real-variance-pilot-v1",
-  "reason": "parent runner initialized real_calls = 0 and never populated it from actual child model calls",
-  "schema_version": "1.0"
-}

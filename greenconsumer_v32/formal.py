@@ -1,3 +1,8 @@
+"""已完成正式实验的只读状态接口。
+
+本模块故意不包含 launcher。F001-F010 已完成且关闭；clean workflow 只
+允许读取归档身份，不能通过这里创建 F011 或重新运行 formal sample。
+"""
 from __future__ import annotations
 
 import json
@@ -9,6 +14,7 @@ EVIDENCE = FORMAL_ROOT / "evidence"
 
 
 def formal_status() -> dict:
+    """读取正式 batch/analysis summary，并显式返回 CLOSED 状态。"""
     batch_path = EVIDENCE / "formal_batch_summary.json"
     analysis_path = EVIDENCE / "formal_analysis_summary.json"
     if not batch_path.exists() or not analysis_path.exists():
@@ -16,6 +22,7 @@ def formal_status() -> dict:
             "status": "ARCHIVE_INCOMPLETE",
             "formal_root": str(FORMAL_ROOT),
         }
+
     batch = json.loads(batch_path.read_text(encoding="utf-8"))
     analysis = json.loads(analysis_path.read_text(encoding="utf-8"))
     return {

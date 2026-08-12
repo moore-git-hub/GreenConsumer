@@ -1,3 +1,8 @@
+"""当前 v3.2 的最小核心回归测试集合。
+
+历史 Task001–Task005 测试已经从 clean branch 移除；这里只保留直接覆盖
+当前情境、购买机制、runtime 和 LLM audit 的六组测试。
+"""
 from __future__ import annotations
 
 import subprocess
@@ -16,6 +21,7 @@ V32_TESTS = (
 
 
 def verify_tests() -> dict:
+    """顺序运行六组测试；首个失败即停止，且不会调用真实 LLM。"""
     rows = []
     for rel in V32_TESTS:
         proc = subprocess.run(
@@ -36,14 +42,10 @@ def verify_tests() -> dict:
         )
         if proc.returncode != 0:
             break
+
     return {
-        "schema_version": "task005_fmcg_v32_clean_verify1.0",
-        "status": (
-            "PASS"
-            if len(rows) == len(V32_TESTS)
-            and all(r["returncode"] == 0 for r in rows)
-            else "FAIL"
-        ),
+        "schema_version": "task005_fmcg_v32_clean_verify1.1",
+        "status": "PASS" if len(rows) == len(V32_TESTS) and all(r["returncode"] == 0 for r in rows) else "FAIL",
         "tests_planned": len(V32_TESTS),
         "tests_run": len(rows),
         "results": rows,

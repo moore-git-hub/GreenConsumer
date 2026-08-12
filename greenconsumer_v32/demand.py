@@ -1,3 +1,9 @@
+"""FMCG demand layer：把认知轨迹转换为重复品牌选择机会。
+
+此层与 LLM 分离：LLM/AgentKernel 先生成每个 cognitive agent 的心理轨迹，
+随后在 treatment-invariant category-purchase opportunities 上计算品牌选择。
+micro-buyers 用于增加需求事件分辨率，不是 formal 独立样本。
+"""
 from __future__ import annotations
 
 from fmcg_scenario_v32 import ENGINEERING_PERSONAS
@@ -12,13 +18,17 @@ def simulate_demand(
     demand_seed: int,
     micro_buyers: int = 25,
 ) -> tuple[list[dict], list[dict]]:
+    """在一条完整 cognitive condition 轨迹上运行 FMCG 重复选择需求层。"""
     if not cognitive_rows:
         raise ValueError("cognitive_rows is empty")
+
     exp_id = str(cognitive_rows[0]["exp_id"])
     cognitive = {
         (int(row["tick"]), str(row["agent_id"])): row
         for row in cognitive_rows
     }
+
+    # 每个 cognitive persona 派生固定 micro cohort。
     params = DemandParameters(micro_buyers_per_archetype=micro_buyers)
     cohorts = {
         persona.agent_id: build_scenario_micro_cohort(
@@ -44,9 +54,12 @@ def simulate_demand(
         tick_n = 0
         tick_expected = 0.0
         tick_chosen = 0
+
         for persona in ENGINEERING_PERSONAS:
             psych = cognitive[(tick, persona.agent_id)]
             for profile in cohorts[persona.agent_id]:
+                # purchase_step 决定该 tick 是否出现品类机会；只有出现机会时，
+                # choice_probability 才有品牌选择含义。
                 choice, next_state = purchase_step(
                     seed=demand_seed,
                     tick=tick,
@@ -61,15 +74,14 @@ def simulate_demand(
                 states[profile.buyer_id] = next_state
                 if not choice.opportunity:
                     continue
+
                 tick_n += 1
                 tick_expected += float(choice.choice_probability)
                 tick_chosen += int(choice.focal_brand_chosen)
                 rows.append(
                     {
                         "exp_id": exp_id,
-                        "conversion_support": (
-                            "present" if support_present else "absent"
-                        ),
+                        "conversion_support": "present" if support_present else "absent",
                         "tick": tick,
                         "agent_id": persona.agent_id,
                         "buyer_id": profile.buyer_id,
@@ -92,19 +104,12 @@ def simulate_demand(
                 "conversion_support": "present" if support_present else "absent",
                 "tick": tick,
                 "opportunities": tick_n,
-                "expected_choice_share": (
-                    tick_expected / tick_n if tick_n else ""
-                ),
-                "realized_choice_share": (
-                    tick_chosen / tick_n if tick_n else ""
-                ),
+                "expected_choice_share": tick_expected / tick_n if tick_n else "",
+                "realized_choice_share": tick_chosen / tick_n if tick_n else "",
                 "cumulative_opportunities": cumulative_n,
-                "cumulative_expected_choice_share": (
-                    cumulative_expected / cumulative_n if cumulative_n else ""
-                ),
-                "cumulative_realized_choice_share": (
-                    cumulative_chosen / cumulative_n if cumulative_n else ""
-                ),
+                "cumulative_expected_choice_share": cumulative_expected / cumulative_n if cumulative_n else "",
+                "cumulative_realized_choice_share": cumulative_chosen / cumulative_n if cumulative_n else "",
             }
         )
+
     return rows, curves

@@ -1,3 +1,12 @@
+"""TASK_005 v3.2 的统一运行调度器。
+
+本模块串联：
+ExperimentConfig → v3.2 AgentKernel cognition → LLM audit/replay →
+offline FMCG demand → 统一结果目录。
+
+它只创建 engineering/demo run；已经关闭的 F001-F010 formal sample 不会从
+这里启动或扩充。
+"""
 from __future__ import annotations
 
 import dataclasses
@@ -30,6 +39,7 @@ TEMPERATURE = 0.3
 
 
 def _configs(settings: RunSettings):
+    """从唯一实验矩阵构造本次 run 的条件列表。"""
     matrix = {cfg.exp_id: cfg for cfg in generate_experiment_matrix()}
     ids = list(CONDITION_ORDER) if settings.condition == "all" else [settings.condition]
     return [
@@ -45,20 +55,20 @@ def _configs(settings: RunSettings):
 
 
 def _trust_trajectory(rows: list[dict]) -> list[dict]:
+    """把 20-agent 机制记录聚合为每 Tick 的 mean trust。"""
     grouped = defaultdict(list)
     for row in rows:
         grouped[int(row["tick"])].append(float(row["trust_final"]))
     return [
-        {
-            "tick": tick,
-            "mean_trust": sum(grouped[tick]) / len(grouped[tick]),
-        }
+        {"tick": tick, "mean_trust": sum(grouped[tick]) / len(grouped[tick])}
         for tick in sorted(grouped)
     ]
 
 
 async def execute(settings: RunSettings) -> dict:
+    """运行一个完整 engineering/demo job，并返回 run summary。"""
     settings.validate()
+
     run_id = dt.datetime.now().strftime("v32_%Y%m%d_%H%M%S")
     run_dir = settings.output_dir / run_id
     if run_dir.exists():
@@ -67,11 +77,13 @@ async def execute(settings: RunSettings) -> dict:
 
     configs = _configs(settings)
     inner = build_inner_router(settings.llm_mode, settings.requested_llm_seed)
+
     control_cache = None
     all_cognitive: list[dict] = []
     all_demand: list[dict] = []
     all_curves: list[dict] = []
     condition_meta = []
+
     try:
         for cfg in configs:
             condition_dir = run_dir / "conditions" / cfg.exp_id
@@ -82,6 +94,8 @@ async def execute(settings: RunSettings) -> dict:
             replay_hits = 0
             replay_misses = 0
 
+            # 全矩阵运行：control 先记录；8个策略在各自 clarification tick
+            # 之前重放同一 control history。单条件运行则直接调用 router。
             if settings.condition == "all":
                 if cfg.is_control:
                     routed_inner = RecordingRouter(inner)
@@ -96,41 +110,47 @@ async def execute(settings: RunSettings) -> dict:
                     )
                     route_role = "replay-before-treatment"
 
+            # 每个 condition 独立写一份 LLM audit JSONL。
             audited = wrap_audited(
                 routed_inner,
                 audit_path=audit_path,
                 run_id=run_id,
                 condition=cfg.exp_id,
                 requested_llm_seed=settings.requested_llm_seed,
-                model=("deterministic-fake" if settings.llm_mode == "fake" else MODEL),
-                temperature=(0.0 if settings.llm_mode == "fake" else TEMPERATURE),
+                model="deterministic-fake" if settings.llm_mode == "fake" else MODEL,
+                temperature=0.0 if settings.llm_mode == "fake" else TEMPERATURE,
             )
+
+            # 这里进入冻结的 v3.2 scientific runtime。
             result = await run_scenario_v32(cfg, override_router=audited)
             cognitive = result["mechanism_records"]
             all_cognitive.extend(cognitive)
+
             write_csv(condition_dir / "cognitive_records.csv", cognitive)
             write_csv(
                 condition_dir / "trust_trajectory.csv",
-                [
-                    {"exp_id": cfg.exp_id, **row}
-                    for row in _trust_trajectory(cognitive)
-                ],
+                [{"exp_id": cfg.exp_id, **row} for row in _trust_trajectory(cognitive)],
             )
 
+            # control 结束后冻结本次 run 的 common-history cache。
             if settings.condition == "all" and cfg.is_control:
                 control_cache = dict(routed_inner.cache)
+
             if isinstance(routed_inner, ReplayRouter):
                 replay_hits = routed_inner.replay_hits
                 replay_misses = routed_inner.replay_misses
                 if replay_misses:
                     raise RuntimeError(f"{cfg.exp_id}: common-history replay miss")
 
+            # Demand 与认知轨迹离线交叉；conversion support 不改变 LLM
+            # cognition，只通过购买层的 PBC facilitation 生效。
             support_levels = []
             if settings.run_demand:
                 if settings.support_mode in {"absent", "both"}:
                     support_levels.append(False)
                 if settings.support_mode in {"present", "both"}:
                     support_levels.append(True)
+
                 for support in support_levels:
                     demand, curves = simulate_demand(
                         cognitive,
@@ -146,29 +166,24 @@ async def execute(settings: RunSettings) -> dict:
                     "exp_id": cfg.exp_id,
                     "route_role": route_role,
                     "logical_llm_calls": audited.call_count,
-                    "provider_calls": int(
-                        getattr(routed_inner, "provider_calls", audited.call_count)
-                    ),
+                    "provider_calls": int(getattr(routed_inner, "provider_calls", audited.call_count)),
                     "replay_hits": replay_hits,
                     "replay_misses": replay_misses,
-                    "legacy_purchase_endpoint_retired": bool(
-                        result["legacy_purchase_endpoint_retired"]
-                    ),
-                    "event_ticks": [
-                        int(row["tick"])
-                        for row in result["effective_event_timeline"]
-                    ],
+                    "legacy_purchase_endpoint_retired": bool(result["legacy_purchase_endpoint_retired"]),
+                    "event_ticks": [int(row["tick"]) for row in result["effective_event_timeline"]],
                 }
             )
     finally:
+        # 即使中途报错，也尽量释放 HTTP/client 资源。
         await close_inner_router(inner)
 
+    # run-level 汇总文件是分析/画图的唯一输入入口。
     write_csv(run_dir / "cognitive_records.csv", all_cognitive)
     write_csv(run_dir / "demand_opportunities.csv", all_demand)
     write_csv(run_dir / "choice_curves.csv", all_curves)
 
     payload = {
-        "schema_version": "task005_fmcg_v32_clean_run1.0",
+        "schema_version": "task005_fmcg_v32_clean_run1.1",
         "run_id": run_id,
         "status": "PASS",
         "scope": "engineering/demo; not a new formal replication",

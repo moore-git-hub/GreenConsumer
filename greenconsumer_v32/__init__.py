@@ -1,7 +1,8 @@
-"""Clean orchestration layer for TASK_005 FMCG scenario v3.2.
+"""TASK_005 FMCG v3.2 的清晰工作流层。
 
-This package does not replace or move the frozen scientific mechanism modules.
-It provides a single, explicit workflow over the canonical v3.2 source.
+这个包只负责“如何运行、检查、分析和画图”，不重新定义论文使用的科学
+机制。Trust、Att、SN、PBC、网络传播与 FMCG demand 仍由冻结的核心模块
+实现。
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

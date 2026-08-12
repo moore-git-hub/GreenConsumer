@@ -18,6 +18,24 @@
 
 `simulation_core.py` 仍保留少量历史命名兼容依赖（`generate_data.py`, `metrics_calculator.py`, `GreenCognitionPlugin.py`, `ConsumerPlanPlugin.py`）。它们暂时保留，因为改写冻结 simulation engine 不属于“代码整理”的必要条件。
 
+### AgentKernel Builder 的最小 bootstrap 配置
+
+`simulation_core.py` 只借用 AgentKernel `Builder` 来生成经过 Pydantic 验证的 AgentConfig。运行时会临时写入 `data/agents/profiles.jsonl`，随后恢复或删除。
+
+当前 v3.2 **不再依赖**：
+
+- `data/relation/relation.jsonl`
+- `data/map/agents.jsonl`
+- `EasyRelationPlugin`
+- `EasySpacePlugin`
+
+社会网络由 `simulation_core.py` 显式创建 `Environment`，再通过 `SocialNetworkPlugin.register_agents(...)` 在内存中构建。因此：
+
+- `configs/simulation_config.yaml` 的 `data` 只保留 `agent_profiles`；
+- `configs/environment_config.yaml` 保留合法的空 `components: {}`，仅用于 Builder/Pydantic 配置解析。
+
+`python run_v32.py preflight` 会静态检查这两项，防止未来删除文件后 YAML 仍残留旧路径。
+
 ## 不应直接运行的 scientific core
 
 以下模块是被统一 workflow 调用的机制实现，不是人工入口：

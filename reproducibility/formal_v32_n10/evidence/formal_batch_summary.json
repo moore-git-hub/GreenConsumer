@@ -1,0 +1,27 @@
+{
+  "analysis_required_separately": true,
+  "attempt_blocks": 10,
+  "formal_batch_id": "task005-fmcg-v32-formal-n10",
+  "formal_block_ids": [
+    "F001",
+    "F002",
+    "F003",
+    "F004",
+    "F005",
+    "F006",
+    "F007",
+    "F008",
+    "F009",
+    "F010"
+  ],
+  "formal_inference_performed": false,
+  "optional_stopping_allowed": false,
+  "provider_request_ceiling": 3000,
+  "real_provider_requests": 2051,
+  "replacement_allowed": false,
+  "schema_version": "task005_fmcg_v32_formal_batch_result1.0",
+  "source_branch": "redesign/task005-mechanism-v2",
+  "source_head": "ef6567adaafcafcf3b9f6884295f509a05ed727e",
+  "status": "PASS",
+  "valid_blocks": 10
+}

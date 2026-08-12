@@ -1,0 +1,11 @@
+schema_version,seed_derivation_version,formal_batch_id,master_seed,block_index,formal_block_id,simulation_seed,requested_llm_seed,demand_seed,python_hash_seed,provider_model,provider_system_fingerprint
+task005_fmcg_v32_formal_seed_ledger1.0,sha256-v32-formal1,task005-fmcg-v32-formal-n10,2026081211,1,F001,2897688439,2350703455,1476457883,617239079,qwen-plus,unavailable-prelaunch
+task005_fmcg_v32_formal_seed_ledger1.0,sha256-v32-formal1,task005-fmcg-v32-formal-n10,2026081211,2,F002,3506421140,1945162537,1790192187,697193760,qwen-plus,unavailable-prelaunch
+task005_fmcg_v32_formal_seed_ledger1.0,sha256-v32-formal1,task005-fmcg-v32-formal-n10,2026081211,3,F003,1437350376,1078853138,3288104023,2410124450,qwen-plus,unavailable-prelaunch
+task005_fmcg_v32_formal_seed_ledger1.0,sha256-v32-formal1,task005-fmcg-v32-formal-n10,2026081211,4,F004,2720882285,2734157280,1704745127,696109957,qwen-plus,unavailable-prelaunch
+task005_fmcg_v32_formal_seed_ledger1.0,sha256-v32-formal1,task005-fmcg-v32-formal-n10,2026081211,5,F005,1035116184,3136384336,3852159058,3256069734,qwen-plus,unavailable-prelaunch
+task005_fmcg_v32_formal_seed_ledger1.0,sha256-v32-formal1,task005-fmcg-v32-formal-n10,2026081211,6,F006,3706046291,557104782,1870740743,1003174198,qwen-plus,unavailable-prelaunch
+task005_fmcg_v32_formal_seed_ledger1.0,sha256-v32-formal1,task005-fmcg-v32-formal-n10,2026081211,7,F007,437843098,3145586685,3691494285,3538930974,qwen-plus,unavailable-prelaunch
+task005_fmcg_v32_formal_seed_ledger1.0,sha256-v32-formal1,task005-fmcg-v32-formal-n10,2026081211,8,F008,3704765755,522436648,4087058939,2390379212,qwen-plus,unavailable-prelaunch
+task005_fmcg_v32_formal_seed_ledger1.0,sha256-v32-formal1,task005-fmcg-v32-formal-n10,2026081211,9,F009,2689718651,585150733,2734987163,4270689140,qwen-plus,unavailable-prelaunch
+task005_fmcg_v32_formal_seed_ledger1.0,sha256-v32-formal1,task005-fmcg-v32-formal-n10,2026081211,10,F010,2016981454,2947687210,2247412504,1533149592,qwen-plus,unavailable-prelaunch

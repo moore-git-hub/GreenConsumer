@@ -1,0 +1,38 @@
+{
+  "schema_version": "greenconsumer_task005_v32_canonical_files1.0",
+  "formal_source_head": "ef6567adaafcafcf3b9f6884295f509a05ed727e",
+  "status": "POST_FORMAL_DOCUMENTATION_AND_REPOSITORY_CLOSEOUT",
+  "canonical_model_files": [
+    "experiment_config.py",
+    "fmcg_scenario_v32.py",
+    "mechanism_v2.py",
+    "mechanism_v31_cognition.py",
+    "mechanism_v32_semantics.py",
+    "purchase_mechanism_v31.py",
+    "purchase_mechanism_v32.py",
+    "task005_fmcg_runtime_v32.py",
+    "task005_fmcg_audited_router_v32.py",
+    "node_selector.py",
+    "clarification_injector.py",
+    "plugins/agent/reflect/GreenCognitionV32Plugin.py",
+    "plugins/agent/plan/ConsumerPlanV32Plugin.py",
+    "plugins/environment/network/SocialNetworkPlugin.py"
+  ],
+  "formal_runtime_artifacts_to_archive": [
+    "run_task005_fmcg_formal_v32_n10.py",
+    "activate_task005_fmcg_formal_v32_n10.py",
+    "analyze_task005_fmcg_formal_v32_n10.py",
+    "task005_fmcg_v32_formal_seed_ledger1.0.csv",
+    "task005_fmcg_v32_formal_scope_freeze1.0.json",
+    "task005_fmcg_v32_formal_analysis_contract1.0.json",
+    "task005_fmcg_v32_formal_runtime_contract1.0.json",
+    "task005_fmcg_v32_formal_execution_authorization1.0.json",
+    "task005_fmcg_v32_formal_closeout1.0.json"
+  ],
+  "repository_policy": {
+    "do_not_move_frozen_source_before_release_snapshot": true,
+    "do_not_rewrite_mechanism_for_cleanup": true,
+    "legacy_files_may_be_retained_with_explicit_boundary": true,
+    "results_are_not_source_code": true
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "attempt_blocks": 10,
+  "authorization_gate": {
+    "activation_token_frozen": false,
+    "current_authorization_present": false,
+    "real_llm_execution_permitted_now": false,
+    "separate_human_authorization_required": true
+  },
+  "block_ids": [
+    "F001",
+    "F002",
+    "F003",
+    "F004",
+    "F005",
+    "F006",
+    "F007",
+    "F008",
+    "F009",
+    "F010"
+  ],
+  "cognitive_agents": 20,
+  "common_history_policy": "control first; each strategy replays exact within-block control history before its clarification tick; any miss fails closed",
+  "conditions_per_block": 9,
+  "conversion_support_crossed_offline": true,
+  "crisis_tick": 5,
+  "demand_conditions_per_block": 18,
+  "execution_order": [
+    "NoClarification-Control",
+    "Rational-Hub-Immediate",
+    "Rational-Hub-Delayed",
+    "Rational-Random-Immediate",
+    "Rational-Random-Delayed",
+    "Empathy-Hub-Immediate",
+    "Empathy-Hub-Delayed",
+    "Empathy-Random-Immediate",
+    "Empathy-Random-Delayed"
+  ],
+  "failure_policy": {
+    "F011_or_later_forbidden": true,
+    "maximum_attempt_blocks": 10,
+    "one_attempt_per_block": true,
+    "optional_stopping": false,
+    "replacement": false
+  },
+  "formal_batch_id": "task005-fmcg-v32-formal-n10",
+  "frozen_artifact_sha256": {
+    "task005_fmcg_v32_formal_analysis_contract1.0.json": "98e62fdb4e691b8479c9ae6fe01aa614e67c2cec4e90ea6e1f56f62ca8569a1d",
+    "task005_fmcg_v32_formal_scope_freeze1.0.json": "74c1d06b84b0677d7681be429e11a614860de3abdc7a46b247140c9e5593b16e",
+    "task005_fmcg_v32_formal_seed_ledger1.0.csv": "686053552ce77833bd2ade93f0ba33057293d7fe7888836d6d2744624c852781",
+    "task005_fmcg_v32_n10_design_power_check1.0.json": "c06dc93f191f5edcb10f932e4c3dddc522e6a0f778a1d28443d25b34fba71572"
+  },
+  "model": "qwen-plus",
+  "provider_request_ceiling_overall": 3000,
+  "provider_request_ceiling_per_block": 300,
+  "schema_version": "task005_fmcg_v32_formal_launch_contract1.0",
+  "source_branch": "redesign/task005-mechanism-v2",
+  "source_head": "ef6567adaafcafcf3b9f6884295f509a05ed727e",
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "stop_rules": [
+    "source branch or HEAD mismatch",
+    "tracked working tree or index not clean",
+    "model binding mismatch",
+    "seed-ledger mismatch or seed collision",
+    "semantic JSON parse/schema failure",
+    "pre-treatment replay miss",
+    "cognitive pre-treatment alignment failure",
+    "provider request ceiling would be exceeded",
+    "runtime exception",
+    "any structural block gate fails"
+  ],
+  "task": "TASK_005",
+  "temperature": 0.3,
+  "ticks": 30
+}

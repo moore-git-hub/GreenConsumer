@@ -25,3 +25,11 @@ plugins/**/logs/
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Secrets / one-time execution material
+.env
+.env.*
+*ACTIVATION_TOKEN*.txt
+
+# Local formal run workspaces (archived summaries live under reproducibility/)
+results/formal/

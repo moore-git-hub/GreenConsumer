@@ -84,6 +84,13 @@ class PromptProfileRouter:
         self.tick = 0
         self.records: list[dict] = []
 
+    def __getattr__(self, name):
+        # Preserve lifecycle/provenance compatibility with AgentKernel routers.
+        # This lets the existing close helper reach ``close`` or
+        # ``_task005_async_router`` on the wrapped provider without duplicating
+        # provider-specific shutdown logic here.
+        return getattr(self.inner, name)
+
     def set_tick(self, tick: int) -> None:
         self.tick = int(tick)
         if hasattr(self.inner, "set_tick"):

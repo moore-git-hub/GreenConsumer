@@ -2,19 +2,14 @@
 
 v3.3.1 preserves the v3.3 scientific mechanism while fixing text-integrity
 artifacts and enriching auditable output. It reuses the same fictional FMCG
-scenario, experiment matrix, and social-network topology while patching only:
+scenario and experiment matrix while patching only explicitly version-scoped
+components.
 
-- GreenCognitionV33Plugin (complete selected peer-post text; no [:180] cut);
-- ConsumerPlanV33Plugin (gradual/asymmetric Trust dynamics from v3.3);
-- ClarificationInjectorV33 (lagged probabilistic one-hop reach from v3.3);
-- Bernoulli public exposure and probabilistic one-hop amplification selectors;
-- v3.3-only audit restoration for full reasoning/post text.
-
-Optional ``trust_parameters`` and ``clarification_parameters`` arguments exist
-solely to support explicitly labelled sensitivity experiments. Their defaults
-are the frozen v3.3.1 baseline. Every patched object/parameter is restored after
-the condition run. No v3.2 source file or closed F001-F010 formal result is
-modified by this runtime.
+Optional ``trust_parameters``, ``clarification_parameters`` and ``network_spec``
+arguments exist solely to support labelled sensitivity experiments. Their
+defaults preserve the frozen v3.3.1 baseline. Every patched object/parameter is
+restored after the condition run. No v3.2 source file or closed F001-F010 formal
+result is modified by this runtime.
 """
 from __future__ import annotations
 
@@ -43,6 +38,10 @@ from clarification_diffusion_v33 import (
     select_public_exposure_nodes_v33,
 )
 from greenconsumer_v33.config import DEFAULT_CRISIS_TICK, HORIZON_ROBUSTNESS_TICKS
+from greenconsumer_v33.network_variants import (
+    NetworkVariantV331Spec,
+    build_directed_network_variant,
+)
 
 RUNTIME_SCHEMA = "task005-fmcg-runtime-3.3.1"
 MECHANISM_AUDIT_SCHEMA = "mechanism-records-fmcg-3.3.1"
@@ -104,6 +103,7 @@ def _isolated_runtime_patch(
     config: ExperimentConfig,
     trust_parameters: TrustDynamicsV33Parameters,
     clarification_parameters: ClarificationDiffusionV33Parameters,
+    network_spec: NetworkVariantV331Spec | None,
 ):
     """Patch explicit module objects and restore them on every exit path."""
 
@@ -120,6 +120,7 @@ def _isolated_runtime_patch(
     original_injector = simulation_module.ClarificationInjector
     original_public_selector = simulation_module.select_public_exposure_nodes
     original_amplification_selector = simulation_module.one_hop_amplification_nodes
+    original_network_plugin = simulation_module.SocialNetworkPlugin
 
     def _audit_compatible_plan(plan):
         """Keep legacy audit fields numeric without changing v3.3 science."""
@@ -208,6 +209,27 @@ def _isolated_runtime_patch(
                 delivery_lag=int(clarification_parameters.paid_delivery_lag),
             )
 
+    if network_spec is not None:
+        class RuntimeSocialNetworkPlugin(original_network_plugin):
+            """Version-scoped topology variant; production plugin remains untouched."""
+
+            def register_agents(self, agents, seed: int = 42):
+                del seed
+                self.agent_registry = {a.agent_id: a for a in agents}
+                agent_ids = list(self.agent_registry.keys())
+                graph, audit = build_directed_network_variant(agent_ids, network_spec)
+                self.graph = graph
+                self.network_type = str(audit["network_type"])
+                self.network_params = dict(audit)
+                self.network_fallback_reason = ""
+                print(
+                    f"[Network-v3.3.1-variant] topology={network_spec.topology} "
+                    f"network_seed={network_spec.network_seed} "
+                    f"nodes={graph.number_of_nodes()} edges={graph.number_of_edges()}"
+                )
+    else:
+        RuntimeSocialNetworkPlugin = original_network_plugin
+
     try:
         simulation_module._generate_profiles_inline = _scenario_profiles
         simulation_module.build_agent_record = build_v331_agent_record
@@ -222,6 +244,7 @@ def _isolated_runtime_patch(
         simulation_module.ClarificationInjector = RuntimeInjectorV33
         simulation_module.select_public_exposure_nodes = public_selector
         simulation_module.one_hop_amplification_nodes = amplification_selector
+        simulation_module.SocialNetworkPlugin = RuntimeSocialNetworkPlugin
         yield
     finally:
         simulation_module._generate_profiles_inline = original_profile_builder
@@ -237,6 +260,7 @@ def _isolated_runtime_patch(
         simulation_module.ClarificationInjector = original_injector
         simulation_module.select_public_exposure_nodes = original_public_selector
         simulation_module.one_hop_amplification_nodes = original_amplification_selector
+        simulation_module.SocialNetworkPlugin = original_network_plugin
 
 
 async def run_scenario_v33(
@@ -245,6 +269,7 @@ async def run_scenario_v33(
     override_router,
     trust_parameters: TrustDynamicsV33Parameters = DEFAULT_TRUST_PARAMETERS,
     clarification_parameters: ClarificationDiffusionV33Parameters = DEFAULT_CLARIFICATION_PARAMETERS,
+    network_spec: NetworkVariantV331Spec | None = None,
 ) -> dict:
     """Run one communication condition on the isolated v3.3.1 cognitive path."""
 
@@ -254,6 +279,11 @@ async def run_scenario_v33(
         raise TypeError(
             "clarification_parameters must be ClarificationDiffusionV33Parameters"
         )
+    if network_spec is not None and not isinstance(network_spec, NetworkVariantV331Spec):
+        raise TypeError("network_spec must be NetworkVariantV331Spec or None")
+    if network_spec is not None:
+        network_spec.validate(int(config.num_agents))
+
     runtime_validation = _validate_runtime_config_v331(
         config,
         override_router=override_router,
@@ -272,6 +302,7 @@ async def run_scenario_v33(
         config,
         trust_parameters,
         clarification_parameters,
+        network_spec,
     ):
         result = await simulation_core.run_simulation_core(
             config,
@@ -288,5 +319,11 @@ async def run_scenario_v33(
     result["trust_v33_parameters"] = parameters_audit_payload(trust_parameters)
     result["clarification_v33_parameters"] = clarification_parameters_audit_payload(
         clarification_parameters
+    )
+    result["network_variant"] = (
+        network_spec.audit_payload() if network_spec is not None else {
+            "topology": "production-baseline",
+            "role": "frozen-baseline",
+        }
     )
     return result

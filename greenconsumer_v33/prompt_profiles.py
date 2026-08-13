@@ -86,9 +86,6 @@ class PromptProfileRouter:
 
     def __getattr__(self, name):
         # Preserve lifecycle/provenance compatibility with AgentKernel routers.
-        # This lets the existing close helper reach ``close`` or
-        # ``_task005_async_router`` on the wrapped provider without duplicating
-        # provider-specific shutdown logic here.
         return getattr(self.inner, name)
 
     def set_tick(self, tick: int) -> None:
@@ -105,6 +102,8 @@ class PromptProfileRouter:
                 "original_sha256": prompt_sha256(prompt),
                 "transformed_sha256": prompt_sha256(transformed),
                 "changed": transformed != str(prompt),
+                "lexical_multiset_equal": lexical_multiset(prompt)
+                == lexical_multiset(transformed),
                 "original_chars": len(str(prompt)),
                 "transformed_chars": len(transformed),
             }

@@ -41,6 +41,39 @@ MECHANISM_AUDIT_SCHEMA = "mechanism-records-fmcg-3.3.1"
 CODE_RELEASE = "TASK_005_FMCG_V3.3.1"
 
 
+def _validate_runtime_config_v331(
+    config: ExperimentConfig,
+    *,
+    override_router,
+) -> dict:
+    """Pure, zero-I/O validation of v3.3.1 runtime invariants.
+
+    This helper exists so unit tests can verify the horizon/Agent/router guard
+    without importing AgentKernel's heavy ``simulation_core`` dependency tree.
+    It must remain the single validation path used by ``run_scenario_v33``.
+    """
+
+    if override_router is None:
+        raise ValueError("scenario-v3.3.1 requires an explicit version-scoped router")
+    if int(config.num_agents) != len(ENGINEERING_PERSONAS):
+        raise ValueError("scenario-v3.3.1 configuration must use 20 cognitive agents")
+    if int(config.scandal_tick) != DEFAULT_CRISIS_TICK:
+        raise ValueError(
+            f"scenario-v3.3.1 requires crisis Tick {DEFAULT_CRISIS_TICK}"
+        )
+    if int(config.total_ticks) not in HORIZON_ROBUSTNESS_TICKS:
+        raise ValueError(
+            "scenario-v3.3.1 total_ticks must use the pre-specified horizon grid "
+            f"{HORIZON_ROBUSTNESS_TICKS}; got {config.total_ticks}"
+        )
+    return {
+        "runtime_total_ticks": int(config.total_ticks),
+        "runtime_horizon_grid": list(HORIZON_ROBUSTNESS_TICKS),
+        "runtime_num_agents": int(config.num_agents),
+        "runtime_crisis_tick": int(config.scandal_tick),
+    }
+
+
 def _restore_full_text_audit_fields(row: dict, *, plan, thought) -> dict:
     """Restore full v3.3.1 LLM text after the legacy audit builder runs.
 
@@ -203,19 +236,10 @@ def _isolated_runtime_patch(
 async def run_scenario_v33(config: ExperimentConfig, *, override_router) -> dict:
     """Run one communication condition on the isolated v3.3.1 cognitive path."""
 
-    if override_router is None:
-        raise ValueError("scenario-v3.3.1 requires an explicit version-scoped router")
-    if int(config.num_agents) != len(ENGINEERING_PERSONAS):
-        raise ValueError("scenario-v3.3.1 configuration must use 20 cognitive agents")
-    if int(config.scandal_tick) != DEFAULT_CRISIS_TICK:
-        raise ValueError(
-            f"scenario-v3.3.1 requires crisis Tick {DEFAULT_CRISIS_TICK}"
-        )
-    if int(config.total_ticks) not in HORIZON_ROBUSTNESS_TICKS:
-        raise ValueError(
-            "scenario-v3.3.1 total_ticks must use the pre-specified horizon grid "
-            f"{HORIZON_ROBUSTNESS_TICKS}; got {config.total_ticks}"
-        )
+    runtime_validation = _validate_runtime_config_v331(
+        config,
+        override_router=override_router,
+    )
 
     import clarification_injector
     import simulation_core
@@ -240,8 +264,7 @@ async def run_scenario_v33(config: ExperimentConfig, *, override_router) -> dict
     result["mechanism_records_schema_version"] = MECHANISM_AUDIT_SCHEMA
     result["engineering_profiles"] = list(engineering_profiles())
     result["legacy_purchase_endpoint_retired"] = True
-    result["runtime_total_ticks"] = int(config.total_ticks)
-    result["runtime_horizon_grid"] = list(HORIZON_ROBUSTNESS_TICKS)
+    result.update(runtime_validation)
     result["trust_v33_parameters"] = parameters_audit_payload(DEFAULT_TRUST_PARAMETERS)
     result["clarification_v33_parameters"] = {
         "paid_edge_probability": DEFAULT_PAID_EDGE_PROBABILITY,

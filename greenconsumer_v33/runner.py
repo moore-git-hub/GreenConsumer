@@ -12,7 +12,9 @@ v3.3.1 adds output/provenance instrumentation only:
 Experiment-design note:
 - the v3.3.1 scientific mechanism is unchanged;
 - the baseline finite horizon is 35 Ticks = 30 post-crisis days after T5;
-- T30 and T40 are pre-specified endpoint-robustness checks, not tuned endpoints.
+- T30 and T40 are pre-specified endpoint-robustness checks, not tuned endpoints;
+- an explicit Trust-parameter argument is available only for labelled
+  sensitivity suites; its default is the frozen v3.3.1 baseline.
 """
 from __future__ import annotations
 
@@ -22,6 +24,7 @@ import subprocess
 from pathlib import Path
 
 from experiment_config import generate_experiment_matrix
+from mechanism_v33 import DEFAULT_TRUST_PARAMETERS, TrustDynamicsV33Parameters
 from task005_fmcg_runtime_v33 import CODE_RELEASE, run_scenario_v33
 
 from greenconsumer_v32.io import write_csv, write_json
@@ -120,10 +123,17 @@ def _topology_signature(meta: dict, nodes: list[dict], edges: list[dict]) -> tup
     )
 
 
-async def execute(settings: RunSettings) -> dict:
+async def execute(
+    settings: RunSettings,
+    *,
+    trust_parameters: TrustDynamicsV33Parameters = DEFAULT_TRUST_PARAMETERS,
+) -> dict:
     """Run one v3.3.1 engineering/demo job and persist auditable outputs."""
 
     settings.validate()
+    if not isinstance(trust_parameters, TrustDynamicsV33Parameters):
+        raise TypeError("trust_parameters must be TrustDynamicsV33Parameters")
+
     run_id = dt.datetime.now().strftime("v331_%Y%m%d_%H%M%S")
     run_dir = settings.output_dir / run_id
     if run_dir.exists():
@@ -142,7 +152,7 @@ async def execute(settings: RunSettings) -> dict:
     all_target_nodes: list[dict] = []
     all_exposure_plan: list[dict] = []
     condition_meta = []
-    trust_parameters = None
+    trust_parameter_payload = None
     clarification_parameters = None
 
     topology_signature = None
@@ -185,11 +195,15 @@ async def execute(settings: RunSettings) -> dict:
                 temperature=0.0 if settings.llm_mode == "fake" else TEMPERATURE,
             )
 
-            result = await run_scenario_v33(cfg, override_router=audited)
+            result = await run_scenario_v33(
+                cfg,
+                override_router=audited,
+                trust_parameters=trust_parameters,
+            )
             cognitive = result["mechanism_records"]
             agent_records = result["agent_records"]
             thoughts = _agent_thought_rows(agent_records, cognitive)
-            trust_parameters = result.get("trust_v33_parameters")
+            trust_parameter_payload = result.get("trust_v33_parameters")
             clarification_parameters = result.get("clarification_v33_parameters")
 
             all_cognitive.extend(cognitive)
@@ -340,7 +354,12 @@ async def execute(settings: RunSettings) -> dict:
         },
         "conditions_run": [row["exp_id"] for row in condition_meta],
         "condition_meta": condition_meta,
-        "trust_v33_parameters": trust_parameters,
+        "trust_v33_parameters": trust_parameter_payload,
+        "trust_parameter_role": (
+            "frozen-baseline"
+            if trust_parameters == DEFAULT_TRUST_PARAMETERS
+            else "explicit-sensitivity-profile"
+        ),
         "clarification_v33_parameters": clarification_parameters,
         "demand_v33": {
             "renewal_purchase_opportunities": True,

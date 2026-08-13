@@ -2,6 +2,7 @@
 
 No smoothing or interpolation is used. One engineering block is descriptive
 only: figures contain no p-values, confidence intervals or winner labels.
+The realized finite horizon is read from run provenance rather than hard-coded.
 """
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from greenconsumer_v32.io import read_csv, write_json
+from .analysis import _read_total_ticks
 
 CONTROL = "NoClarification-Control"
 
@@ -52,6 +54,7 @@ def plot_run(run_dir: Path) -> list[str]:
         raise FileNotFoundError(cognitive_path)
 
     cognitive = read_csv(cognitive_path)
+    end_tick = _read_total_ticks(run_dir, cognitive)
     by_condition = _group_by_condition(cognitive)
     if CONTROL not in by_condition:
         raise ValueError("v3.3.1 plots require the common control condition")
@@ -81,7 +84,10 @@ def plot_run(run_dir: Path) -> list[str]:
     for x, label in ((5, "Crisis"), (6, "Immediate"), (10, "Delayed")):
         ax.axvline(x, linestyle=":" if x != 5 else "--", linewidth=1)
         ax.text(x + 0.1, ax.get_ylim()[1], label, va="top", fontsize=8)
-    ax.set_title("v3.3.1 Trust dynamics — actual Tick observations; no smoothing/interpolation")
+    ax.set_xlim(min(ticks), max(ticks))
+    ax.set_title(
+        f"v3.3.1 Trust dynamics through T{end_tick} — actual Tick observations; no smoothing/interpolation"
+    )
     ax.set_xlabel("Tick")
     ax.set_ylabel("Mean Trust")
     ax.legend()
@@ -103,7 +109,7 @@ def plot_run(run_dir: Path) -> list[str]:
     ax.set_xticks(range(0, len(ticks), 2))
     ax.set_xticklabels([ticks[i] for i in range(0, len(ticks), 2)])
     ax.set_xlabel("Tick")
-    ax.set_title("v3.3.1 Treatment − contemporaneous control Trust")
+    ax.set_title(f"v3.3.1 Treatment − contemporaneous control Trust through T{end_tick}")
     fig.colorbar(im, ax=ax, label="Δ Trust")
     path = figures_dir / "02_trust_delta_heatmap_v33.png"
     _save(fig, path)
@@ -149,10 +155,11 @@ def plot_run(run_dir: Path) -> list[str]:
         ys = [_mean(by_tick[t]) for t in xs]
         fig, ax = plt.subplots(figsize=(11, 5))
         ax.plot(xs, ys, marker="o", markersize=3)
+        ax.set_xlim(min(xs), max(xs))
         ax.set_xlabel("Tick")
         ax.set_ylabel("Mean category-purchase opportunities")
         ax.set_title(
-            "v3.3.1 renewal purchase opportunities — common demand schedule, no fixed permanent interval"
+            f"v3.3.1 renewal purchase opportunities through T{end_tick} — common demand schedule, no fixed permanent interval"
         )
         path = figures_dir / "04_renewal_opportunities_v33.png"
         _save(fig, path)
@@ -166,7 +173,7 @@ def plot_run(run_dir: Path) -> list[str]:
         for ax, support in zip(axes, ("absent", "present")):
             for exp_id in strategy_ids:
                 xvals, yvals = [], []
-                for tick in range(1, 31):
+                for tick in range(1, end_tick + 1):
                     tr = curve_map.get((exp_id, support, tick))
                     ct = curve_map.get((CONTROL, support, tick))
                     if not tr or not ct:
@@ -179,18 +186,22 @@ def plot_run(run_dir: Path) -> list[str]:
                     yvals.append(float(a) - float(b))
                 ax.plot(xvals, yvals, marker="o", markersize=2, linewidth=1, label=exp_id)
             ax.axhline(0.0, linewidth=0.8)
+            ax.set_xlim(1, end_tick)
             ax.set_title(f"Conversion support: {support}")
             ax.set_xlabel("Tick")
         axes[0].set_ylabel("Cumulative expected focal-brand choice Δ vs control")
         axes[1].legend(fontsize=6, loc="best")
-        fig.suptitle("v3.3.1 clarification effect on repeat choice, stratified by conversion support")
+        fig.suptitle(
+            f"v3.3.1 clarification effect on repeat choice through T{end_tick}, stratified by conversion support"
+        )
         path = figures_dir / "05_repeat_choice_delta_v33.png"
         _save(fig, path)
         outputs.append(str(path))
 
     manifest = {
-        "schema_version": "task005_fmcg_v331_visualization1.0",
+        "schema_version": "task005_fmcg_v331_visualization1.1",
         "scope": "single engineering/demo block; descriptive only",
+        "total_ticks": end_tick,
         "smoothing_used": False,
         "interpolation_used": False,
         "confidence_intervals_computed": False,

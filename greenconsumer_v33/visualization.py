@@ -1,6 +1,6 @@
-"""Focused scientific diagnostics for TASK_005 FMCG v3.3 engineering runs.
+"""Focused scientific diagnostics for TASK_005 FMCG v3.3.1 engineering runs.
 
-No smoothing or interpolation is used.  One engineering block is descriptive
+No smoothing or interpolation is used. One engineering block is descriptive
 only: figures contain no p-values, confidence intervals or winner labels.
 """
 from __future__ import annotations
@@ -54,13 +54,12 @@ def plot_run(run_dir: Path) -> list[str]:
     cognitive = read_csv(cognitive_path)
     by_condition = _group_by_condition(cognitive)
     if CONTROL not in by_condition:
-        raise ValueError("v3.3 plots require the common control condition")
+        raise ValueError("v3.3.1 plots require the common control condition")
 
     figures_dir = run_dir / "figures_v33"
     figures_dir.mkdir(parents=True, exist_ok=True)
     outputs = []
 
-    # 1. Full-Tick Trust dynamics: actual simulation points only.
     control = _tick_mean(by_condition[CONTROL], "trust_final")
     strategy_ids = sorted(x for x in by_condition if x != CONTROL)
     strategy_series = {
@@ -82,7 +81,7 @@ def plot_run(run_dir: Path) -> list[str]:
     for x, label in ((5, "Crisis"), (6, "Immediate"), (10, "Delayed")):
         ax.axvline(x, linestyle=":" if x != 5 else "--", linewidth=1)
         ax.text(x + 0.1, ax.get_ylim()[1], label, va="top", fontsize=8)
-    ax.set_title("v3.3 Trust dynamics — actual Tick observations; no smoothing/interpolation")
+    ax.set_title("v3.3.1 Trust dynamics — actual Tick observations; no smoothing/interpolation")
     ax.set_xlabel("Tick")
     ax.set_ylabel("Mean Trust")
     ax.legend()
@@ -90,7 +89,6 @@ def plot_run(run_dir: Path) -> list[str]:
     _save(fig, path)
     outputs.append(str(path))
 
-    # 2. Trust difference heatmap relative to contemporaneous control.
     matrix = np.array(
         [
             [strategy_series[exp_id][tick] - control[tick] for tick in ticks]
@@ -105,35 +103,39 @@ def plot_run(run_dir: Path) -> list[str]:
     ax.set_xticks(range(0, len(ticks), 2))
     ax.set_xticklabels([ticks[i] for i in range(0, len(ticks), 2)])
     ax.set_xlabel("Tick")
-    ax.set_title("v3.3 Treatment − contemporaneous control Trust")
+    ax.set_title("v3.3.1 Treatment − contemporaneous control Trust")
     fig.colorbar(im, ax=ax, label="Δ Trust")
     path = figures_dir / "02_trust_delta_heatmap_v33.png"
     _save(fig, path)
     outputs.append(str(path))
 
-    # 3. Lag-aware direct enterprise reach.
     if reach_path.exists():
         reach = read_csv(reach_path)
         labels = [row["exp_id"] for row in reach]
         direct = [float(row["direct_reach_t0"]) for row in reach]
         eventual = [float(row["eventual_enterprise_reach"]) for row in reach]
+        delivery_lag = int(float(reach[0].get("delivery_lag", 1))) if reach else 1
         y = np.arange(len(labels))
         fig, ax = plt.subplots(figsize=(11, 6))
         ax.scatter(direct, y, label="direct at t0", s=45)
-        ax.scatter(eventual, y, label="eventual direct enterprise reach (t0∪t0+1)", s=45)
+        ax.scatter(
+            eventual,
+            y,
+            label=f"eventual direct enterprise reach (t0∪t0+{delivery_lag})",
+            s=45,
+        )
         for i, (a, b) in enumerate(zip(direct, eventual)):
             ax.plot([a, b], [i, i], linewidth=1)
         ax.set_yticks(y)
         ax.set_yticklabels(labels, fontsize=8)
         ax.set_xlim(0, 1.05)
         ax.set_xlabel("Fraction of cognitive Agents")
-        ax.set_title("v3.3 clarification reach — lag-aware; reach ≠ persuasion or purchase")
+        ax.set_title("v3.3.1 clarification reach — lag-aware; reach ≠ persuasion or purchase")
         ax.legend()
         path = figures_dir / "03_clarification_reach_v33.png"
         _save(fig, path)
         outputs.append(str(path))
 
-    # 4. Renewal category-purchase opportunity counts (support absent only).
     curves = read_csv(curves_path) if curves_path.exists() else []
     if curves:
         by_tick = defaultdict(list)
@@ -148,16 +150,16 @@ def plot_run(run_dir: Path) -> list[str]:
         fig, ax = plt.subplots(figsize=(11, 5))
         ax.plot(xs, ys, marker="o", markersize=3)
         ax.set_xlabel("Tick")
-        ax.set_ylabel("Mean category-purchase opportunities across 8 strategies")
-        ax.set_title("v3.3 renewal purchase opportunities — no permanent fixed interval")
+        ax.set_ylabel("Mean category-purchase opportunities")
+        ax.set_title(
+            "v3.3.1 renewal purchase opportunities — common demand schedule, no fixed permanent interval"
+        )
         path = figures_dir / "04_renewal_opportunities_v33.png"
         _save(fig, path)
         outputs.append(str(path))
 
-        # 5. Repeat-choice treatment-control delta for both support levels.
         curve_map = {
-            (str(row["exp_id"]), str(row["conversion_support"]), int(row["tick"])):
-            row
+            (str(row["exp_id"]), str(row["conversion_support"]), int(row["tick"])): row
             for row in curves
         }
         fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
@@ -181,13 +183,13 @@ def plot_run(run_dir: Path) -> list[str]:
             ax.set_xlabel("Tick")
         axes[0].set_ylabel("Cumulative expected focal-brand choice Δ vs control")
         axes[1].legend(fontsize=6, loc="best")
-        fig.suptitle("v3.3 repeat-choice effect relative to contemporaneous control")
+        fig.suptitle("v3.3.1 clarification effect on repeat choice, stratified by conversion support")
         path = figures_dir / "05_repeat_choice_delta_v33.png"
         _save(fig, path)
         outputs.append(str(path))
 
     manifest = {
-        "schema_version": "task005_fmcg_v33_visualization1.0",
+        "schema_version": "task005_fmcg_v331_visualization1.0",
         "scope": "single engineering/demo block; descriptive only",
         "smoothing_used": False,
         "interpolation_used": False,

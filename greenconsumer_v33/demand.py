@@ -1,13 +1,12 @@
 """v3.3 FMCG demand adapter with renewal category-purchase opportunities.
 
-The demand layer follows the realized cognitive-run horizon.  This is experiment-
-design plumbing only: purchase opportunity, choice and loyalty mechanisms are
-unchanged.  A T35/T40 cognitive run must not silently stop downstream demand at
-legacy T30.
+The demand layer follows the realized cognitive-run horizon. Experimentally
+labelled network-size checks may also supply an explicit persona panel; normal
+v3.3.1 runs still default to the frozen 20 Engineering Personas.
 """
 from __future__ import annotations
 
-from fmcg_scenario_v32 import ENGINEERING_PERSONAS
+from fmcg_scenario_v32 import ENGINEERING_PERSONAS, EngineeringPersona
 from purchase_mechanism_v31 import DemandParameters
 from purchase_mechanism_v32 import (
     FREQUENCY_INTERVALS,
@@ -39,11 +38,18 @@ def simulate_demand(
     support_present: bool,
     demand_seed: int,
     micro_buyers: int = 25,
+    personas: tuple[EngineeringPersona, ...] | None = None,
 ) -> tuple[list[dict], list[dict]]:
     """Run v3.3 renewal repeat-choice demand on one cognitive condition."""
 
     if not cognitive_rows:
         raise ValueError("cognitive_rows is empty")
+
+    persona_panel = tuple(personas) if personas is not None else tuple(ENGINEERING_PERSONAS)
+    if not persona_panel:
+        raise ValueError("personas is empty")
+    if len({p.agent_id for p in persona_panel}) != len(persona_panel):
+        raise ValueError("persona agent IDs must be unique")
 
     exp_id = str(cognitive_rows[0]["exp_id"])
     total_ticks = _realized_horizon(cognitive_rows)
@@ -52,12 +58,12 @@ def simulate_demand(
         for row in cognitive_rows
     }
 
-    # Fail fast if any Persona-Tick state is missing.  Silent gaps would make
-    # horizon comparisons scientifically uninterpretable.
+    # Fail fast if any Persona-Tick state is missing. Silent gaps would make
+    # horizon/size comparisons scientifically uninterpretable.
     expected_keys = {
         (tick, persona.agent_id)
         for tick in range(1, total_ticks + 1)
-        for persona in ENGINEERING_PERSONAS
+        for persona in persona_panel
     }
     missing = expected_keys.difference(cognitive)
     if missing:
@@ -67,6 +73,14 @@ def simulate_demand(
             f"Persona-Tick states, e.g. {preview}"
         )
 
+    unexpected_agents = {
+        str(row["agent_id"]) for row in cognitive_rows
+    }.difference({p.agent_id for p in persona_panel})
+    if unexpected_agents:
+        raise ValueError(
+            f"cognitive_rows contain agents outside supplied persona panel: {sorted(unexpected_agents)[:10]}"
+        )
+
     params = DemandParameters(micro_buyers_per_archetype=micro_buyers)
     cohorts = {
         persona.agent_id: build_scenario_micro_cohort(
@@ -74,7 +88,7 @@ def simulate_demand(
             persona=persona,
             parameters=params,
         )
-        for persona in ENGINEERING_PERSONAS
+        for persona in persona_panel
     }
     states = {
         profile.buyer_id: initial_renewal_state(profile)
@@ -93,7 +107,7 @@ def simulate_demand(
         tick_expected = 0.0
         tick_chosen = 0
 
-        for persona in ENGINEERING_PERSONAS:
+        for persona in persona_panel:
             psych = cognitive[(tick, persona.agent_id)]
             allowed_intervals = FREQUENCY_INTERVALS[
                 persona.category_purchase_frequency
@@ -152,7 +166,10 @@ def simulate_demand(
                 "conversion_support": "present" if support_present else "absent",
                 "tick": tick,
                 "total_ticks": total_ticks,
+                "cognitive_agents": len(persona_panel),
+                "micro_buyers_per_cognitive_agent": int(micro_buyers),
                 "opportunities": tick_n,
+                "opportunities_per_cognitive_agent": tick_n / len(persona_panel),
                 "expected_choice_share": (
                     tick_expected / tick_n if tick_n else ""
                 ),

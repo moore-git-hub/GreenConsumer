@@ -1,10 +1,13 @@
 """Descriptive analysis for one TASK_005 v3.3.1 engineering block.
 
 No p-values, confidence intervals or formal-sample extension are performed.
+The analysis horizon is read from ``run_summary.json`` (or, for legacy runs,
+from the maximum observed Tick) so the pre-specified 30/35/40 horizon checks
+cannot silently fall back to a hard-coded T30 endpoint.
+
 P4 is defined as the fraction of cognitive Agents that directly observed the
 enterprise clarification during the configured delivery window t0..t0+lag.
-The delivery lag is read from the run's parameter snapshot instead of being
-hard-coded to one Tick.
+The delivery lag is read from the run's parameter snapshot.
 """
 from __future__ import annotations
 
@@ -15,7 +18,7 @@ from pathlib import Path
 from greenconsumer_v32.io import read_csv, write_csv, write_json
 
 CONTROL = "NoClarification-Control"
-ANALYSIS_SCHEMA = "task005_fmcg_v331_analysis1.0"
+ANALYSIS_SCHEMA = "task005_fmcg_v331_analysis1.1"
 
 
 def _mean(values):
@@ -49,16 +52,36 @@ def _normalized_trapezoid(series: dict[int, float], start: int, end: int) -> flo
     return area / float(end - start)
 
 
-def _read_delivery_lag(run_dir: Path) -> int:
+def _read_run_summary(run_dir: Path) -> dict:
     path = run_dir / "run_summary.json"
     if not path.exists():
-        return 1
-    payload = json.loads(path.read_text(encoding="utf-8"))
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _read_delivery_lag(run_dir: Path) -> int:
+    payload = _read_run_summary(run_dir)
     params = payload.get("clarification_v33_parameters") or {}
     lag = int(params.get("paid_delivery_lag", 1))
     if lag < 0:
         raise ValueError(f"paid_delivery_lag must be non-negative, got {lag}")
     return lag
+
+
+def _read_total_ticks(run_dir: Path, cognitive_rows: list[dict]) -> int:
+    """Read the realized finite horizon, with a safe legacy-run fallback."""
+
+    payload = _read_run_summary(run_dir)
+    declared = payload.get("total_ticks")
+    observed = max((int(row["tick"]) for row in cognitive_rows), default=0)
+    if declared not in (None, ""):
+        total = int(declared)
+        if observed and total != observed:
+            raise ValueError(
+                f"run_summary total_ticks={total} but cognitive max Tick={observed}"
+            )
+        return total
+    return observed
 
 
 def _lag_aware_direct_reach(
@@ -96,7 +119,12 @@ def _lag_aware_direct_reach(
     return len(direct) / n, len(lagged) / n, len(union) / n
 
 
-def _single_block_estimands(cognitive_by_condition, demand_rows, delivery_lag: int):
+def _single_block_estimands(
+    cognitive_by_condition,
+    demand_rows,
+    delivery_lag: int,
+    end_tick: int = 30,
+):
     required = {
         CONTROL,
         "Rational-Hub-Immediate",
@@ -111,13 +139,17 @@ def _single_block_estimands(cognitive_by_condition, demand_rows, delivery_lag: i
     if not required.issubset(cognitive_by_condition):
         return [], []
 
+    end_tick = int(end_tick)
+    if end_tick < 10:
+        raise ValueError("analysis horizon must include the delayed-clarification period")
+
     strategy_ids = sorted(required - {CONTROL})
     trust_series = {
         exp_id: _tick_means(cognitive_by_condition[exp_id], "trust_final")
         for exp_id in required
     }
     post_auc = {
-        exp_id: _normalized_trapezoid(series, 6, 30)
+        exp_id: _normalized_trapezoid(series, 6, end_tick)
         for exp_id, series in trust_series.items()
     }
     early_auc = {
@@ -153,20 +185,27 @@ def _single_block_estimands(cognitive_by_condition, demand_rows, delivery_lag: i
             }
         )
 
+    common_meta = {
+        "analysis_start_tick": 6,
+        "analysis_end_tick": end_tick,
+        "analysis_horizon": f"T6-T{end_tick}",
+    }
     estimands = [
         {
             "estimand_id": "P1_OVERALL_CLARIFICATION_POST_TRUST_V33",
-            "label": "Overall clarification vs control, post-crisis trust",
+            "label": f"Overall clarification vs control, post-crisis trust through T{end_tick}",
             "value": _mean(post_auc[x] for x in strategy_ids) - post_auc[CONTROL],
             "unit": "trust points",
             "analysis_role": "single-block descriptive only",
+            **common_meta,
         },
         {
             "estimand_id": "P2_CONTENT_POST_TRUST_V33",
-            "label": "Rational minus Empathy, post-crisis trust",
+            "label": f"Rational minus Empathy, post-crisis trust through T{end_tick}",
             "value": _mean(post_auc[x] for x in rational) - _mean(post_auc[x] for x in empathy),
             "unit": "trust points",
             "analysis_role": "single-block descriptive only",
+            **common_meta,
         },
         {
             "estimand_id": "P3_TIMING_PRE_DELAY_TRUST_V33",
@@ -174,6 +213,9 @@ def _single_block_estimands(cognitive_by_condition, demand_rows, delivery_lag: i
             "value": _mean(early_auc[x] for x in immediate) - _mean(early_auc[x] for x in delayed),
             "unit": "trust points",
             "analysis_role": "exploratory single-block descriptive only",
+            "analysis_start_tick": 6,
+            "analysis_end_tick": 9,
+            "analysis_horizon": "T6-T9",
         },
         {
             "estimand_id": "P4_CHANNEL_EVENTUAL_ENTERPRISE_REACH_V33",
@@ -183,6 +225,9 @@ def _single_block_estimands(cognitive_by_condition, demand_rows, delivery_lag: i
             "value": _mean(reach_union[x] for x in hub) - _mean(reach_union[x] for x in random),
             "unit": "proportion",
             "analysis_role": "exploratory reach only; excludes persuasion/purchase",
+            "analysis_start_tick": "t0",
+            "analysis_end_tick": f"t0+{int(delivery_lag)}",
+            "analysis_horizon": "configured-delivery-window",
         },
     ]
 
@@ -191,7 +236,7 @@ def _single_block_estimands(cognitive_by_condition, demand_rows, delivery_lag: i
         support_by_condition = defaultdict(lambda: defaultdict(list))
         for row in demand_rows:
             tick = int(row["tick"])
-            if not 6 <= tick <= 30:
+            if not 6 <= tick <= end_tick:
                 continue
             exp_id = str(row["exp_id"])
             support = str(row["conversion_support"])
@@ -205,10 +250,13 @@ def _single_block_estimands(cognitive_by_condition, demand_rows, delivery_lag: i
             estimands.append(
                 {
                     "estimand_id": "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V33",
-                    "label": "Overall clarification vs control, expected repeat choice",
+                    "label": (
+                        f"Overall clarification vs control, expected repeat choice through T{end_tick}"
+                    ),
                     "value": _mean(metric[x] for x in strategy_ids) - metric[CONTROL],
                     "unit": "expected focal-brand choice share",
                     "analysis_role": "single-block descriptive only",
+                    **common_meta,
                 }
             )
 
@@ -222,10 +270,11 @@ def _single_block_estimands(cognitive_by_condition, demand_rows, delivery_lag: i
             estimands.append(
                 {
                     "estimand_id": "S1_CONVERSION_SUPPORT_EXPECTED_REPEAT_CHOICE_V33",
-                    "label": "Conversion support present minus absent",
+                    "label": f"Conversion support present minus absent through T{end_tick}",
                     "value": _mean(support_deltas),
                     "unit": "expected focal-brand choice share",
                     "analysis_role": "secondary descriptive only",
+                    **common_meta,
                 }
             )
 
@@ -239,21 +288,29 @@ def analyze_run(run_dir: Path) -> dict:
         raise FileNotFoundError(cognitive_path)
 
     cognitive = read_csv(cognitive_path)
+    end_tick = _read_total_ticks(run_dir, cognitive)
     by_condition = defaultdict(list)
     for row in cognitive:
         by_condition[row["exp_id"]].append(row)
 
     summaries = []
     for exp_id, rows in sorted(by_condition.items()):
-        t30 = [r for r in rows if int(r["tick"]) == 30]
-        post = [r for r in rows if 6 <= int(r["tick"]) <= 30]
+        endpoint = [r for r in rows if int(r["tick"]) == end_tick]
+        post = [r for r in rows if 6 <= int(r["tick"]) <= end_tick]
+        legacy_t30 = [r for r in rows if int(r["tick"]) == 30]
         summaries.append(
             {
                 "exp_id": exp_id,
-                "mean_trust_t30": _mean(float(r["trust_final"]) for r in t30),
-                "mean_trust_t6_t30": _mean(float(r["trust_final"]) for r in post),
+                "endpoint_tick": end_tick,
+                "mean_trust_endpoint": _mean(float(r["trust_final"]) for r in endpoint),
+                "mean_trust_t6_endpoint": _mean(float(r["trust_final"]) for r in post),
+                "mean_purchase_intention_endpoint": _mean(
+                    float(r["purchase_intention"]) for r in endpoint
+                ),
+                # Backward-compatible T30 fields remain explicitly secondary.
+                "mean_trust_t30": _mean(float(r["trust_final"]) for r in legacy_t30),
                 "mean_purchase_intention_t30": _mean(
-                    float(r["purchase_intention"]) for r in t30
+                    float(r["purchase_intention"]) for r in legacy_t30
                 ),
             }
         )
@@ -265,20 +322,22 @@ def analyze_run(run_dir: Path) -> dict:
         for row in demand:
             grouped[(row["exp_id"], row["conversion_support"])].append(row)
         for (exp_id, support), rows in sorted(grouped.items()):
-            post = [r for r in rows if 6 <= int(r["tick"]) <= 30]
+            post = [r for r in rows if 6 <= int(r["tick"]) <= end_tick]
             demand_summary.append(
                 {
                     "exp_id": exp_id,
                     "conversion_support": support,
-                    "opportunities_t6_t30": len(post),
-                    "expected_choice_share_t6_t30": _mean(
+                    "analysis_start_tick": 6,
+                    "analysis_end_tick": end_tick,
+                    "opportunities_t6_endpoint": len(post),
+                    "expected_choice_share_t6_endpoint": _mean(
                         float(r["choice_probability"]) for r in post
                     ),
-                    "realized_choice_share_t6_t30": _mean(
+                    "realized_choice_share_t6_endpoint": _mean(
                         1.0 if _as_bool(r["focal_brand_chosen"]) else 0.0
                         for r in post
                     ),
-                    "mean_loyalty_after_t6_t30": _mean(
+                    "mean_loyalty_after_t6_endpoint": _mean(
                         float(r["loyalty_after"]) for r in post
                     ),
                 }
@@ -286,7 +345,7 @@ def analyze_run(run_dir: Path) -> dict:
 
     delivery_lag = _read_delivery_lag(run_dir)
     estimands, reach_rows = _single_block_estimands(
-        dict(by_condition), demand, delivery_lag
+        dict(by_condition), demand, delivery_lag, end_tick=end_tick
     )
     write_csv(run_dir / "analysis_condition_summary.csv", summaries)
     write_csv(run_dir / "analysis_demand_summary.csv", demand_summary)
@@ -298,6 +357,8 @@ def analyze_run(run_dir: Path) -> dict:
         "status": "PASS",
         "scope": "single engineering/demo block; descriptive only",
         "conditions": len(by_condition),
+        "total_ticks": end_tick,
+        "primary_analysis_window": f"T6-T{end_tick}",
         "delivery_lag": delivery_lag,
         "formal_inference_performed": False,
         "p_values_computed": False,

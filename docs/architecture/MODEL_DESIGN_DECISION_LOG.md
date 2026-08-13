@@ -70,29 +70,7 @@ Fake LLM、T35、20 Agents、25 micro-buyers、BA、处理矩阵与三个seeds�
 
 **状态：executed; PASS**
 
-### 设计
-
-固定Fake LLM、T35、20 Agents、25 micro-buyers、BA、K=3、Trust baseline、三个seeds与处理矩阵，仅改变：
-
-- `paid_edge_probability ∈ {.30,.55,.80}`；
-- `paid_delivery_lag ∈ {0,1,2}`。
-
-共9 profiles；baseline保持`.55/1`，不得根据结果重选。
-
-### 结果
-
-`clarification_20260813_151145`：84/84 implementation/falsification checks PASS。固定p时eventual direct enterprise recipient set对lag完全不变；固定lag时每个channel-condition的eventual reach随p非递减。
-
-主要发现：
-
-- P1在9/9 profiles中正；
-- P2在9/9 profiles中负；
-- P3在9/9 profiles中正，并在固定p下随lag增加而系统减小；
-- P4在全部profiles中正，但Hub−Random contrast为`.40/.45/.40`，不是p的单调函数；原因是Hub和Random自身reach均单调，而p=.80时Random也新增recipient；
-- P5在9/9 profiles中正；
-- S1几乎不受reach参数影响，符合独立PBC/demand channel设计。
-
-N=20时一个Agent对应5个百分点reach，因此P4精确幅度存在明显离散性。下一步转向network realization/topology robustness，而不是继续调p/lag。
+固定Fake LLM、T35、20 Agents、25 micro-buyers、BA、K=3、Trust baseline、三个seeds与处理矩阵，仅改变`paid_edge_probability ∈ {.30,.55,.80}`与`paid_delivery_lag ∈ {0,1,2}`，共9 profiles。`clarification_20260813_151145`中84/84 implementation/falsification checks PASS。P1/P3/P4/P5在9/9 profiles中正，P2在9/9中负；固定p时P3随lag增加而系统减小；S1几乎不受reach参数影响。Hub与Random自身reach随p非递减，但Hub−Random contrast并不要求对p单调。N=20导致reach以5个百分点为最小粒度之一。
 
 详见：`V331_CLARIFICATION_DIFFUSION_SENSITIVITY_PLAN.md`、`V331_CLARIFICATION_DIFFUSION_SENSITIVITY_RESULT_20260813.md`。
 
@@ -100,52 +78,84 @@ N=20时一个Agent对应5个百分点reach，因此P4精确幅度存在明显离
 
 ## DR-20260813-08：Network topology robustness at fixed N=20
 
-**状态：pre-specified and implemented; execution pending**
-
-### 触发原因
-
-Paid-reach sensitivity表明Hub advantage方向稳健，但P4精确幅度受N=20离散recipient changes影响。单一BA realization不足以支撑一般网络机制结论。
+**状态：executed; PASS with channel-boundary finding**
 
 ### 设计
 
-保持同一20个Engineering Personas、Fake LLM、T35、25 micro-buyers/Agent、K=3、p=.55、lag=1、Trust baseline、simulation/LLM/demand seeds与处理矩阵不变，仅改变network topology和独立network-only seed。
-
-三类拓扑：
+保持同一20个Engineering Personas、Fake LLM、T35、25 micro-buyers/Agent、K=3、p=.55、lag=1、Trust baseline、simulation/LLM/demand seeds与处理矩阵不变，仅改变network topology与独立network-only seed。
 
 - BA：n=20,m=2；
 - Watts–Strogatz：n=20,k=4,beta=.10；
-- Community SBM：4×5 blocks，p_in=.65，p_out=.08。
+- Community SBM：4×5 blocks，p_in=.65，p_out=.08；
+- 每类5个预设network seeds，共15 profiles。
 
-每类使用5个预先规定network seeds：2026081501–2026081505，共15 profiles。Network seed与simulation/behavior seed分离，避免同时改变行为随机过程。
+### 验证与结果
 
-### 有向传播规则
+`topology_20260813_153842`：76/76 invariants PASS，baseline BA hash精确复现。P1、P2、P3、P5、S1在15张网络上均保持方向；P4则出现明显拓扑边界：BA 5/5 positive（mean=.40），Community 5/5 positive（mean=.17），WS为4 positive + 1 zero（mean=.12）。因此“Hub一定优于Random”不再允许作为无条件结论，只能写为依赖degree heterogeneity / hub distinguishability的结构性优势。
 
-全部底图沿用现有“高度数→低度数”有向化规则，不在本阶段同时更改传播方向机制。必须记录equal-degree tie-edge share；若替代拓扑结果对tie branch高度敏感，则后续另做orientation robustness。
+事后描述性诊断显示，当前15张网络中P4与degree CV、max out-degree呈较强正对应，与average path length、modularity、equal-degree tie share呈负对应；该诊断不作因果或显著性解释。
+
+详见：`V331_NETWORK_TOPOLOGY_ROBUSTNESS_PLAN.md`、`V331_NETWORK_TOPOLOGY_ROBUSTNESS_RESULT_20260813.md`。
+
+---
+
+## DR-20260813-09：Network size × targeting budget robustness
+
+**状态：pre-specified; implementation scaffold added; execution pending**
+
+### 触发原因
+
+固定N=20的topology suite表明P4对network realization敏感，且reach存在1/N=5%的离散粒度。需要判断主要结论是否依赖小网络规模，同时避免把“增加N”与“降低K/N”混为一个变化。
+
+### 设计
+
+仅使用BA m=2，network size设为N=20/40/80，使用5个network-only seeds。比较两种预算制度：
+
+- fixed K=3；
+- proportional K/N=15%，即K=3/6/12。
+
+N20/K3为两种制度的共同baseline，因此每个seed只运行5个唯一profiles：N20-K3、N40-K3、N40-K6、N80-K3、N80-K12，共25 profiles。
+
+### Persona扩展
+
+不得简单复制20个prompt。新增nested balanced mechanism-coverage panel：
+
+- N20精确保留冻结20 Persona；
+- N40包含完整N20；
+- N80包含完整N40；
+- 六维categorical tuple在panel内必须唯一；
+- N40/N80的marginal proportions按N20机制面板整数倍扩展；
+- candidate universe为4×4×3×3×3×2=864种显式组合；
+- deterministic greedy rule在不超出marginal target的前提下优先补足缺口并提高pairwise coverage。
+
+这些比例仍是engineering mechanism coverage，不是现实市场人口权重。
+
+### 固定部分
+
+T35、Trust、clarification p=.55/lag=1、Fake LLM、25 micro-buyers/Agent、behavior/LLM/demand seeds、刺激文本与处理矩阵全部冻结。
 
 ### Hard checks
 
-- 每个profile内9 conditions同一network hash；
-- node set始终为同一20 Persona IDs；
-- Random K=3 target IDs跨topology/network seed保持一致；
-- public organic allocation保持一致；
-- p=.55/lag=1保持冻结；
-- BA + network seed 2026081501必须复现baseline hash `886be697894ff8f79c4e72be4b778978f9c40390ee5a15dcb1e09b73040281ac`。
+- N20 baseline hash复现；
+- Panel20 ⊂ Panel40 ⊂ Panel80；
+- no persona clones；
+- categorical marginals达到预设target；
+- shared N20 Agents的T1–T5认知前缀检查；
+- 每个profile内9条件同一network hash；
+- K完整性；
+- clarification baseline参数冻结；
+- Demand必须实际使用对应N的persona panel。
 
-### 解释边界
-
-5个network realizations只作matched engineering robustness，不是现实统计样本。任何P4方向变化必须作为结构边界条件报告，不得删除不利network或重调参数。
-
-详见：`V331_NETWORK_TOPOLOGY_ROBUSTNESS_PLAN.md`。
+详见：`V331_NETWORK_SIZE_AND_BUDGET_ROBUSTNESS_PLAN.md`。
 
 ---
 
 ## 后续预登记队列
 
-- topology robustness结果记录；
-- 必要时network orientation robustness；
-- network size N=20/40/80（需独立Persona-population设计，不与topology同时修改）；
-- fixed-K vs proportional-K budget；
+- network size × budget 结果记录；
+- 必要时network orientation robustness / matched-metric topology experiment；
 - micro-buyers 10/25/50；
 - prompt sensitivity / LLM stochasticity；
+- Real-LLM selected robustness blocks；
 - v3.3.1 pilot variance estimation与正式replication-block数量；
 - confirmatory estimands / MDE / multiplicity的新formal freeze。

@@ -5,15 +5,15 @@ import argparse
 import json
 from pathlib import Path
 
-from greenconsumer_v33.thesis_outputs import build_thesis_outputs
+from greenconsumer_v33.thesis_outputs_finite_horizon import build_thesis_outputs
 
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="python run_v33_thesis.py",
         description=(
-            "Build descriptive thesis tables, internal-validity evidence, figures, "
-            "and an optional fixed-topology network-state GIF."
+            "Build horizon-aware descriptive thesis tables, internal-validity evidence, "
+            "figures, and an optional fixed-topology network-state GIF."
         ),
     )
     parser.add_argument("run_dir", type=Path)

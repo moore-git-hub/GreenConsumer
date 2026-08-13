@@ -8,6 +8,11 @@ v3.3.1 adds output/provenance instrumentation only:
 - complete per-Agent appraisal text via the version-scoped v3.3 cognition path;
 - run-level network topology and targeting/exposure audit files;
 - Git provenance and explicit code-release markers.
+
+Experiment-design note:
+- the v3.3.1 scientific mechanism is unchanged;
+- the baseline finite horizon is 35 Ticks = 30 post-crisis days after T5;
+- T30 and T40 are pre-specified endpoint-robustness checks, not tuned endpoints.
 """
 from __future__ import annotations
 
@@ -19,15 +24,6 @@ from pathlib import Path
 from experiment_config import generate_experiment_matrix
 from task005_fmcg_runtime_v33 import CODE_RELEASE, run_scenario_v33
 
-from greenconsumer_v32.config import (
-    CONDITION_ORDER,
-    DEFAULT_CRISIS_TICK,
-    DEFAULT_MICRO_BUYERS,
-    DEFAULT_NUM_AGENTS,
-    DEFAULT_TOTAL_TICKS,
-    PROJECT_ROOT,
-    RunSettings,
-)
 from greenconsumer_v32.io import write_csv, write_json
 from greenconsumer_v32.routers import (
     RecordingRouter,
@@ -38,11 +34,23 @@ from greenconsumer_v32.routers import (
 )
 from greenconsumer_v32.runner import _agent_thought_rows, _trust_trajectory
 
+from .config import (
+    CONDITION_ORDER,
+    DEFAULT_CRISIS_TICK,
+    DEFAULT_MICRO_BUYERS,
+    DEFAULT_NUM_AGENTS,
+    DEFAULT_TOTAL_TICKS,
+    HORIZON_ROBUSTNESS_TICKS,
+    PROJECT_ROOT,
+    RunSettings,
+    TIME_UNIT,
+    horizon_role,
+)
 from .demand import simulate_demand
 
 MODEL = "qwen-plus"
 TEMPERATURE = 0.3
-RUN_SCHEMA = "task005_fmcg_v331_engineering_run1.0"
+RUN_SCHEMA = "task005_fmcg_v331_engineering_run1.1"
 
 
 def _configs(settings: RunSettings):
@@ -53,7 +61,7 @@ def _configs(settings: RunSettings):
             matrix[exp_id],
             random_seed=settings.simulation_seed,
             num_agents=DEFAULT_NUM_AGENTS,
-            total_ticks=DEFAULT_TOTAL_TICKS,
+            total_ticks=int(settings.total_ticks),
             scandal_tick=DEFAULT_CRISIS_TICK,
         )
         for exp_id in ids
@@ -317,6 +325,19 @@ async def execute(settings: RunSettings) -> dict:
         "simulation_seed": settings.simulation_seed,
         "requested_llm_seed": settings.requested_llm_seed,
         "demand_seed": settings.demand_seed,
+        "total_ticks": int(settings.total_ticks),
+        "time_design": {
+            "tick_unit": TIME_UNIT,
+            "crisis_tick": DEFAULT_CRISIS_TICK,
+            "total_ticks": int(settings.total_ticks),
+            "post_crisis_observation_days": int(settings.total_ticks) - DEFAULT_CRISIS_TICK,
+            "baseline_total_ticks": DEFAULT_TOTAL_TICKS,
+            "pre_specified_horizon_robustness_ticks": list(HORIZON_ROBUSTNESS_TICKS),
+            "horizon_role": horizon_role(settings.total_ticks),
+            "endpoint_rule": (
+                "T35 is the baseline endpoint; T30 and T40 are horizon-robustness checks only"
+            ),
+        },
         "conditions_run": [row["exp_id"] for row in condition_meta],
         "condition_meta": condition_meta,
         "trust_v33_parameters": trust_parameters,
@@ -324,10 +345,12 @@ async def execute(settings: RunSettings) -> dict:
         "demand_v33": {
             "renewal_purchase_opportunities": True,
             "loyalty_update": "bounded_ewma",
+            "micro_buyers_per_cognitive_agent": DEFAULT_MICRO_BUYERS,
             "empirically_calibrated": False,
         },
         "network": {
             **(topology_meta or {}),
+            "cognitive_agents": DEFAULT_NUM_AGENTS,
             "network_nodes_file": "network_nodes.csv",
             "network_edges_file": "network_edges.csv",
             "target_nodes_file": "target_nodes.csv",

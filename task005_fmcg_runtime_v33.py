@@ -1,7 +1,7 @@
 """Isolated AgentKernel runtime adapter for TASK_005 scenario-v3.3.1.
 
 v3.3.1 preserves the v3.3 scientific mechanism while fixing text-integrity
-artifacts and enriching auditable output.  It reuses the same fictional FMCG
+artifacts and enriching auditable output. It reuses the same fictional FMCG
 scenario, experiment matrix, and social-network topology while patching only:
 
 - GreenCognitionV33Plugin (complete selected peer-post text; no [:180] cut);
@@ -10,8 +10,10 @@ scenario, experiment matrix, and social-network topology while patching only:
 - Bernoulli public exposure and probabilistic one-hop amplification selectors;
 - v3.3-only audit restoration for full reasoning/post text.
 
-Every patched object is restored after the condition run.  No v3.2 source file
-or closed F001-F010 formal result is modified by this runtime.
+The optional ``trust_parameters`` argument exists solely to support explicitly
+labelled sensitivity experiments.  Its default is the frozen v3.3.1 baseline.
+Every patched object/parameter is restored after the condition run. No v3.2
+source file or closed F001-F010 formal result is modified by this runtime.
 """
 from __future__ import annotations
 
@@ -26,7 +28,11 @@ from fmcg_scenario_v32 import (
     SCHEMA as SCENARIO_SCHEMA,
     engineering_profiles,
 )
-from mechanism_v33 import DEFAULT_TRUST_PARAMETERS, parameters_audit_payload
+from mechanism_v33 import (
+    DEFAULT_TRUST_PARAMETERS,
+    TrustDynamicsV33Parameters,
+    parameters_audit_payload,
+)
 from clarification_diffusion_v33 import (
     DEFAULT_PAID_DELIVERY_LAG,
     DEFAULT_PAID_EDGE_PROBABILITY,
@@ -46,12 +52,7 @@ def _validate_runtime_config_v331(
     *,
     override_router,
 ) -> dict:
-    """Pure, zero-I/O validation of v3.3.1 runtime invariants.
-
-    This helper exists so unit tests can verify the horizon/Agent/router guard
-    without importing AgentKernel's heavy ``simulation_core`` dependency tree.
-    It must remain the single validation path used by ``run_scenario_v33``.
-    """
+    """Pure, zero-I/O validation of v3.3.1 runtime invariants."""
 
     if override_router is None:
         raise ValueError("scenario-v3.3.1 requires an explicit version-scoped router")
@@ -75,12 +76,7 @@ def _validate_runtime_config_v331(
 
 
 def _restore_full_text_audit_fields(row: dict, *, plan, thought) -> dict:
-    """Restore full v3.3.1 LLM text after the legacy audit builder runs.
-
-    ``simulation_core.build_agent_record`` remains unchanged because it is shared
-    with the frozen v3.2 path.  Its legacy storage caps (post_content[:200] and
-    reasoning[:300]) are overridden only inside this isolated v3.3.1 runtime.
-    """
+    """Restore full v3.3.1 LLM text after the legacy audit builder runs."""
 
     restored = dict(row or {})
     restored["post_content"] = str((plan or {}).get("post_content", "") or "")
@@ -104,6 +100,7 @@ def _isolated_runtime_patch(
     reflect_plugin_class,
     plan_plugin_class,
     config: ExperimentConfig,
+    trust_parameters: TrustDynamicsV33Parameters,
 ):
     """Patch explicit module objects and restore them on every exit path."""
 
@@ -115,6 +112,7 @@ def _isolated_runtime_patch(
     plugin_map = simulation_module.resource_maps["agent_plugins"]
     original_reflect = plugin_map["GreenCognitionPlugin"]
     original_plan = plugin_map["ConsumerPlanPlugin"]
+    original_plan_trust_parameters = plan_plugin_class.TRUST_PARAMETERS
 
     original_injector = simulation_module.ClarificationInjector
     original_public_selector = simulation_module.select_public_exposure_nodes
@@ -123,7 +121,7 @@ def _isolated_runtime_patch(
     def _audit_compatible_plan(plan):
         """Keep legacy audit fields numeric without changing v3.3 science."""
         row = dict(plan or {})
-        legacy_decay = 1.0 - float(DEFAULT_TRUST_PARAMETERS.repair_retention)
+        legacy_decay = 1.0 - float(trust_parameters.repair_retention)
         row["decay_lambda"] = legacy_decay
         row["decay_rate_raw"] = legacy_decay
         return row
@@ -212,6 +210,7 @@ def _isolated_runtime_patch(
         simulation_module.ENTERPRISE_STRATEGY.update({5: CRISIS_STIMULUS})
         clarification_module.CONTENT_TEMPLATES.clear()
         clarification_module.CONTENT_TEMPLATES.update(CLARIFICATION_TEMPLATES)
+        plan_plugin_class.TRUST_PARAMETERS = trust_parameters
         plugin_map["GreenCognitionPlugin"] = reflect_plugin_class
         plugin_map["ConsumerPlanPlugin"] = plan_plugin_class
         simulation_module.ClarificationInjector = RuntimeInjectorV33
@@ -226,6 +225,7 @@ def _isolated_runtime_patch(
         simulation_module.ENTERPRISE_STRATEGY.update(original_events)
         clarification_module.CONTENT_TEMPLATES.clear()
         clarification_module.CONTENT_TEMPLATES.update(original_templates)
+        plan_plugin_class.TRUST_PARAMETERS = original_plan_trust_parameters
         plugin_map["GreenCognitionPlugin"] = original_reflect
         plugin_map["ConsumerPlanPlugin"] = original_plan
         simulation_module.ClarificationInjector = original_injector
@@ -233,9 +233,16 @@ def _isolated_runtime_patch(
         simulation_module.one_hop_amplification_nodes = original_amplification_selector
 
 
-async def run_scenario_v33(config: ExperimentConfig, *, override_router) -> dict:
+async def run_scenario_v33(
+    config: ExperimentConfig,
+    *,
+    override_router,
+    trust_parameters: TrustDynamicsV33Parameters = DEFAULT_TRUST_PARAMETERS,
+) -> dict:
     """Run one communication condition on the isolated v3.3.1 cognitive path."""
 
+    if not isinstance(trust_parameters, TrustDynamicsV33Parameters):
+        raise TypeError("trust_parameters must be TrustDynamicsV33Parameters")
     runtime_validation = _validate_runtime_config_v331(
         config,
         override_router=override_router,
@@ -252,6 +259,7 @@ async def run_scenario_v33(config: ExperimentConfig, *, override_router) -> dict
         GreenCognitionV33Plugin,
         ConsumerPlanV33Plugin,
         config,
+        trust_parameters,
     ):
         result = await simulation_core.run_simulation_core(
             config,
@@ -265,7 +273,7 @@ async def run_scenario_v33(config: ExperimentConfig, *, override_router) -> dict
     result["engineering_profiles"] = list(engineering_profiles())
     result["legacy_purchase_endpoint_retired"] = True
     result.update(runtime_validation)
-    result["trust_v33_parameters"] = parameters_audit_payload(DEFAULT_TRUST_PARAMETERS)
+    result["trust_v33_parameters"] = parameters_audit_payload(trust_parameters)
     result["clarification_v33_parameters"] = {
         "paid_edge_probability": DEFAULT_PAID_EDGE_PROBABILITY,
         "paid_delivery_lag": DEFAULT_PAID_DELIVERY_LAG,

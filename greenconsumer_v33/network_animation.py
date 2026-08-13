@@ -3,7 +3,7 @@
 The BA topology is static in the current model. Therefore these GIFs must not
 be described as *topology evolution*. They visualize evolution of node states
 (Trust), enterprise clarification exposure, posting activity, and UGC broadcast
-edges on a fixed directed network.
+edges on a fixed directed network for every Tick actually present in the run.
 """
 from __future__ import annotations
 
@@ -51,7 +51,7 @@ def animate_network_state(
     fps: int = 3,
     layout_seed: int = 20260815,
 ) -> str:
-    """Create one 30-Tick GIF for a selected communication condition.
+    """Create a GIF spanning the complete realized Tick horizon of one condition.
 
     Visual encodings:
     - node fill: Trust score (fixed 0..10 scale);

@@ -3,17 +3,21 @@
 The production baseline remains the existing directed BA graph. This module is
 used only by explicitly labelled sensitivity suites. Fixed-N topology checks use
 N=20 for BA/WS/community; network-size checks may use BA at N=20/40/80 while
-preserving m=2 and the current v3.3.1 direction rule.
+preserving m=2.  Equal-degree edge orientation is now explicit so the legacy
+first-endpoint branch can be falsification-tested without changing the frozen
+baseline default.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 
 import networkx as nx
 
 
 TOPOLOGIES = ("ba", "ws", "community")
 SIZE_ROBUSTNESS_N = (20, 40, 80)
+TIE_RULES = ("legacy_first_endpoint", "reverse_first_endpoint", "hash_balanced")
 BASELINE_NETWORK_HASH = "886be697894ff8f79c4e72be4b778978f9c40390ee5a15dcb1e09b73040281ac"
 
 
@@ -28,11 +32,14 @@ class NetworkVariantV331Spec:
     community_block_size: int = 5
     community_p_in: float = 0.65
     community_p_out: float = 0.08
+    tie_rule: str = "legacy_first_endpoint"
 
     def validate(self, n: int) -> None:
         n = int(n)
         if self.topology not in TOPOLOGIES:
             raise ValueError(f"unknown topology: {self.topology}")
+        if self.tie_rule not in TIE_RULES:
+            raise ValueError(f"tie_rule must be one of {TIE_RULES}; got {self.tie_rule!r}")
         if self.topology == "ba":
             if n not in SIZE_ROBUSTNESS_N:
                 raise ValueError(
@@ -72,6 +79,7 @@ class NetworkVariantV331Spec:
             "community_block_size": int(self.community_block_size),
             "community_p_in": float(self.community_p_in),
             "community_p_out": float(self.community_p_out),
+            "tie_rule": self.tie_rule,
             "empirically_calibrated": False,
             "role": "pre-specified network robustness",
         }
@@ -107,24 +115,52 @@ def _undirected_graph(n: int, spec: NetworkVariantV331Spec) -> nx.Graph:
     )
 
 
-def _orient_like_v331(undirected: nx.Graph) -> tuple[nx.DiGraph, dict]:
+def _hash_tie_direction(u: str, v: str, seed: int) -> tuple[str, str]:
+    """Choose one deterministic tie direction independent of edge iteration order."""
+
+    left, right = sorted((str(u), str(v)))
+    payload = f"{int(seed)}|{left}|{right}|equal-degree-tie".encode("utf-8")
+    choose_left = hashlib.sha256(payload).digest()[0] % 2 == 0
+    return (left, right) if choose_left else (right, left)
+
+
+def _orient_like_v331(
+    undirected: nx.Graph,
+    *,
+    tie_rule: str = "legacy_first_endpoint",
+    network_seed: int = 0,
+) -> tuple[nx.DiGraph, dict]:
+    if tie_rule not in TIE_RULES:
+        raise ValueError(f"unknown tie_rule: {tie_rule}")
+
     degrees = dict(undirected.degree())
     directed = nx.DiGraph()
     directed.add_nodes_from(undirected.nodes())
     ties = 0
     for u, v in undirected.edges():
-        if degrees[u] == degrees[v]:
-            ties += 1
-        if degrees[u] >= degrees[v]:
+        if degrees[u] > degrees[v]:
             directed.add_edge(u, v)
-        else:
+        elif degrees[v] > degrees[u]:
             directed.add_edge(v, u)
+        else:
+            ties += 1
+            if tie_rule == "legacy_first_endpoint":
+                directed.add_edge(u, v)
+            elif tie_rule == "reverse_first_endpoint":
+                directed.add_edge(v, u)
+            else:
+                source, target = _hash_tie_direction(u, v, int(network_seed))
+                directed.add_edge(source, target)
+
     edge_count = int(undirected.number_of_edges())
     return directed, {
         "undirected_edge_count": edge_count,
         "equal_degree_tie_edges": int(ties),
         "equal_degree_tie_edge_share": float(ties / edge_count) if edge_count else 0.0,
-        "direction_rule": "higher-undirected-degree-to-lower; legacy deterministic tie branch",
+        "tie_rule": tie_rule,
+        "direction_rule": (
+            "higher-undirected-degree-to-lower; equal-degree rule=" + tie_rule
+        ),
     }
 
 
@@ -140,7 +176,11 @@ def build_directed_network_variant(
     undirected = _undirected_graph(n, spec)
     mapping = {i: ids[i] for i in range(n)}
     undirected = nx.relabel_nodes(undirected, mapping)
-    directed, orientation = _orient_like_v331(undirected)
+    directed, orientation = _orient_like_v331(
+        undirected,
+        tie_rule=spec.tie_rule,
+        network_seed=int(spec.network_seed),
+    )
 
     audit = {
         **spec.audit_payload(),

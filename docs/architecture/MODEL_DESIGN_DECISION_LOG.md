@@ -101,7 +101,7 @@ Fake LLM、T35、20 Agents、25 micro-buyers、BA、处理矩阵与三个seeds�
 
 ## DR-20260813-09：Network size × targeting budget robustness
 
-**状态：pre-specified; implementation scaffold added; execution pending**
+**状态：pre-specified; implementation scaffold added; execution resumed after DR-10**
 
 ### 触发原因
 
@@ -132,7 +132,7 @@ N20/K3为两种制度的共同baseline，因此每个seed只运行5个唯一prof
 
 ### 固定部分
 
-T35、Trust、clarification p=.55/lag=1、Fake LLM、25 micro-buyers/Agent、behavior/LLM/demand seeds、刺激文本与处理矩阵全部冻结。
+T35、Trust、clarification p=.55/lag=1、Fake LLM、25 micro-buyers/Agent、behavior/LLM/demand seeds、刺激文本与处理矩阵全部冻结。BA orientation继续使用冻结`legacy_first_endpoint`；DR-10已确认N20 BA的P4方向对三种等度边规则稳定，因此不因orientation结果重新选择baseline rule。
 
 ### Hard checks
 
@@ -150,10 +150,42 @@ T35、Trust、clarification p=.55/lag=1、Fake LLM、25 micro-buyers/Agent、beh
 
 ---
 
+## DR-20260813-10：Equal-degree edge orientation robustness
+
+**状态：executed; engineering PASS with WS sign-instability boundary**
+
+### 触发原因与设计
+
+Topology suite显示WS具有30%–80%的equal-degree tie-edge share，而冻结有向化规则在等度边上使用NetworkX first endpoint。为排除WS较弱P4只是tie-breaking artifact，在同一15张预设无向底图上比较`legacy_first_endpoint`、`reverse_first_endpoint`、`hash_balanced`三种规则，共45 profiles；所有不等度边方向、Agent、Random target、public exposure、p=.55、lag=1均冻结。
+
+### 验证
+
+`orientation_20260813_162126`中241/241 invariants PASS：baseline hash复现、undirected substrate invariance、unequal-degree direction invariance、changed-edges-are-ties、Random target/public exposure invariance与clarification baseline参数均通过。
+
+### 结果
+
+P4家族均值：
+
+- BA：legacy=.40，reverse=.39，hash=.40；5/5无向图在全部tie rules下保持P4正向；
+- Community：legacy=.17，reverse=.19，hash=.18；5/5保持正向；
+- WS：legacy=.12，reverse=.05，hash=.14；5张中2张出现sign instability。
+
+具体WS边界：seed 2026081502在三规则下为0 / −.05 / +.15；seed 2026081504为+.15 / 0 / +.10。45 profiles中P1 45/45正、P2 45/45负、P3 45/45正、P5 45/45正、S1 45/45正；P4为42正、2零、1负。
+
+### 决策
+
+不能把WS的单一legacy P4解释为稳定topology-only effect。允许结论是：BA中的Hub触达优势对等度边orientation较稳健；WS由于degree近似规则且等度边占比高，Hub−Random contrast同时依赖无向拓扑和有向信息流定义。缺乏真实follower/followee方向数据时，任何tie rule都只是engineering rule。
+
+该结果不改变冻结BA baseline orientation。Network size × budget stage恢复执行；若大N BA出现异常的tie-edge share或P4行为，再另立大N orientation boundary check，而不是事后切换baseline rule。
+
+详见：`V331_NETWORK_ORIENTATION_ROBUSTNESS_PLAN.md`、`V331_NETWORK_ORIENTATION_ROBUSTNESS_RESULT_20260813.md`。
+
+---
+
 ## 后续预登记队列
 
 - network size × budget 结果记录；
-- 必要时network orientation robustness / matched-metric topology experiment；
+- 必要时 matched-metric topology experiment；
 - micro-buyers 10/25/50；
 - prompt sensitivity / LLM stochasticity；
 - Real-LLM selected robustness blocks；

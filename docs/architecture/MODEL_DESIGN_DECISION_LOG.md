@@ -80,73 +80,54 @@ Fake LLM、T35、20 Agents、25 micro-buyers、BA、处理矩阵与三个seeds�
 
 **状态：executed; PASS with channel-boundary finding**
 
-### 设计
+保持同一20个Engineering Personas、Fake LLM、T35、25 micro-buyers/Agent、K=3、p=.55、lag=1、Trust baseline、simulation/LLM/demand seeds与处理矩阵不变，仅改变network topology与独立network-only seed。BA、WS和Community SBM各5张网络，共15 profiles。
 
-保持同一20个Engineering Personas、Fake LLM、T35、25 micro-buyers/Agent、K=3、p=.55、lag=1、Trust baseline、simulation/LLM/demand seeds与处理矩阵不变，仅改变network topology与独立network-only seed。
-
-- BA：n=20,m=2；
-- Watts–Strogatz：n=20,k=4,beta=.10；
-- Community SBM：4×5 blocks，p_in=.65，p_out=.08；
-- 每类5个预设network seeds，共15 profiles。
-
-### 验证与结果
-
-`topology_20260813_153842`：76/76 invariants PASS，baseline BA hash精确复现。P1、P2、P3、P5、S1在15张网络上均保持方向；P4则出现明显拓扑边界：BA 5/5 positive（mean=.40），Community 5/5 positive（mean=.17），WS为4 positive + 1 zero（mean=.12）。因此“Hub一定优于Random”不再允许作为无条件结论，只能写为依赖degree heterogeneity / hub distinguishability的结构性优势。
-
-事后描述性诊断显示，当前15张网络中P4与degree CV、max out-degree呈较强正对应，与average path length、modularity、equal-degree tie share呈负对应；该诊断不作因果或显著性解释。
+`topology_20260813_153842`：76/76 invariants PASS，baseline BA hash精确复现。P1、P2、P3、P5、S1在15张网络上均保持方向；P4出现拓扑边界：BA 5/5 positive（mean=.40），Community 5/5 positive（mean=.17），WS为4 positive + 1 zero（mean=.12）。因此“Hub一定优于Random”不允许作为无条件结论，只能写为依赖degree heterogeneity / hub distinguishability的结构性优势。
 
 详见：`V331_NETWORK_TOPOLOGY_ROBUSTNESS_PLAN.md`、`V331_NETWORK_TOPOLOGY_ROBUSTNESS_RESULT_20260813.md`。
 
 ---
 
-## DR-20260813-09：Network size × targeting budget robustness
+## DR-20260813-09：Network size × paid-seed allocation robustness
 
-**状态：pre-specified; implementation scaffold added; execution resumed after DR-10**
-
-### 触发原因
-
-固定N=20的topology suite表明P4对network realization敏感，且reach存在1/N=5%的离散粒度。需要判断主要结论是否依赖小网络规模，同时避免把“增加N”与“降低K/N”混为一个变化。
+**状态：executed; engineering PASS**
 
 ### 设计
 
-仅使用BA m=2，network size设为N=20/40/80，使用5个network-only seeds。比较两种预算制度：
+仅使用BA m=2，N=20/40/80，各5个network-only seeds。比较：
 
-- fixed K=3；
-- proportional K/N=15%，即K=3/6/12。
+- fixed paid-seed count K=3；
+- proportional paid-seed share K/N=15%，即K=3/6/12。
 
-N20/K3为两种制度的共同baseline，因此每个seed只运行5个唯一profiles：N20-K3、N40-K3、N40-K6、N80-K3、N80-K12，共25 profiles。
+N20/K3为共同baseline，共25 unique profiles。注意这里的“预算”只代表paid-seed allocation，不是完整货币预算；`public_exposure_rate_fixed=.25`始终冻结。
 
 ### Persona扩展
 
-不得简单复制20个prompt。新增nested balanced mechanism-coverage panel：
+使用nested balanced mechanism-coverage panel，而非复制原20人：Panel20为冻结20 Persona；Panel20 ⊂ Panel40 ⊂ Panel80；N80含80个唯一categorical persona tuples；六维categorical marginals在N20/40/80保持完全相同比例。这些比例是engineering mechanism coverage，不是现实人口权重。
 
-- N20精确保留冻结20 Persona；
-- N40包含完整N20；
-- N80包含完整N40；
-- 六维categorical tuple在panel内必须唯一；
-- N40/N80的marginal proportions按N20机制面板整数倍扩展；
-- candidate universe为4×4×3×3×3×2=864种显式组合；
-- deterministic greedy rule在不超出marginal target的前提下优先补足缺口并提高pairwise coverage。
+### 验证
 
-这些比例仍是engineering mechanism coverage，不是现实市场人口权重。
+`size_20260813_164031`：109/109 invariants PASS；baseline N20 hash复现、panel prefix/no-clone、node set、K完整性、每run网络hash一致、clarification p=.55/lag=1冻结、shared N20 T1–T5 prefix均通过。
 
-### 固定部分
+### 结果
 
-T35、Trust、clarification p=.55/lag=1、Fake LLM、25 micro-buyers/Agent、behavior/LLM/demand seeds、刺激文本与处理矩阵全部冻结。BA orientation继续使用冻结`legacy_first_endpoint`；DR-10已确认N20 BA的P4方向对三种等度边规则稳定，因此不因orientation结果重新选择baseline rule。
+5张BA网络的family means：
 
-### Hard checks
+- N20/K3：P1=.25247，P3=.26376，P4=.4000，P5=.016787；
+- N40/K3：P1=.22679，P3=.24256，P4=.2500，P5=.013931；
+- N40/K6：P1=.28276，P3=.30406，P4=.3350，P5=.017922；
+- N80/K3：P1=.20413，P3=.23527，P4=.2200，P5=.013511；
+- N80/K12：P1=.29643，P3=.33682，P4=.3275，P5=.019803。
 
-- N20 baseline hash复现；
-- Panel20 ⊂ Panel40 ⊂ Panel80；
-- no persona clones；
-- categorical marginals达到预设target；
-- shared N20 Agents的T1–T5认知前缀检查；
-- 每个profile内9条件同一network hash；
-- K完整性；
-- clarification baseline参数冻结；
-- Demand必须实际使用对应N的persona panel。
+所有families的5/5 realizations均保持P1/P3/P4/P5/S1正、P2负。
 
-详见：`V331_NETWORK_SIZE_AND_BUDGET_ROBUSTNESS_PLAN.md`。
+固定K时K/N随N增大而稀释，Hub mean reach从.760降至.625/.545，P1/P5相应减弱；保持K/N=15%时Hub mean reach为.760/.785/.7925，总体clarification与P5保持或增强。Random reach也随proportional K增加，因此P4差值不需要与Hub reach同方向单调变化。
+
+### 决策
+
+N20的BA Hub优势不是5个百分点reach粒度的纯artifact；在N40/N80仍保持正向。主科学baseline继续保留N20/K3用于受控机制实验，N40/N80作为规模与paid-seed allocation边界证据，不依据结果改动baseline。
+
+详见：`V331_NETWORK_SIZE_AND_BUDGET_ROBUSTNESS_PLAN.md`、`V331_NETWORK_SIZE_AND_BUDGET_ROBUSTNESS_RESULT_20260813.md`。
 
 ---
 
@@ -154,39 +135,56 @@ T35、Trust、clarification p=.55/lag=1、Fake LLM、25 micro-buyers/Agent、beh
 
 **状态：executed; engineering PASS with WS sign-instability boundary**
 
-### 触发原因与设计
+Topology suite显示WS具有30%–80%的equal-degree tie-edge share。为排除WS较弱P4只是tie-breaking artifact，在同一15张预设无向底图上比较`legacy_first_endpoint`、`reverse_first_endpoint`、`hash_balanced`三种规则，共45 profiles。
 
-Topology suite显示WS具有30%–80%的equal-degree tie-edge share，而冻结有向化规则在等度边上使用NetworkX first endpoint。为排除WS较弱P4只是tie-breaking artifact，在同一15张预设无向底图上比较`legacy_first_endpoint`、`reverse_first_endpoint`、`hash_balanced`三种规则，共45 profiles；所有不等度边方向、Agent、Random target、public exposure、p=.55、lag=1均冻结。
+`orientation_20260813_162126`中241/241 invariants PASS。P4 family mean：BA legacy=.40/reverse=.39/hash=.40，Community=.17/.19/.18，WS=.12/.05/.14。BA和Community的5/5无向图全部保持P4正向；WS有2张出现sign instability。不能把WS单一legacy P4解释为稳定topology-only effect；缺乏真实follower/followee方向数据时，tie rule仍是engineering assumption。
 
-### 验证
-
-`orientation_20260813_162126`中241/241 invariants PASS：baseline hash复现、undirected substrate invariance、unequal-degree direction invariance、changed-edges-are-ties、Random target/public exposure invariance与clarification baseline参数均通过。
-
-### 结果
-
-P4家族均值：
-
-- BA：legacy=.40，reverse=.39，hash=.40；5/5无向图在全部tie rules下保持P4正向；
-- Community：legacy=.17，reverse=.19，hash=.18；5/5保持正向；
-- WS：legacy=.12，reverse=.05，hash=.14；5张中2张出现sign instability。
-
-具体WS边界：seed 2026081502在三规则下为0 / −.05 / +.15；seed 2026081504为+.15 / 0 / +.10。45 profiles中P1 45/45正、P2 45/45负、P3 45/45正、P5 45/45正、S1 45/45正；P4为42正、2零、1负。
-
-### 决策
-
-不能把WS的单一legacy P4解释为稳定topology-only effect。允许结论是：BA中的Hub触达优势对等度边orientation较稳健；WS由于degree近似规则且等度边占比高，Hub−Random contrast同时依赖无向拓扑和有向信息流定义。缺乏真实follower/followee方向数据时，任何tie rule都只是engineering rule。
-
-该结果不改变冻结BA baseline orientation。Network size × budget stage恢复执行；若大N BA出现异常的tie-edge share或P4行为，再另立大N orientation boundary check，而不是事后切换baseline rule。
+该结果不改变冻结BA baseline orientation。
 
 详见：`V331_NETWORK_ORIENTATION_ROBUSTNESS_PLAN.md`、`V331_NETWORK_ORIENTATION_ROBUSTNESS_RESULT_20260813.md`。
 
 ---
 
+## DR-20260813-11：Micro-buyer numerical-resolution robustness
+
+**状态：pre-specified; demand-only implementation added; execution pending**
+
+### 触发原因
+
+Baseline demand layer使用25 micro-buyers/cognitive Agent表示persona内部preference/PBC/loyalty异质性。Micro-buyers不是独立统计样本，25是engineering numerical resolution，需要验证P5/S1是否依赖该离散化。
+
+### 设计
+
+复用已经完成的`size_20260813_164031`中5个N20/K3 BA cognitive blocks，不重跑AgentKernel/LLM。只重新运行downstream demand：
+
+```text
+M = 10 / 25 / 50 micro-buyers per cognitive Agent
+```
+
+共5 network histories × 3 resolutions = 15 demand profiles。M25始终是冻结baseline。
+
+`build_scenario_micro_cohort()`的balanced normal quantile位置依赖micro_count，因此M10/M25/M50应解释为不同deterministic quadrature resolutions，而不是nested samples；不得做micro-buyer prefix-invariance解释。
+
+### Hard checks
+
+- source size suite PASS / zero invariant failures；
+- 不调用simulation_core/AgentKernel/LLM；
+- M25必须逐network seed精确复现source P5/S1（1e-12 tolerance）；
+- P1/P2/P3/P4在M10/25/50内必须不变；
+- 每个Persona生成准确且唯一的M个buyer IDs。
+
+### 解释边界
+
+该阶段是numerical-resolution robustness，不是power analysis。微观买家不得作为正式推断独立单位；未来正式GABM推断单位仍是replication block。无论结果如何，不允许选择产生更有利P5的M。
+
+详见：`V331_MICROBUYER_RESOLUTION_ROBUSTNESS_PLAN.md`。
+
+---
+
 ## 后续预登记队列
 
-- network size × budget 结果记录；
+- micro-buyer resolution结果记录；
 - 必要时 matched-metric topology experiment；
-- micro-buyers 10/25/50；
 - prompt sensitivity / LLM stochasticity；
 - Real-LLM selected robustness blocks；
 - v3.3.1 pilot variance estimation与正式replication-block数量；

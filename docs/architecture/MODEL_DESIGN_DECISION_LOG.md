@@ -122,6 +122,44 @@ Real-LLM cognition audit 发现 receiving LLM 的 Social Feed 存在 `[:180]` �
 
 ---
 
+## DR-20260813-04：Runtime horizon guard 单元测试与重依赖隔离
+
+**状态：implemented; local re-verification pending**
+
+### 触发原因
+
+T35 runtime guard 修复后，首版回归测试为了验证 `run_scenario_v33()` 能接受 T35，直接 `import simulation_core` 并 monkeypatch 主运行函数。该导入会加载 AgentKernel 的 embedding / Hugging Face 依赖树。在同一 pytest 进程中出现 Hugging Face HTTP client 生命周期冲突，导致测试报 `Cannot send a request, as the client has been closed`；同时产生对 sentence-transformers 模型的网络 HEAD 重试。
+
+该失败发生在测试基础设施层，不是 T35 scientific mechanism、Trust、Demand 或 horizon guard 本身的失败。
+
+### 决策
+
+- 将 runtime 参数约束抽取为纯函数 `_validate_runtime_config_v331()`；
+- `run_scenario_v33()` 在任何 `simulation_core` 重依赖导入之前调用这一纯函数；
+- horizon guard 单元测试只测试该唯一验证路径，不再导入 `simulation_core`；
+- 单元测试继续覆盖：T30/T35/T40允许、T31拒绝、20 Agents约束、T5 crisis约束、version-scoped router约束。
+
+### 科学与工程理由
+
+Unit test 应只验证自身目标。Runtime guard 是一个确定性的实验设计不变量，不需要初始化 embedding 模型或发起任何外部网络请求。把重依赖副作用混入guard测试会降低可复现性，并可能把第三方HTTP生命周期错误误判成模型错误。
+
+### 不改变
+
+本修复不改变：
+
+- 任何心理/传播/购买机制；
+- T35主终点与T30/T40 horizon grid；
+- Agent数量；
+- 随机种子；
+- Fake/Real LLM输出；
+- 正式推断计划。
+
+### 验证要求
+
+本地重新运行 `test_task005_v331_runtime_horizon_guard.py` 后应不再触发 Hugging Face 网络访问，并全部PASS。随后再执行完整Fake horizon suite；完整suite属于end-to-end integration test，与纯guard unit test分层处理。
+
+---
+
 ## 后续预登记决策队列
 
 下列项目尚未形成结果，进入下一阶段时应分别新增 Decision Record：

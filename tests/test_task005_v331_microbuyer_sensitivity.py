@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import inspect
 
 import pandas as pd
@@ -46,9 +47,40 @@ def test_stability_table_preserves_sign_and_baseline():
     assert (out[out["estimand_id"] == ms.DOWNSTREAM_ESTIMANDS[0]]["m25_baseline"] == 0.011).all()
 
 
+def _imported_modules(module) -> set[str]:
+    """Return actual Python import targets, ignoring comments/docstrings/text."""
+
+    tree = ast.parse(inspect.getsource(module))
+    imported: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                imported.add(node.module)
+    return imported
+
+
 def test_microbuyer_suite_is_demand_only_no_heavy_runtime_imports():
-    source = inspect.getsource(ms)
-    assert "simulation_core" not in source
-    assert "AgentKernel" not in source
-    assert "runner_module" not in source
-    assert "llm_router" not in source.lower()
+    imported = _imported_modules(ms)
+    forbidden_roots = {
+        "simulation_core",
+        "agentkernel_standalone",
+        "AgentKernel",
+        "greenconsumer_v33.runner",
+        "greenconsumer_v32.routers",
+    }
+    assert forbidden_roots.isdisjoint(imported), sorted(imported & forbidden_roots)
+
+    # Also guard against importing nested heavy modules under those roots.
+    forbidden_prefixes = (
+        "simulation_core.",
+        "agentkernel_standalone.",
+        "AgentKernel.",
+        "greenconsumer_v33.runner.",
+        "greenconsumer_v32.routers.",
+    )
+    assert not any(
+        name.startswith(forbidden_prefixes)
+        for name in imported
+    ), sorted(imported)

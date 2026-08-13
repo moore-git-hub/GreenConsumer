@@ -160,11 +160,59 @@ Unit test 应只验证自身目标。Runtime guard 是一个确定性的实验�
 
 ---
 
+## DR-20260813-05：Trust 参数敏感性 Stage A
+
+**状态：pre-specified and implemented; execution pending**
+
+### 触发原因
+
+`mechanism_v33.py` 明确将 crisis/repair retention、event/quiet adjustment、repair saturation、hypocrisy weight 与 empathy repair weight 标记为 development engineering assumptions，而非真实消费者总体参数。新的正式 inference 前必须检验主要结果是否由某一个单点参数设定驱动。
+
+### 决策
+
+先实施 **Stage A local/boundary sensitivity**，不直接宣称全局敏感性：
+
+- 固定 Fake LLM、T35、20 cognitive Agents、25 micro-buyers、BA topology、处理矩阵与三个 seeds；
+- 对 7 个 Trust 参数分别设置 pre-specified low / baseline / high；
+- 加入 `retention_symmetric_097`、`retention_reversed_096_098` 和 `legacy_v32_transition` 三个结构边界 profile；
+- baseline + 14 OAT + 3 structured boundaries，共 18 个 profile；
+- 不允许根据 Stage A 结果改变冻结 baseline 来获得更有利的效应。
+
+完整参数范围和论文表述见 `V331_TRUST_PARAMETER_SENSITIVITY_PLAN.md`。
+
+### 实现边界
+
+新增 Trust parameter injection hook，但默认仍严格等于 `DEFAULT_TRUST_PARAMETERS`。普通 `run_v33.py` 不暴露任意参数输入；只有专门的 `run_v33_trust_sensitivity.py` 使用显式 profile，因此 sensitivity 不会悄悄改变基准运行。
+
+### Falsification / invariant checks
+
+- Trust profile 不得改变 T1–T4 pre-crisis key states；
+- network hash 必须跨 profile 一致；
+- P4 direct enterprise reach 必须跨 Trust profile 一致；
+- non-baseline run 必须在 provenance 中标识为 `explicit-sensitivity-profile`。
+
+任一不变量失败时先判为实现错误，不进行科学解释。
+
+### 方法依据
+
+- Thiele, Kurth & Grimm (2014) 将 sensitivity analysis 视为 ABM 开发与分析的重要组成，用于理解参数变化对模型输出与机制解释的影响；
+- Stage A OAT 仅用于 range verification 与局部/边界筛查；
+- Stage B 预先计划 Morris elementary-effects global screening；必要时再对关键参数使用 variance-based first/total effects。
+
+### 禁止表述
+
+- OAT low/high 是经验置信区间；
+- Stage A 已经证明全局参数稳健性；
+- 根据敏感性结果重新选择“效果最好”的baseline参数；
+- Fake LLM参数敏感性等价于Real LLM外部效度。
+
+---
+
 ## 后续预登记决策队列
 
 下列项目尚未形成结果，进入下一阶段时应分别新增 Decision Record：
 
-- Trust-parameter sensitivity；
+- Trust-parameter sensitivity Stage B（Morris/global screening）；
 - `paid_edge_probability` / lag sensitivity；
 - network size N=20/40/80；
 - fixed-K 与 proportional-K targeting budget；

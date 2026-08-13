@@ -1,18 +1,21 @@
-"""Descriptive analysis for one TASK_005 v3.3 engineering block.
+"""Descriptive analysis for one TASK_005 v3.3.1 engineering block.
 
 No p-values, confidence intervals or formal-sample extension are performed.
-P4 is intentionally redefined for the v3.3 delivery design as the fraction of
-cognitive Agents that directly observed the enterprise clarification at either
-t0 or t0+1 (the configured paid-delivery lag window).
+P4 is defined as the fraction of cognitive Agents that directly observed the
+enterprise clarification during the configured delivery window t0..t0+lag.
+The delivery lag is read from the run's parameter snapshot instead of being
+hard-coded to one Tick.
 """
 from __future__ import annotations
 
+import json
 from collections import defaultdict
 from pathlib import Path
 
 from greenconsumer_v32.io import read_csv, write_csv, write_json
 
 CONTROL = "NoClarification-Control"
+ANALYSIS_SCHEMA = "task005_fmcg_v331_analysis1.0"
 
 
 def _mean(values):
@@ -46,8 +49,23 @@ def _normalized_trapezoid(series: dict[int, float], start: int, end: int) -> flo
     return area / float(end - start)
 
 
-def _lag_aware_direct_reach(rows: list[dict]) -> tuple[float, float, float]:
-    """Return direct t0, lagged t0+1 and union direct-enterprise reach."""
+def _read_delivery_lag(run_dir: Path) -> int:
+    path = run_dir / "run_summary.json"
+    if not path.exists():
+        return 1
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    params = payload.get("clarification_v33_parameters") or {}
+    lag = int(params.get("paid_delivery_lag", 1))
+    if lag < 0:
+        raise ValueError(f"paid_delivery_lag must be non-negative, got {lag}")
+    return lag
+
+
+def _lag_aware_direct_reach(
+    rows: list[dict],
+    delivery_lag: int,
+) -> tuple[float, float, float]:
+    """Return direct t0, lagged t0+lag and union direct-enterprise reach."""
 
     clr_ticks = {
         int(row["clarification_tick_config"])
@@ -57,6 +75,7 @@ def _lag_aware_direct_reach(rows: list[dict]) -> tuple[float, float, float]:
     if len(clr_ticks) != 1:
         raise ValueError(f"clarification tick is not unique: {clr_ticks}")
     t0 = next(iter(clr_ticks))
+    lag = int(delivery_lag)
     agents = sorted({str(row["agent_id"]) for row in rows})
     n = len(agents)
     if not n:
@@ -68,17 +87,16 @@ def _lag_aware_direct_reach(rows: list[dict]) -> tuple[float, float, float]:
         )
         for row in rows
     }
-    direct = {
-        agent for agent in agents if by_tick_agent.get((t0, agent), False)
-    }
+    direct = {agent for agent in agents if by_tick_agent.get((t0, agent), False)}
+    lagged_tick = t0 + lag
     lagged = {
-        agent for agent in agents if by_tick_agent.get((t0 + 1, agent), False)
+        agent for agent in agents if by_tick_agent.get((lagged_tick, agent), False)
     }
     union = direct | lagged
     return len(direct) / n, len(lagged) / n, len(union) / n
 
 
-def _single_block_estimands(cognitive_by_condition, demand_rows):
+def _single_block_estimands(cognitive_by_condition, demand_rows, delivery_lag: int):
     required = {
         CONTROL,
         "Rational-Hub-Immediate",
@@ -118,16 +136,20 @@ def _single_block_estimands(cognitive_by_condition, demand_rows):
     reach_union = {}
     for exp_id in strategy_ids:
         direct, lagged, union = _lag_aware_direct_reach(
-            cognitive_by_condition[exp_id]
+            cognitive_by_condition[exp_id], delivery_lag
         )
         reach_union[exp_id] = union
         reach_rows.append(
             {
                 "exp_id": exp_id,
+                "delivery_lag": int(delivery_lag),
                 "direct_reach_t0": direct,
-                "lagged_reach_t0_plus_1": lagged,
+                "lagged_reach_t0_plus_lag": lagged,
                 "eventual_enterprise_reach": union,
-                "note": "direct enterprise clarification only; excludes downstream UGC persuasion",
+                "note": (
+                    "direct enterprise clarification only; excludes downstream "
+                    "UGC persuasion"
+                ),
             }
         )
 
@@ -155,7 +177,9 @@ def _single_block_estimands(cognitive_by_condition, demand_rows):
         },
         {
             "estimand_id": "P4_CHANNEL_EVENTUAL_ENTERPRISE_REACH_V33",
-            "label": "Hub minus Random enterprise reach across t0/t0+1 delivery window",
+            "label": (
+                "Hub minus Random enterprise reach across configured delivery window"
+            ),
             "value": _mean(reach_union[x] for x in hub) - _mean(reach_union[x] for x in random),
             "unit": "proportion",
             "analysis_role": "exploratory reach only; excludes persuasion/purchase",
@@ -228,7 +252,9 @@ def analyze_run(run_dir: Path) -> dict:
                 "exp_id": exp_id,
                 "mean_trust_t30": _mean(float(r["trust_final"]) for r in t30),
                 "mean_trust_t6_t30": _mean(float(r["trust_final"]) for r in post),
-                "mean_purchase_intention_t30": _mean(float(r["purchase_intention"]) for r in t30),
+                "mean_purchase_intention_t30": _mean(
+                    float(r["purchase_intention"]) for r in t30
+                ),
             }
         )
 
@@ -245,28 +271,43 @@ def analyze_run(run_dir: Path) -> dict:
                     "exp_id": exp_id,
                     "conversion_support": support,
                     "opportunities_t6_t30": len(post),
-                    "expected_choice_share_t6_t30": _mean(float(r["choice_probability"]) for r in post),
-                    "realized_choice_share_t6_t30": _mean(1.0 if _as_bool(r["focal_brand_chosen"]) else 0.0 for r in post),
-                    "mean_loyalty_after_t6_t30": _mean(float(r["loyalty_after"]) for r in post),
+                    "expected_choice_share_t6_t30": _mean(
+                        float(r["choice_probability"]) for r in post
+                    ),
+                    "realized_choice_share_t6_t30": _mean(
+                        1.0 if _as_bool(r["focal_brand_chosen"]) else 0.0
+                        for r in post
+                    ),
+                    "mean_loyalty_after_t6_t30": _mean(
+                        float(r["loyalty_after"]) for r in post
+                    ),
                 }
             )
 
-    estimands, reach_rows = _single_block_estimands(dict(by_condition), demand)
+    delivery_lag = _read_delivery_lag(run_dir)
+    estimands, reach_rows = _single_block_estimands(
+        dict(by_condition), demand, delivery_lag
+    )
     write_csv(run_dir / "analysis_condition_summary.csv", summaries)
     write_csv(run_dir / "analysis_demand_summary.csv", demand_summary)
     write_csv(run_dir / "single_block_estimands.csv", estimands)
     write_csv(run_dir / "clarification_reach_v33.csv", reach_rows)
 
     payload = {
-        "schema_version": "task005_fmcg_v33_analysis1.0",
+        "schema_version": ANALYSIS_SCHEMA,
         "status": "PASS",
         "scope": "single engineering/demo block; descriptive only",
         "conditions": len(by_condition),
+        "delivery_lag": delivery_lag,
         "formal_inference_performed": False,
         "p_values_computed": False,
         "confidence_intervals_computed": False,
         "formal_reuse_permitted": False,
-        "clarification_reach_definition": "union of direct enterprise observations at t0 and t0+1; excludes downstream UGC",
+        "external_validity_claimed": False,
+        "clarification_reach_definition": (
+            "union of direct enterprise observations at t0 and t0+configured lag; "
+            "excludes downstream UGC"
+        ),
     }
     write_json(run_dir / "analysis_summary.json", payload)
     return payload

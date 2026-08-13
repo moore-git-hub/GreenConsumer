@@ -1,14 +1,17 @@
-"""Isolated AgentKernel runtime adapter for TASK_005 scenario-v3.3.
+"""Isolated AgentKernel runtime adapter for TASK_005 scenario-v3.3.1.
 
-v3.3 is intentionally parallel to the frozen v3.2 runtime.  It reuses the
-same fictional FMCG scenario, LLM semantic plugin, experiment matrix and social
-network topology while patching only:
+v3.3.1 preserves the v3.3 scientific mechanism while fixing text-integrity
+artifacts and enriching auditable output.  It reuses the same fictional FMCG
+scenario, experiment matrix, and social-network topology while patching only:
 
-- ConsumerPlanV33Plugin (gradual/asymmetric Trust dynamics)
-- ClarificationInjectorV33 (lagged probabilistic one-hop reach)
-- Bernoulli public exposure and probabilistic one-hop amplification selectors
+- GreenCognitionV33Plugin (complete selected peer-post text; no [:180] cut);
+- ConsumerPlanV33Plugin (gradual/asymmetric Trust dynamics from v3.3);
+- ClarificationInjectorV33 (lagged probabilistic one-hop reach from v3.3);
+- Bernoulli public exposure and probabilistic one-hop amplification selectors;
+- v3.3-only audit restoration for full reasoning/post text.
 
-Every patched object is restored after the condition run.
+Every patched object is restored after the condition run.  No v3.2 source file
+or closed F001-F010 formal result is modified by this runtime.
 """
 from __future__ import annotations
 
@@ -32,15 +35,30 @@ from clarification_diffusion_v33 import (
     select_public_exposure_nodes_v33,
 )
 
-RUNTIME_SCHEMA = "task005-fmcg-runtime-3.3"
-MECHANISM_AUDIT_SCHEMA = "mechanism-records-fmcg-3.3"
+RUNTIME_SCHEMA = "task005-fmcg-runtime-3.3.1"
+MECHANISM_AUDIT_SCHEMA = "mechanism-records-fmcg-3.3.1"
+CODE_RELEASE = "TASK_005_FMCG_V3.3.1"
+
+
+def _restore_full_text_audit_fields(row: dict, *, plan, thought) -> dict:
+    """Restore full v3.3.1 LLM text after the legacy audit builder runs.
+
+    ``simulation_core.build_agent_record`` remains unchanged because it is shared
+    with the frozen v3.2 path.  Its legacy storage caps (post_content[:200] and
+    reasoning[:300]) are overridden only inside this isolated v3.3.1 runtime.
+    """
+
+    restored = dict(row or {})
+    restored["post_content"] = str((plan or {}).get("post_content", "") or "")
+    restored["reasoning"] = str((thought or {}).get("reasoning", "") or "")
+    return restored
 
 
 def _scenario_profiles(num_agents: int, seed: int) -> list[dict]:
     del seed
     if int(num_agents) != len(ENGINEERING_PERSONAS):
         raise ValueError(
-            f"scenario-v3.3 requires exactly {len(ENGINEERING_PERSONAS)} cognitive agents"
+            f"scenario-v3.3.1 requires exactly {len(ENGINEERING_PERSONAS)} cognitive agents"
         )
     return [copy.deepcopy(row) for row in engineering_profiles()]
 
@@ -71,20 +89,22 @@ def _isolated_runtime_patch(
     def _audit_compatible_plan(plan):
         """Keep legacy audit fields numeric without changing v3.3 science."""
         row = dict(plan or {})
-        # simulation_core's legacy audit schema expects numeric decay fields.
-        # v3.3 has two retentions, so the repair-memory decay is stored in the
-        # legacy scalar slot while the full pair is preserved in v3.3 fields.
         legacy_decay = 1.0 - float(DEFAULT_TRUST_PARAMETERS.repair_retention)
         row["decay_lambda"] = legacy_decay
         row["decay_rate_raw"] = legacy_decay
         return row
 
-    def build_v33_agent_record(*args, **kwargs):
+    def build_v331_agent_record(*args, **kwargs):
         safe = dict(kwargs)
         safe["plan"] = _audit_compatible_plan(kwargs.get("plan", {}))
-        return original_agent_record_builder(*args, **safe)
+        row = original_agent_record_builder(*args, **safe)
+        return _restore_full_text_audit_fields(
+            row,
+            plan=kwargs.get("plan", {}),
+            thought=kwargs.get("thought", {}),
+        )
 
-    def build_v33_mechanism_record(*args, **kwargs):
+    def build_v331_mechanism_record(*args, **kwargs):
         safe = dict(kwargs)
         safe_plan = _audit_compatible_plan(kwargs.get("plan", {}))
         safe["plan"] = safe_plan
@@ -96,6 +116,7 @@ def _isolated_runtime_patch(
             {
                 "scenario_schema_version": SCENARIO_SCHEMA,
                 "runtime_schema_version": RUNTIME_SCHEMA,
+                "code_release": CODE_RELEASE,
                 "trust_dynamics_schema_version": plan.get(
                     "mechanism_schema_version", ""
                 ),
@@ -151,8 +172,8 @@ def _isolated_runtime_patch(
 
     try:
         simulation_module._generate_profiles_inline = _scenario_profiles
-        simulation_module.build_agent_record = build_v33_agent_record
-        simulation_module.build_mechanism_record = build_v33_mechanism_record
+        simulation_module.build_agent_record = build_v331_agent_record
+        simulation_module.build_mechanism_record = build_v331_mechanism_record
         simulation_module.ENTERPRISE_STRATEGY.clear()
         simulation_module.ENTERPRISE_STRATEGY.update({5: CRISIS_STIMULUS})
         clarification_module.CONTENT_TEMPLATES.clear()
@@ -179,24 +200,24 @@ def _isolated_runtime_patch(
 
 
 async def run_scenario_v33(config: ExperimentConfig, *, override_router) -> dict:
-    """Run one communication condition on the isolated v3.3 cognitive path."""
+    """Run one communication condition on the isolated v3.3.1 cognitive path."""
 
     if override_router is None:
-        raise ValueError("scenario-v3.3 requires an explicit version-scoped router")
+        raise ValueError("scenario-v3.3.1 requires an explicit version-scoped router")
     if int(config.num_agents) != len(ENGINEERING_PERSONAS):
-        raise ValueError("scenario-v3.3 configuration must use 20 cognitive agents")
+        raise ValueError("scenario-v3.3.1 configuration must use 20 cognitive agents")
     if int(config.scandal_tick) != 5 or int(config.total_ticks) != 30:
-        raise ValueError("scenario-v3.3 requires crisis Tick 5 and a 30-Tick horizon")
+        raise ValueError("scenario-v3.3.1 requires crisis Tick 5 and a 30-Tick horizon")
 
     import clarification_injector
     import simulation_core
     from plugins.agent.plan.ConsumerPlanV33Plugin import ConsumerPlanV33Plugin
-    from plugins.agent.reflect.GreenCognitionV32Plugin import GreenCognitionV32Plugin
+    from plugins.agent.reflect.GreenCognitionV33Plugin import GreenCognitionV33Plugin
 
     with _isolated_runtime_patch(
         simulation_core,
         clarification_injector,
-        GreenCognitionV32Plugin,
+        GreenCognitionV33Plugin,
         ConsumerPlanV33Plugin,
         config,
     ):
@@ -207,6 +228,7 @@ async def run_scenario_v33(config: ExperimentConfig, *, override_router) -> dict
 
     result["scenario_schema_version"] = SCENARIO_SCHEMA
     result["runtime_schema_version"] = RUNTIME_SCHEMA
+    result["code_release"] = CODE_RELEASE
     result["mechanism_records_schema_version"] = MECHANISM_AUDIT_SCHEMA
     result["engineering_profiles"] = list(engineering_profiles())
     result["legacy_purchase_endpoint_retired"] = True

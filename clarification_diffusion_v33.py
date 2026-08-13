@@ -11,7 +11,7 @@ changing how exposure is realised:
   SocialNetworkPlugin.
 
 The probabilities below are development engineering assumptions and require
-sensitivity analysis.  They are not empirical reach estimates.
+sensitivity analysis. They are not empirical reach estimates.
 """
 from __future__ import annotations
 
@@ -52,8 +52,8 @@ def select_paid_amplification_nodes_v33(
     """Return actual successful one-hop paid amplification recipients.
 
     Each directed seed->successor edge receives an independent deterministic
-    Bernoulli draw.  A target reached by at least one successful edge is included
-    once.  Paid seeds themselves are excluded from the amplified set.
+    Bernoulli draw. A target reached by at least one successful edge is included
+    once. Paid seeds themselves are excluded from the amplified set.
     """
 
     p = clip01(edge_probability)
@@ -65,11 +65,7 @@ def select_paid_amplification_nodes_v33(
     for seed in sorted(seeds):
         if seed not in graph:
             continue
-        neighbors = (
-            graph.successors(seed)
-            if graph.is_directed()
-            else graph.neighbors(seed)
-        )
+        neighbors = graph.successors(seed) if graph.is_directed() else graph.neighbors(seed)
         for target in sorted(str(node) for node in neighbors):
             if target in seeds:
                 continue
@@ -88,6 +84,7 @@ class ClarificationInjectorV33(ClarificationInjector):
     t0: public organic recipients + paid seed recipients
     t0+lag: successful one-hop paid amplification recipients not already exposed
 
+    If lag == 0, direct and one-hop recipients are delivered together at t0.
     The base class still supplies the message template and audit setters.
     """
 
@@ -107,19 +104,22 @@ class ClarificationInjectorV33(ClarificationInjector):
 
         t0 = int(self.clarification_tick)
         tick = int(current_tick)
-        if tick == t0:
-            recipients = set(self.public_exposure_nodes) | set(self.target_nodes)
-            stage = "direct"
-        elif tick == t0 + self.delivery_lag and self.delivery_lag > 0:
-            recipients = set(self.amplified_nodes) - set(self._already_injected)
-            stage = "paid_one_hop_lagged"
-        elif tick == t0 and self.delivery_lag == 0:
+
+        # Important: lag==0 must be handled before the generic t0 branch;
+        # otherwise amplified recipients are silently omitted.
+        if tick == t0 and self.delivery_lag == 0:
             recipients = (
                 set(self.public_exposure_nodes)
                 | set(self.target_nodes)
                 | set(self.amplified_nodes)
             )
             stage = "direct_plus_one_hop"
+        elif tick == t0:
+            recipients = set(self.public_exposure_nodes) | set(self.target_nodes)
+            stage = "direct"
+        elif tick == t0 + self.delivery_lag and self.delivery_lag > 0:
+            recipients = set(self.amplified_nodes) - set(self._already_injected)
+            stage = "paid_one_hop_lagged"
         else:
             return 0
 

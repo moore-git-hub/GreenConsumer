@@ -10,10 +10,13 @@ changing how exposure is realised:
 - downstream organic diffusion still occurs only through consumers' own posts in
   SocialNetworkPlugin.
 
-The probabilities below are development engineering assumptions and require
-sensitivity analysis. They are not empirical reach estimates.
+The probabilities/timing below are development engineering assumptions and
+require sensitivity analysis. They are not empirical platform reach estimates.
+The frozen baseline remains edge probability 0.55 and delivery lag 1 Tick.
 """
 from __future__ import annotations
+
+from dataclasses import asdict, dataclass
 
 from clarification_injector import ClarificationInjector
 from mechanism_v2 import clip01, deterministic_uniform
@@ -22,6 +25,51 @@ SCHEMA = "clarification-diffusion-3.3"
 DEFAULT_PUBLIC_EXPOSURE_RATE = 0.25
 DEFAULT_PAID_EDGE_PROBABILITY = 0.55
 DEFAULT_PAID_DELIVERY_LAG = 1
+
+
+@dataclass(frozen=True)
+class ClarificationDiffusionV33Parameters:
+    """Version-scoped paid-reach parameters for explicit sensitivity suites.
+
+    ``public_exposure_rate`` is intentionally not included here because the
+    current sensitivity stage varies only the paid one-hop mechanism. The public
+    organic exposure mechanism remains frozen and auditable separately.
+    """
+
+    paid_edge_probability: float = DEFAULT_PAID_EDGE_PROBABILITY
+    paid_delivery_lag: int = DEFAULT_PAID_DELIVERY_LAG
+
+    def __post_init__(self):
+        p = float(self.paid_edge_probability)
+        lag = int(self.paid_delivery_lag)
+        if not 0.0 <= p <= 1.0:
+            raise ValueError("paid_edge_probability must be in [0,1]")
+        if lag < 0:
+            raise ValueError("paid_delivery_lag must be non-negative")
+        if float(lag) != float(self.paid_delivery_lag):
+            raise ValueError("paid_delivery_lag must be an integer number of Ticks")
+
+
+DEFAULT_CLARIFICATION_PARAMETERS = ClarificationDiffusionV33Parameters()
+
+
+def clarification_parameters_audit_payload(
+    parameters: ClarificationDiffusionV33Parameters,
+) -> dict:
+    """Return explicit provenance for the paid-reach engineering parameters."""
+
+    if not isinstance(parameters, ClarificationDiffusionV33Parameters):
+        raise TypeError("parameters must be ClarificationDiffusionV33Parameters")
+    return {
+        **asdict(parameters),
+        "public_exposure_rate_fixed": DEFAULT_PUBLIC_EXPOSURE_RATE,
+        "empirically_calibrated": False,
+        "notes": (
+            "development engineering assumptions; baseline frozen at p=0.55, lag=1; "
+            "alternative values allowed only in labelled sensitivity suites"
+        ),
+        "schema_version": SCHEMA,
+    }
 
 
 def select_public_exposure_nodes_v33(

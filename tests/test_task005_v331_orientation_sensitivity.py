@@ -1,6 +1,9 @@
 """Zero-API tests for v3.3.1 equal-degree edge-orientation robustness."""
 from __future__ import annotations
 
+import hashlib
+import json
+
 import networkx as nx
 
 from greenconsumer_v33.network_variants import (
@@ -11,7 +14,18 @@ from greenconsumer_v33.network_variants import (
     build_directed_network_variant,
 )
 from greenconsumer_v33.orientation_sensitivity import profile_table
-from simulation_core import compute_network_hash
+
+
+def _network_hash(graph) -> str:
+    nodes = sorted(str(n) for n in graph.nodes())
+    edges = sorted([str(u), str(v)] for u, v in graph.edges())
+    payload = json.dumps(
+        {"nodes": nodes, "edges": edges},
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def test_orientation_profile_grid_is_pre_specified():
@@ -32,7 +46,7 @@ def test_legacy_baseline_hash_is_unchanged():
             tie_rule="legacy_first_endpoint",
         ),
     )
-    assert compute_network_hash(graph) == BASELINE_NETWORK_HASH
+    assert _network_hash(graph) == BASELINE_NETWORK_HASH
 
 
 def test_only_equal_degree_edges_change_between_tie_rules():
@@ -44,8 +58,11 @@ def test_only_equal_degree_edges_change_between_tie_rules():
         rule: _orient_like_v331(g, tie_rule=rule, network_seed=123)[0]
         for rule in TIE_RULES
     }
-    legacy = {tuple(sorted((u, v))): (u, v) for u, v in oriented["legacy_first_endpoint"].edges()}
-    for rule, graph in oriented.items():
+    legacy = {
+        tuple(sorted((u, v))): (u, v)
+        for u, v in oriented["legacy_first_endpoint"].edges()
+    }
+    for graph in oriented.values():
         current = {tuple(sorted((u, v))): (u, v) for u, v in graph.edges()}
         assert set(current) == set(legacy)
         for pair, direction in legacy.items():

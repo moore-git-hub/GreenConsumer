@@ -34,6 +34,7 @@ from clarification_diffusion_v33 import (
     select_paid_amplification_nodes_v33,
     select_public_exposure_nodes_v33,
 )
+from greenconsumer_v33.config import DEFAULT_CRISIS_TICK, HORIZON_ROBUSTNESS_TICKS
 
 RUNTIME_SCHEMA = "task005-fmcg-runtime-3.3.1"
 MECHANISM_AUDIT_SCHEMA = "mechanism-records-fmcg-3.3.1"
@@ -206,8 +207,15 @@ async def run_scenario_v33(config: ExperimentConfig, *, override_router) -> dict
         raise ValueError("scenario-v3.3.1 requires an explicit version-scoped router")
     if int(config.num_agents) != len(ENGINEERING_PERSONAS):
         raise ValueError("scenario-v3.3.1 configuration must use 20 cognitive agents")
-    if int(config.scandal_tick) != 5 or int(config.total_ticks) != 30:
-        raise ValueError("scenario-v3.3.1 requires crisis Tick 5 and a 30-Tick horizon")
+    if int(config.scandal_tick) != DEFAULT_CRISIS_TICK:
+        raise ValueError(
+            f"scenario-v3.3.1 requires crisis Tick {DEFAULT_CRISIS_TICK}"
+        )
+    if int(config.total_ticks) not in HORIZON_ROBUSTNESS_TICKS:
+        raise ValueError(
+            "scenario-v3.3.1 total_ticks must use the pre-specified horizon grid "
+            f"{HORIZON_ROBUSTNESS_TICKS}; got {config.total_ticks}"
+        )
 
     import clarification_injector
     import simulation_core
@@ -232,6 +240,8 @@ async def run_scenario_v33(config: ExperimentConfig, *, override_router) -> dict
     result["mechanism_records_schema_version"] = MECHANISM_AUDIT_SCHEMA
     result["engineering_profiles"] = list(engineering_profiles())
     result["legacy_purchase_endpoint_retired"] = True
+    result["runtime_total_ticks"] = int(config.total_ticks)
+    result["runtime_horizon_grid"] = list(HORIZON_ROBUSTNESS_TICKS)
     result["trust_v33_parameters"] = parameters_audit_payload(DEFAULT_TRUST_PARAMETERS)
     result["clarification_v33_parameters"] = {
         "paid_edge_probability": DEFAULT_PAID_EDGE_PROBABILITY,

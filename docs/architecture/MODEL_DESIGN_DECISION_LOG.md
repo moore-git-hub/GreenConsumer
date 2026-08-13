@@ -75,7 +75,7 @@ Real-LLM cognition audit 发现 receiving LLM 的 Social Feed 存在 `[:180]` �
 
 ## DR-20260813-03：有限时间范围改为 T35 baseline
 
-**状态：implemented before new v3.3.1 formal inference**
+**状态：implemented and finite-horizon engineering suite PASS**
 
 ### 触发原因
 
@@ -101,18 +101,15 @@ Real-LLM cognition audit 发现 receiving LLM 的 Social Feed 存在 `[:180]` �
 - Real-LLM model/temperature；
 - 2×2×2 + common control treatment matrix。
 
-### 科学依据
+### 验证结果
 
-- ODD protocol 要求明确描述模型尺度、设计 rationale 与 simulation experiments；
-- GABM文献表明小规模生成式 Agent 可用于机制/动态研究，但小 N 不构成网络外部代表性证明；
-- T35 不是文献给出的经验最优天数，而是“危机后30日”这一可解释的有限观察窗口；
-- 通过预先规定 T30/T40 检验 endpoint sensitivity。
+Fake T30/T35/T40 nested horizon suite 已通过，`prefix_invariance_failures=0`。因此延长未来运行时间没有反向改变既有历史状态。T35 保持 primary endpoint；T30/T40 仅用于 endpoint robustness。
 
-完整说明见 `V331_TIME_HORIZON_AND_SCALE_DESIGN.md`。
+完整说明见：
 
-### 论文允许表述
-
-“主仿真终点在新的正式模拟前预先设定为 T35，即危机发生后30日，并以T30/T40检验时间范围稳健性。”
+- `V331_TIME_HORIZON_AND_SCALE_DESIGN.md`；
+- `V331_HORIZON_ROBUSTNESS_PLAN.md`；
+- `V331_HORIZON_ROBUSTNESS_RESULT_20260813.md`。
 
 ### 禁止表述
 
@@ -124,95 +121,129 @@ Real-LLM cognition audit 发现 receiving LLM 的 Social Feed 存在 `[:180]` �
 
 ## DR-20260813-04：Runtime horizon guard 单元测试与重依赖隔离
 
-**状态：implemented; local re-verification pending**
+**状态：implemented and re-verified**
 
 ### 触发原因
 
-T35 runtime guard 修复后，首版回归测试为了验证 `run_scenario_v33()` 能接受 T35，直接 `import simulation_core` 并 monkeypatch 主运行函数。该导入会加载 AgentKernel 的 embedding / Hugging Face 依赖树。在同一 pytest 进程中出现 Hugging Face HTTP client 生命周期冲突，导致测试报 `Cannot send a request, as the client has been closed`；同时产生对 sentence-transformers 模型的网络 HEAD 重试。
-
-该失败发生在测试基础设施层，不是 T35 scientific mechanism、Trust、Demand 或 horizon guard 本身的失败。
+T35 runtime guard 修复后，首版回归测试为验证 `run_scenario_v33()` 能接受 T35，直接 `import simulation_core` 并触发 AgentKernel embedding / Hugging Face 依赖树。测试因此出现 HTTP client 生命周期错误，而非 scientific mechanism 错误。
 
 ### 决策
 
-- 将 runtime 参数约束抽取为纯函数 `_validate_runtime_config_v331()`；
-- `run_scenario_v33()` 在任何 `simulation_core` 重依赖导入之前调用这一纯函数；
-- horizon guard 单元测试只测试该唯一验证路径，不再导入 `simulation_core`；
-- 单元测试继续覆盖：T30/T35/T40允许、T31拒绝、20 Agents约束、T5 crisis约束、version-scoped router约束。
-
-### 科学与工程理由
-
-Unit test 应只验证自身目标。Runtime guard 是一个确定性的实验设计不变量，不需要初始化 embedding 模型或发起任何外部网络请求。把重依赖副作用混入guard测试会降低可复现性，并可能把第三方HTTP生命周期错误误判成模型错误。
+- runtime约束抽取为纯函数 `_validate_runtime_config_v331()`；
+- 在任何 `simulation_core` 重依赖导入之前验证；
+- unit test 不再为整数/配置guard触发外部模型初始化；
+- full Fake horizon suite另作为 end-to-end integration verification。
 
 ### 不改变
 
-本修复不改变：
-
-- 任何心理/传播/购买机制；
-- T35主终点与T30/T40 horizon grid；
-- Agent数量；
-- 随机种子；
-- Fake/Real LLM输出；
-- 正式推断计划。
-
-### 验证要求
-
-本地重新运行 `test_task005_v331_runtime_horizon_guard.py` 后应不再触发 Hugging Face 网络访问，并全部PASS。随后再执行完整Fake horizon suite；完整suite属于end-to-end integration test，与纯guard unit test分层处理。
+心理、传播、购买机制、T35设计、Agent数量、随机种子、Fake/Real LLM输出与推断计划均不改变。
 
 ---
 
 ## DR-20260813-05：Trust 参数敏感性 Stage A
 
+**状态：executed; PASS**
+
+### 触发原因
+
+`mechanism_v33.py` 将 crisis/repair retention、event/quiet adjustment、repair saturation、hypocrisy weight 与 empathy repair weight 明确标记为 development engineering assumptions，而非总体经验参数。正式 inference 前需要检验主要结果是否由某一单点设定驱动。
+
+### 设计
+
+- Fake LLM、T35、20 cognitive Agents、25 micro-buyers、BA topology、处理矩阵与三个 seeds 全部固定；
+- 七个 Trust 参数分别使用预先规定 low / baseline / high；
+- 加入 `retention_symmetric_097`、`retention_reversed_096_098`、`legacy_v32_transition`；
+- baseline + 14 OAT + 3 structured boundaries = 18 profiles；
+- 不允许根据结果重新选择 baseline。
+
+### 结果
+
+`trust_20260813_110718`：
+
+- 18 profiles 全部完成；
+- 54/54 implementation invariants PASS；
+- invariant failures = 0；
+- P1/P2/P3/P4/P5/S1 在全部 profiles 中均无方向翻转；
+- P1/P5 对 `repair_retention`、`empathy_repair_weight`、`event_adjustment` 较敏感；
+- P2 对 `empathy_repair_weight` 最敏感；
+- P3 对 `event_adjustment` 最敏感；
+- P4 在所有 profiles 中严格保持 0.45，符合 Trust 与 direct reach 的机制分离；
+- S1 对 Trust 参数变化很弱。
+
+完整结果见：
+
+- `V331_TRUST_PARAMETER_SENSITIVITY_PLAN.md`；
+- `V331_TRUST_PARAMETER_SENSITIVITY_RESULT_20260813.md`。
+
+### 解释边界
+
+Stage A 只支持 local/boundary robustness；不能识别多参数交互，也不能把 low/high 解释为现实参数置信区间。
+
+---
+
+## DR-20260813-06：Trust 参数敏感性 Stage B — Morris global screening
+
 **状态：pre-specified and implemented; execution pending**
 
 ### 触发原因
 
-`mechanism_v33.py` 明确将 crisis/repair retention、event/quiet adjustment、repair saturation、hypocrisy weight 与 empathy repair weight 标记为 development engineering assumptions，而非真实消费者总体参数。新的正式 inference 前必须检验主要结果是否由某一个单点参数设定驱动。
+Stage A 无方向翻转，但 OAT 无法判断多参数同时变化下的非线性与交互迹象。需要在同一预先规定 parameter envelope 内进行全局 screening。
 
-### 决策
+### 设计
 
-先实施 **Stage A local/boundary sensitivity**，不直接宣称全局敏感性：
+采用 Morris elementary effects：
 
-- 固定 Fake LLM、T35、20 cognitive Agents、25 micro-buyers、BA topology、处理矩阵与三个 seeds；
-- 对 7 个 Trust 参数分别设置 pre-specified low / baseline / high；
-- 加入 `retention_symmetric_097`、`retention_reversed_096_098` 和 `legacy_v32_transition` 三个结构边界 profile；
-- baseline + 14 OAT + 3 structured boundaries，共 18 个 profile；
-- 不允许根据 Stage A 结果改变冻结 baseline 来获得更有利的效应。
+- `k=7` Trust parameters；
+- `p=6` levels；
+- normalized `Delta=0.6`；
+- `r=10` random trajectories；
+- 每条 trajectory 8 points；
+- 每个参数每条 trajectory 恰改变一次；
+- design seed=`2026081801`；
+- 相同参数点允许复用确定性 Fake evaluation；
+- 不允许结果出来后删除轨迹、追加轨迹或调整 parameter bounds。
 
-完整参数范围和论文表述见 `V331_TRUST_PARAMETER_SENSITIVITY_PLAN.md`。
+主要统计量：
 
-### 实现边界
+- `mu`：平均有方向 elementary effect；
+- `mu_star`：平均绝对 elementary effect，用于同一 estimand 内全局筛查排序；
+- `sigma`：非线性和/或参数交互迹象；
+- `sigma/mu_star`：仅作描述性辅助，不设机械分类阈值。
 
-新增 Trust parameter injection hook，但默认仍严格等于 `DEFAULT_TRUST_PARAMETERS`。普通 `run_v33.py` 不暴露任意参数输入；只有专门的 `run_v33_trust_sensitivity.py` 使用显式 profile，因此 sensitivity 不会悄悄改变基准运行。
+### 固定部分
 
-### Falsification / invariant checks
+Fake LLM、T35、20 cognitive Agents、25 micro-buyers、BA topology、K=3、paid edge probability、delivery lag、三个 seeds、treatment matrix、persona 与刺激文本全部保持冻结。
 
-- Trust profile 不得改变 T1–T4 pre-crisis key states；
-- network hash 必须跨 profile 一致；
-- P4 direct enterprise reach 必须跨 Trust profile 一致；
-- non-baseline run 必须在 provenance 中标识为 `explicit-sensitivity-profile`。
+### 实现不变量
 
-任一不变量失败时先判为实现错误，不进行科学解释。
+- Morris轨迹结构、grid、step、bounds必须全部PASS；
+- 所有 evaluations 的 T1–T4 key states一致；
+- network hash一致；
+- P4 direct reach一致且 Morris `mu_star=0`；
+- 参数provenance完整。
 
-### 方法依据
+### 科学依据
 
-- Thiele, Kurth & Grimm (2014) 将 sensitivity analysis 视为 ABM 开发与分析的重要组成，用于理解参数变化对模型输出与机制解释的影响；
-- Stage A OAT 仅用于 range verification 与局部/边界筛查；
-- Stage B 预先计划 Morris elementary-effects global screening；必要时再对关键参数使用 variance-based first/total effects。
+- Morris (1991) elementary-effects screening；
+- Campolongo, Cariboni & Saltelli (2007) 使用 `mu_star` 改进因素重要性筛查；
+- Morris `sigma` 只能提示非线性/交互，不能唯一分解二者；
+- 若需要 first/total variance effects，再对筛出的关键参数单独设计 variance-based analysis。
+
+完整说明见 `V331_TRUST_PARAMETER_MORRIS_PLAN.md`。
 
 ### 禁止表述
 
-- OAT low/high 是经验置信区间；
-- Stage A 已经证明全局参数稳健性；
-- 根据敏感性结果重新选择“效果最好”的baseline参数；
-- Fake LLM参数敏感性等价于Real LLM外部效度。
+- Morris ranking 是真实消费者参数的因果重要性；
+- `sigma` 单独证明某两个参数存在交互；
+- Morris 等同于 Sobol variance decomposition；
+- 根据 Morris 排名重新调 baseline。
 
 ---
 
 ## 后续预登记决策队列
 
-下列项目尚未形成结果，进入下一阶段时应分别新增 Decision Record：
-
-- Trust-parameter sensitivity Stage B（Morris/global screening）；
+- Stage-B Morris 结果记录；
+- 必要时对关键 Trust 参数实施 variance-based first/total-effect analysis；
 - `paid_edge_probability` / lag sensitivity；
 - network size N=20/40/80；
 - fixed-K 与 proportional-K targeting budget；

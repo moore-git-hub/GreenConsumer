@@ -115,13 +115,19 @@ def _undirected_graph(n: int, spec: NetworkVariantV331Spec) -> nx.Graph:
     )
 
 
-def _hash_tie_direction(u: str, v: str, seed: int) -> tuple[str, str]:
-    """Choose one deterministic tie direction independent of edge iteration order."""
+def _hash_tie_direction(u, v, seed: int):
+    """Choose a deterministic tie direction while preserving node identity.
 
-    left, right = sorted((str(u), str(v)))
-    payload = f"{int(seed)}|{left}|{right}|equal-degree-tie".encode("utf-8")
+    String representations are used only to build a canonical hash key.  The
+    returned source/target are the original node objects, so orientation never
+    changes node type or creates synthetic nodes.
+    """
+
+    ordered = sorted(((str(u), u), (str(v), v)), key=lambda item: item[0])
+    (left_key, left_node), (right_key, right_node) = ordered
+    payload = f"{int(seed)}|{left_key}|{right_key}|equal-degree-tie".encode("utf-8")
     choose_left = hashlib.sha256(payload).digest()[0] % 2 == 0
-    return (left, right) if choose_left else (right, left)
+    return (left_node, right_node) if choose_left else (right_node, left_node)
 
 
 def _orient_like_v331(

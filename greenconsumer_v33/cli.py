@@ -6,10 +6,12 @@ import asyncio
 import json
 from pathlib import Path
 
-from greenconsumer_v32.config import (
+from .config import (
     DEFAULT_DEMAND_SEED,
     DEFAULT_LLM_SEED,
     DEFAULT_SIMULATION_SEED,
+    DEFAULT_TOTAL_TICKS,
+    HORIZON_ROBUSTNESS_TICKS,
     PROJECT_ROOT,
     RunSettings,
 )
@@ -32,6 +34,16 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("--llm-seed", type=int, default=DEFAULT_LLM_SEED)
         p.add_argument("--demand-seed", type=int, default=DEFAULT_DEMAND_SEED)
         p.add_argument("--support", choices=("absent", "present", "both"), default="both")
+        p.add_argument(
+            "--total-ticks",
+            type=int,
+            choices=HORIZON_ROBUSTNESS_TICKS,
+            default=DEFAULT_TOTAL_TICKS,
+            help=(
+                "finite observation horizon: 35 is the baseline (30 post-crisis days); "
+                "30 and 40 are pre-specified horizon-robustness checks"
+            ),
+        )
         p.add_argument("--no-demand", action="store_true")
         p.add_argument("--allow-real-llm", action="store_true")
         p.add_argument(
@@ -82,6 +94,7 @@ def main(argv=None) -> int:
             run_demand=not args.no_demand,
             support_mode=args.support,
             allow_real_llm=args.allow_real_llm,
+            total_ticks=args.total_ticks,
         )
         payload = asyncio.run(execute(settings))
 

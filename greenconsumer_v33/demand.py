@@ -1,4 +1,10 @@
-"""v3.3 FMCG demand adapter with renewal category-purchase opportunities."""
+"""v3.3 FMCG demand adapter with renewal category-purchase opportunities.
+
+The demand layer follows the realized cognitive-run horizon.  This is experiment-
+design plumbing only: purchase opportunity, choice and loyalty mechanisms are
+unchanged.  A T35/T40 cognitive run must not silently stop downstream demand at
+legacy T30.
+"""
 from __future__ import annotations
 
 from fmcg_scenario_v32 import ENGINEERING_PERSONAS
@@ -11,6 +17,20 @@ from purchase_mechanism_v33 import (
     initial_renewal_state,
     purchase_step_v33,
 )
+
+
+def _realized_horizon(cognitive_rows: list[dict]) -> int:
+    """Return and validate the complete cognitive Tick horizon."""
+
+    ticks = sorted({int(row["tick"]) for row in cognitive_rows})
+    if not ticks:
+        raise ValueError("cognitive_rows is empty")
+    expected = list(range(1, ticks[-1] + 1))
+    if ticks != expected:
+        raise ValueError(
+            f"cognitive_rows must contain a contiguous Tick horizon 1..T; got {ticks}"
+        )
+    return ticks[-1]
 
 
 def simulate_demand(
@@ -26,10 +46,26 @@ def simulate_demand(
         raise ValueError("cognitive_rows is empty")
 
     exp_id = str(cognitive_rows[0]["exp_id"])
+    total_ticks = _realized_horizon(cognitive_rows)
     cognitive = {
         (int(row["tick"]), str(row["agent_id"])): row
         for row in cognitive_rows
     }
+
+    # Fail fast if any Persona-Tick state is missing.  Silent gaps would make
+    # horizon comparisons scientifically uninterpretable.
+    expected_keys = {
+        (tick, persona.agent_id)
+        for tick in range(1, total_ticks + 1)
+        for persona in ENGINEERING_PERSONAS
+    }
+    missing = expected_keys.difference(cognitive)
+    if missing:
+        preview = sorted(missing)[:10]
+        raise ValueError(
+            f"cognitive_rows are incomplete for demand simulation; missing {len(missing)} "
+            f"Persona-Tick states, e.g. {preview}"
+        )
 
     params = DemandParameters(micro_buyers_per_archetype=micro_buyers)
     cohorts = {
@@ -52,7 +88,7 @@ def simulate_demand(
     cumulative_expected = 0.0
     cumulative_chosen = 0
 
-    for tick in range(1, 31):
+    for tick in range(1, total_ticks + 1):
         tick_n = 0
         tick_expected = 0.0
         tick_chosen = 0
@@ -90,6 +126,7 @@ def simulate_demand(
                             "present" if support_present else "absent"
                         ),
                         "tick": tick,
+                        "total_ticks": total_ticks,
                         "agent_id": persona.agent_id,
                         "buyer_id": profile.buyer_id,
                         "current_pbc": choice.pbc,
@@ -114,6 +151,7 @@ def simulate_demand(
                 "exp_id": exp_id,
                 "conversion_support": "present" if support_present else "absent",
                 "tick": tick,
+                "total_ticks": total_ticks,
                 "opportunities": tick_n,
                 "expected_choice_share": (
                     tick_expected / tick_n if tick_n else ""

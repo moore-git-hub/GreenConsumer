@@ -1,16 +1,23 @@
-"""TASK_005 v3.3 engineering runner.
+"""TASK_005 v3.3.1 engineering runner.
 
-This runner is parallel to greenconsumer_v32.runner.  It never extends the
-closed F001-F010 formal sample.  Real-LLM temperature remains 0.3 so mechanism
-changes can be diagnosed without simultaneously changing sampling randomness.
+This runner remains parallel to ``greenconsumer_v32.runner``. It never extends
+the closed F001-F010 formal sample. Real-LLM temperature remains 0.3 so model
+structure and LLM sampling are not changed simultaneously.
+
+v3.3.1 adds output/provenance instrumentation only:
+- complete per-Agent appraisal text via the version-scoped v3.3 cognition path;
+- run-level network topology and targeting/exposure audit files;
+- Git provenance and explicit code-release markers.
 """
 from __future__ import annotations
 
 import dataclasses
 import datetime as dt
+import subprocess
+from pathlib import Path
 
 from experiment_config import generate_experiment_matrix
-from task005_fmcg_runtime_v33 import run_scenario_v33
+from task005_fmcg_runtime_v33 import CODE_RELEASE, run_scenario_v33
 
 from greenconsumer_v32.config import (
     CONDITION_ORDER,
@@ -18,6 +25,7 @@ from greenconsumer_v32.config import (
     DEFAULT_MICRO_BUYERS,
     DEFAULT_NUM_AGENTS,
     DEFAULT_TOTAL_TICKS,
+    PROJECT_ROOT,
     RunSettings,
 )
 from greenconsumer_v32.io import write_csv, write_json
@@ -34,6 +42,7 @@ from .demand import simulate_demand
 
 MODEL = "qwen-plus"
 TEMPERATURE = 0.3
+RUN_SCHEMA = "task005_fmcg_v331_engineering_run1.0"
 
 
 def _configs(settings: RunSettings):
@@ -51,11 +60,63 @@ def _configs(settings: RunSettings):
     ]
 
 
+def _git_provenance(project_root: Path = PROJECT_ROOT) -> dict:
+    """Best-effort Git identity for reproducibility; never mutates the repository."""
+
+    def run_git(*args):
+        proc = subprocess.run(
+            ["git", *args],
+            cwd=str(project_root),
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        return proc.stdout.strip() if proc.returncode == 0 else ""
+
+    head = run_git("rev-parse", "HEAD")
+    branch = run_git("branch", "--show-current")
+    status = run_git("status", "--porcelain", "--untracked-files=normal")
+    return {
+        "git_head": head,
+        "git_branch": branch,
+        "git_dirty": bool(status),
+        "git_status_short": status,
+    }
+
+
+def _topology_signature(meta: dict, nodes: list[dict], edges: list[dict]) -> tuple:
+    """Canonical immutable topology identity used to verify all conditions share one graph."""
+
+    return (
+        str(meta.get("network_hash", "")),
+        tuple(
+            sorted(
+                (
+                    str(row.get("agent_id", "")),
+                    int(row.get("out_degree", 0)),
+                    int(row.get("in_degree", 0)),
+                )
+                for row in nodes
+            )
+        ),
+        tuple(
+            sorted(
+                (
+                    str(row.get("source_agent_id", "")),
+                    str(row.get("target_agent_id", "")),
+                    str(row.get("is_directed", "")),
+                )
+                for row in edges
+            )
+        ),
+    )
+
+
 async def execute(settings: RunSettings) -> dict:
-    """Run one v3.3 engineering/demo job and persist auditable outputs."""
+    """Run one v3.3.1 engineering/demo job and persist auditable outputs."""
 
     settings.validate()
-    run_id = dt.datetime.now().strftime("v33_%Y%m%d_%H%M%S")
+    run_id = dt.datetime.now().strftime("v331_%Y%m%d_%H%M%S")
     run_dir = settings.output_dir / run_id
     if run_dir.exists():
         raise FileExistsError(run_dir)
@@ -70,9 +131,17 @@ async def execute(settings: RunSettings) -> dict:
     all_thoughts: list[dict] = []
     all_demand: list[dict] = []
     all_curves: list[dict] = []
+    all_target_nodes: list[dict] = []
+    all_exposure_plan: list[dict] = []
     condition_meta = []
     trust_parameters = None
     clarification_parameters = None
+
+    topology_signature = None
+    topology_meta = None
+    topology_nodes = None
+    topology_edges = None
+    event_timeline = None
 
     try:
         for cfg in configs:
@@ -130,6 +199,33 @@ async def execute(settings: RunSettings) -> dict:
                 ],
             )
 
+            network_meta = dict(result.get("network_meta") or {})
+            network_nodes = list(result.get("network_nodes") or [])
+            network_edges = list(result.get("network_edges") or [])
+            signature = _topology_signature(network_meta, network_nodes, network_edges)
+            if topology_signature is None:
+                topology_signature = signature
+                topology_meta = {k: v for k, v in network_meta.items() if k != "exp_id"}
+                topology_nodes = network_nodes
+                topology_edges = network_edges
+            elif signature != topology_signature:
+                raise RuntimeError(
+                    f"{cfg.exp_id}: network topology differs within one blocked run"
+                )
+
+            target_rows = list(result.get("target_nodes_meta") or [])
+            exposure_rows = list(result.get("clarification_exposure_meta") or [])
+            all_target_nodes.extend(target_rows)
+            all_exposure_plan.extend(exposure_rows)
+
+            current_timeline = list(result.get("effective_event_timeline") or [])
+            if event_timeline is None:
+                event_timeline = current_timeline
+            elif current_timeline != event_timeline:
+                raise RuntimeError(
+                    f"{cfg.exp_id}: effective global-event timeline differs within run"
+                )
+
             if settings.condition == "all" and cfg.is_control:
                 control_cache = dict(routed_inner.cache)
 
@@ -181,6 +277,11 @@ async def execute(settings: RunSettings) -> dict:
                         int(row["tick"])
                         for row in result["effective_event_timeline"]
                     ],
+                    "network_hash": network_meta.get("network_hash", ""),
+                    "target_node_count": len(target_rows),
+                    "planned_exposure_count": sum(
+                        1 for row in exposure_rows if bool(row.get("reached"))
+                    ),
                 }
             )
     finally:
@@ -192,12 +293,25 @@ async def execute(settings: RunSettings) -> dict:
     write_csv(run_dir / "demand_opportunities.csv", all_demand)
     write_csv(run_dir / "choice_curves.csv", all_curves)
 
+    write_json(run_dir / "network_meta.json", topology_meta or {})
+    write_csv(run_dir / "network_nodes.csv", topology_nodes or [])
+    write_csv(run_dir / "network_edges.csv", topology_edges or [])
+    write_csv(run_dir / "target_nodes.csv", all_target_nodes)
+    write_csv(run_dir / "clarification_exposure_plan.csv", all_exposure_plan)
+    write_json(
+        run_dir / "effective_event_timeline.json",
+        {"events": event_timeline or []},
+    )
+
+    provenance = _git_provenance()
     payload = {
-        "schema_version": "task005_fmcg_v33_engineering_run1.0",
+        "schema_version": RUN_SCHEMA,
+        "code_release": CODE_RELEASE,
         "run_id": run_id,
         "status": "PASS",
-        "scope": "v3.3 engineering/demo; not a new formal replication",
+        "scope": "v3.3.1 engineering/demo; not a new formal replication",
         "llm_mode": settings.llm_mode,
+        "llm_model": "deterministic-fake" if settings.llm_mode == "fake" else MODEL,
         "llm_temperature": 0.0 if settings.llm_mode == "fake" else TEMPERATURE,
         "condition_request": settings.condition,
         "simulation_seed": settings.simulation_seed,
@@ -212,6 +326,13 @@ async def execute(settings: RunSettings) -> dict:
             "loyalty_update": "bounded_ewma",
             "empirically_calibrated": False,
         },
+        "network": {
+            **(topology_meta or {}),
+            "network_nodes_file": "network_nodes.csv",
+            "network_edges_file": "network_edges.csv",
+            "target_nodes_file": "target_nodes.csv",
+            "clarification_exposure_plan_file": "clarification_exposure_plan.csv",
+        },
         "agent_thought_output": "agent_thoughts.csv",
         "agent_thought_rows": len(all_thoughts),
         "agent_thought_events": sum(
@@ -221,7 +342,10 @@ async def execute(settings: RunSettings) -> dict:
             1 for row in all_thoughts if row["semantic_fallback_used"]
         ),
         "real_llm_execution": settings.llm_mode == "real",
+        "formal_inference_performed": False,
         "formal_reuse_permitted": False,
+        "external_validity_claimed": False,
+        "git_provenance": provenance,
         "output_dir": str(run_dir),
     }
     write_json(run_dir / "run_summary.json", payload)

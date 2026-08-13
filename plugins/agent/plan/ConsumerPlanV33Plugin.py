@@ -1,7 +1,11 @@
 """Scenario-v3.3 cognitive transition and posting plan.
 
-Parallel to ConsumerPlanV32Plugin.  Purchase remains absent from AgentKernel and
+Parallel to ConsumerPlanV32Plugin. Purchase remains absent from AgentKernel and
 is evaluated downstream by the v3.3 FMCG renewal-demand layer.
+
+``TRUST_PARAMETERS`` is a version-scoped injection hook used only by explicitly
+labelled sensitivity runs. Its default is exactly the frozen v3.3.1 baseline;
+normal pipeline behavior is therefore unchanged.
 """
 from __future__ import annotations
 
@@ -21,6 +25,10 @@ SCHEMA = "consumer-plan-3.3"
 
 
 class ConsumerPlanV33Plugin(PlanPlugin):
+    # Sensitivity runs may replace this inside the isolated v3.3.1 runtime.
+    # The runtime restores it after every condition, including exceptions.
+    TRUST_PARAMETERS = DEFAULT_TRUST_PARAMETERS
+
     async def init(self):
         pass
 
@@ -53,6 +61,7 @@ class ConsumerPlanV33Plugin(PlanPlugin):
         if not state_plugin or not profile_plugin:
             return
 
+        trust_parameters = self.TRUST_PARAMETERS
         state_data = getattr(
             state_plugin, "state_data", getattr(state_plugin, "_state_data", {})
         )
@@ -117,7 +126,7 @@ class ConsumerPlanV33Plugin(PlanPlugin):
                 state_data.get("semantic_hypocrisy_perceived", False)
             ),
             enterprise_clarification_observed=enterprise_clarification_observed,
-            parameters=DEFAULT_TRUST_PARAMETERS,
+            parameters=trust_parameters,
         )
 
         social_count = int(
@@ -260,12 +269,12 @@ class ConsumerPlanV33Plugin(PlanPlugin):
             ],
             "empathy_repair_weight": transition["empathy_repair_weight"],
             "hypocrisy_perceived": transition["hypocrisy_perceived"],
-            "crisis_retention": DEFAULT_TRUST_PARAMETERS.crisis_retention,
-            "repair_retention": DEFAULT_TRUST_PARAMETERS.repair_retention,
-            "event_adjustment": DEFAULT_TRUST_PARAMETERS.event_adjustment,
-            "quiet_adjustment": DEFAULT_TRUST_PARAMETERS.quiet_adjustment,
-            "repair_saturation": DEFAULT_TRUST_PARAMETERS.repair_saturation,
-            "hypocrisy_weight": DEFAULT_TRUST_PARAMETERS.hypocrisy_weight,
+            "crisis_retention": trust_parameters.crisis_retention,
+            "repair_retention": trust_parameters.repair_retention,
+            "event_adjustment": trust_parameters.event_adjustment,
+            "quiet_adjustment": trust_parameters.quiet_adjustment,
+            "repair_saturation": trust_parameters.repair_saturation,
+            "hypocrisy_weight": trust_parameters.hypocrisy_weight,
             "purchase_intention": purchase_intention,
             "posting_intention": transition["posting_intention"],
             "buy_probability": "",

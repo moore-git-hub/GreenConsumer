@@ -10,10 +10,11 @@ scenario, experiment matrix, and social-network topology while patching only:
 - Bernoulli public exposure and probabilistic one-hop amplification selectors;
 - v3.3-only audit restoration for full reasoning/post text.
 
-The optional ``trust_parameters`` argument exists solely to support explicitly
-labelled sensitivity experiments.  Its default is the frozen v3.3.1 baseline.
-Every patched object/parameter is restored after the condition run. No v3.2
-source file or closed F001-F010 formal result is modified by this runtime.
+Optional ``trust_parameters`` and ``clarification_parameters`` arguments exist
+solely to support explicitly labelled sensitivity experiments. Their defaults
+are the frozen v3.3.1 baseline. Every patched object/parameter is restored after
+the condition run. No v3.2 source file or closed F001-F010 formal result is
+modified by this runtime.
 """
 from __future__ import annotations
 
@@ -34,9 +35,10 @@ from mechanism_v33 import (
     parameters_audit_payload,
 )
 from clarification_diffusion_v33 import (
-    DEFAULT_PAID_DELIVERY_LAG,
-    DEFAULT_PAID_EDGE_PROBABILITY,
+    DEFAULT_CLARIFICATION_PARAMETERS,
+    ClarificationDiffusionV33Parameters,
     ClarificationInjectorV33,
+    clarification_parameters_audit_payload,
     select_paid_amplification_nodes_v33,
     select_public_exposure_nodes_v33,
 )
@@ -101,6 +103,7 @@ def _isolated_runtime_patch(
     plan_plugin_class,
     config: ExperimentConfig,
     trust_parameters: TrustDynamicsV33Parameters,
+    clarification_parameters: ClarificationDiffusionV33Parameters,
 ):
     """Patch explicit module objects and restore them on every exit path."""
 
@@ -195,12 +198,15 @@ def _isolated_runtime_patch(
             graph,
             seed_nodes,
             base_seed=int(config.random_seed),
-            edge_probability=DEFAULT_PAID_EDGE_PROBABILITY,
+            edge_probability=float(clarification_parameters.paid_edge_probability),
         )
 
     class RuntimeInjectorV33(ClarificationInjectorV33):
         def __init__(self, cfg):
-            super().__init__(cfg, delivery_lag=DEFAULT_PAID_DELIVERY_LAG)
+            super().__init__(
+                cfg,
+                delivery_lag=int(clarification_parameters.paid_delivery_lag),
+            )
 
     try:
         simulation_module._generate_profiles_inline = _scenario_profiles
@@ -238,11 +244,16 @@ async def run_scenario_v33(
     *,
     override_router,
     trust_parameters: TrustDynamicsV33Parameters = DEFAULT_TRUST_PARAMETERS,
+    clarification_parameters: ClarificationDiffusionV33Parameters = DEFAULT_CLARIFICATION_PARAMETERS,
 ) -> dict:
     """Run one communication condition on the isolated v3.3.1 cognitive path."""
 
     if not isinstance(trust_parameters, TrustDynamicsV33Parameters):
         raise TypeError("trust_parameters must be TrustDynamicsV33Parameters")
+    if not isinstance(clarification_parameters, ClarificationDiffusionV33Parameters):
+        raise TypeError(
+            "clarification_parameters must be ClarificationDiffusionV33Parameters"
+        )
     runtime_validation = _validate_runtime_config_v331(
         config,
         override_router=override_router,
@@ -260,6 +271,7 @@ async def run_scenario_v33(
         ConsumerPlanV33Plugin,
         config,
         trust_parameters,
+        clarification_parameters,
     ):
         result = await simulation_core.run_simulation_core(
             config,
@@ -274,9 +286,7 @@ async def run_scenario_v33(
     result["legacy_purchase_endpoint_retired"] = True
     result.update(runtime_validation)
     result["trust_v33_parameters"] = parameters_audit_payload(trust_parameters)
-    result["clarification_v33_parameters"] = {
-        "paid_edge_probability": DEFAULT_PAID_EDGE_PROBABILITY,
-        "paid_delivery_lag": DEFAULT_PAID_DELIVERY_LAG,
-        "empirically_calibrated": False,
-    }
+    result["clarification_v33_parameters"] = clarification_parameters_audit_payload(
+        clarification_parameters
+    )
     return result

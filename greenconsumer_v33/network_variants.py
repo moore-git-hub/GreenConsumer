@@ -1,0 +1,154 @@
+"""Pure network-topology builders for TASK_005 v3.3.1 robustness checks.
+
+The production baseline remains the existing directed BA graph.  This module is
+used only by explicitly labelled topology-sensitivity suites.  It changes the
+undirected substrate while preserving the current v3.3.1 direction rule:
+higher undirected degree -> lower undirected degree; equal-degree edges take the
+same deterministic first-endpoint branch as SocialNetworkPlugin.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import networkx as nx
+
+
+TOPOLOGIES = ("ba", "ws", "community")
+BASELINE_NETWORK_HASH = "886be697894ff8f79c4e72be4b778978f9c40390ee5a15dcb1e09b73040281ac"
+
+
+@dataclass(frozen=True)
+class NetworkVariantV331Spec:
+    topology: str
+    network_seed: int
+    ba_m: int = 2
+    ws_k: int = 4
+    ws_beta: float = 0.10
+    community_blocks: int = 4
+    community_block_size: int = 5
+    community_p_in: float = 0.65
+    community_p_out: float = 0.08
+
+    def validate(self, n: int) -> None:
+        if self.topology not in TOPOLOGIES:
+            raise ValueError(f"unknown topology: {self.topology}")
+        if int(n) != 20:
+            raise ValueError("v3.3.1 topology robustness currently requires N=20")
+        if self.topology == "ba":
+            if not 1 <= int(self.ba_m) < int(n):
+                raise ValueError("ba_m must satisfy 1 <= m < n")
+        if self.topology == "ws":
+            if int(self.ws_k) <= 0 or int(self.ws_k) >= int(n) or int(self.ws_k) % 2:
+                raise ValueError("ws_k must be positive, even, and < n")
+            if not 0.0 <= float(self.ws_beta) <= 1.0:
+                raise ValueError("ws_beta must be in [0,1]")
+        if self.topology == "community":
+            if int(self.community_blocks) * int(self.community_block_size) != int(n):
+                raise ValueError("community blocks × block size must equal n")
+            for value in (self.community_p_in, self.community_p_out):
+                if not 0.0 <= float(value) <= 1.0:
+                    raise ValueError("community probabilities must be in [0,1]")
+            if float(self.community_p_in) <= float(self.community_p_out):
+                raise ValueError("community_p_in must exceed community_p_out")
+
+    def audit_payload(self) -> dict:
+        return {
+            "topology": self.topology,
+            "network_seed": int(self.network_seed),
+            "ba_m": int(self.ba_m),
+            "ws_k": int(self.ws_k),
+            "ws_beta": float(self.ws_beta),
+            "community_blocks": int(self.community_blocks),
+            "community_block_size": int(self.community_block_size),
+            "community_p_in": float(self.community_p_in),
+            "community_p_out": float(self.community_p_out),
+            "empirically_calibrated": False,
+            "role": "pre-specified network-topology robustness",
+        }
+
+
+def _undirected_graph(n: int, spec: NetworkVariantV331Spec) -> nx.Graph:
+    spec.validate(n)
+    seed = int(spec.network_seed)
+    if spec.topology == "ba":
+        return nx.barabasi_albert_graph(n, m=int(spec.ba_m), seed=seed)
+    if spec.topology == "ws":
+        return nx.watts_strogatz_graph(
+            n,
+            k=int(spec.ws_k),
+            p=float(spec.ws_beta),
+            seed=seed,
+        )
+
+    sizes = [int(spec.community_block_size)] * int(spec.community_blocks)
+    probs = [
+        [
+            float(spec.community_p_in) if i == j else float(spec.community_p_out)
+            for j in range(int(spec.community_blocks))
+        ]
+        for i in range(int(spec.community_blocks))
+    ]
+    return nx.stochastic_block_model(
+        sizes,
+        probs,
+        seed=seed,
+        selfloops=False,
+        sparse=True,
+    )
+
+
+def _orient_like_v331(undirected: nx.Graph) -> tuple[nx.DiGraph, dict]:
+    degrees = dict(undirected.degree())
+    directed = nx.DiGraph()
+    directed.add_nodes_from(undirected.nodes())
+    ties = 0
+    for u, v in undirected.edges():
+        if degrees[u] == degrees[v]:
+            ties += 1
+        if degrees[u] >= degrees[v]:
+            directed.add_edge(u, v)
+        else:
+            directed.add_edge(v, u)
+    edge_count = int(undirected.number_of_edges())
+    return directed, {
+        "undirected_edge_count": edge_count,
+        "equal_degree_tie_edges": int(ties),
+        "equal_degree_tie_edge_share": float(ties / edge_count) if edge_count else 0.0,
+        "direction_rule": "higher-undirected-degree-to-lower; legacy deterministic tie branch",
+    }
+
+
+def build_directed_network_variant(
+    agent_ids: list[str],
+    spec: NetworkVariantV331Spec,
+) -> tuple[nx.DiGraph, dict]:
+    """Build one N=20 directed topology and return audit metadata."""
+
+    ids = [str(x) for x in agent_ids]
+    n = len(ids)
+    spec.validate(n)
+    undirected = _undirected_graph(n, spec)
+    mapping = {i: ids[i] for i in range(n)}
+    undirected = nx.relabel_nodes(undirected, mapping)
+    directed, orientation = _orient_like_v331(undirected)
+
+    audit = {
+        **spec.audit_payload(),
+        **orientation,
+        "n": n,
+        "network_type": {
+            "ba": "barabasi_albert_v331_variant",
+            "ws": "watts_strogatz_v331_variant",
+            "community": "stochastic_block_v331_variant",
+        }[spec.topology],
+        "undirected_connected": bool(nx.is_connected(undirected)) if n else True,
+        "undirected_density": float(nx.density(undirected)) if n > 1 else 0.0,
+        "undirected_average_clustering": float(nx.average_clustering(undirected)) if n else 0.0,
+    }
+    if n and nx.is_connected(undirected):
+        audit["undirected_average_shortest_path_length"] = float(
+            nx.average_shortest_path_length(undirected)
+        )
+    else:
+        audit["undirected_average_shortest_path_length"] = None
+    return directed, audit

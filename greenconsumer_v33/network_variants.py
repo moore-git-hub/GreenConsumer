@@ -1,10 +1,9 @@
-"""Pure network-topology builders for TASK_005 v3.3.1 robustness checks.
+"""Pure network builders for TASK_005 v3.3.1 robustness checks.
 
-The production baseline remains the existing directed BA graph.  This module is
-used only by explicitly labelled topology-sensitivity suites.  It changes the
-undirected substrate while preserving the current v3.3.1 direction rule:
-higher undirected degree -> lower undirected degree; equal-degree edges take the
-same deterministic first-endpoint branch as SocialNetworkPlugin.
+The production baseline remains the existing directed BA graph. This module is
+used only by explicitly labelled sensitivity suites. Fixed-N topology checks use
+N=20 for BA/WS/community; network-size checks may use BA at N=20/40/80 while
+preserving m=2 and the current v3.3.1 direction rule.
 """
 from __future__ import annotations
 
@@ -14,6 +13,7 @@ import networkx as nx
 
 
 TOPOLOGIES = ("ba", "ws", "community")
+SIZE_ROBUSTNESS_N = (20, 40, 80)
 BASELINE_NETWORK_HASH = "886be697894ff8f79c4e72be4b778978f9c40390ee5a15dcb1e09b73040281ac"
 
 
@@ -30,20 +30,30 @@ class NetworkVariantV331Spec:
     community_p_out: float = 0.08
 
     def validate(self, n: int) -> None:
+        n = int(n)
         if self.topology not in TOPOLOGIES:
             raise ValueError(f"unknown topology: {self.topology}")
-        if int(n) != 20:
-            raise ValueError("v3.3.1 topology robustness currently requires N=20")
         if self.topology == "ba":
-            if not 1 <= int(self.ba_m) < int(n):
+            if n not in SIZE_ROBUSTNESS_N:
+                raise ValueError(
+                    f"v3.3.1 BA robustness supports N in {SIZE_ROBUSTNESS_N}; got {n}"
+                )
+            if not 1 <= int(self.ba_m) < n:
                 raise ValueError("ba_m must satisfy 1 <= m < n")
+            return
+
+        # WS/community are currently fixed-N topology robustness only. Keeping
+        # this guard prevents accidental topology×size expansion before it is
+        # separately pre-registered.
+        if n != 20:
+            raise ValueError("v3.3.1 WS/community topology robustness currently requires N=20")
         if self.topology == "ws":
-            if int(self.ws_k) <= 0 or int(self.ws_k) >= int(n) or int(self.ws_k) % 2:
+            if int(self.ws_k) <= 0 or int(self.ws_k) >= n or int(self.ws_k) % 2:
                 raise ValueError("ws_k must be positive, even, and < n")
             if not 0.0 <= float(self.ws_beta) <= 1.0:
                 raise ValueError("ws_beta must be in [0,1]")
         if self.topology == "community":
-            if int(self.community_blocks) * int(self.community_block_size) != int(n):
+            if int(self.community_blocks) * int(self.community_block_size) != n:
                 raise ValueError("community blocks × block size must equal n")
             for value in (self.community_p_in, self.community_p_out):
                 if not 0.0 <= float(value) <= 1.0:
@@ -63,7 +73,7 @@ class NetworkVariantV331Spec:
             "community_p_in": float(self.community_p_in),
             "community_p_out": float(self.community_p_out),
             "empirically_calibrated": False,
-            "role": "pre-specified network-topology robustness",
+            "role": "pre-specified network robustness",
         }
 
 
@@ -122,7 +132,7 @@ def build_directed_network_variant(
     agent_ids: list[str],
     spec: NetworkVariantV331Spec,
 ) -> tuple[nx.DiGraph, dict]:
-    """Build one N=20 directed topology and return audit metadata."""
+    """Build one directed robustness topology and return audit metadata."""
 
     ids = [str(x) for x in agent_ids]
     n = len(ids)

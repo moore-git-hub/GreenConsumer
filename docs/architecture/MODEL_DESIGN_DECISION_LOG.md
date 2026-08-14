@@ -147,7 +147,7 @@ Topology suite显示WS具有30%–80%的equal-degree tie-edge share。为排除W
 
 ## DR-20260813-11：Micro-buyer numerical-resolution robustness
 
-**状态：pre-specified; demand-only implementation added; execution pending**
+**状态：executed; engineering PASS**
 
 ### 触发原因
 
@@ -173,19 +173,98 @@ M = 10 / 25 / 50 micro-buyers per cognitive Agent
 - P1/P2/P3/P4在M10/25/50内必须不变；
 - 每个Persona生成准确且唯一的M个buyer IDs。
 
+### 执行结果
+
+`micro_20260813_190453`完成15个demand-resolution profiles（5个冻结N20/K3 BA cognitive histories × M10/M25/M50），suite status=PASS。P5与S1在全部5个network histories中均未出现resolution-induced sign reversal；suite PASS同时要求M25逐network seed精确复现source P5/S1、P1–P4跨M严格不变、buyer count/ID integrity及source provenance检查通过。
+
+该结果只支持numerical-resolution robustness与layer-separation，不支持将25 micro-buyers解释为现实消费者样本量或经验校准值。Baseline继续冻结为M=25，不依据结果选择M。
+
 ### 解释边界
 
 该阶段是numerical-resolution robustness，不是power analysis。微观买家不得作为正式推断独立单位；未来正式GABM推断单位仍是replication block。无论结果如何，不允许选择产生更有利P5的M。
 
-详见：`V331_MICROBUYER_RESOLUTION_ROBUSTNESS_PLAN.md`。
+详见：`V331_MICROBUYER_RESOLUTION_ROBUSTNESS_PLAN.md`、`V331_MICROBUYER_RESOLUTION_ROBUSTNESS_RESULT_20260813.md`。
+
+---
+
+## DR-20260813-12：Real-LLM prompt-layout 与 practical stochasticity robustness
+
+**状态：pre-specified; zero-API validation PASS; execution pending**
+
+### 触发原因
+
+Fake-LLM structural robustness链已经覆盖有限时间范围、Trust参数、clarification reach/lag、network topology、equal-degree orientation、network size/paid-seed allocation以及micro-buyer numerical resolution。下一阶段只检验LLM semantic appraisal layer对prompt版式和实际provider/runtime non-determinism的敏感性。
+
+### 冻结设计
+
+保持以下内容不变：
+
+- `qwen-plus`；
+- temperature = `0.3`；
+- requested LLM seed = `2026081601`；
+- simulation seed = `2026081501`；
+- demand seed = `2026081701`；
+- T35；
+- N=20 cognitive Agents；
+- M=25 micro-buyers/Agent；
+- frozen BA baseline、K=3；
+- clarification p=.55、lag=1；
+- frozen v3.3 Trust parameters；
+- 2×2×2 treatments + common control；
+- control-first common-history replay。
+
+Prompt profiles预先固定为：
+
+1. `baseline_exact`；
+2. `compact_separator`；
+3. `schema_first`。
+
+Practical stochasticity重复为：
+
+- `baseline_r1`；
+- `baseline_r2`；
+- `baseline_r3`。
+
+完整suite共5个unique Real-LLM blocks：
+
+- `baseline_r1`；
+- `compact_r1`；
+- `schema_first_r1`；
+- `baseline_r2`；
+- `baseline_r3`。
+
+### 执行前验证
+
+Zero-API tests：25/25 PASS。
+
+`run_v33_llm_robustness.py --plan-only`：
+
+- status = PLAN_ONLY；
+- profiles_count = 5；
+- baseline_repeats = 3；
+- real_llm_calls_started = false。
+
+Real-LLM preflight：
+
+- Python 3.12.13；
+- dependency check PASS；
+- model config verified；
+- builder bootstrap verified；
+- DashScope API key present；
+- external API calls = 0；
+- real LLM calls = 0。
+
+### 解释边界
+
+该阶段仅属于selected Real-LLM engineering robustness，不进行p-values、confidence intervals或population inference。不得根据结果选择更有利的prompt、修改temperature、替换seed或重新调主体机制。Prompt sign reversal或semantic manipulation collapse必须作为boundary condition报告。
+
+详见：`V331_REAL_LLM_PROMPT_AND_STOCHASTICITY_ROBUSTNESS_PLAN.md`。
 
 ---
 
 ## 后续预登记队列
 
-- micro-buyer resolution结果记录；
+- Real-LLM prompt-layout / practical stochasticity结果记录；
 - 必要时 matched-metric topology experiment；
-- prompt sensitivity / LLM stochasticity；
-- Real-LLM selected robustness blocks；
 - v3.3.1 pilot variance estimation与正式replication-block数量；
 - confirmatory estimands / MDE / multiplicity的新formal freeze。

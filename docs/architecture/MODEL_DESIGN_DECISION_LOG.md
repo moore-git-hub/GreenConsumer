@@ -189,7 +189,7 @@ M = 10 / 25 / 50 micro-buyers per cognitive Agent
 
 ## DR-20260813-12：Real-LLM prompt-layout 与 practical stochasticity robustness
 
-**状态：pre-specified; zero-API validation PASS; execution pending**
+**状态：executed; engineering PASS**
 
 ### 触发原因
 
@@ -254,17 +254,24 @@ Real-LLM preflight：
 - external API calls = 0；
 - real LLM calls = 0。
 
+### 执行结果
+
+`llmrob_20260814_230111`完成全部5个预登记Real-LLM blocks，suite status=PASS，process exit code=0。总provider calls为743；`invariant_failures=0`；`prompt_sign_unstable_estimands=0`；`baseline_repeat_sign_unstable_estimands=0`。未计算p-values或confidence intervals，也未进行formal inference；`prompt_selection_permitted=false`。
+
+该结果支持有限的方向稳健性表述：在固定模型、temperature、请求seed、simulation/demand seeds、T35及主体机制的条件下，两种预登记prompt版式/顺序扰动与三次完全相同baseline prompt重复均未导致已报告estimand方向翻转。不得据此断言任意prompt都无影响，也不得把三次重复解释为统计稳定性证明。
+
 ### 解释边界
 
 该阶段仅属于selected Real-LLM engineering robustness，不进行p-values、confidence intervals或population inference。不得根据结果选择更有利的prompt、修改temperature、替换seed或重新调主体机制。Prompt sign reversal或semantic manipulation collapse必须作为boundary condition报告。
 
-详见：`V331_REAL_LLM_PROMPT_AND_STOCHASTICITY_ROBUSTNESS_PLAN.md`。
+Baseline继续冻结为`baseline_exact`；不依据本次结果修改prompt profile、temperature、seed、Trust、network或demand参数。
+
+详见：`V331_REAL_LLM_PROMPT_AND_STOCHASTICITY_ROBUSTNESS_PLAN.md`、`V331_REAL_LLM_PROMPT_AND_STOCHASTICITY_ROBUSTNESS_RESULT_20260814.md`。
 
 ---
 
 ## 后续预登记队列
 
-- Real-LLM prompt-layout / practical stochasticity结果记录；
 - 必要时 matched-metric topology experiment；
 - v3.3.1 pilot variance estimation与正式replication-block数量；
 - confirmatory estimands / MDE / multiplicity的新formal freeze。

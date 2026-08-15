@@ -56,7 +56,7 @@ Rational-evidence / Emotional-empathy
 | 19 | 固定拓扑网络状态/传播动画 | 已完成 | `greenconsumer_v33/network_animation.py` | 论文中不得称拓扑演化 |
 | 20 | Agent cognition evolution论文输出 | 已完成 | 预选Real-LLM run的schema 1.2真实产物已完成provenance、9项输出hash、完整面板、matched-Control算术与视觉审计；用户确认clean commit上的认知直接测试和Windows全量测试均通过 | 仅作为单次工程run的有限描述性证据；不把Agents当重复块、不推断隐性CoT、不作策略排名或总体推断 |
 | 21 | 语义→心理→网络→行为机制总图 | 已完成 | `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg/.png`；与model-to-code traceability逐层对齐 | 论文排版时只调整编号和尺寸，不改变机制 |
-| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、基础包、来源台账、ODD＋D附录、第五章正式结果模板、题目—RQ—贡献审计、跨章一致性审计、N=10诊断协议、阈值工作表及引用审计已建立 | 按统一口径逐段审校第一、二章 |
+| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、基础包、来源台账、ODD＋D附录、第五章正式结果模板、题目—RQ—贡献审计、跨章一致性审计、第一二章编辑审计、N=10诊断协议、阈值工作表及引用审计已建立 | 审校第三、四章的理论—方法—estimand接口 |
 | 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、tests | 用户冻结预算并另行授权后才可执行Pilot |
 | 24 | 实验结果证据台账与版本分层 | 已完成 | `EXPERIMENT_EVIDENCE_REGISTER.md`；结果记录commits；v3.2 archive | 正式写作时按已建立的table/figure registry持续登记 |
 | 25 | 论文工作—证据—表图追踪体系 | 已完成 | `MODEL_TO_CODE_TRACEABILITY_V331.md`、`THESIS_WORK_AND_OUTPUT_REGISTER.md` | 任何新run或正文表图进入论文时同步更新 |
@@ -115,8 +115,8 @@ Rational-evidence / Emotional-empathy
 当前下一门槛改为：
 
 ```text
-THESIS-CH1-CH2-REVISION：按已建立的跨章统一口径，压缩重复背景，
-强化研究缺口、GABM必要性和理论—机制递进。
+THESIS-CH3-CH4-INTERFACE-AUDIT：检查第三章模型规则是否逐项回应第二章
+理论接口，并检查第四章每个estimand是否与RQ及可识别结论严格一致。
 ```
 
 零API基础设施已完成，Windows clean HEAD `b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`的129项测试已由用户回传全部通过。此前命令因缺少provider-call ceiling在参数解析阶段停止，没有启动新的suite或形成有效Pilot block。用户已确认Pilot和正式独立replication blocks不取消，只在论文基础章节写作期间暂缓。`N_max=10`仍只是预结果预算上限，不是已证明的正式N；后续必须先完成Pilot可行性门禁，再恢复正式执行。

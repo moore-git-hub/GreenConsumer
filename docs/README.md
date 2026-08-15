@@ -12,6 +12,7 @@
 - `thesis/CHAPTER_1_INTRODUCTION_DRAFT_V331.md` — 第一章绪论正文底稿，含研究背景、问题、方法、技术路线及创新边界
 - `thesis/TITLE_RQ_CONTRIBUTION_AUDIT_V331.md` — 题目、研究问题、现有证据与贡献声明的一致性门禁
 - `thesis/CROSS_CHAPTER_CONSISTENCY_AUDIT_V331.md` — 第一至第四章术语、RQ、时间点、estimand与证据身份的统一口径
+- `thesis/CHAPTER_1_2_EDITORIAL_AUDIT_V331.md` — 第一、二章结构性精修、已修复问题与剩余审稿风险
 - `thesis/CHAPTER_2_LITERATURE_AND_THEORY_DRAFT_V331.md` — 第二章文献综述与理论基础正文底稿，含作者—年份—题名引用
 - `thesis/CHAPTER_3_MODEL_AND_METHOD_DRAFT_V331.md` — 第三章GABM模型构建正文底稿，区分文献依据、研究设计与工程假设
 - `thesis/CHAPTER_4_EXPERIMENT_AND_VALIDATION_DRAFT_V331.md` — 第四章实验设计与模型验证正文底稿，区分工程证据、Pilot计划和正式推断

@@ -124,7 +124,7 @@ Agent在观察信息后依据发帖意向和冻结随机种子决定是否发布
 
 模型按ODD思路记录目的、实体、状态、过程、调度、初始化、输入和子模型（Grimm等，2020，《The ODD protocol for describing agent-based and other simulation models: A second update to improve clarity, replication, and structural realism》）。代码层建立模型—实现—输出追踪表，运行层记录Git HEAD、工作树状态、参数快照、模型与prompt、种子、schema及文件哈希。
 
-验证分为四层。第一层为实现验证，检查单元测试、边界、schema、共同历史和处理污染；第二层为工程验证，检查时间范围、信任参数、澄清概率与滞后、网络拓扑/方向/规模及micro-buyer分辨率；第三层为单次Real-LLM描述性机制证据，只用于展示固定run中的轨迹与Agent异质性；第四层才是以独立replication blocks为单位的正式推断。当前前三层已有不同程度证据，第四层尚不存在。
+证据分为五层。第一层为实现验证，检查单元测试、边界、schema、共同历史和处理污染；第二层为工程稳健性，检查时间范围、信任参数、澄清概率与滞后、网络拓扑/方向/规模及微型购买者分辨率；第三层为单次Real-LLM描述，只用于展示固定run中的轨迹与Agent异质性；第四层为Pilot方差规划；第五层才是以独立replication blocks为单位的正式推断。当前前三层已有不同程度证据，Pilot与正式推断均尚未形成结果。
 
 用户已在查看Pilot结果前冻结正式replication-block上限N_max=10。该值不是Pilot规模，也不是已证明的正式N。P001—P006仍只用于估计规划方差；若Pilot后的预设operating-characteristic规则在N=10时不能同时满足P1、P2、P5的检出概率门槛，研究设计必须记录为预算上限内不可行，而不能事后放宽标准。Pilot及正式实验均未在本章写作过程中执行。
 

@@ -210,12 +210,14 @@ Pilot预设P001–P006六个cognitive blocks并对每个历史离线交叉三个
 1. 第二章正文底稿及逐节作者—年份—题名引用：`CHAPTER_2_LITERATURE_AND_THEORY_DRAFT_V331.md`；
 2. 第三章模型构建正文底稿：`CHAPTER_3_MODEL_AND_METHOD_DRAFT_V331.md`；
 3. 引用—主张—外推边界审计：`CITATION_CLAIM_AUDIT_V331.md`；
-4. 四项中文核心文献和四项包外补充文献的条目核验。
+4. 第四章实验设计与模型验证的无正式结果正文底稿：`CHAPTER_4_EXPERIMENT_AND_VALIDATION_DRAFT_V331.md`；
+5. v3.3.1 ODD＋D复现附录：`APPENDIX_ODD_D_MODEL_DESCRIPTION_V331.md`；
+6. 四项中文核心文献和七项包外补充文献的条目核验。
 
 下一队列：
 
-1. 在不使用Pilot结果的前提下完成第四章“实验设计与模型验证”前半部分，并将预登记计划与既有工程证据分节；
-2. 按ODD结构从第三章抽取可复现模型附录，避免正文堆积代码细节；
+1. 建立第五章正式结果的空表、空图和逐项报告模板，但不预写效应方向、p值或显著性结论；
+2. 为第四章补建“设计阈值依据”和“N=10小样本诊断规则”两个执行前接口；
 3. 待provider-call ceiling、时间预算、clean execution SHA和明确授权冻结后，执行P001–P006；
 4. Pilot后只按预先规定的OC规则判断N=10是否可行，随后才发布协议1.1和正式seed ledger；
-5. 正式实验完成前，第五章只保留表图位置、报告规范和工程验证部分，不预写效应方向或显著性结论。
+5. 正式实验完成后再完成第五章结果与第六章结论，禁止用工程结果填补正式结果位置。

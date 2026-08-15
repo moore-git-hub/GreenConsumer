@@ -426,6 +426,18 @@ provider-call ceiling、时间预算、clean execution SHA和真实Pilot授权�
 
 ---
 
+## DR-20260815-23：第四章无正式结果底稿、ODD＋D附录与执行前方法风险
+
+**状态：design/validation prose available; ODD＋D available; Pilot not executed**
+
+新增第四章“实验设计与模型验证”无正式结果底稿和v3.3.1 ODD＋D复现附录。第四章将处理矩阵、estimand、replication block、Pilot方差分解、planning SD、Holm family、validity gate与已完成工程稳健性逐项对齐，并明确工程PASS、方向稳定和正式推断是不同证据身份。附录按Overview、Design concepts、Details及决策补充说明实体、状态、调度、感知、互动、随机性、学习边界、网络与需求子模型。
+
+本轮写作暴露两项尚未解决的执行前风险。其一，`N_max=10`使正式候选N唯一为10，即使operating-characteristic门槛通过，block-level one-sample t-test仍可能对异常block和分布偏离敏感；诊断与预设敏感性规则尚未冻结。其二，P1/P2/P5的0.15/0.15/0.05只能称为预设设计阈值，尚缺企业决策或现实效应量依据，不得称为“管理上重要差异”。这两项必须在正式执行前处理，不能在看到Pilot或正式结果后补写。
+
+新增Holm（1979）、Morris（1991）和Müller等（2013）三项方法引用，并登记其可支持与不可支持范围。该工作没有修改机制、参数、处理、estimand、prompt、seed或正式协议；新增GABM run=0、provider call=0、Pilot observation=0、formal inference=0。
+
+---
+
 ## 后续预登记队列
 
 - `N_max=10`已冻结；用户仍需冻结provider-call ceiling、时间预算与clean execution SHA，再明确授权执行P001–P006；

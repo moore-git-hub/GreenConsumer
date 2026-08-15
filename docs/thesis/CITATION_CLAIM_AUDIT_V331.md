@@ -30,6 +30,9 @@
 | C20 | GABM需要传统ABM与生成式Agent特有验证 | Adornetto等，2025，《Generative agents in agent-based modeling: Overview, validation, and emerging challenges》 | 多层验证框架 | selected robustness等同外部效度 | 用户文献包原PDF |
 | C21 | ODD提高模型描述透明度与复现性 | Grimm等，2020，《The ODD protocol for describing agent-based and other simulation models: A second update to improve clarity, replication, and structural realism》 | 实体、过程、调度和初始化报告 | 完成ODD即证明模型有效 | 用户文献包原PDF |
 | C22 | ABM参数校准需要经验目标与方法选择 | Platt，2020，《A comparison of economic agent-based model calibration methods》；Grazzini、Richiardi、Tsionas，2017，《Bayesian estimation of agent-based models》 | 校准与不确定性的重要性 | 当前参数已经验估计 | 用户文献包原PDF |
+| C23 | 三项确认性检验使用step-down控制FWER | Holm，1979，《A Simple Sequentially Rejective Multiple Test Procedure》 | 多重检验规则及strong FWER control | N=10的power、正态性或异常值稳健性 | 原文书目信息/JSTOR，包外引用 |
+| C24 | Morris elementary-effects可用于多参数全局筛查 | Morris，1991，《Factorial Sampling Plans for Preliminary Computational Experiments》 | 随机化OAT trajectories、mu/mu-star/sigma筛查 | 唯一分解非线性与具体交互；现实参数贡献 | Taylor & Francis/JSTOR官方页面，包外引用 |
+| C25 | ODD＋D补充人类Agent决策模型说明 | Müller等，2013，《Describing human decisions in agent-based models: ODD + D, an extension of the ODD protocol》 | 决策者、目标、信息、适应、社会影响和理论/经验基础的透明报告 | 完成报告即证明行为有效或外部有效 | Elsevier官方页面，包外引用 |
 
 ## 3. 工程设定审计
 
@@ -57,5 +60,7 @@
 3. 现实平台中企业绿色澄清的网络投放、直接触达和UGC再传播数据；
 4. 当前20个Persona属性分布的现实消费者分层依据；
 5. Trust、Attitude、Subjective norm、PBC和重复选择之间的纵向校准数据。
+
+第四章和ODD＋D附录还形成两项执行前方法缺口：第一，N=10下block-level t检验的异常值与分布诊断规则仍须在正式执行前冻结；第二，三个预设设计阈值尚缺少企业决策或现实效应量依据，当前不得称为“管理上重要差异”。
 
 在这些材料补齐前，正文维持“模型内机制证据”表述，不使用“真实消费者”“现实最优”“市场预测”或“外部验证完成”等结论。

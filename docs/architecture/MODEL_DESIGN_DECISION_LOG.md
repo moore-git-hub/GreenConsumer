@@ -374,7 +374,7 @@ Windows `Kernel`环境首次全量复验得到123项通过、1项失败。唯一
 
 ## DR-20260815-20：Agent异质性与Control调整的认知恢复展示
 
-**状态：post-result descriptive redesign implemented; synthetic and retained-data visual QA passed; final clean rerender pending**
+**状态：limited descriptive evidence admitted; clean real rerender, independent artifact audit and Windows regression gate passed**
 
 ### 触发原因与审计结果
 
@@ -388,7 +388,15 @@ Schema升级为`task005_fmcg_v331_cognition_outputs1.2`。新增`06_control_adju
 
 本决策是在查看schema 1.1真实分布后作出的post-result descriptive visualization adjustment，不是预登记confirmatory estimand，不允许用于p-value、置信区间、稳定策略排名或population inference。Agents仍不是独立replication blocks。所有原始transition定义、表5均值、模型参数、状态、随机种子和源run保持不变。
 
-本次新增GABM run=0、provider call=0、Pilot observation=0、formal inference=0。最终准入仍需clean schema-1.2真实重生成、manifest/hash复核和Windows全量测试。
+### 最终准入记录
+
+用户在clean postprocessor commit `ce736f442c74bef404940f6dcaf8009c4015a1da`上对同一预选run完成schema 1.2真实重生成。manifest记录9项输出；新图2与表6的上传文件SHA-256分别为`fd8ddcd35208eb32ba4fd4ce05805ad2ab3c48cc0d251de5848f49a1d9f57cf6`和`225be16469ccb329d8a9cfd7a9796f721c8dfb1c1d763d35ad80a024fd233676`，其余7项输出hash与已独立审计的schema 1.1文件保持一致。manifest明确`formal_inference_performed=false`、`external_validity_claimed=false`和`text_coding_performed=false`。
+
+表6含1120行（8 treatments×20 Agents×7 states），无缺失键、重复键或Agent集合漂移；每个Agent-state的Control change在8个处理条件中完全相同，`condition_delta - control_delta - control_adjusted_delta`及其对源Agent ledger的最大重构误差均为`1.665e-16`。图2视觉审查确认四个panel保留变量各自单位，完整显示20个Agent、零线、IQR、median、mean与正/零/负计数，且页脚明确Agents不是replication blocks。全部9项输出的manifest hash链据此闭合。
+
+用户随后确认既定的认知直接测试和Windows `Kernel`全量测试在该clean代码commit上均通过；本轮没有回传测试数量或用时，因此本记录不补写未观察值。最终准入结论为`DESCRIPTIVE_EVIDENCE = ADMISSIBLE_WITH_LIMITATIONS`：仅允许描述这一固定单次Real-LLM工程run中的轨迹、可用率和Agent异质性；`FORMAL_INFERENCE = NOT_AUTHORIZED`，不得报告p-value、置信区间、稳定策略排名或总体外推。
+
+本阶段新增GABM run=0、provider call=0、Pilot observation=0、formal inference=0。
 
 ---
 

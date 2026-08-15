@@ -6,7 +6,7 @@
 
 当前分支：`refactor/task005-v32-clean-codebase`
 
-审查基准 HEAD：`7d7a4e595969d6912995c7b7d068144b28d92771`
+审查基准 HEAD：`ce736f442c74bef404940f6dcaf8009c4015a1da`
 
 状态定义：
 
@@ -53,7 +53,7 @@ Rational-evidence / Emotional-empathy
 | 17 | v3.3.1正式runner与分析包 | 未开始 | 当前runner仅engineering/demo | 添加测试、合同和SHA冻结 |
 | 18 | v3.3.1正式实验 | 未开始 | `FORMAL_NOT_AUTHORIZED` | 协议1.1和明确授权 |
 | 19 | 固定拓扑网络状态/传播动画 | 已完成 | `greenconsumer_v33/network_animation.py` | 论文中不得称拓扑演化 |
-| 20 | Agent cognition evolution论文输出 | 部分完成 | schema 1.1真实产物的provenance、hash、完整面板和数值聚合已PASS；Agent ledger为720/720行且与summary精确一致；schema 1.2新增matched Agent treatment-minus-Control表并将图2升级为完整Agent分布 | 在clean新commit上完成schema 1.2最终重生成与Windows全量测试；不把Agents当重复块、不推断隐性CoT |
+| 20 | Agent cognition evolution论文输出 | 已完成 | 预选Real-LLM run的schema 1.2真实产物已完成provenance、9项输出hash、完整面板、matched-Control算术与视觉审计；用户确认clean commit上的认知直接测试和Windows全量测试均通过 | 仅作为单次工程run的有限描述性证据；不把Agents当重复块、不推断隐性CoT、不作策略排名或总体推断 |
 | 21 | 语义→心理→网络→行为机制总图 | 未开始 | 只有机制诊断图 | 制作与代码traceability一致的论文图 |
 | 22 | 论文正文与文献证据映射 | 部分完成 | 第二轮机制统一版、既有文献主题 | 消除旧版本漂移并挂接原始文献 |
 | 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、tests | 用户冻结预算并另行授权后才可执行Pilot |
@@ -63,10 +63,10 @@ Rational-evidence / Emotional-empathy
 当前计数：
 
 ```text
-已完成：18
-部分完成：2
+已完成：19
+部分完成：1
 未开始：5
-阻塞：0（远端commit `ab74a2e2cdba3029ae2f623fa0fb8f49128f6df1`已在Windows Kernel环境完成全量复验：125项全部通过，用时5.04秒）
+阻塞：0（schema 1.2代码commit `ce736f442c74bef404940f6dcaf8009c4015a1da`的两项指定Windows `Kernel`测试由用户确认均通过；本轮未回传测试数量和用时，故不补写未观察值）
 ```
 
 ## 4. 论文稿与当前代码的版本漂移
@@ -117,4 +117,4 @@ provider-call ceiling和clean execution SHA，并决定是否授权P001-P006。
 
 零API基础设施已完成。下一门槛不是继续增加设计因素，而是由用户在真实执行前批准并冻结`N_max`、provider-call ceiling和clean execution SHA；未获得明确真实LLM执行授权前，不运行 P001–P006。
 
-在不触发真实LLM的论文输出工作中，下一步是在clean新commit上对已预选的同一v3.3.1 run生成schema 1.2 cognition outputs并完成Windows全量测试。schema 1.1的真实provenance、hash与数值审计已经PASS，但Agent ledger显示均值图掩盖大量零效应和方向异质性；因此schema 1.2将图2固定为same-Agent treatment-minus-Control分布图。该调整属于查看结果后的描述性可视化改进，不升级证据层级，也不形成正式策略排名。
+不触发真实LLM的认知输出工作包已经关闭：预选的同一v3.3.1 run已生成schema 1.2产物，manifest中的9项输出均完成独立hash复核；`06_control_adjusted_agent_recovery.csv`的1120行完整，matched-Control算术与源Agent ledger在浮点容差内一致；三张图完成视觉审查；用户确认clean代码commit上的认知直接测试和Windows全量测试均通过。该产物仅升级为单次Real-LLM工程run的有限描述性证据，不升级为Pilot或正式推断，不形成稳定策略排名。

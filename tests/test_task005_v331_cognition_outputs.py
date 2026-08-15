@@ -90,6 +90,14 @@ def test_build_cognition_outputs_writes_manifest_and_declares_no_inference(tmp_p
     manifest = json.loads((run_dir / "thesis_outputs/cognition/cognition_output_manifest.json").read_text(encoding="utf-8"))
     assert manifest["formal_inference_performed"] is False
     assert manifest["text_coding_performed"] is False
+    assert set(manifest["source_run_git_provenance"]) == set()
+    assert manifest["postprocessor_git_provenance"]["git_head"]
+    assert manifest["postprocessor_git_provenance"]["git_branch"] == "refactor/task005-v32-clean-codebase"
+    assert [row["path"] for row in manifest["analysis_code_hashes"]] == [
+        "greenconsumer_v33/cognition_outputs.py",
+        "run_v33_cognition.py",
+    ]
+    assert all(len(row["sha256"]) == 64 for row in manifest["analysis_code_hashes"])
     assert len(manifest["generated_outputs"]) == 8
 
 

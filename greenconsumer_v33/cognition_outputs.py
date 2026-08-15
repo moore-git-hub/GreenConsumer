@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 
 import matplotlib
 
@@ -20,6 +21,7 @@ import pandas as pd
 
 
 SCHEMA_VERSION = "task005_fmcg_v331_cognition_outputs1.0"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONTROL = "NoClarification-Control"
 STATE_FIELDS = (
     "trust_final",
@@ -49,6 +51,29 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _git_provenance(project_root: Path = PROJECT_ROOT) -> dict:
+    """Return the post-processor Git identity without mutating the repository."""
+
+    def run_git(*args: str) -> str:
+        proc = subprocess.run(
+            ["git", *args],
+            cwd=str(project_root),
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        return proc.stdout.strip() if proc.returncode == 0 else ""
+
+    status = run_git("status", "--porcelain", "--untracked-files=normal")
+    return {
+        "git_head": run_git("rev-parse", "HEAD"),
+        "git_branch": run_git("branch", "--show-current"),
+        "git_dirty": bool(status),
+        "git_status_short": status,
+    }
 
 
 def _as_bool(series: pd.Series) -> pd.Series:
@@ -342,6 +367,10 @@ def build_cognition_outputs(run_dir: Path) -> dict:
     generated.extend(_figures(tick, transition, out_dir))
 
     sources = [run_dir / "run_summary.json", run_dir / "agent_thoughts.csv", run_dir / "cognitive_records.csv"]
+    analysis_files = [
+        Path(__file__).resolve(),
+        PROJECT_ROOT / "run_v33_cognition.py",
+    ]
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "run_id": summary.get("run_id", ""),
@@ -352,6 +381,16 @@ def build_cognition_outputs(run_dir: Path) -> dict:
         "formal_inference_performed": False,
         "external_validity_claimed": False,
         "text_coding_performed": False,
+        "source_run_git_provenance": summary.get("git_provenance", {}),
+        "postprocessor_git_provenance": _git_provenance(),
+        "analysis_code_hashes": [
+            {
+                "path": str(path.relative_to(PROJECT_ROOT)).replace("\\", "/"),
+                "sha256": _sha256(path),
+                "bytes": path.stat().st_size,
+            }
+            for path in analysis_files
+        ],
         "source_evidence_hashes": [
             {"path": path.name, "sha256": _sha256(path), "bytes": path.stat().st_size}
             for path in sources

@@ -53,7 +53,7 @@ Rational-evidence / Emotional-empathy
 | 17 | v3.3.1正式runner与分析包 | 未开始 | 当前runner仅engineering/demo | 添加测试、合同和SHA冻结 |
 | 18 | v3.3.1正式实验 | 未开始 | `FORMAL_NOT_AUTHORIZED` | 协议1.1和明确授权 |
 | 19 | 固定拓扑网络状态/传播动画 | 已完成 | `greenconsumer_v33/network_animation.py` | 论文中不得称拓扑演化 |
-| 20 | Agent cognition evolution论文输出 | 部分完成 | `cognition_outputs.py`、CLI、tests；显式appraisal与状态轨迹设计已实现 | 在一个保留的真实v3.3.1 run上生成、核对hash并完成视觉QA；不推断隐性CoT |
+| 20 | Agent cognition evolution论文输出 | 部分完成 | `cognition_outputs.py`、CLI、tests；显式appraisal与状态轨迹设计已实现；已预先选择clean Real-LLM `baseline_r1/v331_20260814_230111` | 用户本地生成、核对双重Git provenance与hash并完成视觉QA；不推断隐性CoT |
 | 21 | 语义→心理→网络→行为机制总图 | 未开始 | 只有机制诊断图 | 制作与代码traceability一致的论文图 |
 | 22 | 论文正文与文献证据映射 | 部分完成 | 第二轮机制统一版、既有文献主题 | 消除旧版本漂移并挂接原始文献 |
 | 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、tests | 用户冻结预算并另行授权后才可执行Pilot |

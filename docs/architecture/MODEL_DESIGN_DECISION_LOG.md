@@ -334,6 +334,18 @@ Windows `Kernel`环境首次全量复验得到123项通过、1项失败。唯一
 
 ---
 
+## DR-20260815-17：认知演化源run选择与后处理代码provenance
+
+**状态：source run pre-selected; provenance hardening implemented; rendering pending**
+
+本地结果发现共识别5个clean Real-LLM、T35、9条件的v3.3.1完整run，另有1个dirty单条件smoke run和1个dirty Fake-LLM run。论文认知演化输出在查看轨迹结果前固定使用`llmrob_20260814_230111/profiles/baseline_r1/v331_20260814_230111`：它是预登记`baseline_exact`的首次运行，源Git HEAD为`f52c97fcdf88efd0df2bec01e80bac2f63d9233b`且worktree clean。不得在`baseline_r1/r2/r3`、`compact_r1`和`schema_first_r1`之间根据生成图形选择更有利的run；后四者只保留为prompt/stochasticity工程稳健性证据。
+
+生成真实表图前发现原manifest只记录源文件与输出文件SHA，不能单独识别后处理代码版本。现新增源运行Git provenance、后处理Git provenance，以及`greenconsumer_v33/cognition_outputs.py`和`run_v33_cognition.py`的SHA-256与字节数。该补强不修改源run、心理状态、统计口径或图中数值。真实生成时后处理worktree必须clean，manifest中的postprocessor SHA必须与执行分支相符。
+
+本次仅完成候选筛选、provenance代码与合成测试：新增GABM run=0、provider call=0、Pilot observation=0、formal inference=0。真实表图仍须用户在本地ignored results目录运行并回传manifest和三张PNG进行视觉审查。
+
+---
+
 ## 后续预登记队列
 
 - 用户先冻结`N_max`、provider-call ceiling与clean execution SHA，再明确授权执行P001–P006；

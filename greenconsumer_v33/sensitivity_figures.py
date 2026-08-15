@@ -17,6 +17,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import matplotlib
+
+# This module only writes files; forcing a non-GUI backend avoids Tk/Tcl
+# dependencies in Windows Kernel and headless reproducibility environments.
+matplotlib.use("Agg", force=True)
 import matplotlib.pyplot as plt
 import pandas as pd
 

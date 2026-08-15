@@ -66,7 +66,7 @@ Rational-evidence / Emotional-empathy
 已完成：18
 部分完成：2
 未开始：5
-阻塞：0（当前容器已执行不依赖AgentKernel的测试85项并全部通过；9个测试文件因缺少`agentkernel_standalone`无法收集，仍须在Windows Kernel环境完成全量复验）
+阻塞：0（Windows Kernel首次全量复验为123项通过、1项Tk/Tcl绘图环境失败；无界面`Agg`后端修复已实现，等待Windows全量复验确认124项通过）
 ```
 
 ## 4. 论文稿与当前代码的版本漂移

@@ -9,6 +9,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import matplotlib
+
+matplotlib.use("Agg", force=True)
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 import networkx as nx

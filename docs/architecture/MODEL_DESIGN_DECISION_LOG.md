@@ -320,6 +320,20 @@ Pilot预设3个simulation/network seeds×2个requested LLM seeds，共6个完整
 
 ---
 
+## DR-20260815-16：论文绘图统一使用无界面Matplotlib后端
+
+**状态：implemented; Windows full-suite revalidation pending; no scientific-model change**
+
+Windows `Kernel`环境首次全量复验得到123项通过、1项失败。唯一失败发生在`test_stage_a_replot_is_postprocessing_only`创建Matplotlib画布时：自动选择的`TkAgg`依赖不完整的Tk/Tcl安装，尚未进入数据绘图、估计量计算或断言比较。因此该失败属于绘图运行环境兼容性，不构成模型机制、统计分析或既有结果失败。
+
+审计确认v3.3.1绘图模块均只将图形写入PNG/GIF，不提供交互式`plt.show()`界面。现统一在导入`pyplot`前显式设置`Agg`后端，并增加后端合同测试。该变更不修改输入CSV、指标、参数、随机种子、估计量或图中数值，只消除Tk/Tcl GUI依赖并提高Windows/headless环境下的可复现性。
+
+本地以`MPLBACKEND=TkAgg`进行反向兼容测试时，模块成功强制切换为`Agg`，Stage-A与Morris三项直接测试通过，Python编译与`git diff --check`通过。最终验收仍要求Windows `Kernel`环境重新执行全量`pytest -q`，预期为124项通过；在用户返回该结果前不得登记为全量PASS。
+
+本次修复新增模型运行=0、真实LLM调用=0、Pilot观测=0、正式推断=0。
+
+---
+
 ## 后续预登记队列
 
 - 用户先冻结`N_max`、provider-call ceiling与clean execution SHA，再明确授权执行P001–P006；

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import matplotlib
 import pandas as pd
 
 from greenconsumer_v33.sensitivity_figures import replot_sensitivity_suite
@@ -14,6 +15,10 @@ PRIMARY = [
     "P3_TIMING_PRE_DELAY_TRUST_V33",
     "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V33",
 ]
+
+
+def test_sensitivity_replot_forces_headless_backend():
+    assert matplotlib.get_backend().lower() == "agg"
 
 
 def test_stage_a_replot_is_postprocessing_only(tmp_path: Path):

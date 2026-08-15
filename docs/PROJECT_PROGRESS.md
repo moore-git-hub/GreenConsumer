@@ -53,7 +53,7 @@ Rational-evidence / Emotional-empathy
 | 17 | v3.3.1正式runner与分析包 | 未开始 | 当前runner仅engineering/demo | 添加测试、合同和SHA冻结 |
 | 18 | v3.3.1正式实验 | 未开始 | `FORMAL_NOT_AUTHORIZED` | 协议1.1和明确授权 |
 | 19 | 固定拓扑网络状态/传播动画 | 已完成 | `greenconsumer_v33/network_animation.py` | 论文中不得称拓扑演化 |
-| 20 | Agent cognition evolution论文输出 | 部分完成 | `cognition_outputs.py`、CLI、tests；显式appraisal与状态轨迹设计已实现；已预先选择clean Real-LLM `baseline_r1/v331_20260814_230111` | 用户本地生成、核对双重Git provenance与hash并完成视觉QA；不推断隐性CoT |
+| 20 | Agent cognition evolution论文输出 | 部分完成 | 预选clean Real-LLM `baseline_r1/v331_20260814_230111`已首次生成5表3图；首次视觉QA拒绝跨量纲恢复热图，量纲安全分面、因子编码轨迹和availability matrix已实现 | 在clean新commit上重生成，核对双重Git provenance、hash、新3图与数值表；不推断隐性CoT |
 | 21 | 语义→心理→网络→行为机制总图 | 未开始 | 只有机制诊断图 | 制作与代码traceability一致的论文图 |
 | 22 | 论文正文与文献证据映射 | 部分完成 | 第二轮机制统一版、既有文献主题 | 消除旧版本漂移并挂接原始文献 |
 | 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、tests | 用户冻结预算并另行授权后才可执行Pilot |
@@ -117,4 +117,4 @@ provider-call ceiling和clean execution SHA，并决定是否授权P001-P006。
 
 零API基础设施已完成。下一门槛不是继续增加设计因素，而是由用户在真实执行前批准并冻结`N_max`、provider-call ceiling和clean execution SHA；未获得明确真实LLM执行授权前，不运行 P001–P006。
 
-在不触发真实LLM的论文输出工作中，下一步是从已保留且版本匹配的v3.3.1 run目录生成 cognition outputs，核验manifest与图形可读性；在此完成前，项目只记录“生成器已实现”，不记录任何认知演化结果。
+在不触发真实LLM的论文输出工作中，下一步是在clean新commit上对已预选的同一v3.3.1 run重新生成 cognition outputs，核验manifest、三张重设计图和数值表。首次真实生成已PASS，但原恢复热图因跨量纲色标在视觉QA阶段被拒绝；在新图复核完成前，项目仍不登记任何认知演化经验结论。

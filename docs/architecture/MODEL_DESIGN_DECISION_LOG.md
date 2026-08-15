@@ -358,6 +358,20 @@ Windows `Kernel`环境首次全量复验得到123项通过、1项失败。唯一
 
 ---
 
+## DR-20260815-19：认知演化图形的量纲安全与因子编码
+
+**状态：redesign implemented and synthetic visual QA passed; final real rerender pending**
+
+修复schema后，预选的clean Real-LLM `baseline_r1/v331_20260814_230111`成功生成5表3图，manifest payload为PASS且明确`formal_inference_performed=false`。首次视觉审查在形成任何论文结论前发现三个表达问题：九条条件轨迹仅靠独立颜色区分；事件线没有清晰说明；最重要的是，恢复热图把0–10量纲的Trust和0–1量纲的Attitude、Subjective norm、Purchase intention放入同一原始数值色标，色彩强度不允许跨变量解释。
+
+现将条件编码固定为实验因子而非九种任意颜色：内容框架由颜色表示，传播渠道由实线/虚线表示，时机由圆/方标记表示，共同Control使用黑色；T5/T6/T10明确标记为Crisis/Immediate/Delayed。恢复热图被永久替换为四个保留变量原单位的水平条形分面，并在图下注明不得跨面板比较条长。显式appraisal折线图改为condition×Tick availability matrix，以减少大量重合线，并继续明确其测量的是记录可用率而非reasoning质量。
+
+本次重设计不修改源CSV、Agent状态、transition定义、均值、任何科学参数、随机种子或推断口径。旧文件`02_recovery_transition_heatmap.png`被标记为superseded，不得用于论文；新manifest只登记`02_recovery_transition_facets.png`。最终状态仍为`IMPLEMENTED_NOT_RENDERED`，直到用户在clean新commit上对同一个预选run重新生成并回传新manifest、三张新图和数值表完成审核。
+
+本次新增GABM run=0、provider call=0、Pilot observation=0、formal inference=0。
+
+---
+
 ## 后续预登记队列
 
 - 用户先冻结`N_max`、provider-call ceiling与clean execution SHA，再明确授权执行P001–P006；

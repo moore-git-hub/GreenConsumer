@@ -16,13 +16,25 @@ import matplotlib
 
 matplotlib.use("Agg", force=True)
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
 
 
-SCHEMA_VERSION = "task005_fmcg_v331_cognition_outputs1.0"
+SCHEMA_VERSION = "task005_fmcg_v331_cognition_outputs1.1"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONTROL = "NoClarification-Control"
+CONDITION_ORDER = (
+    CONTROL,
+    "Rational-Hub-Immediate",
+    "Rational-Hub-Delayed",
+    "Rational-Random-Immediate",
+    "Rational-Random-Delayed",
+    "Empathy-Hub-Immediate",
+    "Empathy-Hub-Delayed",
+    "Empathy-Random-Immediate",
+    "Empathy-Random-Delayed",
+)
 STATE_FIELDS = (
     "trust_final",
     "attitude_att",
@@ -289,12 +301,33 @@ def _transition_summary(agent_transitions: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _condition_order(values) -> list[str]:
+    observed = {str(value) for value in values}
+    ordered = [condition for condition in CONDITION_ORDER if condition in observed]
+    return ordered + sorted(observed.difference(ordered))
+
+
+def _condition_style(exp_id: str) -> dict:
+    if exp_id == CONTROL:
+        return {
+            "color": "#222222", "linestyle": "-", "marker": None,
+            "linewidth": 2.2, "alpha": 0.95,
+        }
+    return {
+        "color": "#0072B2" if exp_id.startswith("Rational-") else "#D55E00",
+        "linestyle": "-" if "-Hub-" in exp_id else "--",
+        "marker": "o" if exp_id.endswith("-Immediate") else "s",
+        "linewidth": 1.35,
+        "alpha": 0.85,
+    }
+
+
 def _figures(tick: pd.DataFrame, transition: pd.DataFrame, out_dir: Path) -> list[Path]:
     fig_dir = out_dir / "figures"
     fig_dir.mkdir(parents=True, exist_ok=True)
     outputs: list[Path] = []
-    colors = plt.get_cmap("tab10")
-    conditions = sorted(tick["exp_id"].astype(str).unique(), key=lambda x: (x != CONTROL, x))
+    conditions = _condition_order(tick["exp_id"].astype(str).unique())
+    events = ((5, "Crisis"), (6, "Immediate"), (10, "Delayed"))
 
     display_fields = (
         ("trust_final", "Trust"),
@@ -304,48 +337,126 @@ def _figures(tick: pd.DataFrame, transition: pd.DataFrame, out_dir: Path) -> lis
     )
     fig, axes = plt.subplots(2, 2, figsize=(14, 9), sharex=True)
     for ax, (field, label) in zip(axes.flat, display_fields):
-        for index, exp_id in enumerate(conditions):
+        for exp_id in conditions:
             part = tick[tick["exp_id"].astype(str) == exp_id]
-            ax.plot(part["tick"], part[field], linewidth=1.2, color=colors(index), label=exp_id)
-        ax.axvline(5, color="#555555", linestyle="--", linewidth=0.8)
-        ax.axvline(6, color="#888888", linestyle=":", linewidth=0.8)
-        ax.axvline(10, color="#888888", linestyle=":", linewidth=0.8)
+            style = _condition_style(exp_id)
+            ax.plot(
+                part["tick"], part[field], markevery=5, markersize=3.0,
+                **style,
+            )
+        for event_tick, _ in events:
+            ax.axvline(event_tick, color="#777777", linestyle=":", linewidth=0.8)
         ax.set_title(label)
         ax.set_xlabel("Tick")
         ax.set_ylabel("Agent mean")
-    handles, labels = axes[0, 0].get_legend_handles_labels()
+    for ax in axes[0, :]:
+        for event_tick, event_label in events:
+            ax.text(
+                event_tick, 1.01, event_label, transform=ax.get_xaxis_transform(),
+                ha="center", va="bottom", rotation=90, fontsize=7, color="#555555",
+            )
+    handles = [
+        Line2D([0], [0], color="#222222", linewidth=2.2, label="Control"),
+        Line2D([0], [0], color="#0072B2", linewidth=2, label="Rational content"),
+        Line2D([0], [0], color="#D55E00", linewidth=2, label="Empathy content"),
+        Line2D([0], [0], color="#444444", linestyle="-", label="Hub channel"),
+        Line2D([0], [0], color="#444444", linestyle="--", label="Random channel"),
+        Line2D([0], [0], color="#444444", marker="o", linestyle="None", label="Immediate timing"),
+        Line2D([0], [0], color="#444444", marker="s", linestyle="None", label="Delayed timing"),
+    ]
     fig.legend(
-        handles, labels, loc="lower center", bbox_to_anchor=(0.5, 0.04),
-        ncol=3, fontsize=8,
+        handles=handles, loc="lower center", bbox_to_anchor=(0.5, 0.045),
+        ncol=4, fontsize=8,
     )
     fig.suptitle("Descriptive cognition-state trajectories by condition")
-    fig.text(0.5, 0.01, "Single run; lines are agent means, not population estimates.", ha="center", fontsize=9)
+    fig.text(
+        0.5, 0.01,
+        "Single Real-LLM engineering run; lines are Agent means, not population estimates.",
+        ha="center", fontsize=9,
+    )
     path = fig_dir / "01_cognition_state_trajectories.png"
-    fig.tight_layout(rect=(0, 0.13, 1, 0.96)); fig.savefig(path, dpi=180); plt.close(fig)
+    fig.tight_layout(rect=(0, 0.13, 1, 0.94)); fig.savefig(path, dpi=180); plt.close(fig)
     outputs.append(path)
 
     recovery = transition[transition["transition"] == "recovery_to_endpoint"].copy()
-    states = ["trust_final", "attitude_att", "subjective_norm_after", "purchase_intention"]
-    matrix = recovery.pivot(index="exp_id", columns="state", values="mean_delta").reindex(conditions)
-    matrix = matrix.reindex(columns=states)
-    scale = max(float(np.nanmax(np.abs(matrix.to_numpy()))), 1e-12)
-    fig, ax = plt.subplots(figsize=(10, 6))
-    image = ax.imshow(matrix.to_numpy(), aspect="auto", cmap="coolwarm", vmin=-scale, vmax=scale)
-    ax.set_yticks(range(len(matrix.index))); ax.set_yticklabels(matrix.index, fontsize=8)
-    ax.set_xticks(range(len(states))); ax.set_xticklabels([x.replace("_", " ") for x in states], rotation=20, ha="right")
-    ax.set_title("Mean within-agent change: T5 to observed endpoint")
-    fig.colorbar(image, ax=ax, label="Mean descriptive change")
-    path = fig_dir / "02_recovery_transition_heatmap.png"
-    fig.tight_layout(); fig.savefig(path, dpi=180); plt.close(fig)
+    endpoint = int(recovery["after_tick"].max())
+    state_panels = (
+        ("trust_final", "Trust", "Mean within-Agent ΔTrust (0–10 points)"),
+        ("attitude_att", "Attitude", "Mean within-Agent ΔAttitude (0–1)"),
+        ("subjective_norm_after", "Subjective norm", "Mean within-Agent ΔSN (0–1)"),
+        ("purchase_intention", "Purchase intention", "Mean within-Agent ΔPI (0–1)"),
+    )
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10), sharey=True)
+    for panel_index, (ax, (state, title, xlabel)) in enumerate(
+        zip(axes.flat, state_panels)
+    ):
+        part = (
+            recovery[recovery["state"] == state]
+            .set_index("exp_id")
+            .reindex(conditions)
+        )
+        values = part["mean_delta"].astype(float).to_numpy()
+        values[np.isclose(values, 0.0, atol=1e-12)] = 0.0
+        colors = [
+            "#777777" if condition == CONTROL
+            else ("#0072B2" if condition.startswith("Rational-") else "#D55E00")
+            for condition in conditions
+        ]
+        y = np.arange(len(conditions))
+        ax.barh(y, values, color=colors, alpha=0.82)
+        ax.axvline(0.0, color="#222222", linewidth=0.8)
+        ax.set_yticks(y)
+        ax.set_yticklabels(conditions, fontsize=8)
+        if panel_index % 2:
+            ax.tick_params(axis="y", labelleft=False)
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        for row, value in enumerate(values):
+            ax.text(
+                0.98, row, f"{value:+.4f}", transform=ax.get_yaxis_transform(),
+                va="center", ha="right", fontsize=7,
+                bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.72, "pad": 0.8},
+            )
+        ax.margins(x=0.08)
+        if np.nanmax(np.abs(values)) <= 1e-12:
+            half_range = 0.1 if state == "trust_final" else 0.01
+            ax.set_xlim(-half_range, half_range)
+            ax.ticklabel_format(axis="x", style="plain")
+    axes[0, 0].invert_yaxis()
+    fig.suptitle(f"Mean within-Agent change from T5 to T{endpoint} by condition")
+    fig.text(
+        0.5, 0.015,
+        "Single run; panels retain variable-specific units. Do not compare bar lengths across panels.",
+        ha="center", fontsize=9,
+    )
+    path = fig_dir / "02_recovery_transition_facets.png"
+    fig.tight_layout(rect=(0, 0.045, 1, 0.96)); fig.savefig(path, dpi=180); plt.close(fig)
     outputs.append(path)
 
-    fig, ax = plt.subplots(figsize=(12, 5))
-    for index, exp_id in enumerate(conditions):
-        part = tick[tick["exp_id"].astype(str) == exp_id]
-        ax.plot(part["tick"], part["thought_rate"], linewidth=1.2, color=colors(index), label=exp_id)
-    ax.set(xlabel="Tick", ylabel="Fraction with explicit appraisal", ylim=(-0.02, 1.02),
-           title="Availability of explicit appraisal records")
-    ax.legend(fontsize=7, ncol=3)
+    availability = (
+        tick.pivot(index="exp_id", columns="tick", values="thought_rate")
+        .reindex(conditions)
+        .sort_index(axis=1)
+    )
+    fig, ax = plt.subplots(figsize=(14, 6))
+    image = ax.imshow(availability.to_numpy(), aspect="auto", cmap="viridis", vmin=0, vmax=1)
+    ax.set_yticks(range(len(conditions)))
+    ax.set_yticklabels(conditions, fontsize=8)
+    observed_ticks = [int(value) for value in availability.columns]
+    shown_ticks = [tick_value for tick_value in (1, 5, 6, 10, 15, 20, 25, 30, 35) if tick_value in observed_ticks]
+    ax.set_xticks([observed_ticks.index(tick_value) for tick_value in shown_ticks])
+    event_codes = {5: "C", 6: "I", 10: "D"}
+    ax.set_xticklabels([
+        f"{tick_value}\n{event_codes[tick_value]}" if tick_value in event_codes else str(tick_value)
+        for tick_value in shown_ticks
+    ])
+    for event_tick, event_label in events:
+        if event_tick in observed_ticks:
+            position = observed_ticks.index(event_tick)
+            ax.axvline(position, color="white", linestyle=":", linewidth=0.9)
+    ax.set_xlabel("Tick (C = crisis; I = immediate clarification; D = delayed clarification)")
+    ax.set_title("Availability of explicit appraisal records by condition and Tick")
+    fig.colorbar(image, ax=ax, label="Fraction of Agents with an explicit appraisal")
     path = fig_dir / "03_explicit_appraisal_availability.png"
     fig.tight_layout(); fig.savefig(path, dpi=180); plt.close(fig)
     outputs.append(path)

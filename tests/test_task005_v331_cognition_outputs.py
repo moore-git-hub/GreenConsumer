@@ -121,6 +121,9 @@ def test_build_cognition_outputs_writes_manifest_and_declares_no_inference(tmp_p
     ]
     assert all(len(row["sha256"]) == 64 for row in manifest["analysis_code_hashes"])
     assert len(manifest["generated_outputs"]) == 8
+    generated_paths = {row["path"] for row in manifest["generated_outputs"]}
+    assert "thesis_outputs/cognition/figures/02_recovery_transition_facets.png" in generated_paths
+    assert "thesis_outputs/cognition/figures/02_recovery_transition_heatmap.png" not in generated_paths
 
 
 def test_loader_rejects_horizon_mismatch(tmp_path):

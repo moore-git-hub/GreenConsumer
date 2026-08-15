@@ -66,7 +66,7 @@ Rational-evidence / Emotional-empathy
 已完成：18
 部分完成：2
 未开始：5
-阻塞：0（Windows Kernel首次全量复验为123项通过、1项Tk/Tcl绘图环境失败；无界面`Agg`后端修复已实现，等待Windows全量复验确认124项通过）
+阻塞：0（远端commit `ab74a2e2cdba3029ae2f623fa0fb8f49128f6df1`已在Windows Kernel环境完成全量复验：125项全部通过，用时5.04秒）
 ```
 
 ## 4. 论文稿与当前代码的版本漂移

@@ -9,6 +9,30 @@
 
 ## 1. 当前工程入口
 
+当前正式实验准备文件：
+
+- `docs/architecture/FORMAL_EXPERIMENT_PROTOCOL.md`：冻结2×2×2+共同Control、estimands、Pilot方差设计和执行门禁；
+- `docs/PROJECT_PROGRESS.md`：可核验的已完成、部分完成和未完成工作台账。
+- `docs/architecture/EXPERIMENT_EVIDENCE_REGISTER.md`：区分v3.2正式archive、v3.3.1工程结果、用户叙述总结与计划记录，防止论文引用时跨版本混用。
+- `docs/architecture/MODEL_TO_CODE_TRACEABILITY_V331.md`：把当前模型规则、代码、输出和证据边界逐项对应；
+- `docs/architecture/THESIS_WORK_AND_OUTPUT_REGISTER.md`：按模型设计、系统构建、实验设计、仿真结果登记工作与论文表图状态。
+
+协议当前状态为`PILOT_NOT_EXECUTED; FORMAL_NOT_AUTHORIZED`。以下入口仍然只用于engineering/demo或历史复核。
+
+### TASK-PV01：Pilot variance（当前只允许零 API）
+
+```powershell
+# 只打印冻结的P001-P006、D1-D3和分析规则；不写结果、不调用LLM
+python run_v33_pilot_variance.py --plan-only
+
+# 未来仅对已经完整执行的Pilot目录做离线分析
+python run_v33_pilot_variance.py `
+  --analyze-existing "results\v33_pilot_variance\<suite_id>" `
+  --n-max <pre_frozen_cap>
+```
+
+真实Pilot入口还要求`--execute-real-pilot --allow-real-llm`、用户批准的`N_max`与provider-call ceiling、clean worktree和精确Git SHA。当前没有执行授权，不得运行P001–P006。实现合同见`docs/architecture/TASK_PV01_PILOT_VARIANCE_IMPLEMENTATION.md`。
+
 ### v3.3.1：后续研究使用
 
 ```powershell
@@ -30,6 +54,14 @@ python run_v33.py pipeline --llm real --condition all --support both --allow-rea
 ```powershell
 python run_v33_thesis.py "results\v33_runs\<run_id>"
 ```
+
+单独生成可审计的 Agent cognition evolution 表图（纯离线、零 API）：
+
+```powershell
+python run_v33_cognition.py "results\v33_runs\<run_id>"
+```
+
+该输出中的 `reasoning` 只按原文登记显式的一句 appraisal，不代表隐藏思维链，也不进行新的文本情绪/主题编码。轨迹和变化量是单次运行描述性结果，不是总体推断。
 
 生成固定拓扑上的网络状态/信息传播 GIF：
 
@@ -92,14 +124,18 @@ v3.3.1 不改变已验收的 v3.3 主体科学参数。它主要完成：
 GreenConsumer/
 ├── run_v33.py                         # v3.3.1 cognition/demand workflow
 ├── run_v33_thesis.py                  # 论文输出、验证证据、网络动画
+├── run_v33_cognition.py               # 零API认知演化表图与hash manifest
+├── run_v33_pilot_variance.py           # Pilot plan/offline analysis/显式执行门禁
 │
 ├── greenconsumer_v33/
 │   ├── cli.py
 │   ├── runner.py                      # 9条件调度 + provenance/network audit
 │   ├── demand.py
 │   ├── analysis.py                    # 单block描述性 estimands
+│   ├── pilot_variance.py               # seed合同、方差分解、planning SD、Holm OC
 │   ├── visualization.py               # 基础v3.3.1图
 │   ├── thesis_outputs.py              # 论文表格/验证证据/扩展图
+│   ├── cognition_outputs.py           # 显式appraisal与心理状态演化后处理
 │   └── network_animation.py           # 固定拓扑上的状态与传播动态图
 │
 ├── mechanism_v33.py                   # Trust v3.3
@@ -148,6 +184,7 @@ results/v33_runs/<run_id>/
     ├── validation/
     ├── figures/
     ├── animations/
+    ├── cognition/
     └── thesis_output_manifest.json
 ```
 

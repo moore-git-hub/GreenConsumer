@@ -268,10 +268,60 @@ Baseline继续冻结为`baseline_exact`；不依据本次结果修改prompt prof
 
 详见：`V331_REAL_LLM_PROMPT_AND_STOCHASTICITY_ROBUSTNESS_PLAN.md`、`V331_REAL_LLM_PROMPT_AND_STOCHASTICITY_ROBUSTNESS_RESULT_20260814.md`。
 
+## DR-20260815-13：v3.3.1正式处理范围与Pilot规划冻结
+
+**状态：treatment and pilot protocol frozen; pilot not executed; formal not authorized**
+
+正式范围固定为`Rational-evidence / Emotional-empathy × Hub / Random × Immediate / Delayed`八个完全交叉策略单元，加一个共同`NoClarification-Control`。不增加Bridge、KOL、独立credibility、独立evidence strength、endorsement或其他正式处理因素。`Rational-evidence`与`Emotional-empathy`是复合文本策略，只允许解释完整内容框架的对比，不允许拆解为单个语义属性的独立因果效应。
+
+确认性family冻结为P1总体澄清Trust、P2内容Trust、P5总体澄清预期重复品牌选择；P3时机和P4企业直接reach保持探索性/机制性。P4不允许解释为说服或购买。正式P5固定`conversion_support=absent`，既有S1仅作为工程机制分离诊断，不形成第四个正式因素。
+
+Pilot预设3个simulation/network seeds×2个requested LLM seeds，共6个完整cognitive blocks，并对每个cognitive history离线交叉3个demand seeds。Pilot只估计planning variance和工程性variance components，不计算正式p-value、不选择策略胜者、不修改机制。正式N将在Pilot后通过预先规定的Holm operating-characteristic规则选择；可执行上限`N_max`必须在Pilot前依据用户批准的provider-call与时间预算冻结，不得根据Pilot结果调整。最终N将写入协议1.1；在此之前`FORMAL_NOT_AUTHORIZED`。
+
+完整规则见：`FORMAL_EXPERIMENT_PROTOCOL.md`。
+
+### TASK-PV01实现更新（Pilot执行前）
+
+**状态：zero-API infrastructure complete; pilot not executed; formal not authorized**
+
+已实现独立`run_v33_pilot_variance.py`与`greenconsumer_v33/pilot_variance.py`：冻结P001–P006和D1–D3，提供seed/attempt/validity合同、provider-call硬上限、clean branch/HEAD门禁、失败即停止且禁止replacement seed、P1/P2两向与P5三向method-of-moments方差分解、保守planning SD以及Holm operating-characteristic模拟。OC在multivariate-normal planning model下使用相关正态样本均值与Wishart样本协方差联合构造相关t统计量；该假设只用于设计，不是Pilot效应结论。普通import、`--plan-only`和`--analyze-existing`均不加载AgentKernel或构建router。
+
+在任何Pilot结果产生前，明确global-null Monte Carlo门槛为`.05 + 2×MCSE`。原因是Holm规则本身提供strong FWER control，而有限次数Monte Carlo估计会围绕.05随机波动；该阈值仅用于检验实现与理论规则是否兼容，不能被写成新的显著性标准，也不得依据未来Pilot结果修改。正式N仍只使用预设MDE与保守planning SD，不使用Pilot mean、sign或策略排序。
+
+当前没有获批`N_max`、provider-call ceiling、clean frozen execution SHA或真实LLM执行授权，故P001–P006仍为`PLANNED_NOT_EXECUTED`。
+
+## DR-20260815-14：实验结果证据层级与跨版本使用边界
+
+**状态：evidence register established; no experiment rerun; no inference change**
+
+用户补充了五份既有实验叙述材料。核对后，clarification diffusion、network size/paid-seed allocation和Trust Stage-A/Morris总结与仓库中已提交的v3.3.1结果记录一致；网络拓扑补充文件本身只包含研究问题和执行前检查，不构成结果，论文引用必须改用`V331_NETWORK_TOPOLOGY_ROBUSTNESS_RESULT_20260813.md`；`预实验结果.md`属于v3.2 Variance10与N=10设计沿革，不能替代当前v3.3.1 Pilot。
+
+证据优先级固定为：仓库冻结合同/原始数据/manifest > 仓库版本化结果记录与原始文件SHA > 用户叙述性总结 > 问题/计划记录。v3.2 F001–F010保持closed formal archive；v3.3.1 sensitivity/topology/size/Real-LLM结果保持engineering validation。不同版本不得合并估计、共同计算p值或互相补足正式N。当前v3.3.1协议只继承v3.2中预先存在的P1/P2/P5角色和量纲一致MDE，不继承其Variance10方差或N。
+
+完整审查与论文使用边界见`EXPERIMENT_EVIDENCE_REGISTER.md`。本次登记新增模型运行=0、真实LLM调用=0、正式推断=0。
+
+---
+
+## DR-20260815-15：论文追踪体系与认知演化后处理口径
+
+**状态：zero-API implementation complete; real-run rendering pending; no scientific-model change**
+
+为使代码工作可以严谨进入论文的模型设计、系统构建、实验设计和仿真结果章节，新增v3.3.1 model-to-code traceability及稳定的工作/表图artifact登记。登记状态明确区分artifact存在、生成器已实现但尚未渲染、计划未执行与未获授权，禁止把planned output写成已有结果。
+
+认知演化后处理固定使用两类已落盘记录：`cognitive_records.csv`提供显式机制状态，`agent_thoughts.csv`提供模型按schema返回的一句显式appraisal及其语义字段。`reasoning`只原样登记，不进行新的情绪/主题编码，不解释为隐藏chain-of-thought，也不作为现实消费者认知证据。
+
+时间变化比较在查看新结果前固定为T5−T4、T6−T5、T10−T9以及T终点−T5。输出为单run的Agent均值、within-Agent差和Agent间描述性SD，不计算p值、置信区间或formal standard error；正式推断单位仍是未来的replication block。输入必须通过summary horizon一致性、Agent×Tick键一一对应、无重复和完整面板检查，manifest记录输入与输出SHA-256。
+
+实现文件为`greenconsumer_v33/cognition_outputs.py`、`run_v33_cognition.py`和对应zero-API tests。当前只完成synthetic fixture验证，尚未对保留的真实v3.3.1 run生成和视觉审查表图。因此进度台账仍将“Agent cognition evolution论文输出”记为部分完成，不报告任何认知演化结果。
+
+本次变更修改科学参数=0、GABM run=0、provider call=0、Pilot observation=0、formal inference=0。
+
+详见：`MODEL_TO_CODE_TRACEABILITY_V331.md`、`THESIS_WORK_AND_OUTPUT_REGISTER.md`。
+
 ---
 
 ## 后续预登记队列
 
-- 必要时 matched-metric topology experiment；
-- v3.3.1 pilot variance estimation与正式replication-block数量；
-- confirmatory estimands / MDE / multiplicity的新formal freeze。
+- 用户先冻结`N_max`、provider-call ceiling与clean execution SHA，再明确授权执行P001–P006；
+- Pilot完成后冻结正式N、正式seed ledger、源码/分析SHA与协议1.1；
+- 必要时 matched-metric topology experiment，但不得挤占正式实验准备主线。

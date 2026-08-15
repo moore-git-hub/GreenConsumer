@@ -414,6 +414,18 @@ provider-call ceiling、时间预算、clean execution SHA和真实Pilot授权�
 
 ---
 
+## DR-20260815-22：第二、三章引用感知正文底稿与主张审计
+
+**状态：drafts available; citation claims audited; no scientific execution**
+
+按用户要求，论文正文引用统一在对应论述处写为“作者、年份、题名”，当前阶段不处理字体、版式或完整参考文献格式。新增第二章文献综述与理论基础底稿、第三章GABM模型构建底稿以及引用—主张审计表。文献条目只在用户PDF原文或出版社/期刊官方页面核验后准入；四项包外来源用于补足重复品牌选择、节点投放和复杂传染接口，并已显式登记为包外引用。
+
+正文把文献支持限定在构念关系和机制必要性，不让一般性文献替具体代码参数背书。N=20、M=25、T5/T6/T10/T35、K=3、传播概率与滞后、Trust参数、购买意向系数和`N_max=10`均继续作为研究设计或工程假设披露。章节还主动记录未完成的现实数据校准、平台拓扑拟合和消费者外部有效性，禁止将LLM语义评价等同真实心理、将Agent当独立重复或将Hub触达改写为购买效果。
+
+本写作工作包没有修改科学机制、处理矩阵、estimand、参数、prompt、随机种子或协议；新增GABM run=0、provider call=0、Pilot observation=0、formal inference=0。
+
+---
+
 ## 后续预登记队列
 
 - `N_max=10`已冻结；用户仍需冻结provider-call ceiling、时间预算与clean execution SHA，再明确授权执行P001–P006；

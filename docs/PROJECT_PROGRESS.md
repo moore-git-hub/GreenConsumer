@@ -55,7 +55,7 @@ Rational-evidence / Emotional-empathy
 | 19 | 固定拓扑网络状态/传播动画 | 已完成 | `greenconsumer_v33/network_animation.py` | 论文中不得称拓扑演化 |
 | 20 | Agent cognition evolution论文输出 | 已完成 | 预选Real-LLM run的schema 1.2真实产物已完成provenance、9项输出hash、完整面板、matched-Control算术与视觉审计；用户确认clean commit上的认知直接测试和Windows全量测试均通过 | 仅作为单次工程run的有限描述性证据；不把Agents当重复块、不推断隐性CoT、不作策略排名或总体推断 |
 | 21 | 语义→心理→网络→行为机制总图 | 已完成 | `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg/.png`；与model-to-code traceability逐层对齐 | 论文排版时只调整编号和尺寸，不改变机制 |
-| 22 | 论文正文与文献证据映射 | 部分完成 | `THESIS_WRITING_FOUNDATION_V331.md`、`LITERATURE_AND_STYLE_SOURCE_REGISTER.md`；七包57份/53份唯一PDF和5篇同专业硕士论文已登记 | 逐章扩写正文并继续完成中文书目元数据核验 |
+| 22 | 论文正文与文献证据映射 | 部分完成 | 基础包、来源台账、第二章正文底稿、第三章正文底稿及`CITATION_CLAIM_AUDIT_V331.md`已建立；七包57份/53份唯一PDF、5篇同专业硕士论文、4项中文核心文献和4项包外补充文献已登记 | 完成第四章前半部分、ODD附录及后续章节；继续按需核验新增文献 |
 | 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、tests | 用户冻结预算并另行授权后才可执行Pilot |
 | 24 | 实验结果证据台账与版本分层 | 已完成 | `EXPERIMENT_EVIDENCE_REGISTER.md`；结果记录commits；v3.2 archive | 正式写作时按已建立的table/figure registry持续登记 |
 | 25 | 论文工作—证据—表图追踪体系 | 已完成 | `MODEL_TO_CODE_TRACEABILITY_V331.md`、`THESIS_WORK_AND_OUTPUT_REGISTER.md` | 任何新run或正文表图进入论文时同步更新 |
@@ -98,13 +98,15 @@ Rational-evidence / Emotional-empathy
 - face validity、micro-validity、macro-validity；
 - generative explanation 与 model docking/cross-model comparison。
 
-本次已解包并清点用户提供的七个理论文献包：共57份PDF，4组重复，SHA-256去重后为53份唯一PDF；另审阅5篇同专业硕士论文以提取章节、标题层级、图表注释和结果讨论风格。核心英文文献已用PDF原文和出版社/期刊页面交叉核验；中文文献仍须逐篇补齐完整书目元数据。详细清单、核验状态和章节路由见`docs/thesis/LITERATURE_AND_STYLE_SOURCE_REGISTER.md`。后续论文写作必须遵守：
+本次已解包并清点用户提供的七个理论文献包：共57份PDF，4组重复，SHA-256去重后为53份唯一PDF；另审阅5篇同专业硕士论文以提取章节、标题层级、图表注释和结果讨论风格。核心英文文献已用PDF原文和出版社/期刊页面交叉核验；四项进入当前正文的中文文献已完成作者、年份、题名及出版身份核验，其余中文来源仍按需要逐篇处理。详细清单、核验状态和章节路由见`docs/thesis/LITERATURE_AND_STYLE_SOURCE_REGISTER.md`。后续论文写作必须遵守：
 
 1. 优先使用用户原始文献包；
 2. 包外引用明确标记“包外引用”；
 3. 无法核验的理论主张标记“此处需要补充材料”；
 4. 不把工程参数写成文献估计值；
 5. 不用一般性文献替代模型具体识别条件。
+
+第二章与第三章正文底稿已在对应句段使用“作者、年份、题名”引用，并通过`docs/thesis/CITATION_CLAIM_AUDIT_V331.md`记录每项来源的允许用途和禁止外推。论文正文事项仍保持“部分完成”，因为第四章、ODD附录、第五章正式结果和第六章尚未完成；不以已写两章虚增总体完成度。
 
 ## 6. 下一门槛
 

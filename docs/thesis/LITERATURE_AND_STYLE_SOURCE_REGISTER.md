@@ -66,20 +66,33 @@
 | ODD报告 | Grimm, V., et al. (2020). The ODD protocol for describing agent-based and other simulation models: A second update to improve clarity, replication, and structural realism. *JASSS*, 23(2), 7. DOI: `10.18564/jasss.4259` | ABM的目的、实体、过程、调度、设计依据与实验需标准化记录 | 完成ODD即证明模型有效 |
 | ABM校准比较 | Platt, D. (2020). A comparison of economic agent-based model calibration methods. *Journal of Economic Dynamics and Control*, 113, 103859. DOI: `10.1016/j.jedc.2020.103859` | ABM校准方法具有模型规模与方法依赖性 | 未经数据校准的参数可以称为经验估计 |
 | ABM贝叶斯估计 | Grazzini, J., Richiardi, M. G., & Tsionas, M. (2017). Bayesian estimation of agent-based models. *Journal of Economic Dynamics and Control*, 77, 26–47. DOI: `10.1016/j.jedc.2017.01.014` | ABM可采用likelihood近似/ABC等进行参数与不确定性估计 | 本研究已经完成贝叶斯校准 |
+| 生成式Agent架构 | Park, J. S., O’Brien, J. C., Cai, C. J., Morris, M. R., Liang, P., & Bernstein, M. S. (2023). Generative Agents: Interactive Simulacra of Human Behavior. *UIST 2023*. DOI: `10.1145/3586183.3606763` | LLM可与记忆、反思和计划架构结合形成自然语言Agent | 行为表现可信即等同现实人类行为 |
 | GABM验证 | Adornetto, C., et al. (2025). Generative agents in agent-based modeling: Overview, validation, and emerging challenges. *IEEE Transactions on Artificial Intelligence*, 6(12), 3165–3183. DOI: `10.1109/TAI.2025.3566362` | GABM需要结合传统ABM与生成式Agent特有验证 | LLM生成“可信文本”即具有行为有效性 |
 | LLM模拟边界 | Aher, G. V., Arriaga, R. I., & Kalai, A. T. (2023). Using large language models to simulate multiple humans and replicate human subject studies. *Proceedings of ICML*, PMLR 202, 337–371 | LLM可在受控实验中复现部分模式，也可能产生系统性失真 | LLM输出可以替代现实受试者数据 |
 
 ## 5. 中文文献使用规则
 
-中文PDF将优先用于中国绿色消费语境、漂绿感知、绿色品牌信任和国内复杂网络研究现状。进入正文前必须逐条提取并核验：作者、年份、题名、期刊/学位授予单位、卷期、页码和可用数据库标识。当前可作为待整理候选的文件包括但不限于：
+中文PDF优先用于中国绿色消费语境、漂绿感知、绿色品牌信任和国内复杂网络研究现状。以下四项已经由PDF首页、摘要和出版信息核验，可按作者—年份—题名进入当前正文：
 
-- 《绿色消费会传染吗——绿色消费的社会扩散效应及其形成机制》；
-- 《复杂网络上竞争信息传播对绿色消费的影响》；
-- 《中国消费者绿色购买意愿形成的理论依据与实证检验——基于生态价值观、个人感知相关性的TPB拓展模型》；
-- 《漂绿后绿色品牌信任重建战略研究——基于CBBE模型和合理性视角》；
-- 《消费者品牌转换口碑传播影响因素研究——基于绿色营销视角》。
+| 主题 | 核验书目 | 可支持的命题 | 不可支持的命题 |
+|---|---|---|---|
+| 绿色消费信息扩散 | 王建明、冯雨（2023）：《绿色消费会传染吗？——绿色消费的社会扩散效应及其形成机制》，《管理评论》35(7) | 绿色购买、使用、回收与绿色信息关注/分享的问卷关系 | 固定网络中的因果扩散、当前传播参数 |
+| 中国绿色TPB | 盛光华、龚思羽、解芳（2019）：《中国消费者绿色购买意愿形成的理论依据与实证检验——基于生态价值观、个人感知相关性的TPB拓展模型》，《吉林大学社会科学学报》59(1) | 中国情境中生态价值观、个人相关性与TPB变量关系 | 当前Persona或意向系数校准 |
+| 漂绿后品牌信任重建 | 郭锐、李伟、严良（2015）：《漂绿后绿色品牌信任重建战略研究：基于CBBE模型和合理性视角》，《中国地质大学学报（社会科学版）》15(3) | 可观察策略、品牌合理性与信任重建 | 摘要表述矛盾的定价效应；本研究澄清策略效果 |
+| 绿色消费竞争传播 | 刘佼、卫柯臻、帅青红（2025）：《复杂网络上竞争信息传播对绿色消费的影响》，《复杂系统与复杂性科学》网络首发 | 竞争信息、绿色意识、节点度与扩散的相邻模型证据 | 直接验证本研究固定BA/GABM |
 
-在完整书目信息完成核验前，正文只能使用“此处需要补充材料”标记，不得根据文件名推测年份、刊物或研究结论。
+《消费者品牌转换口碑传播影响因素研究——基于绿色营销视角》目前尚未从PDF正文完整核验作者页与出版信息，继续列为待核验，不进入正文。任何新增中文来源仍须逐条提取原文，不得根据文件名推测结论。
+
+### 5.1 已核验的包外补充文献
+
+以下四项通过出版社或期刊官方页面核验，用于补足重复品牌选择、节点投放和复杂传染接口；均在引用审计表中标记为“包外引用”。
+
+| 主题 | 核验书目 | 可支持的命题 | 不可支持的命题 |
+|---|---|---|---|
+| 重复品牌选择 | Guadagni, P. M., & Little, J. D. C. (1983). A Logit Model of Brand Choice Calibrated on Scanner Data. *Marketing Science*, 2(3), 203–238 | 重复购买记录中的品牌忠诚与条件品牌选择 | 当前模型系数、机会间隔或植物奶外推 |
+| 重复购买规律 | Ehrenberg, A. S. C., Goodhardt, G. J., & Barwise, T. P. (1990). Double Jeopardy Revisited. *Journal of Marketing*, 54(3), 82–91 | 品牌渗透与重复购买需分别观察 | 当前虚构品牌符合双重劣势规律 |
+| 影响最大化 | Kempe, D., Kleinberg, J., & Tardos, É. (2003). Maximizing the Spread of Influence through a Social Network. *KDD 2003* | 有限种子选择与潜在传播范围 | Hub自动提高说服、信任或购买 |
+| 复杂传染 | Centola, D., & Macy, M. (2007). Complex Contagions and the Weakness of Long Ties. *American Journal of Sociology*, 113(3), 702–734 | 多源确认与网络桥宽度的情境依赖 | 本研究已经实现阈值型复杂传染 |
 
 ## 6. 文献—章节路由
 

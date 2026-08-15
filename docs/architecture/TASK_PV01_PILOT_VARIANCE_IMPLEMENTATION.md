@@ -2,7 +2,7 @@
 
 ## 1. 状态与范围
 
-实现状态：`ZERO_API_INFRASTRUCTURE_REPAIRED; NO_VALID_PILOT_BLOCK; FORMAL_NOT_AUTHORIZED`
+实现状态：`ZERO_API_INFRASTRUCTURE_REPAIRED; NO_VALID_PILOT_BLOCK; PILOT_DEFERRED_BY_USER; FORMAL_NOT_AUTHORIZED`
 
 本工作包实现 v3.3.1 Pilot 的计划、执行门禁、seed/attempt ledger、方差分解、planning SD 和 Holm operating-characteristic 分析。它不生成 Pilot 结果，不授权 P001–P006，也不启动正式实验。
 
@@ -58,7 +58,7 @@ python run_v33_pilot_variance.py `
 block，不进入Pilot方差表，也不形成Pilot结果。修复后必须从P001按原冻结seed grid
 重新开始完整suite，不把失败尝试当作replacement或正式样本。
 
-用户已在查看Pilot结果前批准并冻结`N_max=10`，但provider-call ceiling、时间预算、frozen execution SHA和真实Pilot授权仍不存在，因此不得运行该入口。完整状态见`PILOT_EXECUTION_CONDITIONS.md`。
+用户已在查看Pilot结果前批准并冻结`N_max=10`，但provider-call ceiling、时间预算和真实Pilot授权仍不存在。用户于2026-08-16决定暂缓该步骤并继续论文写作，因此不得运行该入口。完整状态见`PILOT_EXECUTION_CONDITIONS.md`。
 
 ## 4. 方差与样本量规则
 

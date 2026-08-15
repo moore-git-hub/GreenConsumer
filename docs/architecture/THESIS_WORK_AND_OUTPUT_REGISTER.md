@@ -10,6 +10,7 @@ Status vocabulary:
 - `IMPLEMENTED_NOT_RENDERED`: output code exists but no retained source run has yet been processed and visually checked;
 - `PLANNED_NOT_EXECUTED`: design exists but the corresponding experiment has not run;
 - `NOT_AUTHORIZED`: execution requires an explicit later authorization;
+- `DEFERRED_BY_USER`: a planned execution step has been paused without admitting results;
 - `HISTORICAL_ONLY`: belongs to the closed v3.2 archive.
 
 ## 2. Thesis-section traceability
@@ -26,6 +27,8 @@ Status vocabulary:
 | W08 | Thesis chapter | Chapter 5 formal-results reporting template with empty tables, figures and guarded prose | `docs/thesis/CHAPTER_5_RESULTS_REPORTING_TEMPLATE_V331.md` | AVAILABLE | Structure only; no Pilot/formal value, direction or significance exists |
 | W09 | Analysis protocol | Pre-Pilot N=10 diagnostics, joint LOBO and exact sign-flip sensitivity | `SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` | AVAILABLE | Frozen analysis interface; does not prove N=10 feasible and does not replace primary analysis |
 | W10 | Design worksheet | P1/P2/P5 threshold provenance and evidence-gap worksheet | `DESIGN_THRESHOLD_JUSTIFICATION_WORKSHEET_V331.md` | AVAILABLE | Thresholds remain design values; managerial justification unresolved |
+| W11 | Thesis chapter | Chapter 1 introduction draft with scoped background, RQs, methods and contribution boundaries | `docs/thesis/CHAPTER_1_INTRODUCTION_DRAFT_V331.md` | AVAILABLE | Working thesis prose; no Pilot/formal result implied |
+| W12 | Thesis audit | Title–RQ–evidence–contribution consistency and two-path decision gate | `docs/thesis/TITLE_RQ_CONTRIBUTION_AUDIT_V331.md` | AVAILABLE | Mandatory before Chapter 5 is finalized |
 | M01 | Model design | 2×2×2 + common control conceptual design | `FORMAL_EXPERIMENT_PROTOCOL.md`, `experiment_config.py` | AVAILABLE | Methods: treatment definition |
 | M02 | Model design | Semantic→psychological→network→behavior architecture | `MODEL_TO_CODE_TRACEABILITY_V331.md`, `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg` | AVAILABLE | Methods: implemented architecture; figure must retain the LLM/non-LLM boundary |
 | M03 | Model design | v3.3 Trust dynamics | `mechanism_v33.py`, Decision Log DR-01/05/06 | AVAILABLE | Methods with engineering-assumption boundary |
@@ -36,12 +39,12 @@ Status vocabulary:
 | S03 | System construction | Tests and engineering verification chain | `tests/`, architecture result records | AVAILABLE | Verification subsection, not formal inference |
 | S04 | System construction | Fixed-network state/flow animation | `greenconsumer_v33/network_animation.py` | AVAILABLE | System demonstration with fixed-topology caveat |
 | E01 | Experiment design | Primary/secondary estimands and analysis family | `FORMAL_EXPERIMENT_PROTOCOL.md` | AVAILABLE | Formal design section |
-| E02 | Experiment design | Pilot seed and replication design with pre-result `N_max=10` | Pilot protocol/contract/code, `PILOT_EXECUTION_CONDITIONS.md` | PLANNED_NOT_EXECUTED | Methods as preregistered plan only; N=10 is not yet justified as formal N |
+| E02 | Experiment design | Pilot seed and replication design with pre-result `N_max=10` | Pilot protocol/contract/code, `PILOT_EXECUTION_CONDITIONS.md` | DEFERRED_BY_USER | Methods as preregistered plan only; N=10 is not justified as formal N |
 | E04 | Experiment design | N=10 small-sample diagnostic and sensitivity rules | `SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` | AVAILABLE | Apply only if OC gate accepts N=10; results cannot drive method switching |
 | E03 | Experiment design | Formal N, seed ledger and frozen analysis SHA | not yet created | NOT_AUTHORIZED | No thesis value may be reported yet |
 | R01 | Simulation results | v3.3.1 engineering robustness results | `EXPERIMENT_EVIDENCE_REGISTER.md` and committed result records | AVAILABLE | Robustness/verification appendix with engineering label |
 | R02 | Simulation results | Selected Real-LLM robustness | committed Real-LLM result record | AVAILABLE | Engineering robustness only |
-| R03 | Simulation results | Pilot variance findings | no result exists | PLANNED_NOT_EXECUTED | No finding may be stated |
+| R03 | Simulation results | Pilot variance findings | no valid result exists | DEFERRED_BY_USER | No finding may be stated |
 | R04 | Simulation results | v3.3.1 formal P1/P2/P5 results | no result exists | NOT_AUTHORIZED | No finding may be stated |
 | R05 | Simulation results | Cognition-evolution tables/figures | preselected `baseline_r1/v331_20260814_230111`, schema 1.2 manifest and `greenconsumer_v33/cognition_outputs.py` | AVAILABLE | Single Real-LLM engineering run; descriptive mechanism/internal-validation evidence only, not formal inference |
 

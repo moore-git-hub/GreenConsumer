@@ -8,10 +8,12 @@ PROVIDER_CALL_CEILING_NOT_FROZEN
 TIME_BUDGET_NOT_FROZEN
 EXECUTION_SHA_NOT_FROZEN
 PILOT_NOT_AUTHORIZED
+PILOT_DEFERRED_BY_USER_2026_08_16
 FORMAL_NOT_AUTHORIZED
 ```
 
-本文件记录Pilot执行前的用户选择，不构成P001–P006执行授权。
+本文件记录Pilot执行前的用户选择，不构成P001–P006执行授权。用户于2026-08-16
+决定不继续当前Pilot步骤并转回论文写作；除非未来重新明确授权，本执行队列保持暂缓。
 
 ## 2. 已冻结条件
 
@@ -41,9 +43,11 @@ FORMAL_NOT_AUTHORIZED
 
 ## 4. 后续记录顺序
 
-1. 先估算P001–P006在当前调用合同下的最大provider calls和时间；
+当前不继续执行。若用户未来恢复Pilot，则重新从以下顺序开始：
+
+1. 估算P001–P006在当时调用合同下的最大provider calls和时间；
 2. 用户冻结provider-call ceiling和时间预算；
 3. 完成最终preflight与Windows全量测试；
-4. 记录clean execution SHA；
+4. 记录当时的clean execution SHA；
 5. 用户另行明确授权后才执行P001–P006；
 6. Pilot完成后按协议OC规则判断N=10是否可行，不进行结果导向调参。

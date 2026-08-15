@@ -2,17 +2,18 @@
 
 ## 1. 台账口径
 
-更新时间：`2026-08-15`
+更新时间：`2026-08-16`
 
 当前分支：`refactor/task005-v32-clean-codebase`
 
-审查基准 HEAD：`ce736f442c74bef404940f6dcaf8009c4015a1da`
+最近完整Windows测试基准 HEAD：`b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`
 
 状态定义：
 
 - **已完成**：代码或文档已经存在，并有可定位的测试、结果记录或冻结决策；
 - **部分完成**：已有数据或基础实现，但尚未达到论文/正式实验交付门槛；
 - **未开始**：尚无对应实现或正式证据；
+- **暂缓**：设计或入口存在，但用户已决定当前不继续执行，且没有准入结果；
 - **阻塞**：已开始但受缺失依赖、权限、材料或前置决策阻止。
 
 本台账不使用未经加权的“总体完成百分比”。不同事项的科学权重和工作量不同，简单百分比会制造虚假精确性。
@@ -48,14 +49,14 @@ Rational-evidence / Emotional-empathy
 | 12 | Selected Real-LLM robustness | 已完成 | `llmrob_20260814_230111`结果记录 | 不作为正式样本 |
 | 13 | Provenance、网络和内部有效性输出 | 已完成 | `V331_OUTPUT_AND_VALIDATION.md` | 正式runner复用并加固 |
 | 14 | 正式处理、estimand与Pilot协议v1.0 | 已完成 | `FORMAL_EXPERIMENT_PROTOCOL.md` | 保持处理与分析规则冻结 |
-| 15 | Pilot variance执行 | 未开始 | `N_max=10`已在结果前冻结；无Pilot结果 | 继续冻结provider-call ceiling、时间预算、clean SHA并获得明确授权 |
+| 15 | Pilot variance执行 | 暂缓 | 用户于2026-08-16决定停止当前Pilot步骤；新入口在参数门禁前停止，无有效Pilot block | 只有用户未来重新授权时才恢复执行门禁 |
 | 16 | 正式N与正式seed ledger | 未开始 | N仍待Pilot | Pilot后按冻结OC规则确定 |
 | 17 | v3.3.1正式runner与分析包 | 未开始 | 当前runner仅engineering/demo | 添加测试、合同和SHA冻结 |
 | 18 | v3.3.1正式实验 | 未开始 | `FORMAL_NOT_AUTHORIZED` | 协议1.1和明确授权 |
 | 19 | 固定拓扑网络状态/传播动画 | 已完成 | `greenconsumer_v33/network_animation.py` | 论文中不得称拓扑演化 |
 | 20 | Agent cognition evolution论文输出 | 已完成 | 预选Real-LLM run的schema 1.2真实产物已完成provenance、9项输出hash、完整面板、matched-Control算术与视觉审计；用户确认clean commit上的认知直接测试和Windows全量测试均通过 | 仅作为单次工程run的有限描述性证据；不把Agents当重复块、不推断隐性CoT、不作策略排名或总体推断 |
 | 21 | 语义→心理→网络→行为机制总图 | 已完成 | `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg/.png`；与model-to-code traceability逐层对齐 | 论文排版时只调整编号和尺寸，不改变机制 |
-| 22 | 论文正文与文献证据映射 | 部分完成 | 基础包、来源台账、第二至第四章正文底稿、ODD＋D附录、第五章正式结果模板、N=10诊断协议、阈值工作表及引用审计已建立；七包57份/53份唯一PDF、5篇同专业硕士论文、4项中文核心文献和8项包外补充文献已登记 | 编写第一章并实现零结果正式分析合同；正式结果和第六章仍待后续阶段 |
+| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、基础包、来源台账、ODD＋D附录、第五章正式结果模板、题目—RQ—贡献审计、N=10诊断协议、阈值工作表及引用审计已建立 | 开展跨章一致性审计；根据Pilot最终取舍重构第五、六章 |
 | 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、tests | 用户冻结预算并另行授权后才可执行Pilot |
 | 24 | 实验结果证据台账与版本分层 | 已完成 | `EXPERIMENT_EVIDENCE_REGISTER.md`；结果记录commits；v3.2 archive | 正式写作时按已建立的table/figure registry持续登记 |
 | 25 | 论文工作—证据—表图追踪体系 | 已完成 | `MODEL_TO_CODE_TRACEABILITY_V331.md`、`THESIS_WORK_AND_OUTPUT_REGISTER.md` | 任何新run或正文表图进入论文时同步更新 |
@@ -65,8 +66,9 @@ Rational-evidence / Emotional-empathy
 ```text
 已完成：20
 部分完成：1
-未开始：4
-阻塞：0（schema 1.2代码commit `ce736f442c74bef404940f6dcaf8009c4015a1da`的两项指定Windows `Kernel`测试由用户确认均通过；本轮未回传测试数量和用时，故不补写未观察值）
+未开始：3
+暂缓：1
+阻塞：0（用户回传Windows `Kernel`完整测试：129 passed in 8.29s，HEAD为`b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`）
 ```
 
 ## 4. 论文稿与当前代码的版本漂移
@@ -106,17 +108,17 @@ Rational-evidence / Emotional-empathy
 4. 不把工程参数写成文献估计值；
 5. 不用一般性文献替代模型具体识别条件。
 
-第二至第四章正文底稿、ODD＋D附录和第五章报告模板已在对应句段使用“作者、年份、题名”引用，并通过`docs/thesis/CITATION_CLAIM_AUDIT_V331.md`记录每项来源的允许用途和禁止外推。N=10小样本诊断规则已在Pilot前冻结，设计阈值的依据工作表已建立但管理意义仍未解决。论文正文事项保持“部分完成”，因为第一章、第五章正式结果和第六章仍未完成；不以已有底稿替代未产生的正式证据。
+第一至第四章正文底稿、ODD＋D附录和第五章报告模板已在对应句段使用“作者、年份、题名”引用，并通过`docs/thesis/CITATION_CLAIM_AUDIT_V331.md`记录每项来源的允许用途和禁止外推。题目—RQ—证据—贡献审计已建立。论文正文事项保持“部分完成”，因为第五章正式结果和第六章仍未完成；用户暂缓Pilot后，更不能以已有工程材料替代未产生的正式证据。
 
 ## 6. 下一门槛
 
-真实实验执行的下一门槛固定为：
+当前下一门槛改为：
 
 ```text
-TASK-PV01-EXEC：在已冻结N_max=10的前提下，继续冻结
-provider-call ceiling、时间预算和clean execution SHA，并决定是否授权P001-P006。
+THESIS-CROSS-CHAPTER-AUDIT：统一第一至第四章的题目范围、RQ、变量、
+时间点、证据身份和贡献表述，并决定Pilot是暂缓还是永久取消。
 ```
 
-零API基础设施已完成。用户已在查看Pilot结果前冻结`N_max=10`；该值是正式replication-block预算上限，不是Pilot规模，也不是已证明的正式样本量。下一门槛不是继续增加设计因素，而是冻结provider-call ceiling、时间预算和clean execution SHA；未获得明确真实LLM执行授权前，不运行P001–P006。若Pilot后的预设operating-characteristic规则在N=10时不能同时满足三项确认性检出概率门槛，则记录`DESIGN_NOT_FEASIBLE_WITHIN_CAP`，不得事后提高N或放宽标准。
+零API基础设施已完成，Windows clean HEAD `b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`的129项测试已由用户回传全部通过。用户随后决定不继续当前Pilot步骤；该命令因缺少provider-call ceiling在参数解析阶段停止，没有启动新的suite或形成有效Pilot block。`N_max=10`仍只是预结果预算上限，不是已证明的正式N。若Pilot被永久取消，题目、研究问题、第五章和贡献必须转为方法与工程机制路线，不能继续保留确认性策略效果叙事。
 
 不触发真实LLM的认知输出工作包已经关闭：预选的同一v3.3.1 run已生成schema 1.2产物，manifest中的9项输出均完成独立hash复核；`06_control_adjusted_agent_recovery.csv`的1120行完整，matched-Control算术与源Agent ledger在浮点容差内一致；三张图完成视觉审查；用户确认clean代码commit上的认知直接测试和Windows全量测试均通过。该产物仅升级为单次Real-LLM工程run的有限描述性证据，不升级为Pilot或正式推断，不形成稳定策略排名。

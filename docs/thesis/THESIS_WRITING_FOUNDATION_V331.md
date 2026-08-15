@@ -113,7 +113,7 @@ LLM边界必须在方法章节和图中同时说明：LLM不直接决定购买�
 
 正式统计单位是完整replication block。确认性family固定为P1、P2、P5，并使用Holm step-down控制family-wise alpha=.05；P3和P4为探索性/机制性estimands。Agent、Agent×Tick、provider call和micro-buyer都不是独立统计单位。
 
-Pilot预设P001–P006六个cognitive blocks并对每个历史离线交叉三个demand seeds。用户已在看到v3.3.1 Pilot结果前冻结`N_max=10`。这意味着正式N只能在10这一唯一预算可行点接受或判定不可行：若Pilot后基于保守planning SD的三项确认性检出概率均达到.80，则协议1.1可冻结正式N=10；否则状态必须转为`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。当前provider-call ceiling、时间预算、执行SHA和真实Pilot授权仍未冻结，因此不得执行Pilot。
+Pilot预设P001–P006六个cognitive blocks并对每个历史离线交叉三个demand seeds。用户已在看到v3.3.1 Pilot结果前冻结`N_max=10`。这意味着正式N只能在10这一唯一预算可行点接受或判定不可行：若未来恢复Pilot，且保守planning SD下三项确认性检出概率均达到.80，协议1.1才可冻结正式N=10；否则状态必须转为`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。用户于2026-08-16决定不继续当前Pilot步骤并转回论文写作；因此当前状态为`PILOT_DEFERRED_BY_USER`，没有有效Pilot block，也没有正式N或正式推断。
 
 ## 7. 验证与证据层级
 
@@ -207,20 +207,22 @@ Pilot预设P001–P006六个cognitive blocks并对每个历史离线交叉三个
 
 已完成：
 
-1. 第二章正文底稿及逐节作者—年份—题名引用：`CHAPTER_2_LITERATURE_AND_THEORY_DRAFT_V331.md`；
-2. 第三章模型构建正文底稿：`CHAPTER_3_MODEL_AND_METHOD_DRAFT_V331.md`；
-3. 引用—主张—外推边界审计：`CITATION_CLAIM_AUDIT_V331.md`；
-4. 第四章实验设计与模型验证的无正式结果正文底稿：`CHAPTER_4_EXPERIMENT_AND_VALIDATION_DRAFT_V331.md`；
-5. v3.3.1 ODD＋D复现附录：`APPENDIX_ODD_D_MODEL_DESCRIPTION_V331.md`；
-6. 四项中文核心文献和八项包外补充文献的条目核验；
-7. 第五章正式结果空表、空图与受约束报告模板：`CHAPTER_5_RESULTS_REPORTING_TEMPLATE_V331.md`；
-8. Pilot前N=10小样本诊断协议与P1/P2/P5阈值依据工作表。
+1. 第一章绪论正文底稿：`CHAPTER_1_INTRODUCTION_DRAFT_V331.md`；
+2. 题目—研究问题—证据—贡献一致性审计：`TITLE_RQ_CONTRIBUTION_AUDIT_V331.md`；
+3. 第二章正文底稿及逐节作者—年份—题名引用：`CHAPTER_2_LITERATURE_AND_THEORY_DRAFT_V331.md`；
+4. 第三章模型构建正文底稿：`CHAPTER_3_MODEL_AND_METHOD_DRAFT_V331.md`；
+5. 引用—主张—外推边界审计：`CITATION_CLAIM_AUDIT_V331.md`；
+6. 第四章实验设计与模型验证的无正式结果正文底稿：`CHAPTER_4_EXPERIMENT_AND_VALIDATION_DRAFT_V331.md`；
+7. v3.3.1 ODD＋D复现附录：`APPENDIX_ODD_D_MODEL_DESCRIPTION_V331.md`；
+8. 四项中文核心文献和八项包外补充文献的条目核验；
+9. 第五章正式结果空表、空图与受约束报告模板：`CHAPTER_5_RESULTS_REPORTING_TEMPLATE_V331.md`；
+10. Pilot前N=10小样本诊断协议与P1/P2/P5阈值依据工作表。
 
 下一队列：
 
-1. 编写第一章绪论正文底稿，并进行题目—研究问题—章节贡献的一致性审计；
-2. 将N=10 exact sign-flip、联合LOBO与报告表实现为零结果分析代码和合同测试，不运行Pilot；
+1. 对第一至第四章进行跨章术语、RQ、变量、时间点和证据身份一致性审计；
+2. 根据用户对Pilot“暂缓”还是“永久取消”的最终选择，决定是否收窄题目并重构第五、六章；
 3. 如需把设计阈值称为管理阈值，由用户补充企业/导师决策记录、可比数据或可核验原始文献；缺失时继续使用“预先设定的设计阈值”；
-4. 待provider-call ceiling、时间预算、clean execution SHA和明确授权冻结后，执行P001–P006；
-5. Pilot后只按预先规定的OC规则判断N=10是否可行，随后才发布协议1.1和正式seed ledger；
-6. 正式实验完成后再填充第五章结果并撰写第六章，禁止用工程结果填补正式结果位置。
+4. 在不产生新实验结果的前提下，整理现有工程验证表图和第五章可用的有限证据；
+5. 只有用户未来重新授权Pilot时，才恢复provider-call ceiling、时间预算、clean SHA与P001–P006执行门禁；
+6. 永久不执行正式blocks时，不得填充确认性结果模板，必须按方法与机制论文路线重构结论。

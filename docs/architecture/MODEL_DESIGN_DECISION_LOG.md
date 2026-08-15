@@ -480,8 +480,37 @@ DashScope客户端为同一次调用执行的HTTP transport retry不另计为新
 
 ---
 
+## DR-20260816-26：暂缓Pilot并转入论文第一章与一致性审计
+
+**状态：Pilot deferred by user; Chapter 1 draft available; no formal inference**
+
+用户在clean HEAD `b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`上完成Windows
+`Kernel`全量验证，结果为129 passed in 8.29s。随后执行真实Pilot命令时未提供
+`--provider-call-ceiling`，CLI在参数解析阶段按设计fail closed；该次命令没有创建
+新的Pilot suite，没有形成provider调用或有效Pilot block。用户随后明确决定不继续
+当前Pilot步骤，工作重心转回论文写作。
+
+该决定记录为`PILOT_DEFERRED_BY_USER`，而不是Pilot完成、Pilot失败或正式N=10已被
+证明。此前旧路由实现下的HTTP 400失败目录仍仅为工程故障记录；v3.3.1有效Pilot
+观察数保持0，正式P1/P2/P5证据仍不存在。
+
+新增第一章绪论正文底稿与题目—研究问题—证据—贡献一致性审计。第一章把研究范围
+限定为虚构植物奶绿色快消品品牌的信任危机修复，将“竞争信息环境”限定为危机信息、
+企业澄清和UGC并存，并明确Hub触达、信任修复与重复选择是不同结果。所有引用继续
+使用已经由用户PDF或官方页面核验的作者—年份—题名，未新增不可核验文献。
+
+一致性审计确认一项结构性风险：若Pilot和正式独立blocks被永久取消，当前“绿色消费
+扩散”题目及确认性策略效果叙事将大于可用证据。届时必须收窄题目，并将第五、六章
+重构为GABM模型构建、工程稳健性和有限机制展示；不得用单次Real-LLM工程run、Agent
+数量、micro-buyers或历史v3.2结果填充v3.3.1正式结果位置。
+
+本阶段新增GABM run=0、provider call=0、有效Pilot observation=0、formal inference=0。
+
+---
+
 ## 后续预登记队列
 
-- `N_max=10`已冻结；用户仍需冻结provider-call ceiling、时间预算与clean execution SHA，再明确授权执行P001–P006；
-- Pilot完成后冻结正式N、正式seed ledger、源码/分析SHA与协议1.1；
-- 必要时 matched-metric topology experiment，但不得挤占正式实验准备主线。
+- 对第一至第四章开展题目、RQ、变量、时间点、术语与证据身份的跨章一致性审计；
+- 在第五章定稿前决定Pilot只是暂缓还是永久取消；永久取消则收窄题目与贡献；
+- 只有用户未来重新授权时才恢复P001–P006执行门禁；
+- 必要时整理既有工程表图，但不得挤占论文主线或冒充正式推断。

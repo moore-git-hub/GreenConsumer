@@ -372,6 +372,26 @@ Windows `Kernel`环境首次全量复验得到123项通过、1项失败。唯一
 
 ---
 
+## DR-20260815-20：Agent异质性与Control调整的认知恢复展示
+
+**状态：post-result descriptive redesign implemented; synthetic and retained-data visual QA passed; final clean rerender pending**
+
+### 触发原因与审计结果
+
+用户回传schema 1.1 manifest、三张图、Tick/transition summary与完整`04_agent_transition_ledger.csv`。上传文件的字节数和SHA-256均与manifest一致；source run继续是预先固定的clean `baseline_r1/v331_20260814_230111`，后处理commit为clean `353ea074aef1c2b0aecca7e26e1b54457eb9b77b`。Agent ledger含720/720条预期记录（9 conditions×20 Agents×4 transitions），无缺失键或重复键，所有condition×transition均为同一20个Agent；其mean/SD/min/max与`05_transition_summary.csv`最大差异为`1.11e-16`，T4→T5 crisis change逐Agent跨条件完全相同。
+
+完整分布显示，原始均值分面虽然数值正确，但掩盖了大量零contrast、长尾以及同一条件内的方向异质性。尤其Random渠道的matched treatment-minus-Control contrast常集中在少数被触达Agent上，mean不能单独展示这种extensive-margin机制。因此原均值图可保留为表5中的描述性汇总，但不再作为正文主要机制图。
+
+### 决策
+
+Schema升级为`task005_fmcg_v331_cognition_outputs1.2`。新增`06_control_adjusted_agent_recovery.csv`，对每个处理条件、同一Agent和每个state记录：处理条件的T5→endpoint change、Control的同期间change及二者之差。FIG-COG-02使用这一matched contrast，显示全部Agent点、IQR、median、mean和正/零/负计数；四个panel保留各自单位。该配对依赖固定Persona/Agent身份与已经验证的common-history合同。
+
+本决策是在查看schema 1.1真实分布后作出的post-result descriptive visualization adjustment，不是预登记confirmatory estimand，不允许用于p-value、置信区间、稳定策略排名或population inference。Agents仍不是独立replication blocks。所有原始transition定义、表5均值、模型参数、状态、随机种子和源run保持不变。
+
+本次新增GABM run=0、provider call=0、Pilot observation=0、formal inference=0。最终准入仍需clean schema-1.2真实重生成、manifest/hash复核和Windows全量测试。
+
+---
+
 ## 后续预登记队列
 
 - 用户先冻结`N_max`、provider-call ceiling与clean execution SHA，再明确授权执行P001–P006；

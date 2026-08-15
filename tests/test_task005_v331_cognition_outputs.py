@@ -8,6 +8,7 @@ import pandas as pd
 
 from greenconsumer_v33.cognition_outputs import (
     _agent_transitions,
+    _control_adjusted_recovery,
     _reasoning_ledger,
     _tick_summary,
     _validate_and_load,
@@ -91,6 +92,23 @@ def test_transitions_are_predefined_within_agent_changes(tmp_path):
     assert (recovery["delta_trust_final"].round(10) == 0.05).all()
 
 
+def test_control_adjusted_recovery_is_matched_within_agent(tmp_path):
+    run_dir = _fixture(tmp_path)
+    _, _, cognitive, end_tick = _validate_and_load(run_dir)
+    transitions = _agent_transitions(cognitive, end_tick)
+    out = _control_adjusted_recovery(transitions)
+    assert len(out) == 2 * 7
+    assert set(out["exp_id"]) == {"Rational-Hub-Immediate"}
+    assert set(out["agent_id"]) == {"A", "B"}
+    trust = out[out["state"] == "trust_final"]
+    repair = out[out["state"] == "repair_memory"]
+    assert (trust["control_adjusted_delta"].round(10) == 0.0).all()
+    assert (repair["control_adjusted_delta"].round(10) == 0.5).all()
+    assert set(out["analysis_role"]) == {
+        "matched_agent_descriptive_contrast_not_formal_inference"
+    }
+
+
 def test_tick_summary_handles_real_schema_duplicate_audit_columns(tmp_path):
     run_dir = _fixture(tmp_path)
     _, thoughts, cognitive, _ = _validate_and_load(run_dir)
@@ -112,6 +130,7 @@ def test_build_cognition_outputs_writes_manifest_and_declares_no_inference(tmp_p
     manifest = json.loads((run_dir / "thesis_outputs/cognition/cognition_output_manifest.json").read_text(encoding="utf-8"))
     assert manifest["formal_inference_performed"] is False
     assert manifest["text_coding_performed"] is False
+    assert manifest["schema_version"] == "task005_fmcg_v331_cognition_outputs1.2"
     assert set(manifest["source_run_git_provenance"]) == set()
     assert manifest["postprocessor_git_provenance"]["git_head"]
     assert manifest["postprocessor_git_provenance"]["git_branch"] == "refactor/task005-v32-clean-codebase"
@@ -120,8 +139,9 @@ def test_build_cognition_outputs_writes_manifest_and_declares_no_inference(tmp_p
         "run_v33_cognition.py",
     ]
     assert all(len(row["sha256"]) == 64 for row in manifest["analysis_code_hashes"])
-    assert len(manifest["generated_outputs"]) == 8
+    assert len(manifest["generated_outputs"]) == 9
     generated_paths = {row["path"] for row in manifest["generated_outputs"]}
+    assert "thesis_outputs/cognition/tables/06_control_adjusted_agent_recovery.csv" in generated_paths
     assert "thesis_outputs/cognition/figures/02_recovery_transition_facets.png" in generated_paths
     assert "thesis_outputs/cognition/figures/02_recovery_transition_heatmap.png" not in generated_paths
 

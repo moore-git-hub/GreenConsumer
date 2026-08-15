@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 
-SCHEMA_VERSION = "task005_fmcg_v331_cognition_outputs1.1"
+SCHEMA_VERSION = "task005_fmcg_v331_cognition_outputs1.2"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONTROL = "NoClarification-Control"
 CONDITION_ORDER = (
@@ -301,6 +301,49 @@ def _transition_summary(agent_transitions: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _control_adjusted_recovery(agent_transitions: pd.DataFrame) -> pd.DataFrame:
+    """Return matched Agent-level T5-to-endpoint changes versus Control.
+
+    These contrasts are descriptive within one frozen run. Agent rows are not
+    independent replication blocks and the output performs no formal inference.
+    """
+    recovery = agent_transitions[
+        agent_transitions["transition"] == "recovery_to_endpoint"
+    ].copy()
+    control = recovery[recovery["exp_id"] == CONTROL].set_index("agent_id")
+    if control.empty:
+        raise ValueError("control-adjusted recovery requires the common Control")
+
+    rows: list[dict] = []
+    conditions = _condition_order(recovery["exp_id"].astype(str).unique())
+    for exp_id in [condition for condition in conditions if condition != CONTROL]:
+        treatment = recovery[recovery["exp_id"] == exp_id].set_index("agent_id")
+        if set(treatment.index) != set(control.index):
+            raise ValueError(
+                f"control-adjusted recovery Agent mismatch for {exp_id}"
+            )
+        treatment = treatment.reindex(control.index)
+        for agent_id in control.index:
+            for state in STATE_FIELDS:
+                field = f"delta_{state}"
+                condition_delta = float(treatment.at[agent_id, field])
+                control_delta = float(control.at[agent_id, field])
+                rows.append({
+                    "exp_id": exp_id,
+                    "agent_id": agent_id,
+                    "before_tick": int(treatment.at[agent_id, "before_tick"]),
+                    "after_tick": int(treatment.at[agent_id, "after_tick"]),
+                    "state": state,
+                    "condition_delta": condition_delta,
+                    "control_delta": control_delta,
+                    "control_adjusted_delta": condition_delta - control_delta,
+                    "analysis_role": (
+                        "matched_agent_descriptive_contrast_not_formal_inference"
+                    ),
+                })
+    return pd.DataFrame(rows)
+
+
 def _condition_order(values) -> list[str]:
     observed = {str(value) for value in values}
     ordered = [condition for condition in CONDITION_ORDER if condition in observed]
@@ -322,7 +365,12 @@ def _condition_style(exp_id: str) -> dict:
     }
 
 
-def _figures(tick: pd.DataFrame, transition: pd.DataFrame, out_dir: Path) -> list[Path]:
+def _figures(
+    tick: pd.DataFrame,
+    transition: pd.DataFrame,
+    control_adjusted: pd.DataFrame,
+    out_dir: Path,
+) -> list[Path]:
     fig_dir = out_dir / "figures"
     fig_dir.mkdir(parents=True, exist_ok=True)
     outputs: list[Path] = []
@@ -380,57 +428,115 @@ def _figures(tick: pd.DataFrame, transition: pd.DataFrame, out_dir: Path) -> lis
 
     recovery = transition[transition["transition"] == "recovery_to_endpoint"].copy()
     endpoint = int(recovery["after_tick"].max())
+    treatment_conditions = [condition for condition in conditions if condition != CONTROL]
     state_panels = (
-        ("trust_final", "Trust", "Mean within-Agent ΔTrust (0–10 points)"),
-        ("attitude_att", "Attitude", "Mean within-Agent ΔAttitude (0–1)"),
-        ("subjective_norm_after", "Subjective norm", "Mean within-Agent ΔSN (0–1)"),
-        ("purchase_intention", "Purchase intention", "Mean within-Agent ΔPI (0–1)"),
+        ("trust_final", "Trust", "Matched control-adjusted ΔTrust (0–10 points)"),
+        ("attitude_att", "Attitude", "Matched control-adjusted ΔAttitude (0–1)"),
+        ("subjective_norm_after", "Subjective norm", "Matched control-adjusted ΔSN (0–1)"),
+        ("purchase_intention", "Purchase intention", "Matched control-adjusted ΔPI (0–1)"),
     )
     fig, axes = plt.subplots(2, 2, figsize=(14, 10), sharey=True)
     for panel_index, (ax, (state, title, xlabel)) in enumerate(
         zip(axes.flat, state_panels)
     ):
-        part = (
-            recovery[recovery["state"] == state]
-            .set_index("exp_id")
-            .reindex(conditions)
-        )
-        values = part["mean_delta"].astype(float).to_numpy()
-        values[np.isclose(values, 0.0, atol=1e-12)] = 0.0
-        colors = [
-            "#777777" if condition == CONTROL
-            else ("#0072B2" if condition.startswith("Rational-") else "#D55E00")
-            for condition in conditions
-        ]
-        y = np.arange(len(conditions))
-        ax.barh(y, values, color=colors, alpha=0.82)
+        panel_values: list[np.ndarray] = []
+        y = np.arange(len(treatment_conditions))
+        for row, exp_id in enumerate(treatment_conditions):
+            values = (
+                control_adjusted[
+                    (control_adjusted["exp_id"] == exp_id)
+                    & (control_adjusted["state"] == state)
+                ]
+                .sort_values("agent_id")["control_adjusted_delta"]
+                .astype(float)
+                .to_numpy()
+            )
+            values[np.isclose(values, 0.0, atol=1e-12)] = 0.0
+            panel_values.append(values)
+            color = "#0072B2" if exp_id.startswith("Rational-") else "#D55E00"
+            jitter = np.linspace(-0.18, 0.18, len(values))
+            ax.scatter(
+                values, row + jitter, s=15, color=color, alpha=0.62,
+                edgecolors="none", zorder=2,
+            )
+            q1, median, q3 = np.quantile(values, [0.25, 0.5, 0.75])
+            mean = float(np.mean(values))
+            ax.plot(
+                [q1, q3], [row, row], color="#222222", linewidth=3.0,
+                zorder=3,
+            )
+            ax.plot(
+                [median, median], [row - 0.14, row + 0.14],
+                color="#222222", linewidth=1.4, zorder=4,
+            )
+            ax.scatter(
+                [mean], [row], marker="D", s=34, facecolor="white",
+                edgecolor="#111111", linewidth=0.9, zorder=5,
+            )
+            positive = int(np.sum(values > 0))
+            zero = int(np.sum(values == 0))
+            negative = int(np.sum(values < 0))
+            ax.text(
+                0.99, row, f"n(+/0/−) {positive}/{zero}/{negative}",
+                transform=ax.get_yaxis_transform(), ha="right", va="center",
+                fontsize=6.8,
+                bbox={
+                    "facecolor": "white", "edgecolor": "none",
+                    "alpha": 0.74, "pad": 0.7,
+                },
+                zorder=6,
+            )
         ax.axvline(0.0, color="#222222", linewidth=0.8)
         ax.set_yticks(y)
-        ax.set_yticklabels(conditions, fontsize=8)
+        ax.set_yticklabels(treatment_conditions, fontsize=8)
         if panel_index % 2:
             ax.tick_params(axis="y", labelleft=False)
         ax.set_title(title)
         ax.set_xlabel(xlabel)
-        for row, value in enumerate(values):
-            ax.text(
-                0.98, row, f"{value:+.4f}", transform=ax.get_yaxis_transform(),
-                va="center", ha="right", fontsize=7,
-                bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.72, "pad": 0.8},
-            )
         ax.margins(x=0.08)
-        if np.nanmax(np.abs(values)) <= 1e-12:
+        all_values = np.concatenate(panel_values)
+        if np.nanmax(np.abs(all_values)) <= 1e-12:
             half_range = 0.1 if state == "trust_final" else 0.01
             ax.set_xlim(-half_range, half_range)
             ax.ticklabel_format(axis="x", style="plain")
     axes[0, 0].invert_yaxis()
-    fig.suptitle(f"Mean within-Agent change from T5 to T{endpoint} by condition")
+    legend_handles = [
+        Line2D(
+            [0], [0], marker="o", color="none", markerfacecolor="#0072B2",
+            markersize=5, label="Rational-content Agent",
+        ),
+        Line2D(
+            [0], [0], marker="o", color="none", markerfacecolor="#D55E00",
+            markersize=5, label="Empathy-content Agent",
+        ),
+        Line2D(
+            [0], [0], color="#222222", linewidth=3,
+            label="Interquartile range",
+        ),
+        Line2D(
+            [0], [0], marker="|", color="#222222", linestyle="None",
+            markersize=10, label="Median",
+        ),
+        Line2D(
+            [0], [0], marker="D", markerfacecolor="white",
+            markeredgecolor="#111111", linestyle="None", markersize=5,
+            label="Mean",
+        ),
+    ]
+    fig.legend(
+        handles=legend_handles, loc="lower center", bbox_to_anchor=(0.5, 0.047),
+        ncol=5, fontsize=8,
+    )
+    fig.suptitle(
+        f"Agent-level control-adjusted change from T5 to T{endpoint} by condition"
+    )
     fig.text(
         0.5, 0.015,
-        "Single run; panels retain variable-specific units. Do not compare bar lengths across panels.",
+        "Matched contrasts use the same Agent's Control trajectory; panels retain variable-specific units. Single-run descriptive evidence; Agents are not replication blocks.",
         ha="center", fontsize=9,
     )
     path = fig_dir / "02_recovery_transition_facets.png"
-    fig.tight_layout(rect=(0, 0.045, 1, 0.96)); fig.savefig(path, dpi=180); plt.close(fig)
+    fig.tight_layout(rect=(0, 0.085, 1, 0.96)); fig.savefig(path, dpi=180); plt.close(fig)
     outputs.append(path)
 
     availability = (
@@ -474,6 +580,7 @@ def build_cognition_outputs(run_dir: Path) -> dict:
     window = _window_summary(cognitive, end_tick)
     agents = _agent_transitions(cognitive, end_tick)
     transition = _transition_summary(agents)
+    control_adjusted = _control_adjusted_recovery(agents)
 
     generated = [
         _write_csv(ledger, table_dir / "01_explicit_appraisal_ledger.csv"),
@@ -481,8 +588,12 @@ def build_cognition_outputs(run_dir: Path) -> dict:
         _write_csv(window, table_dir / "03_cognition_window_summary.csv"),
         _write_csv(agents, table_dir / "04_agent_transition_ledger.csv"),
         _write_csv(transition, table_dir / "05_transition_summary.csv"),
+        _write_csv(
+            control_adjusted,
+            table_dir / "06_control_adjusted_agent_recovery.csv",
+        ),
     ]
-    generated.extend(_figures(tick, transition, out_dir))
+    generated.extend(_figures(tick, transition, control_adjusted, out_dir))
 
     sources = [run_dir / "run_summary.json", run_dir / "agent_thoughts.csv", run_dir / "cognitive_records.csv"]
     analysis_files = [

@@ -452,6 +452,34 @@ Ernst（2004，《Permutation Methods: A Basis for Exact Inference》）已由Pr
 
 ---
 
+## DR-20260816-25：Pilot真实路由一致性修复与失败尝试隔离
+
+**状态：implementation repaired; no valid Pilot block admitted; formal not authorized**
+
+用户报告旧Pilot入口在P001调用`qwen-plus`时收到HTTP 400，而同一环境中的
+`run_v33_llm_robustness.py`能够调用真实LLM。逐字比较确认用户提供的稳健性入口与
+仓库文件逻辑相同，差异不在CLI；两条链路的关键差别是旧Pilot为执行provider-call
+ceiling，使用`_BudgetedRouter`临时替换了`runner.build_inner_router`，稳健性入口则
+沿用原生模型构造链。
+
+本次撤销Pilot的router-builder猴子补丁。预算钩子改放到现有
+`RecordingRouter/ReplayRouter`真正决定进入底层`ModelRouter.chat`的位置：control
+调用和处理条件clarification后的新调用消耗预算，common-history replay hit不消耗
+预算。Pilot现在与已验证的稳健性入口共享完全相同的真实`ModelRouter`构造路径。
+回归合同新增“不得给`build_inner_router`赋值”、超额前停止和replay不计费检查。
+
+旧失败目录保留为工程故障审计，但没有完成且通过validity gate的P001 block，因此
+Pilot有效观察数仍为0，不进入方差分解、operating-characteristic计算或论文结果。
+修复后只能在新的clean SHA上从P001按原P001—P006 seed grid完整重启；这不是
+replacement seed。处理矩阵、estimands、MDE、`N_max=10`、随机种子、prompt、模型、
+温度及统计协议均未改变，故不形成结果驱动的科学设计修订。
+
+这里的provider call定义为一次底层`ModelRouter.chat`语义调用。AgentKernel或
+DashScope客户端为同一次调用执行的HTTP transport retry不另计为新的科学语义调用；
+失败重试仍会在日志中保留，任一异常继续触发整套suite fail closed。
+
+---
+
 ## 后续预登记队列
 
 - `N_max=10`已冻结；用户仍需冻结provider-call ceiling、时间预算与clean execution SHA，再明确授权执行P001–P006；

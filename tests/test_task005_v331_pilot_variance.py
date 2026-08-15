@@ -18,7 +18,6 @@ from greenconsumer_v33.pilot_variance import (
     P5,
     SIMULATION_SEEDS,
     ProviderCallBudgetExceeded,
-    _BudgetedRouter,
     _ProviderCallBudget,
     _holm_rejections,
     demand_seed_table,
@@ -31,6 +30,7 @@ from greenconsumer_v33.pilot_variance import (
     validate_execution_budget,
     variance_component_table,
 )
+from greenconsumer_v32.routers import RecordingRouter, ReplayRouter, prompt_key
 
 
 def _synthetic_inputs() -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -111,7 +111,7 @@ def test_provider_budget_blocks_before_excess_call() -> None:
 
     inner = Inner()
     budget = _ProviderCallBudget(1)
-    router = _BudgetedRouter(inner, budget)
+    router = RecordingRouter(inner, before_provider_call=budget.reserve)
     assert asyncio.run(router.chat("first")) == "first"
     try:
         asyncio.run(router.chat("blocked"))
@@ -121,6 +121,36 @@ def test_provider_budget_blocks_before_excess_call() -> None:
         raise AssertionError("provider ceiling did not stop the second call")
     assert inner.calls == 1
     assert budget.calls_attempted == 1
+
+
+def test_replay_hits_do_not_consume_provider_budget() -> None:
+    class Inner:
+        def __init__(self):
+            self.calls = 0
+
+        async def chat(self, prompt: str) -> str:
+            self.calls += 1
+            return "provider"
+
+    prompt = "same prompt"
+    cache = {(prompt_key(prompt), 5, 0): "replayed"}
+    inner = Inner()
+    budget = _ProviderCallBudget(1)
+    router = ReplayRouter(
+        inner,
+        cache,
+        replay_until=10,
+        before_provider_call=budget.reserve,
+    )
+    router.set_tick(5)
+    assert asyncio.run(router.chat(prompt)) == "replayed"
+    assert budget.calls_attempted == 0
+    assert inner.calls == 0
+
+    router.set_tick(10)
+    assert asyncio.run(router.chat(prompt)) == "provider"
+    assert budget.calls_attempted == 1
+    assert inner.calls == 1
 
 
 def test_two_way_components_are_complete_and_nonnegative_after_bounding() -> None:
@@ -218,6 +248,23 @@ def test_zero_api_module_has_no_top_level_runner_or_agentkernel_import() -> None
     assert "greenconsumer_v33.runner" not in top_level
     assert "greenconsumer_v32.routers" not in top_level
     assert not any(name.startswith("agentkernel") for name in top_level)
+
+
+def test_pilot_does_not_monkeypatch_runner_router_builder() -> None:
+    path = Path(__file__).parents[1] / "greenconsumer_v33" / "pilot_variance.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    assigned_attributes = {
+        node.attr
+        for item in ast.walk(tree)
+        if isinstance(item, (ast.Assign, ast.AnnAssign, ast.AugAssign))
+        for node in (
+            item.targets
+            if isinstance(item, ast.Assign)
+            else [item.target]
+        )
+        if isinstance(node, ast.Attribute)
+    }
+    assert "build_inner_router" not in assigned_attributes
 
 
 def test_machine_contract_matches_code_constants() -> None:

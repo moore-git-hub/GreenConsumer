@@ -10,7 +10,6 @@ means and signs are never used to select effects, mechanisms, or treatments.
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import datetime as dt
 import hashlib
 import json
@@ -674,37 +673,6 @@ class _ProviderCallBudget:
         self.calls_attempted += 1
 
 
-class _BudgetedRouter:
-    def __init__(self, inner, budget: _ProviderCallBudget):
-        self.inner = inner
-        self.budget = budget
-
-    def set_tick(self, tick: int) -> None:
-        if hasattr(self.inner, "set_tick"):
-            self.inner.set_tick(tick)
-
-    async def chat(self, prompt: str) -> str:
-        self.budget.reserve()
-        return await self.inner.chat(prompt)
-
-    def __getattr__(self, name):
-        return getattr(self.inner, name)
-
-
-@contextlib.contextmanager
-def _budget_router_patch(runner_module, budget: _ProviderCallBudget):
-    original = runner_module.build_inner_router
-
-    def builder(mode: str, requested_llm_seed: int):
-        return _BudgetedRouter(original(mode, requested_llm_seed), budget)
-
-    runner_module.build_inner_router = builder
-    try:
-        yield
-    finally:
-        runner_module.build_inner_router = original
-
-
 def _git_execution_preflight(project_root: Path, expected_git_head: str) -> dict:
     def git(*args: str) -> str:
         proc = subprocess.run(
@@ -863,8 +831,10 @@ async def run_pilot_suite(
                 run_demand=True, support_mode="absent", allow_real_llm=True,
                 total_ticks=TOTAL_TICKS, prompt_profile="baseline_exact",
             )
-            with _budget_router_patch(runner_module, budget):
-                payload = await runner_module.execute(settings)
+            payload = await runner_module.execute(
+                settings,
+                before_provider_call=budget.reserve,
+            )
             run_dir = Path(payload["output_dir"])
             analyze_run(run_dir)
             valid, details = _validity_row(str(profile["pilot_id"]), payload, run_dir)

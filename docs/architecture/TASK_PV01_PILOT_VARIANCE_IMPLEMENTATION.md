@@ -2,7 +2,7 @@
 
 ## 1. 状态与范围
 
-实现状态：`ZERO_API_INFRASTRUCTURE_COMPLETE; PILOT_NOT_EXECUTED; FORMAL_NOT_AUTHORIZED`
+实现状态：`ZERO_API_INFRASTRUCTURE_REPAIRED; NO_VALID_PILOT_BLOCK; FORMAL_NOT_AUTHORIZED`
 
 本工作包实现 v3.3.1 Pilot 的计划、执行门禁、seed/attempt ledger、方差分解、planning SD 和 Holm operating-characteristic 分析。它不生成 Pilot 结果，不授权 P001–P006，也不启动正式实验。
 
@@ -42,8 +42,21 @@ python run_v33_pilot_variance.py `
 - HEAD 严格等于显式传入的 frozen SHA；
 - `N_max≥10`；
 - provider-call ceiling 为正数；
-- provider 调用在每次实际请求前原子计数，达到 ceiling 时 fail closed；
+- provider 调用在现有`RecordingRouter/ReplayRouter`决定调用底层`ModelRouter.chat`
+  的位置计数，达到 ceiling 时在进入底层router前 fail closed；
 - 任一预登记 block 失败后停止，不生成 replacement seed。
+
+限额实现不得替换或包装`build_inner_router`返回的真实`ModelRouter`。Pilot与已经
+验证可运行的Real-LLM稳健性入口必须共享同一模型构造链。这里的provider call是
+一次底层`ModelRouter.chat`语义调用；AgentKernel/DashScope客户端内部针对同一调用
+进行的HTTP transport retry不另算一个独立科学语义调用，也不由本计数器控制。
+
+2026-08-16观察到旧实现首次执行时在P001发生HTTP 400并停止。旧实现曾用
+`_BudgetedRouter`猴子补丁替换`runner.build_inner_router`，与已验证的Real-LLM入口
+形成了不必要的路由差异。该实现已撤销，限额钩子下移到原有
+`RecordingRouter/ReplayRouter`。失败目录只作为工程故障审计保留；没有完成的valid
+block，不进入Pilot方差表，也不形成Pilot结果。修复后必须从P001按原冻结seed grid
+重新开始完整suite，不把失败尝试当作replacement或正式样本。
 
 用户已在查看Pilot结果前批准并冻结`N_max=10`，但provider-call ceiling、时间预算、frozen execution SHA和真实Pilot授权仍不存在，因此不得运行该入口。完整状态见`PILOT_EXECUTION_CONDITIONS.md`。
 
@@ -79,4 +92,6 @@ Operating-characteristic 模拟：
 
 测试文件：`tests/test_task005_v331_pilot_variance.py`
 
-覆盖：冻结 seed grid、plan-only 非执行状态、cap fail-closed、两向/三向方差分量、保守 planning SD、零方差停止、Holm step-down、OC 可复现性，以及零 API 顶层 import contract。
+覆盖：冻结 seed grid、plan-only 非执行状态、cap fail-closed、replay不消耗provider
+预算、禁止Pilot猴子补丁修改`build_inner_router`、两向/三向方差分量、保守planning
+SD、零方差停止、Holm step-down、OC可复现性，以及零API顶层import contract。

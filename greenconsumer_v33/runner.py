@@ -127,12 +127,18 @@ async def execute(
     settings: RunSettings,
     *,
     trust_parameters: TrustDynamicsV33Parameters = DEFAULT_TRUST_PARAMETERS,
+    before_provider_call=None,
 ) -> dict:
     """Run one v3.3.1 engineering/demo job and persist auditable outputs."""
 
     settings.validate()
     if not isinstance(trust_parameters, TrustDynamicsV33Parameters):
         raise TypeError("trust_parameters must be TrustDynamicsV33Parameters")
+    if before_provider_call is not None and settings.condition != "all":
+        raise ValueError(
+            "before_provider_call is supported only for condition='all', where "
+            "RecordingRouter/ReplayRouter identify actual provider invocations"
+        )
 
     run_id = dt.datetime.now().strftime("v331_%Y%m%d_%H%M%S")
     run_dir = settings.output_dir / run_id
@@ -173,7 +179,9 @@ async def execute(
 
             if settings.condition == "all":
                 if cfg.is_control:
-                    routed_inner = RecordingRouter(inner)
+                    routed_inner = RecordingRouter(
+                        inner, before_provider_call=before_provider_call
+                    )
                     route_role = "record-control"
                 else:
                     if control_cache is None:
@@ -182,6 +190,7 @@ async def execute(
                         inner,
                         control_cache,
                         replay_until=int(cfg.clarification_tick),
+                        before_provider_call=before_provider_call,
                     )
                     route_role = "replay-before-treatment"
 

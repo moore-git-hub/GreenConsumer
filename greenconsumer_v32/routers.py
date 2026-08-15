@@ -94,8 +94,9 @@ def _build_real_router(requested_llm_seed: int):
 class RecordingRouter:
     """记录 control 的 LLM 响应，供同一 run 的策略条件重放。"""
 
-    def __init__(self, inner):
+    def __init__(self, inner, *, before_provider_call=None):
         self.inner = inner
+        self.before_provider_call = before_provider_call
         self.tick = 0
         self.counts: dict[str, int] = {}
         self.cache: dict[tuple[str, int, int], str] = {}
@@ -111,6 +112,8 @@ class RecordingRouter:
         key = prompt_key(prompt)
         index = self.counts.get(key, 0)
         self.counts[key] = index + 1
+        if self.before_provider_call is not None:
+            self.before_provider_call()
         response = await self.inner.chat(prompt)
         self.provider_calls += 1
         self.cache[(key, self.tick, index)] = response
@@ -123,8 +126,16 @@ class ReplayRouter:
     cache miss 被视为实验对齐失败，而不是回退为一次新的真实模型调用。
     """
 
-    def __init__(self, inner, cache: Mapping[tuple[str, int, int], str], replay_until: int):
+    def __init__(
+        self,
+        inner,
+        cache: Mapping[tuple[str, int, int], str],
+        replay_until: int,
+        *,
+        before_provider_call=None,
+    ):
         self.inner = inner
+        self.before_provider_call = before_provider_call
         self.cache = cache
         self.replay_until = int(replay_until)
         self.tick = 0
@@ -152,6 +163,8 @@ class ReplayRouter:
             self.replay_hits += 1
             return self.cache[cache_key]
 
+        if self.before_provider_call is not None:
+            self.before_provider_call()
         self.provider_calls += 1
         return await self.inner.chat(prompt)
 

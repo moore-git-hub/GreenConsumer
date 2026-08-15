@@ -16,8 +16,10 @@ Status vocabulary:
 
 | Work ID | Thesis domain | Evidence or deliverable | Canonical source | Status | Permitted use now |
 |---|---|---|---|---|---|
+| W01 | Writing foundation | Research positioning, RQs, theory–mechanism map, chapter skeleton and claim firewall | `docs/thesis/THESIS_WRITING_FOUNDATION_V331.md` | AVAILABLE | Basis for chapter drafting; not an empirical result |
+| W02 | Literature/style | Seven-pack source register and five same-major thesis style samples | `docs/thesis/LITERATURE_AND_STYLE_SOURCE_REGISTER.md` | AVAILABLE | Source routing and writing-style constraints; bibliography entries still require item-level verification |
 | M01 | Model design | 2×2×2 + common control conceptual design | `FORMAL_EXPERIMENT_PROTOCOL.md`, `experiment_config.py` | AVAILABLE | Methods: treatment definition |
-| M02 | Model design | Semantic→psychological→network→behavior architecture | `MODEL_TO_CODE_TRACEABILITY_V331.md` | AVAILABLE | Methods: implemented architecture; final mechanism figure still pending |
+| M02 | Model design | Semantic→psychological→network→behavior architecture | `MODEL_TO_CODE_TRACEABILITY_V331.md`, `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg` | AVAILABLE | Methods: implemented architecture; figure must retain the LLM/non-LLM boundary |
 | M03 | Model design | v3.3 Trust dynamics | `mechanism_v33.py`, Decision Log DR-01/05/06 | AVAILABLE | Methods with engineering-assumption boundary |
 | M04 | Model design | Clarification diffusion | `clarification_diffusion_v33.py` | AVAILABLE | Methods; p and lag described as frozen assumptions |
 | M05 | Model design | Renewal demand and loyalty | `purchase_mechanism_v33.py`, `greenconsumer_v33/demand.py` | AVAILABLE | Methods; M described as numerical resolution |
@@ -26,7 +28,7 @@ Status vocabulary:
 | S03 | System construction | Tests and engineering verification chain | `tests/`, architecture result records | AVAILABLE | Verification subsection, not formal inference |
 | S04 | System construction | Fixed-network state/flow animation | `greenconsumer_v33/network_animation.py` | AVAILABLE | System demonstration with fixed-topology caveat |
 | E01 | Experiment design | Primary/secondary estimands and analysis family | `FORMAL_EXPERIMENT_PROTOCOL.md` | AVAILABLE | Formal design section |
-| E02 | Experiment design | Pilot seed and replication design | Pilot protocol/contract/code | PLANNED_NOT_EXECUTED | Methods as preregistered plan only |
+| E02 | Experiment design | Pilot seed and replication design with pre-result `N_max=10` | Pilot protocol/contract/code, `PILOT_EXECUTION_CONDITIONS.md` | PLANNED_NOT_EXECUTED | Methods as preregistered plan only; N=10 is not yet justified as formal N |
 | E03 | Experiment design | Formal N, seed ledger and frozen analysis SHA | not yet created | NOT_AUTHORIZED | No thesis value may be reported yet |
 | R01 | Simulation results | v3.3.1 engineering robustness results | `EXPERIMENT_EVIDENCE_REGISTER.md` and committed result records | AVAILABLE | Robustness/verification appendix with engineering label |
 | R02 | Simulation results | Selected Real-LLM robustness | committed Real-LLM result record | AVAILABLE | Engineering robustness only |
@@ -53,7 +55,8 @@ Artifact IDs remain stable even if final thesis table/figure numbering changes.
 | FIG-COG-02 | Agent-level control-adjusted transition facets | `cognition/figures/02_recovery_transition_facets.png` | matched treatment-minus-Control changes with all engineered Agents, IQR, median and mean; Agents are not replication blocks | AVAILABLE — limited engineering evidence |
 | FIG-COG-03 | Explicit appraisal availability matrix | `cognition/figures/03_explicit_appraisal_availability.png` | condition×Tick record availability, not reasoning quality | AVAILABLE — limited engineering evidence |
 | FIG-NET-01 | Network state and information-flow animation | optional GIF from `run_v33_thesis.py` | fixed topology, evolving states/flows | generator available |
-| FIG-MECH-01 | Overall mechanism figure | not yet created | semantic→psychological→network→behavior | planned |
+| FIG-MECH-01 | Overall mechanism figure | `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg/.png` | semantic appraisal→deterministic psychology→fixed-network exposure→repeat choice, with explicit evidence firewall | AVAILABLE — conceptual/method figure |
+| FIG-ROUTE-01 | Thesis research and technical route | `docs/thesis/figures/FIG-ROUTE-01_v331_thesis_technical_route.svg/.png` | completed/partial/pending stages and execution gates | AVAILABLE — progress-aware method figure |
 | TAB-PILOT-01 | Pilot variance components | future Pilot output | replication-block planning variance | PLANNED_NOT_EXECUTED |
 | TAB-FORMAL-01 | Confirmatory P1/P2/P5 | future formal analysis | replication-block inference | NOT_AUTHORIZED |
 
@@ -112,3 +115,9 @@ That Agent-level review showed that a mean-only recovery figure concealed extens
 The final clean schema-1.2 rerender used postprocessor commit `ce736f442c74bef404940f6dcaf8009c4015a1da` and the same preselected source run. The manifest records six tables and three figures. Independent review closed the complete nine-output hash chain; table 6 contains all 8×20×7 matched treatment cells with no missing or duplicate keys, and its arithmetic and source-ledger reconstruction agree within `1.665e-16`. Figure 2 passed visual QA with variable-specific axes, all Agent points, IQR, median, mean, direction counts and the non-replication warning. The user then confirmed that both requested Windows `Kernel` regression commands passed on the clean code commit; counts and timing were not supplied in that confirmation and are therefore not asserted here.
 
 R05 and TAB/FIG-COG-01–06/01–03 are now `AVAILABLE` only as limited, single-run Real-LLM engineering evidence. This admission permits descriptive mechanism and internal-validation statements tied to the retained run. It does not authorize formal inference, external validity, causal strategy ranking, hidden-chain-of-thought interpretation or treatment of the 20 engineered Agents as replication blocks. This closure generated no new GABM run, provider call, Pilot observation or formal estimate.
+
+## 7. Work log entry — 2026-08-15: thesis writing foundation package
+
+Created the v3.3.1 thesis writing foundation and the literature/style source register. The source audit located seven user literature packs containing 57 PDFs (53 unique after SHA-256 deduplication) and five same-major master's theses used only for structure and style. Core English bibliography entries are admitted only after PDF and publisher/journal cross-check; unresolved Chinese metadata remains explicitly pending rather than inferred from filenames.
+
+Rebuilt the two conceptual figures from the older draw.io material. `FIG-MECH-01` removes obsolete KOL/Bridge and arbitrary allocation details, makes the LLM responsible only for schema-constrained semantic appraisal, and leaves psychological updates, diffusion and purchase choice deterministic and auditable. `FIG-ROUTE-01` separates completed engineering verification, the not-yet-executed Pilot and unauthorized formal inference. The user froze `N_max=10` before Pilot results; this is recorded as a budget cap, not as achieved formal N. This work generated no simulation run, provider call, Pilot observation or formal estimate.

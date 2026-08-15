@@ -400,8 +400,22 @@ Schema升级为`task005_fmcg_v331_cognition_outputs1.2`。新增`06_control_adju
 
 ---
 
+## DR-20260815-21：论文写作基础包、框架图重构与Pilot预算上限
+
+**状态：writing foundation available; `N_max=10` frozen; Pilot not executed; formal not authorized**
+
+用户提供七个理论文献包、五篇同专业硕士论文、旧版框架图、研究问题和导师意见，要求先完成论文写作基础包，并在之后冻结Pilot执行条件时采用N=10。材料清点得到57份PDF，4组重复，SHA-256去重后为53份唯一PDF。文献台账只准入可由PDF原文及出版社/期刊页面核验的书目信息和主张；硕士论文仅用于学习章节结构、标题层级、图表说明与中文论证风格，不作为理论事实的替代证据，也不复制其表述。
+
+新增`docs/thesis/THESIS_WRITING_FOUNDATION_V331.md`和`docs/thesis/LITERATURE_AND_STYLE_SOURCE_REGISTER.md`，固定研究定位、研究问题—estimand映射、理论—机制链、论文六章结构、证据等级和claim firewall。旧图中的KOL/Bridge、任意内容配比和T30口径被移除；新机制图明确LLM只执行schema约束的语义评价，Trust/Attitude/Subjective norm/intention、固定网络扩散和重复选择继续由可审计规则更新。新技术路线图区分已完成工程验证、尚未执行Pilot和未获授权的正式推断，避免将计划误画成结果。
+
+用户给出的“N选取为10”在科学协议中解释为Pilot结果揭示前冻结正式replication-block上限`N_max=10`，而不是宣称Pilot规模为10或正式N已经获得统计依据。P001–P006六个Pilot blocks不变；由于formal N的候选范围原为`10..N_max`，当前唯一候选为N=10。Pilot后只有当预设Holm operating-characteristic规则下P1、P2、P5的marginal detection probability均达到.80时，协议1.1才可冻结formal N=10；否则必须登记`DESIGN_NOT_FEASIBLE_WITHIN_CAP`，不得提高上限、放宽门槛或依据结果重设MDE。
+
+provider-call ceiling、时间预算、clean execution SHA和真实Pilot授权仍未冻结，因此本决策不授权P001–P006。本工作包新增GABM run=0、provider call=0、Pilot observation=0、formal inference=0。
+
+---
+
 ## 后续预登记队列
 
-- 用户先冻结`N_max`、provider-call ceiling与clean execution SHA，再明确授权执行P001–P006；
+- `N_max=10`已冻结；用户仍需冻结provider-call ceiling、时间预算与clean execution SHA，再明确授权执行P001–P006；
 - Pilot完成后冻结正式N、正式seed ledger、源码/分析SHA与协议1.1；
 - 必要时 matched-metric topology experiment，但不得挤占正式实验准备主线。

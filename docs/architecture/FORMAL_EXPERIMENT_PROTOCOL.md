@@ -4,15 +4,19 @@
 
 | 字段 | 冻结值 |
 |---|---|
-| 协议版本 | `1.0` |
+| 协议版本 | `1.0.1` |
 | 协议日期 | `2026-08-15` |
 | 代码分支 | `refactor/task005-v32-clean-codebase` |
 | 协议起草时 HEAD | `7d7a4e595969d6912995c7b7d068144b28d92771` |
 | 模型版本 | `TASK_005_FMCG_V3.3.1` |
-| 当前状态 | `TREATMENT_AND_PILOT_PROTOCOL_FROZEN; PILOT_NOT_EXECUTED; FORMAL_NOT_AUTHORIZED` |
+| 当前状态 | `TREATMENT_AND_PILOT_PROTOCOL_FROZEN; N_MAX_10_FROZEN; PILOT_NOT_EXECUTED; FORMAL_NOT_AUTHORIZED` |
 | 论文用途 | 工商管理硕士论文的正式实验准备与方法审计 |
 
 本协议冻结 v3.3.1 的处理矩阵、研究问题、estimand、推断单位、Pilot 方差设计、失败规则与正式样本量选择规则。它不授权真实 LLM Pilot 或正式实验。任何真实 LLM 执行仍须另行生成执行授权、seed ledger、源码清洁性证明和费用上限。
+
+### 0.1 预算上限修订记录
+
+用户于2026-08-15在查看v3.3.1 Pilot结果前冻结正式replication-block上限`N_max=10`。该值是Pilot执行前的计算/费用约束，不是Pilot block数，也不是已经由方差证据证明的正式N。P001–P006六个Pilot blocks保持不变；Pilot后若N=10不能满足第7节的operating-characteristic规则，必须判定`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。provider-call ceiling、时间预算、clean execution SHA和真实Pilot授权仍未冻结。
 
 ## 1. 科学范围与版本边界
 
@@ -227,7 +231,7 @@ Pilot 实现必须至少生成：
 3. Holm规则提供理论上的strong FWER control；global-null Monte Carlo只作实现兼容性诊断，其经验FWER不高于`.05 + 2×MCSE`，避免把有限Monte Carlo误差误判为规则失效；
 4. planning SD 使用 Pilot 方差的保守值，不使用 Pilot 均值作为备择效应；
 5. Monte Carlo operating-characteristic 模拟次数不少于 200,000/场景，并冻结随机种子；
-6. Pilot执行前必须在执行授权中根据用户批准的provider-call与时间预算冻结`N_max`；该上限不得根据Pilot结果设置或修改；
+6. Pilot执行前的`N_max`已由用户在查看Pilot结果前冻结为10；该上限不得根据Pilot结果修改；
 7. 若`N≤N_max`无法满足条件，协议状态改为`DESIGN_NOT_FEASIBLE_WITHIN_CAP`，不得直接启动正式实验。
 
 保守 planning SD 的具体计算实现必须在 Pilot 分析代码中预先锁定并测试。至少同时报告原始 Pilot SD 与小样本不确定性调整后的 planning SD；不得选择产生更小 N 的估计量。

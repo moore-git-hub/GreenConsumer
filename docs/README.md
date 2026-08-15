@@ -7,10 +7,20 @@
 
 ## 论文
 - `thesis/MODEL_DESIGN_CHAPTER_V32.md`
+- `thesis/THESIS_WRITING_FOUNDATION_V331.md` — v3.3.1研究定位、研究问题、理论—机制框架、章节骨架与表述边界
+- `thesis/LITERATURE_AND_STYLE_SOURCE_REGISTER.md` — 七个文献包、同专业硕士论文样本、已核验书目与章节路由
+- `thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg` — 语义—心理—网络—行为机制总图（另有PNG）
+- `thesis/figures/FIG-ROUTE-01_v331_thesis_technical_route.svg` — 论文研究与技术路线图（另有PNG）
 
 ## 正式实验复现
 - `reproducibility/TASK005_V32_FORMAL_CLOSEOUT.md`
 - `reproducibility/REPRODUCIBILITY_CHECKLIST.md`
 - repository-level `../reproducibility/formal_v32_n10/`
+
+## v3.3.1正式实验准备
+- `architecture/FORMAL_EXPERIMENT_PROTOCOL.md`
+- `architecture/PILOT_EXECUTION_CONDITIONS.md`
+- `architecture/THESIS_WORK_AND_OUTPUT_REGISTER.md`
+- `PROJECT_PROGRESS.md`
 
 历史开发文档、旧 runner 索引和 superseded 代码不再保留在 clean branch；需要追溯时使用 Git 历史或旧研究分支。

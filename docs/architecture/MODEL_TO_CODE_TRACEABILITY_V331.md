@@ -41,7 +41,7 @@ Rules:
 | P3 Immediate vs Delayed | same | `greenconsumer_v33/analysis.py` | Exploratory/mechanism estimand |
 | P4 Hub vs Random enterprise reach | same | `greenconsumer_v33/analysis.py` | Exploratory reach estimand; not persuasion or purchase |
 | Pilot variance components and planning SD | `TASK_PV01_PILOT_VARIANCE_IMPLEMENTATION.md` | `greenconsumer_v33/pilot_variance.py` | Infrastructure complete; P001–P006 not executed |
-| Cognition evolution | this register and `THESIS_WORK_AND_OUTPUT_REGISTER.md` | `greenconsumer_v33/cognition_outputs.py` | Offline implementation complete; not yet verified on a retained real v3.3.1 run directory |
+| Cognition evolution | this register and `THESIS_WORK_AND_OUTPUT_REGISTER.md` | `greenconsumer_v33/cognition_outputs.py` | Schema 1.2 retained real run verified; limited single-run descriptive engineering evidence only |
 
 ## 4. Claim firewall
 

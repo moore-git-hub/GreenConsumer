@@ -45,7 +45,7 @@ python run_v33_pilot_variance.py `
 - provider 调用在每次实际请求前原子计数，达到 ceiling 时 fail closed；
 - 任一预登记 block 失败后停止，不生成 replacement seed。
 
-当前没有用户批准的 `N_max`、provider-call ceiling 或 frozen execution SHA，因此不得运行该入口。
+用户已在查看Pilot结果前批准并冻结`N_max=10`，但provider-call ceiling、时间预算、frozen execution SHA和真实Pilot授权仍不存在，因此不得运行该入口。完整状态见`PILOT_EXECUTION_CONDITIONS.md`。
 
 ## 4. 方差与样本量规则
 

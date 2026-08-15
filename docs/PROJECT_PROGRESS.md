@@ -55,8 +55,8 @@ Rational-evidence / Emotional-empathy
 | 18 | v3.3.1正式实验 | 未开始 | `FORMAL_NOT_AUTHORIZED` | 协议1.1和明确授权 |
 | 19 | 固定拓扑网络状态/传播动画 | 已完成 | `greenconsumer_v33/network_animation.py` | 论文中不得称拓扑演化 |
 | 20 | Agent cognition evolution论文输出 | 已完成 | 预选Real-LLM run的schema 1.2真实产物已完成provenance、9项输出hash、完整面板、matched-Control算术与视觉审计；用户确认clean commit上的认知直接测试和Windows全量测试均通过 | 仅作为单次工程run的有限描述性证据；不把Agents当重复块、不推断隐性CoT、不作策略排名或总体推断 |
-| 21 | 语义→心理→网络→行为机制总图 | 已完成 | `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg/.png`；与model-to-code traceability逐层对齐 | 论文排版时只调整编号和尺寸，不改变机制 |
-| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、基础包、来源台账、ODD＋D附录、第五章正式结果模板、题目—RQ—贡献审计、跨章一致性审计、第一二章编辑审计、N=10诊断协议、阈值工作表及引用审计已建立 | 审校第三、四章的理论—方法—estimand接口 |
+| 21 | 语义→心理→网络→行为机制总图 | 已完成 | `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg`与model-to-code traceability逐层对齐；LLM理由复用为UGC的边界已更正 | 既有PNG含修正前文字，定稿前在Windows中文字体环境从SVG重导出；不改变机制 |
+| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、基础包、来源台账、ODD＋D附录、第五章正式结果模板、题目—RQ—贡献审计、跨章一致性审计、第一二章编辑审计、第三四章接口审计、N=10诊断协议、阈值工作表及引用审计已建立 | 审校第五章报告模板与第三、四章新冻结术语是否完全一致 |
 | 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、tests | 用户冻结预算并另行授权后才可执行Pilot |
 | 24 | 实验结果证据台账与版本分层 | 已完成 | `EXPERIMENT_EVIDENCE_REGISTER.md`；结果记录commits；v3.2 archive | 正式写作时按已建立的table/figure registry持续登记 |
 | 25 | 论文工作—证据—表图追踪体系 | 已完成 | `MODEL_TO_CODE_TRACEABILITY_V331.md`、`THESIS_WORK_AND_OUTPUT_REGISTER.md` | 任何新run或正文表图进入论文时同步更新 |
@@ -115,9 +115,12 @@ Rational-evidence / Emotional-empathy
 当前下一门槛改为：
 
 ```text
-THESIS-CH3-CH4-INTERFACE-AUDIT：检查第三章模型规则是否逐项回应第二章
-理论接口，并检查第四章每个estimand是否与RQ及可识别结论严格一致。
+THESIS-CH5-REPORTING-CONTRACT-AUDIT：将第三、四章已经冻结的P2复合刺激、
+P3早期启动对比、P4企业直接触达、P5路径条件选择概率及五层证据口径逐项
+写入第五章表头、图注、结果句式和讨论防火墙，同时保持所有正式结果格为空。
 ```
+
+第三、四章接口审计已经完成。审计确认LLM不决定发帖，但其schema约束的显式评价理由可在规则触发发帖后成为UGC正文；P5下游条件选择概率还包含micro-buyer PBC、偏好和既往实现选择形成的loyalty，不等同于认知层purchase intention。P3仅识别T6—T9早期处理启动对比，P4仅识别冻结投递窗口中的企业直接触达。以上均已同步到正文、ODD＋D、跨章审计、概念SVG和model-to-code traceability。本轮没有新增文献、GABM run、provider call、Pilot observation或formal inference。
 
 零API基础设施已完成，Windows clean HEAD `b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`的129项测试已由用户回传全部通过。此前命令因缺少provider-call ceiling在参数解析阶段停止，没有启动新的suite或形成有效Pilot block。用户已确认Pilot和正式独立replication blocks不取消，只在论文基础章节写作期间暂缓。`N_max=10`仍只是预结果预算上限，不是已证明的正式N；后续必须先完成Pilot可行性门禁，再恢复正式执行。
 

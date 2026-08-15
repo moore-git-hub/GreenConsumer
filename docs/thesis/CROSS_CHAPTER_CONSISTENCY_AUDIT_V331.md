@@ -43,6 +43,7 @@
 |---|---|---|
 | Cognitive Agents | 20个认知Agent，由工程Persona初始化 | 机制覆盖面板，不是概率样本或正式重复 |
 | Micro-buyers | 每个认知Agent下25个微型购买者 | 离线需求数值分辨率，不增加自由度 |
+| LLM显式评价理由 | schema约束的可审计输出；规则触发发帖时可复用为UGC正文 | 不是隐性思维链，也不等于真实消费者生成内容；LLM不决定是否发帖 |
 | Tick | 1 Tick定义为1个simulation day | 模型时间，不直接映射现实最佳时长 |
 | T1—T4 | 共同历史 | 条件间应完全对齐 |
 | T5 | 绿色信任危机 | 共同冲击 |
@@ -57,11 +58,11 @@
 |---|---|---|---|---|---|
 | 澄清相对不澄清是否改变信任恢复 | P1 | 漂绿与动态信任修复 | Trust记忆与修复更新 | 确认性 | 表5-2、正式block图 |
 | 理性证据型与情感共情型有何差异 | P2 | 双过程、情绪与危机沟通 | 复合文本→semantic appraisal→Trust | 确认性 | 表5-2、语义操纵表 |
-| 即时与延迟澄清如何改变早期路径 | P3 | 回应时机与路径依赖 | T6/T10事件调度 | 探索性 | 表5-3、轨迹图 |
-| Hub与Random如何改变直接触达 | P4 | 网络结构与有限种子选择 | K=3节点选择与企业投递 | 探索性 | 表5-3、reach图 |
-| 澄清是否改变预期重复品牌选择 | P5 | TPB、品牌选择与重复购买 | opportunity→choice→loyalty | 确认性 | 表5-2、choice轨迹 |
+| 即时与延迟澄清如何改变早期路径 | P3 | 回应时机与路径依赖 | T6/T10事件调度 | 探索性早期处理启动对比 | 表5-3、轨迹图 |
+| Hub与Random如何改变直接触达 | P4 | 网络结构与有限种子选择 | K=3节点选择与企业直接投递 | 探索性直接触达 | 表5-3、reach图 |
+| 澄清是否改变预期重复品牌选择 | P5 | TPB、品牌选择与重复购买 | opportunity→micro-buyer choice→loyalty | 确认性条件选择概率 | 表5-2、choice轨迹 |
 
-P2不识别单一credibility、evidence strength、valence、arousal或empathy的独立效应；P4不识别说服或购买；P5是expected focal-brand choice share，不是销量增长率。
+P2不识别单一credibility、evidence strength、valence、arousal或empathy的独立效应；P3只比较T6—T9中Immediate已启动与Delayed尚未启动的早期路径，不识别连续时机响应或全部后续时段的“延迟损失”；P4只识别冻结窗口内的企业直接触达，不识别UGC级联、说服或购买；P5是购买机会发生条件下、包含micro-buyer PBC、偏好项和既往选择忠诚路径的expected focal-brand choice share，不等同认知层purchase intention，也不是实现销量或市场份额。
 
 ## 6. 证据身份统一口径
 
@@ -80,6 +81,8 @@ P2不识别单一credibility、evidence strength、valence、arousal或empathy�
 3. 论文基础包、执行条件、进度台账和决策日志统一记录：有效Pilot观察为0，正式结果尚未生成。
 4. 统一内容因素的中文正文称谓；代码标签只用于复现和表格。
 5. 统一T35为基线终点，T30/T40仅为工程稳健性条件。
+6. 统一LLM职责：它不决定发帖或购买，但显式评价理由在规则触发发帖时可成为UGC正文。
+7. 统一P3为早期处理启动对比、P4为企业直接触达、P5为路径条件选择概率。
 
 ## 8. 下一轮正文审校规则
 

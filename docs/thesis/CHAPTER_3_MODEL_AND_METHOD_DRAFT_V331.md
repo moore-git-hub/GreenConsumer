@@ -12,7 +12,7 @@
 
 v3.3.1采用“生成式语义评价＋规则化状态转移”的混合GABM。模型分为五层：信息环境层生成危机新闻、企业澄清与消费者UGC；语义评价层把Agent实际观察到的文本转换为结构化指标；心理状态层更新信任、态度、主观规范和购买意向；社会网络层记录信息投递与消费者传播；需求层在认知仿真结束后重放购买机会、条件品牌选择和忠诚更新。
 
-LLM的权限被限制在语义评价层。其输出包括valence、arousal、credibility、evidence strength、topic relevance、perceived empathy、peer approval和hypocrisy perceived，并附一条用于审计的显式简短理由。LLM不直接生成信任分数、购买决定、品牌选择或正式结果。将LLM限制在文本到结构化评价的接口，是为了利用其处理复合自然语言的能力，同时保留状态转移、传播和需求结果的可复算性。生成式Agent研究支持这种自然语言Agent架构的可行性，但同时要求防止把“表现可信”误当作现实行为有效（Park等，2023，《Generative Agents: Interactive Simulacra of Human Behavior》；Adornetto等，2025，《Generative agents in agent-based modeling: Overview, validation, and emerging challenges》）。
+LLM的主要权限被限制在语义评价接口。其输出包括valence、arousal、credibility、evidence strength、topic relevance、perceived empathy、peer approval和hypocrisy perceived，并附一条用于审计的显式简短理由。LLM不直接生成信任分数，不决定是否发帖、是否购买或选择哪个品牌，也不生成正式统计结果；上述状态与行为均由冻结规则和随机种子决定。但当前实现存在一个必须披露的文本接口：当规则判定Agent发帖时，该显式评价理由会被复用为UGC正文并进入后续网络传播。因此，LLM不控制发帖事件，却会影响被传播文本的内容。该设计保留了状态转移与行为触发的可复算性，但UGC语义仍可能继承模型输出偏差。生成式Agent研究支持这种自然语言Agent架构的可行性，同时要求防止把“表现可信”误当作现实行为有效（Park等，2023，《Generative Agents: Interactive Simulacra of Human Behavior》；Adornetto等，2025，《Generative agents in agent-based modeling: Overview, validation, and emerging challenges》）。
 
 ## 3.3 实体、状态变量与尺度
 
@@ -46,7 +46,7 @@ Agent接收文本后，LLM按照冻结schema返回八项语义变量。效价取
 
 启发式—系统加工研究支持保留来源和论据线索，但本模型没有直接测量加工路径潜变量（Chaiken，1980，《Heuristic versus systematic information processing and the use of source versus message cues in persuasion》）。在线传播研究支持将唤醒与效价分开，但不意味着高唤醒内容必然在本情境中占优（Berger、Milkman，2012，《What makes online content viral?》）。所以，语义变量是具有理论依据的模型接口，不是已校准心理量表。
 
-为了控制LLM不稳定性，运行记录模型、temperature、prompt profile、请求种子、原始响应、schema状态、fallback状态和哈希。正式有效block要求schema错误、解析错误和semantic fallback均为零。selected Real-LLM robustness只能作为工程稳定性证据，不能替代现实被试效度。
+为了控制LLM不稳定性，运行记录模型、temperature、prompt profile、请求种子、原始响应、schema状态、fallback状态和哈希。显式简短理由只是可审计输出，不是隐藏思维链；它在规则触发发帖后被复用为UGC，因而还应作为后续信息输入保存和追踪。正式有效block要求schema错误、解析错误和semantic fallback均为零。selected Real-LLM robustness只能作为工程稳定性证据，不能替代现实被试效度或UGC内容效度。
 
 ## 3.6 心理状态更新
 
@@ -80,7 +80,7 @@ TPB支持Attitude、Subjective norm和PBC共同进入意向，但不规定本研
 
 $$PI_{i,t}=\sigma[\beta_0+\beta_A(Att_{i,t}-0.5)+\beta_S(SN_{i,t}-0.5)+\beta_P(PBC_i-0.5)+\beta_T(Trust_{i,t}/10-0.5)].$$
 
-当前实现冻结为β0=−0.50、βA=1.40、βS=0.80、βP=0.60、βT=1.20。Trust是漂绿危机情境下的扩展状态，并非Ajzen原始TPB的组成变量。因此，论文应称其为“TPB式购买意向桥接”，不能声称完整检验TPB。
+当前实现冻结为β0=−0.50、βA=1.40、βS=0.80、βP=0.60、βT=1.20。Trust是漂绿危机情境下的扩展状态，并非Ajzen原始TPB的组成变量。因此，论文应称其为“TPB式购买意向桥接”，不能声称完整检验TPB。这里记录的是认知Agent层的购买意向轨迹；需求层会使用同一函数结构，以微型购买者自身的PBC重新计算机会发生时的购买意向，两者不能当作两项独立心理测量。
 
 发帖意向只在观察发生时生成，并由唤醒与效价绝对值进入Logit函数。该结构反映“激活程度可能与传播相关”的理论方向，但系数仍是工程假设（Berger、Milkman，2012，《What makes online content viral?》）。
 
@@ -100,13 +100,15 @@ $$PI_{i,t}=\sigma[\beta_0+\beta_A(Att_{i,t}-0.5)+\beta_S(SN_{i,t}-0.5)+\beta_P(P
 
 ### 3.7.3 消费者UGC
 
-Agent在观察信息后依据发帖意向和冻结随机种子决定是否发布UGC，UGC再沿有向网络边传递。消费者UGC携带文本内容，接收者重新进行语义评价，而不是继承发送者的信任或态度。该设计使社会影响通过“观察到同伴文本—形成语义评价—更新主观规范或其他心理状态”的路径发生。
+Agent在观察信息后依据发帖意向和冻结随机种子决定是否发布UGC。发帖事件由规则决定；若发帖，当前实现将LLM在该次观察中生成的显式简短评价理由作为UGC正文，无理由时使用冻结回退文本。UGC随后沿有向网络边传递，接收者重新进行语义评价，而不是继承发送者的信任或态度。该设计使社会影响通过“观察到同伴文本—形成语义评价—更新主观规范或其他心理状态”的路径发生，但也形成LLM文本在网络中的内生反馈；这种反馈属于模型机制，不得表述为真实消费者自发内容生成。
 
 ## 3.8 绿色快消品重复品牌选择
 
-认知仿真完成后，需求层读取完整心理历史并进行离线重放。每个micro-buyer在T5之后具有Agent特定、条件不变的购买机会相位；默认机会间隔为7个Tick。出现机会时，以当期购买意向作为焦点品牌条件选择概率，并用冻结种子生成可复算选择。由于机会调度不读取处理标签、信任或既往购买，处理只能通过认知历史影响选择概率，而不能改变购买机会本身。
+认知仿真完成后，需求层读取完整的Trust、Attitude和Subjective norm历史并进行离线重放。每个微型购买者具有由所属Persona购买频率区间确定的首次机会相位；每次机会后，再从该Persona冻结的5—7、7—10、10—14或14—28 Tick允许区间中确定性重抽下一间隔。机会调度不读取处理标签、心理状态或既往品牌选择，因此在相同demand seed下不受处理影响。
 
-品牌选择模型的概念分解受到重复购买和品牌忠诚研究启发（Guadagni、Little，1983，《A Logit Model of Brand Choice Calibrated on Scanner Data》），但机会间隔、微型购买者数量和忠诚更新均未经扫描面板数据校准。正式P5因此使用焦点品牌预期选择份额，实际选择结果仅作描述性一致性检查。
+机会发生时，需求层先以微型购买者PBC和当期上层心理状态重新计算TPB式购买意向，再在其Logit上叠加微型购买者偏好偏移和上一期忠诚状态，形成焦点品牌条件选择概率。冻结随机数只用于生成已实现品牌选择，选择结果再通过有界EWMA更新忠诚。因此，焦点品牌选择概率不等于认知Agent层购买意向，且其后续路径会受到已经实现的历史选择影响。
+
+品牌选择模型的概念分解受到重复购买和品牌忠诚研究启发（Guadagni、Little，1983，《A Logit Model of Brand Choice Calibrated on Scanner Data》，包外引用），但机会区间、偏好偏移、微型购买者数量和忠诚更新均未经扫描面板数据校准。正式P5使用各次品类购买机会上的条件选择概率均值；该均值条件于模型生成的既往忠诚路径，因此称为“焦点品牌预期选择份额”时必须保留这一条件性。已实现选择只作描述性一致性检查。
 
 ## 3.9 过程调度与共同历史
 

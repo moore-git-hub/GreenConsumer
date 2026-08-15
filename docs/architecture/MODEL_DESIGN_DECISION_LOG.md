@@ -556,9 +556,23 @@ formal inference=0。
 
 ---
 
+## DR-20260816-29：第三、四章代码接口与Estimand识别边界审计
+
+**状态：Chapter 3–4 interface audit available; code-text mismatches corrected; no scientific redesign**
+
+第三章规则说明和第四章P1—P5定义经由canonical code逐项复核后，发现三项需要纠正的文字—代码偏差。第一，LLM不决定是否发帖，但当确定性规则触发发帖时，其schema约束的显式评价理由会被复用为UGC正文并进入网络传播。因此，“LLM不执行行为决策”不能被简化成“LLM文字绝不进入UGC”。第二，需求层没有统一的7 Tick默认购买间隔，而是按Persona频率集合确定性重抽renewal interval。第三，认知层purchase intention不是P5的micro-buyer条件选择概率；后者会用micro-buyer PBC重新计算意向，并叠加偏好项和既往实现选择更新的loyalty。
+
+新增`CHAPTER_3_4_INTERFACE_AUDIT_V331.md`，冻结理论—规则—estimand—允许声明—禁止外推的对应关系。P2只比较两套复合文本框架；P3只识别T6—T9中Immediate已启动而Delayed尚未启动的早期处理启动对比；P4只识别冻结投递窗口中的企业直接触达；P5只解释为购买机会条件下、带偏好和忠诚路径的expected focal-brand choice probability。P1、P2、P5的等权cell平均是预设分析权重，不代表现实企业策略组合。
+
+上述边界已同步至第一至第四章、论文基础包、ODD＋D、跨章审计、model-to-code traceability及两张概念SVG。旧PNG仍含修正前文字，已标记为非权威导出物，待Windows中文字体环境重绘；这不需要重新运行模型。
+
+本决策没有修改模型、处理矩阵、estimand、参数、prompt、seed或执行协议，也没有新增文献。新增GABM run=0、provider call=0、有效Pilot observation=0、formal inference=0。Pilot和正式独立blocks保持暂缓而未取消。
+
+---
+
 ## 后续预登记队列
 
-- 审校第三、四章的理论—模型—estimand接口，特别检查P2复合刺激、P3时机窗口和P4直接触达的识别边界；
+- 将第三、四章冻结的estimand限定语同步进入第五章空表、图注、结果句式和讨论防火墙；
 - 整理现有工程表图，但不得冒充正式推断；
 - 论文基础章节稳定后重新冻结Pilot费用、时间、clean SHA和执行授权；
 - Pilot后按预设OC规则判断N=10可行性，再生成正式seed ledger。

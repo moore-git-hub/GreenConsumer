@@ -13,14 +13,15 @@
 - `thesis/TITLE_RQ_CONTRIBUTION_AUDIT_V331.md` — 题目、研究问题、现有证据与贡献声明的一致性门禁
 - `thesis/CROSS_CHAPTER_CONSISTENCY_AUDIT_V331.md` — 第一至第四章术语、RQ、时间点、estimand与证据身份的统一口径
 - `thesis/CHAPTER_1_2_EDITORIAL_AUDIT_V331.md` — 第一、二章结构性精修、已修复问题与剩余审稿风险
+- `thesis/CHAPTER_3_4_INTERFACE_AUDIT_V331.md` — 第三、四章理论—规则—estimand—可声明结论接口审计
 - `thesis/CHAPTER_2_LITERATURE_AND_THEORY_DRAFT_V331.md` — 第二章文献综述与理论基础正文底稿，含作者—年份—题名引用
 - `thesis/CHAPTER_3_MODEL_AND_METHOD_DRAFT_V331.md` — 第三章GABM模型构建正文底稿，区分文献依据、研究设计与工程假设
 - `thesis/CHAPTER_4_EXPERIMENT_AND_VALIDATION_DRAFT_V331.md` — 第四章实验设计与模型验证正文底稿，区分工程证据、Pilot计划和正式推断
 - `thesis/APPENDIX_ODD_D_MODEL_DESCRIPTION_V331.md` — v3.3.1 ODD＋D模型复现说明和决策子模型边界
 - `thesis/CHAPTER_5_RESULTS_REPORTING_TEMPLATE_V331.md` — 第五章正式结果空表、空图、诊断字段和受约束讨论模板
 - `thesis/CITATION_CLAIM_AUDIT_V331.md` — 关键主张、引用来源、允许用途与禁止外推审计表
-- `thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg` — 语义—心理—网络—行为机制总图（另有PNG）
-- `thesis/figures/FIG-ROUTE-01_v331_thesis_technical_route.svg` — 论文研究与技术路线图（另有PNG）
+- `thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg` — 语义—心理—网络—行为机制总图；当前修订以SVG为准，PNG待中文字体环境重导出
+- `thesis/figures/FIG-ROUTE-01_v331_thesis_technical_route.svg` — 论文研究与技术路线图；当前修订以SVG为准，PNG待中文字体环境重导出
 
 ## 正式实验复现
 - `reproducibility/TASK005_V32_FORMAL_CLOSEOUT.md`

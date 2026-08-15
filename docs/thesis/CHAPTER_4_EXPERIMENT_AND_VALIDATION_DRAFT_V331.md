@@ -2,7 +2,7 @@
 
 ## 4.1 本章任务与证据边界
 
-本章说明处理设计、estimand、推断单位、Pilot方差方案、正式分析规则以及已经完成的模型验证。需要首先划定证据边界：实现测试回答“代码是否按设计运行”；工程稳健性回答“模型内方向或结构是否依赖某一预设工程条件”；Pilot只回答“在预算上限内是否可能形成可接受的正式重复设计”；正式replication blocks才用于确认性推断。四类证据不能相互替代。
+本章说明处理设计、estimand、推断单位、Pilot方差方案、正式分析规则以及已经完成的模型验证。需要首先划定五层证据边界：实现验证回答“代码是否按设计运行”；工程稳健性回答“模型内方向或结构是否依赖某一预设工程条件”；单次Real-LLM描述只展示固定工程run中的状态与异质性；Pilot只回答“在预算上限内是否可能形成可接受的正式重复设计”；正式replication blocks才用于确认性推断。五层证据不能相互替代。
 
 因此，本章可以报告已经完成的实现检查和工程稳健性，但不能报告v3.3.1正式处理效应。P001—P006尚未执行，正式N尚未获得方差证据支持，P1、P2和P5的p值、置信区间及Holm结论均不存在。将工程PASS写成现实消费者效应，会形成直接的证据—结论不匹配。
 
@@ -24,7 +24,9 @@
 
 每个完整block内九个条件共享Persona面板、危机文本、危机时点、网络拓扑及预处理历史。处理前T1—T4和危机T5必须保持相同；处理差异只能在预设澄清时点后出现。该设计能够识别冻结模型内部的处理对比，但仍依赖以下不可由仿真自身验证的前提：文本框架具有足够构念区分、网络节点选择规则对应所称渠道差异、心理更新函数没有遗漏决定性反向机制，以及共同历史重放没有引入条件特异误差。
 
-内容因素尤其需要收紧解释。Rational-evidence与Emotional-empathy同时改变多个语义特征，故P2只识别复合文本策略差异，不识别credibility、evidence strength、valence、arousal或perceived empathy的独立因果效应。若正文把P2拆成单一语义机制，将超过设计的识别能力。
+内容因素尤其需要收紧解释。Rational-evidence与Emotional-empathy同时改变多个语义特征，故P2只识别复合文本策略差异，不识别credibility、evidence strength、valence、arousal或perceived empathy的独立因果效应。若正文把P2拆成单一语义机制，将超过设计的识别能力。语义操纵检查只能说明两套文本在模型中产生了哪些评价差异，不能把这些事后实现差异升级为独立中介效应。
+
+时机和渠道也有各自的识别限制。T6—T9期间Delayed尚未接受澄清，因此P3本质上是“即时启动相对尚未启动”的早期处理起点对比，而不是两个均已实施策略之间的完整时机效应，更不能估计连续时间响应函数。P4则只比较给定拓扑、K=3、公共暴露和一跳投递规则下的直接企业触达；它不识别UGC级联、说服效果或现实平台投放效率。
 
 ## 4.3 Estimand与分析角色
 
@@ -40,21 +42,23 @@ $$AUC_{c,a:b}=\frac{1}{b-a}\sum_{t=a}^{b-1}\frac{\bar T_{c,t}+\bar T_{c,t+1}}{2}
 
 确认性family固定为P1、P2和P5：
 
-1. P1为八个澄清单元T6—T35 Trust AUC均值减去共同控制组AUC；
-2. P2为四个Rational单元AUC均值减去四个Empathy单元AUC均值；
-3. P5为无外部支持（support absent）条件下，八个澄清单元T6—T35焦点品牌预期选择份额均值减去共同控制组对应值。
+1. P1为八个澄清单元T6—T35 Trust AUC等权均值减去共同控制组AUC；
+2. P2为四个Rational单元AUC等权均值减去四个Empathy单元AUC等权均值；
+3. P5为无外部支持（support absent）条件下，八个澄清单元T6—T35焦点品牌预期选择份额等权均值减去共同控制组对应值。
 
-P5使用每次真实购买机会上的模型概率均值，而不是已实现选择（realized choices）。这样可以降低有限微型购买者产生的离散化噪声，同时仍不能把概率均值解释为现实购买率。M=25只是需求层数值分辨率。
+P1和P5是对八种策略单元等权后的模型内总体澄清对比，不对应现实企业策略组合的经验权重。P2则是对渠道及时机等权边际化后的复合内容对比；若存在内容×渠道或内容×时机异质性，P2可能掩盖条件差异，而当前协议没有冻结确认性交互estimand。
+
+P5使用每次品类购买机会上的模型条件选择概率均值，而不是已实现选择（realized choices）。该概率叠加微型购买者偏好和既往忠诚，忠诚又由此前已实现选择更新，因此P5条件于模型生成的历史路径。它不是现实购买率、销量或无条件市场份额；M=25只是需求层数值分辨率。
 
 ### 4.3.3 探索性与机制性estimand
 
-P3比较Immediate与Delayed在T6—T9的Trust AUC，用于刻画延迟澄清尚未启动的早期窗口。P4比较Hub与Random在企业投递窗口t0至t0+lag内的直接企业触达比例。P4不包含下游UGC说服或购买，故Hub提高reach不能直接推出Trust或repeat choice提高。P3和P4不进入确认性Holm family，也不使用显著性语言。
+P3比较Immediate与Delayed在T6—T9的Trust AUC，用于刻画即时澄清已经启动而延迟澄清尚未启动时的早期处理起点差异。它不回答T10之后两种策略的完整恢复差异，也不能直接写成“延迟造成的损失”。P4比较Hub与Random在各自企业投递窗口t0至t0+lag内的直接企业触达比例。P4不包含下游UGC说服或购买，故Hub提高reach不能直接推出Trust或repeat choice提高。P3和P4不进入确认性Holm family，也不使用显著性语言。
 
 ## 4.4 Replication block、随机来源与推断单位
 
 一个完整replication block是在一套预先登记的simulation/network seed、requested LLM seed及demand seed下完成全部九个认知条件与support-absent需求输出的不可拆分单位。每个block先计算P1—P5，再在block之间进行正式分析。
 
-以下对象均不是独立正式样本：20个认知Agent、Agent×Tick记录、LLM provider calls、每个Agent下的25个微型购买者以及同一认知历史上的多个需求重放。把这些行当成独立观测会产生伪重复，并系统性低估不确定性。
+以下对象均不是独立正式样本：20个认知Agent、Agent×Tick记录、LLM provider calls、每个Agent下的25个微型购买者以及同一认知历史上的多个需求重放。把这些行当成独立观测会破坏独立性假设，使所得标准误缺少相应的抽样依据。
 
 模型包含三类主要随机来源：simulation/network随机性、requested-seed与provider/runtime共同形成的LLM波动，以及离线demand随机性。当前runner尚未完全拆分simulation seed与network seed，因此Pilot只能估计联合simulation/network分量，不能声称独立识别网络方差。
 
@@ -118,8 +122,8 @@ ABM校准方法对模型规模、经验目标、计算预算和识别条件敏�
 |---|---|---|---|
 | Horizon | T30/T35/T40均PASS；prefix invariance failure=0 | 时间范围传递与过去轨迹不受未来horizon污染；T35继续作为预设终点 | 已证明三个horizon效应量稳定 |
 | Trust Stage A | 18个预设OAT/边界profiles；不变量全PASS | 局部/边界范围内主要描述性方向未翻转；识别高敏感参数 | 参数已经验校准 |
-| Trust Morris | 7参数、10 trajectories、80个points；240/240实现不变量PASS | 七维engineering envelope内方向稳定；P2高度依赖empathy repair pathway，P3高度依赖event adjustment | 80个points是现实样本；参数排序是现实因果贡献 |
-| Clarification | p=.30/.55/.80×lag=0/1/2共9 profiles；84/84不变量PASS | paid reach speed影响早期timing机制；P4依赖触达结构 | p=.55和lag=1是现实最优值 |
+| Trust Morris | 7参数、10 trajectories、80个points；240/240实现不变量PASS | 七维engineering envelope内方向稳定；P2对empathy repair pathway敏感，P3早期起点对比对event adjustment敏感 | 80个points是现实样本；参数排序是现实因果贡献 |
+| Clarification | p=.30/.55/.80×lag=0/1/2共9 profiles；84/84不变量PASS | paid reach speed改变P3早期起点对比；P4依赖触达结构 | p=.55和lag=1是现实最优值 |
 | Topology | BA、WS、Community各5张网络；76/76不变量PASS | P1/P2/P3/P5方向在15张预设网络中稳定；P4具有拓扑边界 | BA代表真实平台；15张网络支持总体推断 |
 | Orientation | 3 topology×5 seeds×3等度边方向规则，共45 profiles；241/241检查PASS | BA与Community的P4较稳定；WS中P4可降至零或反向，显示方向定义边界 | 任一方向规则是现实真值 |
 | Network size/K | N=20/40/80、fixed K与15% proportional allocation，共25 profiles；109/109检查PASS | fixed K随规模扩大产生覆盖稀释；结果依赖K/N | 15%为最优货币预算；N=80代表人口 |
@@ -130,7 +134,7 @@ ABM校准方法对模型规模、经验目标、计算预算和识别条件敏�
 
 ## 4.10 当前未解决的验证缺口
 
-第一，语义评价缺少与现实消费者编码或量表的criterion validation。LLM能够在部分受控实验中复现人类模式，也可能产生系统性偏差（Aher、Arriaga、Kalai，2023，《Using large language models to simulate multiple humans and replicate human subject studies》）。三次provider重复和两种版式扰动不足以解决这一问题。
+第一，语义评价缺少与现实消费者编码或量表的criterion validation。LLM能够在部分受控实验中复现人类模式，也可能产生系统性偏差（Aher、Arriaga、Kalai，2023，《Using large language models to simulate multiple humans and replicate human subject studies》）。三次provider重复和两种版式扰动不足以解决这一问题。进一步地，当前实现会在规则判定发帖后，将LLM显式评价理由复用为UGC正文，形成模型生成文本的网络反馈；该接口需要单独的内容审计，不能仅凭schema合规证明其具有现实UGC效度。
 
 第二，Persona面板用于机制覆盖，没有人口权重；网络是受控拓扑，没有真实follower/followee或信息流方向数据；需求层没有植物奶扫描面板校准。这些缺口限制外部效度，而不是靠增加Fake-LLM运行数量可以修复。
 

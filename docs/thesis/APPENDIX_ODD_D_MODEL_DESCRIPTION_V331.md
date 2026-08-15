@@ -36,7 +36,7 @@
 2. 生成或读取固定社会网络，并为九条件保持相同topology hash；
 3. 按固定顺序运行九个实验条件；
 4. 每个Tick投递到达信息；
-5. 仅对Agent实际观察到的文本执行schema约束的LLM语义评价；
+5. 仅对Agent实际观察到的文本执行schema约束的LLM语义评价；规则触发发帖后，显式评价理由作为UGC正文；
 6. 更新危机/修复记忆、Trust和Attitude；
 7. 根据实际同伴观察更新Subjective norm；
 8. 计算purchase intention和posting intention；
@@ -119,7 +119,7 @@ Persona面板通过确定性规则覆盖green orientation、category purchase fr
 
 #### A.4.3.1 Semantic appraisal
 
-当且仅当Agent观察到文本时，LLM返回valence、arousal、credibility、evidence strength、topic relevance、perceived empathy、peer approval、hypocrisy perceived及一条显式审计理由。输出必须满足schema和边界；fallback或解析错误会使正式block失效。LLM不直接决定行为。
+当且仅当Agent观察到文本时，LLM返回valence、arousal、credibility、evidence strength、topic relevance、perceived empathy、peer approval、hypocrisy perceived及一条显式审计理由。输出必须满足schema和边界；fallback或解析错误会使正式block失效。LLM不直接决定行为；若规则随后触发发帖，显式审计理由会被复用为UGC正文并由接收者重新评价。
 
 #### A.4.3.2 Trust and memory
 

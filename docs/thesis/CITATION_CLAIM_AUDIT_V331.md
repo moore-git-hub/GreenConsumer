@@ -47,7 +47,7 @@
 - 一跳放大概率0.55、投递滞后1 Tick；
 - Trust记忆保留率、危机/修复权重、饱和与调整率；
 - TPB式购买意向的具体Logit系数；
-- 默认7 Tick购买机会间隔；
+- Persona购买频率集合、首次机会相位与后续renewal interval重抽规则；
 - LLM模型、temperature和prompt profile；
 - 预先设定的MDE；
 - N_max=10预算上限。

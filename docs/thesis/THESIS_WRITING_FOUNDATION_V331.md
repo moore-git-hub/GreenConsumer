@@ -98,7 +98,7 @@ BA网络在本研究中是用于制造连接异质性和Hub结构的受控基准
 
 每个完整replication block在同一组simulation/network、requested LLM和demand seeds下运行九个条件。T1–T4构成共同历史，T5发生虚构绿色信任危机，Immediate条件在T6澄清，Delayed条件在T10澄清，T35为基线endpoint。每个Tick依次完成信息投递、LLM semantic appraisal、确定性心理状态更新、UGC发布与网络传播记录；认知历史完成后再执行离线renewal-demand replay。
 
-LLM边界必须在方法章节和图中同时说明：LLM不直接决定购买、品牌选择或发帖；购买意向、发帖概率、状态转移和需求结果由版本化确定性函数与冻结随机种子生成。显式appraisal中的一句reasoning仅是审计输出，不是隐性chain-of-thought，也不能作为现实消费者质性材料。
+LLM边界必须在方法章节和图中同时说明：LLM不直接决定购买、品牌选择或是否发帖；购买意向、发帖概率、状态转移和需求结果由版本化函数与冻结随机种子生成。显式appraisal中的一句reasoning不是隐性chain-of-thought，也不能作为现实消费者质性材料；但规则触发发帖后，该reasoning会被复用为UGC正文，因此LLM会影响被传播文本而不控制发帖事件。
 
 ## 6. 实验与推断结构
 
@@ -150,7 +150,7 @@ Pilot预设P001–P006六个cognitive blocks并对每个历史离线交叉三个
 
 ### 9.1 研究方法定位
 
-本研究采用生成式智能体建模方法，在传统基于规则的Agent状态更新与社会网络交互框架中嵌入大语言模型语义评价模块。大语言模型只负责将Agent实际接触的自然语言信息转换为结构化语义指标，不直接决定购买、品牌选择或信息发布。语义评价随后进入版本化的心理状态转移、TPB式购买意向和快消品重复选择机制。该混合设计旨在利用大语言模型处理复合自然语言刺激的能力，同时保留行为状态、传播过程和结果生成的可审计性。
+本研究采用生成式智能体建模方法，在传统基于规则的Agent状态更新与社会网络交互框架中嵌入大语言模型语义评价模块。大语言模型将Agent实际接触的自然语言信息转换为结构化语义指标及显式简短理由，不直接决定购买、品牌选择或是否发布；规则触发发帖后，理由被复用为UGC正文。语义评价随后进入版本化的心理状态转移、TPB式购买意向和快消品重复选择机制。该混合设计旨在利用大语言模型处理复合自然语言刺激的能力，同时保留行为状态、传播事件和结果生成的可审计性。
 
 ### 9.2 研究情境
 
@@ -176,8 +176,8 @@ Pilot预设P001–P006六个cognitive blocks并对每个历史离线交叉三个
 
 | 图号 | 文件 | 论文作用 | 状态 |
 |---|---|---|---|
-| FIG-MECH-01 | `figures/FIG-MECH-01_v331_mechanism_architecture.svg/.png` | 语义—心理—网络—行为机制与LLM边界 | 已生成，需按学校最终版式编号 |
-| FIG-ROUTE-01 | `figures/FIG-ROUTE-01_v331_thesis_technical_route.svg/.png` | 从理论问题、模型构建、验证到正式推断的技术路线 | 已生成，Pilot与正式阶段明确标为未执行 |
+| FIG-MECH-01 | `figures/FIG-MECH-01_v331_mechanism_architecture.svg` | 语义—心理—网络—行为机制与LLM边界 | SVG已按LLM理由可复用为UGC的代码事实修正；PNG待中文字体环境重导出 |
+| FIG-ROUTE-01 | `figures/FIG-ROUTE-01_v331_thesis_technical_route.svg` | 从理论问题、模型构建、验证到正式推断的技术路线 | SVG为当前版本；PNG待重导出，Pilot与正式阶段仍为未执行 |
 | FIG-COG-01–03 | retained run的cognition figures | 单次工程run的有限描述性机制证据 | 已准入但不得作正式推断 |
 
 旧图中的KOL/桥接正式因素、LLM直接生成购买决策、TPB作为独立输入、T30 endpoint和泛化的“最优ROI”表达均已删除。旧图只保留为设计演变材料，不再直接进入论文。

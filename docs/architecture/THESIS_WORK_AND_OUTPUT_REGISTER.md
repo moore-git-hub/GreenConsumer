@@ -23,6 +23,9 @@ Status vocabulary:
 | W05 | Citation audit | Claim–citation–permitted scope–prohibited extrapolation map | `docs/thesis/CITATION_CLAIM_AUDIT_V331.md` | AVAILABLE | Mandatory gate for later revisions and new citations |
 | W06 | Thesis chapter | Chapter 4 experiment design and validation draft without formal results | `docs/thesis/CHAPTER_4_EXPERIMENT_AND_VALIDATION_DRAFT_V331.md` | AVAILABLE | Treatment, estimand, Pilot and engineering validation prose; no formal effect claim |
 | W07 | Reproducibility appendix | v3.3.1 ODD＋D model and human-decision description | `docs/thesis/APPENDIX_ODD_D_MODEL_DESCRIPTION_V331.md` | AVAILABLE | Reproducibility specification; not validity proof |
+| W08 | Thesis chapter | Chapter 5 formal-results reporting template with empty tables, figures and guarded prose | `docs/thesis/CHAPTER_5_RESULTS_REPORTING_TEMPLATE_V331.md` | AVAILABLE | Structure only; no Pilot/formal value, direction or significance exists |
+| W09 | Analysis protocol | Pre-Pilot N=10 diagnostics, joint LOBO and exact sign-flip sensitivity | `SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` | AVAILABLE | Frozen analysis interface; does not prove N=10 feasible and does not replace primary analysis |
+| W10 | Design worksheet | P1/P2/P5 threshold provenance and evidence-gap worksheet | `DESIGN_THRESHOLD_JUSTIFICATION_WORKSHEET_V331.md` | AVAILABLE | Thresholds remain design values; managerial justification unresolved |
 | M01 | Model design | 2×2×2 + common control conceptual design | `FORMAL_EXPERIMENT_PROTOCOL.md`, `experiment_config.py` | AVAILABLE | Methods: treatment definition |
 | M02 | Model design | Semantic→psychological→network→behavior architecture | `MODEL_TO_CODE_TRACEABILITY_V331.md`, `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg` | AVAILABLE | Methods: implemented architecture; figure must retain the LLM/non-LLM boundary |
 | M03 | Model design | v3.3 Trust dynamics | `mechanism_v33.py`, Decision Log DR-01/05/06 | AVAILABLE | Methods with engineering-assumption boundary |
@@ -34,6 +37,7 @@ Status vocabulary:
 | S04 | System construction | Fixed-network state/flow animation | `greenconsumer_v33/network_animation.py` | AVAILABLE | System demonstration with fixed-topology caveat |
 | E01 | Experiment design | Primary/secondary estimands and analysis family | `FORMAL_EXPERIMENT_PROTOCOL.md` | AVAILABLE | Formal design section |
 | E02 | Experiment design | Pilot seed and replication design with pre-result `N_max=10` | Pilot protocol/contract/code, `PILOT_EXECUTION_CONDITIONS.md` | PLANNED_NOT_EXECUTED | Methods as preregistered plan only; N=10 is not yet justified as formal N |
+| E04 | Experiment design | N=10 small-sample diagnostic and sensitivity rules | `SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` | AVAILABLE | Apply only if OC gate accepts N=10; results cannot drive method switching |
 | E03 | Experiment design | Formal N, seed ledger and frozen analysis SHA | not yet created | NOT_AUTHORIZED | No thesis value may be reported yet |
 | R01 | Simulation results | v3.3.1 engineering robustness results | `EXPERIMENT_EVIDENCE_REGISTER.md` and committed result records | AVAILABLE | Robustness/verification appendix with engineering label |
 | R02 | Simulation results | Selected Real-LLM robustness | committed Real-LLM result record | AVAILABLE | Engineering robustness only |
@@ -64,6 +68,7 @@ Artifact IDs remain stable even if final thesis table/figure numbering changes.
 | FIG-ROUTE-01 | Thesis research and technical route | `docs/thesis/figures/FIG-ROUTE-01_v331_thesis_technical_route.svg/.png` | completed/partial/pending stages and execution gates | AVAILABLE — progress-aware method figure |
 | TAB-PILOT-01 | Pilot variance components | future Pilot output | replication-block planning variance | PLANNED_NOT_EXECUTED |
 | TAB-FORMAL-01 | Confirmatory P1/P2/P5 | future formal analysis | replication-block inference | NOT_AUTHORIZED |
+| TAB-FORMAL-02 | Confirmatory diagnostics and sensitivity | future formal analysis following `SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` | all block values, exact sign-flip family and joint LOBO | TEMPLATE_AVAILABLE; DATA_NOT_AUTHORIZED |
 
 “Generator available” does not mean a thesis-ready artifact has been produced. A result artifact becomes available only after its source run is retained, source hashes are recorded and the rendered output is visually inspected.
 
@@ -140,3 +145,11 @@ Created the no-formal-results portion of Chapter 4 and a code-aligned ODD＋D ap
 The ODD＋D appendix records purpose, entities, scales, scheduling, design concepts, initialization, inputs, submodels and human-decision assumptions, and maps each section to canonical code/output files. It explicitly states that Agents do not optimize a long-run objective, the network does not rewire, LLM appraisal is not human measurement, and the model has no empirical population/network calibration.
 
 Three additional method references—Holm multiple testing, Morris screening and ODD＋D—were verified and added to the citation audit. Two unresolved pre-execution risks are now visible in the thesis package: N=10 small-sample diagnostic rules remain to be frozen, and the three design thresholds still lack a real managerial-effect justification. This writing package changed no scientific mechanism, parameter, treatment, estimand, prompt, seed or execution contract. New GABM run=0, provider call=0, Pilot observation=0, formal inference=0.
+
+## 10. Work log entry — 2026-08-15: Chapter 5 template and pre-Pilot analysis interfaces
+
+Created a Chapter 5 reporting template that reserves separate positions for block flow, P1/P2/P5 confirmation, P3/P4 description, trajectories, realized semantic manipulation, single-run cognition evidence and engineering robustness. All formal cells remain empty placeholders; no direction, p-value, strategy winner or formal finding was generated.
+
+Froze the N=10 diagnostic interface before Pilot results. The primary two-sided one-sample t-test and Holm family remain unchanged. Each estimand must show all ten block values, distribution and influence diagnostics, ten joint leave-one-block-out analyses and a separately Holm-adjusted exact sign-flip sensitivity family based on all 1024 sign assignments. Valid extreme blocks cannot be deleted; disagreement is reported as fragility rather than resolved by choosing the favorable method. Ernst (2004) was verified from the official journal page and added to the source and claim registers.
+
+Created a threshold worksheet showing that P1/P2=0.15 Trust points and P5=0.05 expected-choice share are inherited pre-result design values, not established managerial-effect thresholds. The worksheet defines acceptable enterprise, empirical and measurement evidence and keeps the justification status unresolved. This package changed no mechanism, treatment, estimand, main threshold, prompt or seed and generated GABM run=0, provider call=0, Pilot observation=0 and formal inference=0.

@@ -82,7 +82,9 @@ P1、P2和P5的预设阈值分别为0.15 Trust points、0.15 Trust points和0.05
 
 用户已在查看Pilot结果前冻结正式replication-block预算上限N_max=10。由于协议要求正式N不低于10，当前唯一预算候选是N=10。只有当保守planning SD下P1、P2和P5在各自阈值处的边际检出概率均不低于0.80时，才能发布协议1.1并冻结正式N=10；否则必须记录DESIGN_NOT_FEASIBLE_WITHIN_CAP。
 
-N_max=10不是已证明的正式样本量。更严厉的审稿风险在于：即使operating-characteristic计算通过，N=10下block-level t统计量仍对异常block和分布偏离敏感。当前协议选择双侧one-sample t-test作为主分析，这一选择需要在正式执行前完成代码级诊断规则；事后看到结果再选择稳健方法是不允许的。
+N_max=10不是已证明的正式样本量。更严厉的审稿风险在于：即使operating-characteristic计算通过，N=10下block-level t统计量仍可能对异常block和分布偏离敏感。为避免看到结果后选择方法，本研究已在Pilot前冻结小样本诊断协议：主分析仍为双侧one-sample t-test与Holm校正；同时完整展示10个block值、Q-Q图和MAD影响提示，执行10次联合leave-one-block-out，并对每项estimand完整枚举2^10=1024种符号组合形成exact sign-flip敏感性family。置换推断依赖零假设下相应的数据变换不变性，sign-flip在此具体依赖block contrasts关于零的符号可交换/对称条件，因此其结果不被包装为无条件优于t-test（Ernst，2004，《Permutation Methods: A Basis for Exact Inference》）。
+
+诊断只用于披露脆弱性。通过validity gate的极端block不得删除，Shapiro–Wilk不作为方法切换门禁，LOBO的N=9结果不得替代N=10主分析。若主分析拒绝而exact sign-flip或LOBO不一致，结果仍报告主分析决定，但必须标记为`PRIMARY_SUPPORTED_BUT_DIAGNOSTICALLY_FRAGILE`。
 
 ### 4.6.3 多重检验
 
@@ -130,7 +132,9 @@ ABM校准方法对模型规模、经验目标、计算预算和识别条件敏�
 
 第二，Persona面板用于机制覆盖，没有人口权重；网络是受控拓扑，没有真实follower/followee或信息流方向数据；需求层没有植物奶扫描面板校准。这些缺口限制外部效度，而不是靠增加Fake-LLM运行数量可以修复。
 
-第三，N_max=10可能使正式设计在预设阈值下不可行。若Pilot后出现该结论，它是研究设计的真实失败模式，不应通过提高效应、减少family、放宽power或重新定义MDE来消除。
+第三，N_max=10可能使正式设计在预设阈值下不可行。若Pilot后出现该结论，它是研究设计的真实失败模式，不应通过提高效应、减少family、放宽power或重新定义MDE来消除。N=10的诊断与敏感性规则虽已在结果前冻结，但不能补偿检出概率不足。
+
+第四，P1/P2/P5的0.15/0.15/0.05仍缺少企业决策、可比经验效应或测量分辨率依据。目前只能称为预先设定的设计阈值。即使正式均值达到阈值，也不能自动写为“具有管理意义”；相关依据必须在`DESIGN_THRESHOLD_JUSTIFICATION_WORKSHEET_V331.md`中补齐并经决策日志准入。
 
 ## 4.11 本章小结
 

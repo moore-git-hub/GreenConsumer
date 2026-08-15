@@ -85,7 +85,7 @@
 
 ### 5.1 已核验的包外补充文献
 
-以下各项通过出版社、期刊官方页面或原文书目信息核验，用于补足重复品牌选择、节点投放、复杂传染、多重检验、全局筛查和ODD＋D接口；均在引用审计表中标记为“包外引用”。
+以下各项通过出版社、期刊官方页面或原文书目信息核验，用于补足重复品牌选择、节点投放、复杂传染、多重检验、置换推断、全局筛查和ODD＋D接口；均在引用审计表中标记为“包外引用”。
 
 | 主题 | 核验书目 | 可支持的命题 | 不可支持的命题 |
 |---|---|---|---|
@@ -94,6 +94,7 @@
 | 影响最大化 | Kempe, D., Kleinberg, J., & Tardos, É. (2003). Maximizing the Spread of Influence through a Social Network. *KDD 2003* | 有限种子选择与潜在传播范围 | Hub自动提高说服、信任或购买 |
 | 复杂传染 | Centola, D., & Macy, M. (2007). Complex Contagions and the Weakness of Long Ties. *American Journal of Sociology*, 113(3), 702–734 | 多源确认与网络桥宽度的情境依赖 | 本研究已经实现阈值型复杂传染 |
 | 多重检验 | Holm, S. (1979). A Simple Sequentially Rejective Multiple Test Procedure. *Scandinavian Journal of Statistics*, 6, 65–70 | 以step-down程序控制确认性family的FWER | N=10下检验必然具有足够power或稳健性 |
+| 置换推断 | Ernst, M. D. (2004). Permutation Methods: A Basis for Exact Inference. *Statistical Science*, 19(4), 676–685. DOI: `10.1214/088342304000000396` | 置换方法通过零假设允许的数据变换构造参考分布；精确性依赖相应不变性条件 | sign-flip在任意分布下无条件有效；敏感性结果可替代预设主分析 |
 | 全局筛查 | Morris, M. D. (1991). Factorial Sampling Plans for Preliminary Computational Experiments. *Technometrics*, 33(2), 161–174. DOI: `10.1080/00401706.1991.10484804` | 随机化OAT trajectories与elementary effects筛查 | Morris直接分离非线性与具体交互；参数区间是经验分布 |
 | ODD＋D | Müller, B., Bohn, F., Dreßler, G., Groeneveld, J., Klassert, C., Martin, R., Schlüter, M., Schulze, J., Weise, H., & Schwarz, N. (2013). Describing human decisions in agent-based models: ODD + D, an extension of the ODD protocol. *Environmental Modelling & Software*, 48, 37–48. DOI: `10.1016/j.envsoft.2013.06.003` | 标准化说明人类Agent的决策主体、目标、信息、适应与理论/经验基础 | 完成ODD＋D即获得行为有效性 |
 

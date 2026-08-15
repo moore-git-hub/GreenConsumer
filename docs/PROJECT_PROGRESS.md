@@ -55,7 +55,7 @@ Rational-evidence / Emotional-empathy
 | 19 | 固定拓扑网络状态/传播动画 | 已完成 | `greenconsumer_v33/network_animation.py` | 论文中不得称拓扑演化 |
 | 20 | Agent cognition evolution论文输出 | 已完成 | 预选Real-LLM run的schema 1.2真实产物已完成provenance、9项输出hash、完整面板、matched-Control算术与视觉审计；用户确认clean commit上的认知直接测试和Windows全量测试均通过 | 仅作为单次工程run的有限描述性证据；不把Agents当重复块、不推断隐性CoT、不作策略排名或总体推断 |
 | 21 | 语义→心理→网络→行为机制总图 | 已完成 | `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg/.png`；与model-to-code traceability逐层对齐 | 论文排版时只调整编号和尺寸，不改变机制 |
-| 22 | 论文正文与文献证据映射 | 部分完成 | 基础包、来源台账、第二至第四章正文底稿、ODD＋D附录及`CITATION_CLAIM_AUDIT_V331.md`已建立；七包57份/53份唯一PDF、5篇同专业硕士论文、4项中文核心文献和7项包外补充文献已登记 | 建立第五章空表图/报告模板并补齐执行前方法接口；正式结果和第六章仍待后续阶段 |
+| 22 | 论文正文与文献证据映射 | 部分完成 | 基础包、来源台账、第二至第四章正文底稿、ODD＋D附录、第五章正式结果模板、N=10诊断协议、阈值工作表及引用审计已建立；七包57份/53份唯一PDF、5篇同专业硕士论文、4项中文核心文献和8项包外补充文献已登记 | 编写第一章并实现零结果正式分析合同；正式结果和第六章仍待后续阶段 |
 | 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、tests | 用户冻结预算并另行授权后才可执行Pilot |
 | 24 | 实验结果证据台账与版本分层 | 已完成 | `EXPERIMENT_EVIDENCE_REGISTER.md`；结果记录commits；v3.2 archive | 正式写作时按已建立的table/figure registry持续登记 |
 | 25 | 论文工作—证据—表图追踪体系 | 已完成 | `MODEL_TO_CODE_TRACEABILITY_V331.md`、`THESIS_WORK_AND_OUTPUT_REGISTER.md` | 任何新run或正文表图进入论文时同步更新 |
@@ -106,7 +106,7 @@ Rational-evidence / Emotional-empathy
 4. 不把工程参数写成文献估计值；
 5. 不用一般性文献替代模型具体识别条件。
 
-第二至第四章正文底稿及ODD＋D附录已在对应句段使用“作者、年份、题名”引用，并通过`docs/thesis/CITATION_CLAIM_AUDIT_V331.md`记录每项来源的允许用途和禁止外推。论文正文事项仍保持“部分完成”，因为第五章正式结果、第六章、设计阈值依据和N=10小样本诊断规则尚未完成；不以已有底稿替代未产生的正式证据。
+第二至第四章正文底稿、ODD＋D附录和第五章报告模板已在对应句段使用“作者、年份、题名”引用，并通过`docs/thesis/CITATION_CLAIM_AUDIT_V331.md`记录每项来源的允许用途和禁止外推。N=10小样本诊断规则已在Pilot前冻结，设计阈值的依据工作表已建立但管理意义仍未解决。论文正文事项保持“部分完成”，因为第一章、第五章正式结果和第六章仍未完成；不以已有底稿替代未产生的正式证据。
 
 ## 6. 下一门槛
 

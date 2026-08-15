@@ -438,6 +438,20 @@ provider-call ceiling、时间预算、clean execution SHA和真实Pilot授权�
 
 ---
 
+## DR-20260815-24：第五章正式结果模板、N=10诊断冻结与设计阈值边界
+
+**状态：reporting template available; small-N diagnostics frozen pre-Pilot; managerial threshold justification unresolved**
+
+在Pilot和正式结果均未生成时，新增第五章正式结果报告模板。模板按block流转、P1/P2/P5确认性结果、P3/P4探索性结果、条件轨迹、语义操纵、单次Real-LLM认知证据和工程稳健性依次预留表图位置。所有正式结果格均为空占位符，不预写效应方向、p值、Holm结论、策略排序或管理启示；既有工程运行和认知图不得填充正式结果位置。
+
+针对唯一预算候选N=10，在查看Pilot结果前冻结小样本诊断协议。主分析保持双侧block-level one-sample t-test与P1/P2/P5 Holm family不变。每项必须展示全部十个block值、Q-Q图、MAD影响提示；联合删除同一block执行十次leave-one-block-out；敏感性分析完整枚举2^10=1024种sign assignments，并对三个exact p值另行Holm校正。通过validity gate的极端block不得删除，Shapiro–Wilk不作为方法切换门禁，主分析与敏感性不一致时按预设标签披露fragility。该协议不能使未通过operating-characteristic门禁的N=10变得可行。
+
+P1/P2/P5的0.15/0.15/0.05保持不变，但继续只称为“预先设定的设计阈值”。工作表明确了三条可能的补证路径：企业/导师决策阈值、可比经验效应或企业历史数据、测量分辨率与可靠性。当前没有材料把三个数值与真实管理动作连接，因此状态保持`MANAGERIAL_JUSTIFICATION_UNRESOLVED`；达到阈值不自动等于管理重要，P5的5个百分点也不得写成销量提高5%。
+
+Ernst（2004，《Permutation Methods: A Basis for Exact Inference》）已由Project Euclid期刊官方页面核验，仅用于支持置换参考分布与不变性条件，不用于宣称sign-flip无条件有效。正式分析代码仍未实现，provider-call ceiling、时间预算、clean execution SHA和Pilot授权仍未冻结。本阶段新增GABM run=0、provider call=0、Pilot observation=0、formal inference=0。
+
+---
+
 ## 后续预登记队列
 
 - `N_max=10`已冻结；用户仍需冻结provider-call ceiling、时间预算与clean execution SHA，再明确授权执行P001–P006；

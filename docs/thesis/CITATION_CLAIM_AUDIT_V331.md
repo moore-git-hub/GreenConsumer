@@ -33,6 +33,7 @@
 | C23 | 三项确认性检验使用step-down控制FWER | Holm，1979，《A Simple Sequentially Rejective Multiple Test Procedure》 | 多重检验规则及strong FWER control | N=10的power、正态性或异常值稳健性 | 原文书目信息/JSTOR，包外引用 |
 | C24 | Morris elementary-effects可用于多参数全局筛查 | Morris，1991，《Factorial Sampling Plans for Preliminary Computational Experiments》 | 随机化OAT trajectories、mu/mu-star/sigma筛查 | 唯一分解非线性与具体交互；现实参数贡献 | Taylor & Francis/JSTOR官方页面，包外引用 |
 | C25 | ODD＋D补充人类Agent决策模型说明 | Müller等，2013，《Describing human decisions in agent-based models: ODD + D, an extension of the ODD protocol》 | 决策者、目标、信息、适应、社会影响和理论/经验基础的透明报告 | 完成报告即证明行为有效或外部有效 | Elsevier官方页面，包外引用 |
+| C26 | 置换方法可在零假设允许的数据变换下构造参考分布 | Ernst，2004，《Permutation Methods: A Basis for Exact Inference》 | exact permutation/randomization的基本逻辑与不变性条件；支持将sign-flip作为预设敏感性 | sign-flip对任意block分布无条件精确；可替代t-test主分析或N=10 power门禁 | Project Euclid期刊官方页面，包外引用 |
 
 ## 3. 工程设定审计
 

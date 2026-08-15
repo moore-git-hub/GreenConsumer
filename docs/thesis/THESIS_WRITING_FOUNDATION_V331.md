@@ -212,12 +212,15 @@ Pilot预设P001–P006六个cognitive blocks并对每个历史离线交叉三个
 3. 引用—主张—外推边界审计：`CITATION_CLAIM_AUDIT_V331.md`；
 4. 第四章实验设计与模型验证的无正式结果正文底稿：`CHAPTER_4_EXPERIMENT_AND_VALIDATION_DRAFT_V331.md`；
 5. v3.3.1 ODD＋D复现附录：`APPENDIX_ODD_D_MODEL_DESCRIPTION_V331.md`；
-6. 四项中文核心文献和七项包外补充文献的条目核验。
+6. 四项中文核心文献和八项包外补充文献的条目核验；
+7. 第五章正式结果空表、空图与受约束报告模板：`CHAPTER_5_RESULTS_REPORTING_TEMPLATE_V331.md`；
+8. Pilot前N=10小样本诊断协议与P1/P2/P5阈值依据工作表。
 
 下一队列：
 
-1. 建立第五章正式结果的空表、空图和逐项报告模板，但不预写效应方向、p值或显著性结论；
-2. 为第四章补建“设计阈值依据”和“N=10小样本诊断规则”两个执行前接口；
-3. 待provider-call ceiling、时间预算、clean execution SHA和明确授权冻结后，执行P001–P006；
-4. Pilot后只按预先规定的OC规则判断N=10是否可行，随后才发布协议1.1和正式seed ledger；
-5. 正式实验完成后再完成第五章结果与第六章结论，禁止用工程结果填补正式结果位置。
+1. 编写第一章绪论正文底稿，并进行题目—研究问题—章节贡献的一致性审计；
+2. 将N=10 exact sign-flip、联合LOBO与报告表实现为零结果分析代码和合同测试，不运行Pilot；
+3. 如需把设计阈值称为管理阈值，由用户补充企业/导师决策记录、可比数据或可核验原始文献；缺失时继续使用“预先设定的设计阈值”；
+4. 待provider-call ceiling、时间预算、clean execution SHA和明确授权冻结后，执行P001–P006；
+5. Pilot后只按预先规定的OC规则判断N=10是否可行，随后才发布协议1.1和正式seed ledger；
+6. 正式实验完成后再填充第五章结果并撰写第六章，禁止用工程结果填补正式结果位置。

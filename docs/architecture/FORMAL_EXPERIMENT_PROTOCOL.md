@@ -4,12 +4,12 @@
 
 | 字段 | 冻结值 |
 |---|---|
-| 协议版本 | `1.0.1` |
+| 协议版本 | `1.0.2` |
 | 协议日期 | `2026-08-15` |
 | 代码分支 | `refactor/task005-v32-clean-codebase` |
 | 协议起草时 HEAD | `7d7a4e595969d6912995c7b7d068144b28d92771` |
 | 模型版本 | `TASK_005_FMCG_V3.3.1` |
-| 当前状态 | `TREATMENT_AND_PILOT_PROTOCOL_FROZEN; N_MAX_10_FROZEN; PILOT_NOT_EXECUTED; FORMAL_NOT_AUTHORIZED` |
+| 当前状态 | `TREATMENT_AND_PILOT_PROTOCOL_FROZEN; N_MAX_10_FROZEN; SMALL_N_DIAGNOSTIC_FROZEN; PILOT_NOT_EXECUTED; FORMAL_NOT_AUTHORIZED` |
 | 论文用途 | 工商管理硕士论文的正式实验准备与方法审计 |
 
 本协议冻结 v3.3.1 的处理矩阵、研究问题、estimand、推断单位、Pilot 方差设计、失败规则与正式样本量选择规则。它不授权真实 LLM Pilot 或正式实验。任何真实 LLM 执行仍须另行生成执行授权、seed ledger、源码清洁性证明和费用上限。
@@ -17,6 +17,10 @@
 ### 0.1 预算上限修订记录
 
 用户于2026-08-15在查看v3.3.1 Pilot结果前冻结正式replication-block上限`N_max=10`。该值是Pilot执行前的计算/费用约束，不是Pilot block数，也不是已经由方差证据证明的正式N。P001–P006六个Pilot blocks保持不变；Pilot后若N=10不能满足第7节的operating-characteristic规则，必须判定`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。provider-call ceiling、时间预算、clean execution SHA和真实Pilot授权仍未冻结。
+
+### 0.2 小样本诊断修订记录
+
+用户于2026-08-15在查看Pilot和正式结果前批准继续完善论文与执行前方法接口。`SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md`据此冻结N=10时的全block披露、Q-Q图、MAD影响提示、联合leave-one-block-out与exact sign-flip/Holm敏感性规则。主分析仍为本协议8.1节的双侧one-sample t-test与Holm family；诊断不触发结果驱动的方法切换或block删除。P1/P2/P5阈值仍为0.15/0.15/0.05，管理依据缺口登记于`DESIGN_THRESHOLD_JUSTIFICATION_WORKSHEET_V331.md`，当前不得称为管理上重要差异。
 
 ## 1. 科学范围与版本边界
 
@@ -245,7 +249,8 @@ Pilot 实现必须至少生成：
 - 对 P1、P2、P5 分别在 replication-block 层面进行双侧 one-sample t-test versus 0；
 - 使用 Holm step-down 控制三项 family-wise error rate=.05；
 - 报告有效 block 数、mean、SD、SE、95% ordinary CI、raw p、Holm-adjusted p、Holm decision、MDE 和设计阈值分类；
-- 若分布或极端值诊断显示 t-test 明显脆弱，稳健替代分析只能作为预先规定的敏感性结果，不替代主分析；
+- 按`SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md`报告全部block值、Q-Q、影响提示、联合leave-one-block-out和exact sign-flip/Holm敏感性；置换参考分布的有效性依赖相应不变性条件（Ernst，2004，《Permutation Methods: A Basis for Exact Inference》）；
+- 诊断结果不替代主分析，不触发删除有效block或在多个方法中选择有利结果；主分析与敏感性不一致时必须标记为diagnostically fragile；
 - 不能把“未拒绝零假设”写成“证明无效”，也不能把统计显著写成现实市场外部有效性。
 
 ### 8.2 探索性分析

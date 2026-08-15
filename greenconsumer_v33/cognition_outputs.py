@@ -183,6 +183,11 @@ def _reasoning_ledger(thoughts: pd.DataFrame) -> pd.DataFrame:
 
 
 def _tick_summary(thoughts: pd.DataFrame, cognitive: pd.DataFrame) -> pd.DataFrame:
+    audit_fields = (
+        "thought_present", "clarification_received",
+        "semantic_observation_present", "semantic_social_observation_count",
+        "semantic_fallback_used",
+    )
     flags = thoughts[[
         "exp_id", "tick", "agent_id", "thought_present", "clarification_received",
         "semantic_observation_present", "semantic_social_observation_count",
@@ -196,15 +201,17 @@ def _tick_summary(thoughts: pd.DataFrame, cognitive: pd.DataFrame) -> pd.DataFra
     flags["semantic_social_observation_count"] = pd.to_numeric(
         flags["semantic_social_observation_count"], errors="coerce"
     ).fillna(0)
+    audit_columns = {field: f"thought_audit__{field}" for field in audit_fields}
+    flags = flags.rename(columns=audit_columns)
     merged = cognitive.merge(flags, on=["exp_id", "tick", "agent_id"], validate="one_to_one")
     aggregations = {field: (field, "mean") for field in STATE_FIELDS}
     aggregations.update({
         "agents": ("agent_id", "nunique"),
-        "thought_rate": ("thought_present", "mean"),
-        "clarification_exposure_rate": ("clarification_received", "mean"),
-        "semantic_observation_rate": ("semantic_observation_present", "mean"),
-        "mean_social_observation_count": ("semantic_social_observation_count", "mean"),
-        "semantic_fallback_rate": ("semantic_fallback_used", "mean"),
+        "thought_rate": (audit_columns["thought_present"], "mean"),
+        "clarification_exposure_rate": (audit_columns["clarification_received"], "mean"),
+        "semantic_observation_rate": (audit_columns["semantic_observation_present"], "mean"),
+        "mean_social_observation_count": (audit_columns["semantic_social_observation_count"], "mean"),
+        "semantic_fallback_rate": (audit_columns["semantic_fallback_used"], "mean"),
     })
     out = merged.groupby(["exp_id", "tick"], dropna=False).agg(**aggregations).reset_index()
     out["analysis_role"] = "single_run_descriptive_group_mean"

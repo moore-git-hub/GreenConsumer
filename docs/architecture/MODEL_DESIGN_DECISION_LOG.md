@@ -346,6 +346,18 @@ Windows `Kernel`环境首次全量复验得到123项通过、1项失败。唯一
 
 ---
 
+## DR-20260815-18：真实认知schema重名字段兼容修复
+
+**状态：implemented and regression-tested; real rendering retry pending**
+
+首次对预选`baseline_r1/v331_20260814_230111`执行零API认知后处理时，在生成任何manifest或结果结论前失败。原因是真实`cognitive_records.csv`与`agent_thoughts.csv`都包含`semantic_observation_present`、`semantic_social_observation_count`和`semantic_fallback_used`等审计字段；合成fixture此前只在thoughts侧包含这些列。pandas合并后自动生成`_x/_y`列名，而聚合器仍引用无后缀列，触发`KeyError`。
+
+修复将`agent_thoughts.csv`中的5个审计字段先重命名为内部`thought_audit__*`字段，再与认知状态合并；公开输出列名与指标口径不变。选择thoughts侧是因为这些比率定义为显式appraisal/observation audit availability，而非心理状态重复列。回归fixture现故意在cognitive侧加入冲突值，验证聚合器仍使用thoughts侧审计来源。7项认知后处理直接测试、Python编译和格式检查通过。
+
+失败运行没有修改源run、没有调用LLM、没有生成Pilot观测或正式推断。真实表图仍须在补丁提交后的clean worktree重跑，旧失败尝试不得登记为结果。
+
+---
+
 ## 后续预登记队列
 
 - 用户先冻结`N_max`、provider-call ceiling与clean execution SHA，再明确授权执行P001–P006；

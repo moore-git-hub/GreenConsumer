@@ -9,6 +9,7 @@ import pandas as pd
 from greenconsumer_v33.cognition_outputs import (
     _agent_transitions,
     _reasoning_ledger,
+    _tick_summary,
     _validate_and_load,
     build_cognition_outputs,
 )
@@ -56,6 +57,14 @@ def _fixture(tmp_path, *, horizon=10):
                     "purchase_intention": 0.4 + tick / 1000,
                     "crisis_memory": 1.0 if tick >= 5 else 0.0,
                     "repair_memory": 0.5 if exp_id != "NoClarification-Control" and tick >= 6 else 0.0,
+                    # Real v3.3.1 cognitive records duplicate these audit fields.
+                    # Deliberately conflicting values verify that tick summaries use
+                    # the explicit agent_thoughts audit source after the merge.
+                    "thought_present": False,
+                    "clarification_received": False,
+                    "semantic_observation_present": False,
+                    "semantic_social_observation_count": 99,
+                    "semantic_fallback_used": True,
                 })
     pd.DataFrame(thoughts).to_csv(run_dir / "agent_thoughts.csv", index=False)
     pd.DataFrame(cognitive).to_csv(run_dir / "cognitive_records.csv", index=False)
@@ -80,6 +89,19 @@ def test_transitions_are_predefined_within_agent_changes(tmp_path):
     }
     recovery = out[out["transition"] == "recovery_to_endpoint"]
     assert (recovery["delta_trust_final"].round(10) == 0.05).all()
+
+
+def test_tick_summary_handles_real_schema_duplicate_audit_columns(tmp_path):
+    run_dir = _fixture(tmp_path)
+    _, thoughts, cognitive, _ = _validate_and_load(run_dir)
+    tick = _tick_summary(thoughts, cognitive).set_index(["exp_id", "tick"])
+    control_t5 = tick.loc[("NoClarification-Control", 5)]
+    treatment_t6 = tick.loc[("Rational-Hub-Immediate", 6)]
+    assert control_t5["thought_rate"] == 1.0
+    assert control_t5["semantic_observation_rate"] == 1.0
+    assert control_t5["mean_social_observation_count"] == 0.0
+    assert control_t5["semantic_fallback_rate"] == 0.0
+    assert treatment_t6["clarification_exposure_rate"] == 1.0
 
 
 def test_build_cognition_outputs_writes_manifest_and_declares_no_inference(tmp_path):

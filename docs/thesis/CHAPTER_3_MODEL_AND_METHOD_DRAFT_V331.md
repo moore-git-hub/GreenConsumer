@@ -10,15 +10,15 @@
 
 ## 3.2 总体架构与混合建模原则
 
-v3.3.1采用“生成式语义评价＋规则化状态转移”的混合GABM。模型分为五层：信息环境层生成危机新闻、企业澄清与消费者UGC；语义评价层把Agent实际观察到的文本转换为结构化指标；心理状态层更新Trust、Attitude、Subjective norm和purchase intention；社会网络层记录信息投递与消费者传播；需求层在认知仿真结束后重放购买机会、条件品牌选择和忠诚更新。
+v3.3.1采用“生成式语义评价＋规则化状态转移”的混合GABM。模型分为五层：信息环境层生成危机新闻、企业澄清与消费者UGC；语义评价层把Agent实际观察到的文本转换为结构化指标；心理状态层更新信任、态度、主观规范和购买意向；社会网络层记录信息投递与消费者传播；需求层在认知仿真结束后重放购买机会、条件品牌选择和忠诚更新。
 
 LLM的权限被限制在语义评价层。其输出包括valence、arousal、credibility、evidence strength、topic relevance、perceived empathy、peer approval和hypocrisy perceived，并附一条用于审计的显式简短理由。LLM不直接生成信任分数、购买决定、品牌选择或正式结果。将LLM限制在文本到结构化评价的接口，是为了利用其处理复合自然语言的能力，同时保留状态转移、传播和需求结果的可复算性。生成式Agent研究支持这种自然语言Agent架构的可行性，但同时要求防止把“表现可信”误当作现实行为有效（Park等，2023，《Generative Agents: Interactive Simulacra of Human Behavior》；Adornetto等，2025，《Generative agents in agent-based modeling: Overview, validation, and emerging challenges》）。
 
 ## 3.3 实体、状态变量与尺度
 
-### 3.3.1 Cognitive Agents
+### 3.3.1 认知Agent（Cognitive Agents）
 
-模型包含20个Cognitive Agents。每个Agent具有稳定身份和一组Persona属性，用于覆盖绿色涉入、品牌信任基线、态度、主观规范、感知行为控制、信息加工倾向、购买频率及网络位置等机制差异。选择20个Agent是计算预算与机制覆盖之间的工程折中，不是现实消费者样本量。绿色消费者分层文献支持引入心理和态度异质性，但不能证明当前Persona配额具有总体代表性（Straughan、Roberts，1999，《Environmental segmentation alternatives: A look at green consumer behavior in the new millennium》）。
+模型包含20个认知Agent。每个Agent具有稳定身份和一组Persona属性，用于覆盖绿色涉入、品牌信任基线、态度、主观规范、感知行为控制、信息加工倾向、购买频率及网络位置等机制差异。选择20个Agent是计算预算与机制覆盖之间的工程折中，不是现实消费者样本量。绿色消费者分层文献支持引入心理和态度异质性，但不能证明当前Persona配额具有总体代表性（Straughan、Roberts，1999，《Environmental segmentation alternatives: A look at green consumer behavior in the new millennium》）。
 
 Agent i在Tick t的核心心理状态写为：
 
@@ -32,7 +32,7 @@ $$S_{i,t}=\{Trust_{i,t},Att_{i,t},SN_{i,t},PBC_i,CrisisMemory_{i,t},RepairMemory
 
 ### 3.3.3 Micro-buyers与统计单位
 
-每个Cognitive Agent下设置25个micro-buyers，用于离线需求重放中的数值分辨率。micro-buyers共享上层Agent的认知历史，并通过冻结随机种子形成购买机会与选择结果。M=25不是新增的消费者样本，更不增加正式统计自由度。正式推断单位是包含全部九个条件的一次完整replication block。
+每个认知Agent下设置25个微型购买者（micro-buyers），用于离线需求重放中的数值分辨率。微型购买者共享上层Agent的认知历史，并通过冻结随机种子形成购买机会与选择结果。M=25不是新增的消费者样本，更不增加正式统计自由度。正式推断单位是包含全部九个条件的一次完整replication block。
 
 ## 3.4 时间、事件和处理结构
 
@@ -94,7 +94,7 @@ $$PI_{i,t}=\sigma[\beta_0+\beta_A(Att_{i,t}-0.5)+\beta_S(SN_{i,t}-0.5)+\beta_P(P
 
 ### 3.7.2 Hub与Random投放
 
-企业paid-seed数量固定为K=3。Hub规则选择高出度节点，Random规则从符合条件的节点中随机选择相同数量的种子。K表示种子数量预算，不是货币预算。企业澄清还包括公共暴露、概率0.55的一跳放大和一个Tick的投递滞后；这些均为冻结工程设置。
+企业付费种子节点数量固定为K=3。Hub规则选择高出度节点，Random规则从符合条件的节点中随机选择相同数量的种子。K表示种子数量预算，不是货币预算。企业澄清还包括公共暴露、概率0.55的一跳放大和一个Tick的投递滞后；这些均为冻结工程设置。
 
 有限种子选择与网络影响最大化研究说明节点结构会影响潜在覆盖（Kempe、Kleinberg、Tardos，2003，《Maximizing the Spread of Influence through a Social Network》），但复杂传染研究提示连接优势取决于重复确认与网络桥宽度（Centola、Macy，2007，《Complex Contagions and the Weakness of Long Ties》）。因此，本研究的Hub—Random对比首先以企业直接触达比例衡量；任何下游信任和选择变化都必须另行测量，不能由reach替代。
 
@@ -106,7 +106,7 @@ Agent在观察信息后依据发帖意向和冻结随机种子决定是否发布
 
 认知仿真完成后，需求层读取完整心理历史并进行离线重放。每个micro-buyer在T5之后具有Agent特定、条件不变的购买机会相位；默认机会间隔为7个Tick。出现机会时，以当期购买意向作为焦点品牌条件选择概率，并用冻结种子生成可复算选择。由于机会调度不读取处理标签、信任或既往购买，处理只能通过认知历史影响选择概率，而不能改变购买机会本身。
 
-品牌选择模型的概念分解受到重复购买和品牌忠诚研究启发（Guadagni、Little，1983，《A Logit Model of Brand Choice Calibrated on Scanner Data》），但机会间隔、micro-buyer数量和忠诚更新均未经扫描面板数据校准。正式P5因此使用expected focal-brand choice share，realized choices仅作描述性一致性检查。
+品牌选择模型的概念分解受到重复购买和品牌忠诚研究启发（Guadagni、Little，1983，《A Logit Model of Brand Choice Calibrated on Scanner Data》），但机会间隔、微型购买者数量和忠诚更新均未经扫描面板数据校准。正式P5因此使用焦点品牌预期选择份额，实际选择结果仅作描述性一致性检查。
 
 ## 3.9 过程调度与共同历史
 

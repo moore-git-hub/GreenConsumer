@@ -28,7 +28,8 @@ Status vocabulary:
 | W09 | Analysis protocol | Pre-Pilot N=10 diagnostics, joint LOBO and exact sign-flip sensitivity | `SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` | AVAILABLE | Frozen analysis interface; does not prove N=10 feasible and does not replace primary analysis |
 | W10 | Design worksheet | P1/P2/P5 threshold provenance and evidence-gap worksheet | `DESIGN_THRESHOLD_JUSTIFICATION_WORKSHEET_V331.md` | AVAILABLE | Thresholds remain design values; managerial justification unresolved |
 | W11 | Thesis chapter | Chapter 1 introduction draft with scoped background, RQs, methods and contribution boundaries | `docs/thesis/CHAPTER_1_INTRODUCTION_DRAFT_V331.md` | AVAILABLE | Working thesis prose; no Pilot/formal result implied |
-| W12 | Thesis audit | Title–RQ–evidence–contribution consistency and two-path decision gate | `docs/thesis/TITLE_RQ_CONTRIBUTION_AUDIT_V331.md` | AVAILABLE | Mandatory before Chapter 5 is finalized |
+| W12 | Thesis audit | Title–RQ–evidence–contribution consistency and retained formal-execution route | `docs/thesis/TITLE_RQ_CONTRIBUTION_AUDIT_V331.md` | AVAILABLE | Mandatory before Chapter 5 is finalized |
+| W13 | Thesis audit | Cross-chapter terminology, RQ, timing, estimand and evidence-status consistency | `docs/thesis/CROSS_CHAPTER_CONSISTENCY_AUDIT_V331.md` | AVAILABLE | Canonical wording gate for Chapters 1–5 |
 | M01 | Model design | 2×2×2 + common control conceptual design | `FORMAL_EXPERIMENT_PROTOCOL.md`, `experiment_config.py` | AVAILABLE | Methods: treatment definition |
 | M02 | Model design | Semantic→psychological→network→behavior architecture | `MODEL_TO_CODE_TRACEABILITY_V331.md`, `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg` | AVAILABLE | Methods: implemented architecture; figure must retain the LLM/non-LLM boundary |
 | M03 | Model design | v3.3 Trust dynamics | `mechanism_v33.py`, Decision Log DR-01/05/06 | AVAILABLE | Methods with engineering-assumption boundary |
@@ -39,7 +40,7 @@ Status vocabulary:
 | S03 | System construction | Tests and engineering verification chain | `tests/`, architecture result records | AVAILABLE | Verification subsection, not formal inference |
 | S04 | System construction | Fixed-network state/flow animation | `greenconsumer_v33/network_animation.py` | AVAILABLE | System demonstration with fixed-topology caveat |
 | E01 | Experiment design | Primary/secondary estimands and analysis family | `FORMAL_EXPERIMENT_PROTOCOL.md` | AVAILABLE | Formal design section |
-| E02 | Experiment design | Pilot seed and replication design with pre-result `N_max=10` | Pilot protocol/contract/code, `PILOT_EXECUTION_CONDITIONS.md` | DEFERRED_BY_USER | Methods as preregistered plan only; N=10 is not justified as formal N |
+| E02 | Experiment design | Pilot seed and replication design with pre-result `N_max=10` | Pilot protocol/contract/code, `PILOT_EXECUTION_CONDITIONS.md` | DEFERRED_BY_USER | Temporarily deferred for thesis drafting, not cancelled; N=10 is not justified as formal N |
 | E04 | Experiment design | N=10 small-sample diagnostic and sensitivity rules | `SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` | AVAILABLE | Apply only if OC gate accepts N=10; results cannot drive method switching |
 | E03 | Experiment design | Formal N, seed ledger and frozen analysis SHA | not yet created | NOT_AUTHORIZED | No thesis value may be reported yet |
 | R01 | Simulation results | v3.3.1 engineering robustness results | `EXPERIMENT_EVIDENCE_REGISTER.md` and committed result records | AVAILABLE | Robustness/verification appendix with engineering label |

@@ -508,9 +508,32 @@ DashScope客户端为同一次调用执行的HTTP transport retry不另计为新
 
 ---
 
+## DR-20260816-27：确认保留Pilot与正式blocks并建立跨章统一口径
+
+**状态：formal route retained; execution deferred for writing; cross-chapter audit available**
+
+用户明确确认Pilot和正式独立replication blocks不取消，当前只先继续论文写作。因此，
+DR-20260816-26中的“永久取消时收窄题目”仅保留为历史风险分析，不再是当前执行分支。
+工作题目、P1/P2/P5确认性family、P3/P4探索性角色、Pilot方差门禁和N=10预算上限
+均保持不变。有效Pilot观察仍为0，正式结果仍不存在。
+
+新增`CROSS_CHAPTER_CONSISTENCY_AUDIT_V331.md`，统一第一至第四章的产品范围、竞争
+信息环境定义、Content/Channel/Timing中文与代码标签、20个Cognitive Agents、25个
+micro-buyers、T5/T6/T10/T35、replication block、P1—P5以及五层证据身份。检索未
+发现旧现实品牌、N=40、2×2×3、T30作为唯一终点或v3.3.1正式实验已完成等硬冲突。
+
+第一章与第四章已同步改写为“Pilot与正式blocks暂缓但不取消”。第五章正式结果位置
+继续保持为空；在Pilot、协议1.1、正式seed ledger和独立blocks完成前，不写策略方向、
+p值、置信区间或Holm结论。本次仅修改论文和状态文档，没有修改模型、处理、estimand、
+参数、prompt、seed或分析规则。
+
+本阶段新增GABM run=0、provider call=0、有效Pilot observation=0、formal inference=0。
+
+---
+
 ## 后续预登记队列
 
-- 对第一至第四章开展题目、RQ、变量、时间点、术语与证据身份的跨章一致性审计；
-- 在第五章定稿前决定Pilot只是暂缓还是永久取消；永久取消则收窄题目与贡献；
-- 只有用户未来重新授权时才恢复P001–P006执行门禁；
-- 必要时整理既有工程表图，但不得挤占论文主线或冒充正式推断。
+- 按跨章统一口径逐段审校第一、二章，压缩重复并强化研究缺口；
+- 整理现有工程表图，但不得冒充正式推断；
+- 论文基础章节稳定后重新冻结Pilot费用、时间、clean SHA和执行授权；
+- Pilot后按预设OC规则判断N=10可行性，再生成正式seed ledger。

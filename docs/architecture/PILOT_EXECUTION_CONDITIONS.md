@@ -8,12 +8,12 @@ PROVIDER_CALL_CEILING_NOT_FROZEN
 TIME_BUDGET_NOT_FROZEN
 EXECUTION_SHA_NOT_FROZEN
 PILOT_NOT_AUTHORIZED
-PILOT_DEFERRED_BY_USER_2026_08_16
+PILOT_DEFERRED_NOT_CANCELLED_2026_08_16
 FORMAL_NOT_AUTHORIZED
 ```
 
 本文件记录Pilot执行前的用户选择，不构成P001–P006执行授权。用户于2026-08-16
-决定不继续当前Pilot步骤并转回论文写作；除非未来重新明确授权，本执行队列保持暂缓。
+决定先完成论文基础章节；Pilot与正式独立replication blocks不取消。重新执行时仍需新的明确授权和当时的完整门禁。
 
 ## 2. 已冻结条件
 
@@ -43,7 +43,7 @@ FORMAL_NOT_AUTHORIZED
 
 ## 4. 后续记录顺序
 
-当前不继续执行。若用户未来恢复Pilot，则重新从以下顺序开始：
+当前不继续执行；论文基础章节稳定后，按以下顺序恢复：
 
 1. 估算P001–P006在当时调用合同下的最大provider calls和时间；
 2. 用户冻结provider-call ceiling和时间预算；

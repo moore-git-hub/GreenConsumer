@@ -15,7 +15,7 @@
 | 因素 | 水平1 | 水平2 | 操作化边界 |
 |---|---|---|---|
 | Content | Rational-evidence | Emotional-empathy | 两套完整文本框架，不拆解单一语义维度效应 |
-| Channel | Hub | Random | 相同paid-seed数量K=3下的节点选择规则 |
+| Channel | Hub | Random | 相同企业付费种子节点数量K=3下的节点选择规则 |
 | Timing | Immediate | Delayed | 危机后T6与T10，不代表现实最优时间 |
 
 八个处理单元为Rational/Empathy×Hub/Random×Immediate/Delayed。NoClarification-Control不属于Timing的第三个水平，也不进入三因素编码。控制组用于识别任一企业澄清相对于无企业回应的总体模型内差异。
@@ -28,7 +28,7 @@
 
 ## 4.3 Estimand与分析角色
 
-### 4.3.1 标准化Trust AUC
+### 4.3.1 信任轨迹标准化曲线下面积（Trust AUC）
 
 对条件c在区间a至b的Agent平均Trust轨迹，标准化梯形面积定义为：
 
@@ -42,9 +42,9 @@ $$AUC_{c,a:b}=\frac{1}{b-a}\sum_{t=a}^{b-1}\frac{\bar T_{c,t}+\bar T_{c,t+1}}{2}
 
 1. P1为八个澄清单元T6—T35 Trust AUC均值减去共同控制组AUC；
 2. P2为四个Rational单元AUC均值减去四个Empathy单元AUC均值；
-3. P5为support absent条件下，八个澄清单元T6—T35 expected focal-brand choice share均值减去共同控制组对应值。
+3. P5为无外部支持（support absent）条件下，八个澄清单元T6—T35焦点品牌预期选择份额均值减去共同控制组对应值。
 
-P5使用每次真实购买机会上的模型概率均值，而不是realized choices。这样可以降低有限micro-buyer抽样噪声，同时仍不能把概率均值解释为现实购买率。M=25只是需求层数值分辨率。
+P5使用每次真实购买机会上的模型概率均值，而不是已实现选择（realized choices）。这样可以降低有限微型购买者产生的离散化噪声，同时仍不能把概率均值解释为现实购买率。M=25只是需求层数值分辨率。
 
 ### 4.3.3 探索性与机制性estimand
 
@@ -54,13 +54,13 @@ P3比较Immediate与Delayed在T6—T9的Trust AUC，用于刻画延迟澄清尚�
 
 一个完整replication block是在一套预先登记的simulation/network seed、requested LLM seed及demand seed下完成全部九个认知条件与support-absent需求输出的不可拆分单位。每个block先计算P1—P5，再在block之间进行正式分析。
 
-以下对象均不是独立正式样本：20个Cognitive Agents、Agent×Tick记录、LLM provider calls、每个Agent下的25个micro-buyers以及同一认知历史上的多个demand replays。把这些行当成独立观测会产生伪重复，并系统性低估不确定性。
+以下对象均不是独立正式样本：20个认知Agent、Agent×Tick记录、LLM provider calls、每个Agent下的25个微型购买者以及同一认知历史上的多个需求重放。把这些行当成独立观测会产生伪重复，并系统性低估不确定性。
 
 模型包含三类主要随机来源：simulation/network随机性、requested-seed与provider/runtime共同形成的LLM波动，以及离线demand随机性。当前runner尚未完全拆分simulation seed与network seed，因此Pilot只能估计联合simulation/network分量，不能声称独立识别网络方差。
 
 ## 4.5 Pilot方差设计
 
-> 当前执行状态：用户于2026-08-16决定暂缓Pilot并继续论文写作。以下内容保留为预先形成的设计方案，不代表Pilot已经执行，也不形成正式N或结果。
+> 当前执行状态：用户于2026-08-16决定先完成论文基础章节，Pilot与正式独立replication blocks暂缓但不取消。以下内容保留为预先形成的设计方案，不代表Pilot已经执行，也不形成正式N或结果。
 
 ### 4.5.1 目的与网格
 
@@ -140,4 +140,4 @@ ABM校准方法对模型规模、经验目标、计算预算和识别条件敏�
 
 ## 4.11 本章小结
 
-本章冻结了处理、estimand、推断单位、Pilot方差方案和正式分析门禁，并把已经完成的工程验证与尚不存在的正式推断分开报告。现有证据支持模型实现、若干方向稳健性和明确结构边界；不支持现实消费者效应量、平台最优投放或经验参数有效性。Pilot现由用户暂缓；在决定恢复执行或永久取消之前，本文只继续整理既有工程证据与方法文本。若永久取消，必须同步收窄题目、研究问题以及第五、六章的贡献和结论。
+本章冻结了处理、estimand、推断单位、Pilot方差方案和正式分析门禁，并把已经完成的工程验证与尚不存在的正式推断分开报告。现有证据支持模型实现、若干方向稳健性和明确结构边界；不支持现实消费者效应量、平台最优投放或经验参数有效性。Pilot与正式独立replication blocks当前仅因论文写作顺序暂缓，后续仍按既定门禁恢复；在结果生成前，本文只继续整理既有工程证据与方法文本。

@@ -49,14 +49,14 @@ Rational-evidence / Emotional-empathy
 | 12 | Selected Real-LLM robustness | 已完成 | `llmrob_20260814_230111`结果记录 | 不作为正式样本 |
 | 13 | Provenance、网络和内部有效性输出 | 已完成 | `V331_OUTPUT_AND_VALIDATION.md` | 正式runner复用并加固 |
 | 14 | 正式处理、estimand与Pilot协议v1.0 | 已完成 | `FORMAL_EXPERIMENT_PROTOCOL.md` | 保持处理与分析规则冻结 |
-| 15 | Pilot variance执行 | 暂缓 | 用户于2026-08-16决定停止当前Pilot步骤；新入口在参数门禁前停止，无有效Pilot block | 只有用户未来重新授权时才恢复执行门禁 |
+| 15 | Pilot variance执行 | 暂缓 | 用户于2026-08-16决定先完成论文基础章节；Pilot与正式blocks不取消；当前无有效Pilot block | 论文基础章节稳定后恢复执行门禁 |
 | 16 | 正式N与正式seed ledger | 未开始 | N仍待Pilot | Pilot后按冻结OC规则确定 |
 | 17 | v3.3.1正式runner与分析包 | 未开始 | 当前runner仅engineering/demo | 添加测试、合同和SHA冻结 |
 | 18 | v3.3.1正式实验 | 未开始 | `FORMAL_NOT_AUTHORIZED` | 协议1.1和明确授权 |
 | 19 | 固定拓扑网络状态/传播动画 | 已完成 | `greenconsumer_v33/network_animation.py` | 论文中不得称拓扑演化 |
 | 20 | Agent cognition evolution论文输出 | 已完成 | 预选Real-LLM run的schema 1.2真实产物已完成provenance、9项输出hash、完整面板、matched-Control算术与视觉审计；用户确认clean commit上的认知直接测试和Windows全量测试均通过 | 仅作为单次工程run的有限描述性证据；不把Agents当重复块、不推断隐性CoT、不作策略排名或总体推断 |
 | 21 | 语义→心理→网络→行为机制总图 | 已完成 | `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg/.png`；与model-to-code traceability逐层对齐 | 论文排版时只调整编号和尺寸，不改变机制 |
-| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、基础包、来源台账、ODD＋D附录、第五章正式结果模板、题目—RQ—贡献审计、N=10诊断协议、阈值工作表及引用审计已建立 | 开展跨章一致性审计；根据Pilot最终取舍重构第五、六章 |
+| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、基础包、来源台账、ODD＋D附录、第五章正式结果模板、题目—RQ—贡献审计、跨章一致性审计、N=10诊断协议、阈值工作表及引用审计已建立 | 按统一口径逐段审校第一、二章 |
 | 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、tests | 用户冻结预算并另行授权后才可执行Pilot |
 | 24 | 实验结果证据台账与版本分层 | 已完成 | `EXPERIMENT_EVIDENCE_REGISTER.md`；结果记录commits；v3.2 archive | 正式写作时按已建立的table/figure registry持续登记 |
 | 25 | 论文工作—证据—表图追踪体系 | 已完成 | `MODEL_TO_CODE_TRACEABILITY_V331.md`、`THESIS_WORK_AND_OUTPUT_REGISTER.md` | 任何新run或正文表图进入论文时同步更新 |
@@ -115,10 +115,10 @@ Rational-evidence / Emotional-empathy
 当前下一门槛改为：
 
 ```text
-THESIS-CROSS-CHAPTER-AUDIT：统一第一至第四章的题目范围、RQ、变量、
-时间点、证据身份和贡献表述，并决定Pilot是暂缓还是永久取消。
+THESIS-CH1-CH2-REVISION：按已建立的跨章统一口径，压缩重复背景，
+强化研究缺口、GABM必要性和理论—机制递进。
 ```
 
-零API基础设施已完成，Windows clean HEAD `b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`的129项测试已由用户回传全部通过。用户随后决定不继续当前Pilot步骤；该命令因缺少provider-call ceiling在参数解析阶段停止，没有启动新的suite或形成有效Pilot block。`N_max=10`仍只是预结果预算上限，不是已证明的正式N。若Pilot被永久取消，题目、研究问题、第五章和贡献必须转为方法与工程机制路线，不能继续保留确认性策略效果叙事。
+零API基础设施已完成，Windows clean HEAD `b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`的129项测试已由用户回传全部通过。此前命令因缺少provider-call ceiling在参数解析阶段停止，没有启动新的suite或形成有效Pilot block。用户已确认Pilot和正式独立replication blocks不取消，只在论文基础章节写作期间暂缓。`N_max=10`仍只是预结果预算上限，不是已证明的正式N；后续必须先完成Pilot可行性门禁，再恢复正式执行。
 
 不触发真实LLM的认知输出工作包已经关闭：预选的同一v3.3.1 run已生成schema 1.2产物，manifest中的9项输出均完成独立hash复核；`06_control_adjusted_agent_recovery.csv`的1120行完整，matched-Control算术与源Agent ledger在浮点容差内一致；三张图完成视觉审查；用户确认clean代码commit上的认知直接测试和Windows全量测试均通过。该产物仅升级为单次Real-LLM工程run的有限描述性证据，不升级为Pilot或正式推断，不形成稳定策略排名。

@@ -70,7 +70,7 @@
 
 绿色产品扩散研究表明，消费者偏好、社会加工和企业行为可以共同演化，ABM适合研究宏观扩散如何从微观异质互动中产生（Janssen、Jager，2002，《Stimulating diffusion of green products: Co-evolution between firms and consumers》）。绿色消费者分层研究也指出，心理和态度变量在解释绿色行为差异时可能比简单人口特征更有价值（Straughan、Roberts，1999，《Environmental segmentation alternatives: A look at green consumer behavior in the new millennium》）。
 
-本研究据此保留20个engineering personas，以覆盖绿色涉入、信任基线、信息加工倾向、购买频率和网络位置等机制差异。但这些Persona不是依据概率抽样或潜类别模型获得的现实群体权重，不能据此估计消费者分群占比，也不能把20个Agent当作20个独立统计重复。
+本研究据此保留20个工程Persona，以覆盖绿色涉入、信任基线、信息加工倾向、购买频率和网络位置等机制差异。但这些Persona不是依据概率抽样或潜类别模型获得的现实群体权重，不能据此估计消费者分群占比，也不能把20个Agent当作20个独立统计重复。
 
 ## 2.7 ABM/GABM的验证、校准与报告
 

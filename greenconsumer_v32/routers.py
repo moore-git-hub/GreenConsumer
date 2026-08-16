@@ -51,8 +51,12 @@ def _is_placeholder_secret(value) -> bool:
     )
 
 
-def _real_model_config(requested_llm_seed: int):
-    """读取 qwen-plus 配置并只在内存中注入 API key 与本次 requested seed。"""
+def _real_model_config(
+    requested_llm_seed: int,
+    *,
+    model_override: str | None = None,
+):
+    """读取共享配置，并只在内存中注入密钥、seed和可选模型覆盖。"""
     config_path = PROJECT_ROOT / "configs" / "models_config.yaml"
     raw = yaml.safe_load(config_path.read_text(encoding="utf-8-sig"))
     conf = copy.deepcopy(raw)
@@ -73,18 +77,35 @@ def _real_model_config(requested_llm_seed: int):
     if not chat_entries:
         raise RuntimeError("models_config.yaml has no chat-capable model entry")
 
+    resolved_model = None
+    if model_override is not None:
+        resolved_model = str(model_override).strip()
+        if not resolved_model:
+            raise ValueError("model_override must be a non-empty model identifier")
+
     for entry in chat_entries:
         entry["api_key"] = api_key
         entry["seed"] = int(requested_llm_seed)
+        if resolved_model is not None:
+            entry["model"] = resolved_model
     return conf
 
 
-def _build_real_router(requested_llm_seed: int):
-    """构建 AgentKernel 的 qwen-plus ModelRouter。
+def _build_real_router(
+    requested_llm_seed: int,
+    *,
+    model_override: str | None = None,
+):
+    """构建 AgentKernel ModelRouter，并允许版本作用域内固定模型。
 
     API key 只存在于当前进程内存，不会写回 YAML 或结果文件。
     """
-    async_router = AsyncModelRouter(_real_model_config(requested_llm_seed))
+    async_router = AsyncModelRouter(
+        _real_model_config(
+            requested_llm_seed,
+            model_override=model_override,
+        )
+    )
     router = ModelRouter(async_router)
     # 保留 inner 引用用于兼容不同 AgentKernel 版本的资源关闭方式。
     router._task005_async_router = async_router
@@ -169,12 +190,20 @@ class ReplayRouter:
         return await self.inner.chat(prompt)
 
 
-def build_inner_router(mode: str, requested_llm_seed: int):
-    """按显式 mode 构建 fake 或 real router；绝不静默 fallback。"""
+def build_inner_router(
+    mode: str,
+    requested_llm_seed: int,
+    *,
+    model_override: str | None = None,
+):
+    """按显式mode构建router；real可覆盖模型，fake忽略覆盖且绝不fallback。"""
     if mode == "fake":
         return DeterministicFMCGSemanticRouterV32()
     if mode == "real":
-        return _build_real_router(requested_llm_seed=requested_llm_seed)
+        return _build_real_router(
+            requested_llm_seed=requested_llm_seed,
+            model_override=model_override,
+        )
     raise ValueError(mode)
 
 

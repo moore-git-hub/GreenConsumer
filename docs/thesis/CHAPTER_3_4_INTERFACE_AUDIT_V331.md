@@ -50,4 +50,4 @@ LLM输出的是schema约束的显式语义评价及一条可审计理由，而�
 
 ## 6. 科研状态
 
-本轮只修改论文文字、概念图源和审计台账，没有修改模型机制、处理矩阵、参数、prompt、seed、estimand或执行协议。新增GABM run=0、provider call=0、有效Pilot observation=0、formal inference=0。Pilot与正式独立replication blocks继续保留，但在论文基础章节稳定前暂缓执行。
+本轮只修改论文文字、概念图源和审计台账，没有修改模型机制、处理矩阵、参数、prompt、seed、estimand或执行协议。新增GABM run=0、provider call=0、有效Pilot observation=0、formal inference=0。后续Pilot虽已获得条件式授权，本文所述审计本身不构成执行或结果证据。

@@ -2,9 +2,9 @@
 
 ## 1. 文件性质
 
-状态：`PROPOSED_FOR_USER_FREEZE; ZERO_API; PILOT_NOT_AUTHORIZED`
+状态：`USER_ACCEPTED_2026_08_16; ZERO_API; PENDING_WINDOWS_TESTED_CLEAN_SHA; PILOT_NOT_EXECUTED`
 
-本文件把P001—P006恢复执行所需的调用、时间、费用、模型版本和代码版本条件整理为一次性决策单。除`N_max=10`外，下列数值在用户明确接受前均只是提案。创建本文件、运行`--plan-only`或执行历史结果清点都不构成真实LLM Pilot授权。
+本文件把P001—P006恢复执行所需的调用、时间、费用、模型版本和代码版本条件整理为一次性决策单。用户已于2026-08-16接受第3节全部建议值和第5节方案A，并同意在模型固定提交通过Windows全量测试、记录clean SHA后开始Pilot。当前仍是零API准备阶段；候选SHA未通过新测试前不得执行。
 
 ## 2. 已有事实与可推导范围
 
@@ -23,9 +23,9 @@
 - 不能把run ID之间的时间间隔冒充经审计的单block wall time；
 - 不能宣称提案上限保证六个blocks一定完成。
 
-## 3. 建议冻结值
+## 3. 用户已接受的冻结值
 
-| 条件 | 建议值 | 依据 | 是否程序硬执行 |
+| 条件 | 冻结值 | 依据 | 是否程序硬执行 |
 |---|---:|---|---|
 | 正式block预算上限 | `N_max=10` | 已在Pilot结果前由用户冻结 | 是，既有门禁 |
 | Pilot provider-call ceiling | `1200` | 相对六block点估算891.6保留308.4次、约34.6%余量 | 是，调用底层router前停止 |
@@ -54,7 +54,7 @@ https://help.aliyun.com/zh/model-studio/model-pricing
 
 当前`configs/models_config.yaml`使用滚动别名`qwen-plus`。同一官方价格页在2026-08-16说明，该别名当前能力等同于`qwen-plus-2025-12-01`。滚动别名未来可能迁移，因此仅冻结字符串`qwen-plus`不足以保证长期复现。
 
-执行前必须二选一：
+用户必须在Pilot结果前二选一；2026-08-16已接受方案A：
 
 | 方案 | 处置 | 科学后果 |
 |---|---|---|
@@ -111,16 +111,21 @@ $rows | Sort-Object Profile | Format-Table -AutoSize
 
 总数应为743，所有`ReplayMisses`应为0。若不一致，停止冻结并先审计结果目录；不得选择性排除调用量较高的有效历史block。
 
-## 8. 尚需用户一次确认的项目
+## 8. 用户接受记录与剩余门禁
 
-在任何真实调用前，用户需明确回复是否同时接受：
+用户于2026-08-16明确回复“检查通过，接受建议，开始”。结合本文件上一轮列出的
+一次性选择，该回复记录为同时接受：
 
 1. `provider-call ceiling=1200`；
 2. `wall-clock ceiling=2.0 hours`；
-3. `可接受费用上限=CNY 20`及其非程序化边界；
-4. 模型版本方案A或B；
-5. 在新代码通过Windows全量测试后，再以当时clean HEAD单独冻结执行SHA；
-6. SHA冻结之后仍需另行说出“授权执行P001—P006”，冻结参数本身不自动启动Pilot。
+3. `可接受费用=CNY 20`及其非程序化边界；
+4. 模型版本方案A：`qwen-plus-2025-12-01`；
+5. P001–P006仅在新代码通过Windows全量测试并冻结clean SHA后开始。
+
+因此无需在相同条件下再次索取Pilot意向确认。但“开始”是条件式授权：模型固定会
+生成新SHA，用户先前在旧SHA上的测试通过不能验证该新提交。剩余步骤是发布候选SHA、
+由用户回传该SHA的完整测试与plan-only输出、再记录execution SHA；门禁未闭合前代码
+中的`pilot_execution_authorized`继续保持`false`。正式实验仍需完全独立的后续授权。
 
 ## 9. 当前零结果声明
 

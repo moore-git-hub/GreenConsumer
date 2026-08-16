@@ -12,7 +12,8 @@ The following scientific parameters remain unchanged from v3.3:
 - clarification: paid edge probability 0.55, delivery lag 1;
 - renewal demand and bounded-EWMA loyalty;
 - BA network baseline, 20 cognitive Agents, K=3 paid seeds;
-- qwen-plus with temperature 0.3 for real-LLM engineering runs;
+- historical retained engineering runs used the `qwen-plus` alias at temperature 0.3;
+- future v3.3.1 Pilot/formal runs pin `qwen-plus-2025-12-01` at temperature 0.3, while v3.2 remains unchanged;
 - 2×2×2 strategy matrix plus one common control.
 
 All numeric scientific defaults remain engineering assumptions until sensitivity

@@ -111,7 +111,7 @@ Persona面板通过确定性规则覆盖green orientation、category purchase fr
 
 ### A.4.2 Input data
 
-基线模型不读取现实品牌、消费者面板、平台网络或销量数据。自然语言输入由虚构危机和澄清材料构成。selected Real-LLM工程运行调用qwen-plus，temperature=0.3，prompt profile为baseline_exact；Fake-LLM仅用于结构和敏感性测试。
+基线模型不读取现实品牌、消费者面板、平台网络或销量数据。自然语言输入由虚构危机和澄清材料构成。既有selected Real-LLM工程运行按历史元数据调用`qwen-plus`，temperature=0.3，prompt profile为baseline_exact；后续v3.3.1 Pilot固定为`qwen-plus-2025-12-01`。Fake-LLM仅用于结构和敏感性测试。
 
 缺少现实输入数据是当前外部有效性的主要限制。任何未来现实数据校准必须形成新版本和新协议，不能静默覆盖v3.3.1。
 

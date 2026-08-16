@@ -2,7 +2,7 @@
 
 ## 1. 状态与范围
 
-实现状态：`ZERO_API_INFRASTRUCTURE_REPAIRED; NO_VALID_PILOT_BLOCK; PILOT_DEFERRED_NOT_CANCELLED; FORMAL_NOT_AUTHORIZED`
+实现状态：`PILOT_PARAMETERS_FROZEN; MODEL_PIN_IMPLEMENTED; PENDING_WINDOWS_TESTED_CLEAN_SHA; NO_VALID_PILOT_BLOCK; FORMAL_NOT_AUTHORIZED`
 
 本工作包实现 v3.3.1 Pilot 的计划、执行门禁、seed/attempt ledger、方差分解、planning SD 和 Holm operating-characteristic 分析。它不生成 Pilot 结果，不授权 P001–P006，也不启动正式实验。
 
@@ -30,9 +30,9 @@ python run_v33_pilot_variance.py `
 python run_v33_pilot_variance.py `
   --execute-real-pilot `
   --allow-real-llm `
-  --n-max <user_approved_cap> `
-  --provider-call-ceiling <user_approved_cap> `
-  --max-wall-clock-hours <user_approved_hours> `
+  --n-max 10 `
+  --provider-call-ceiling 1200 `
+  --max-wall-clock-hours 2 `
   --expected-git-head <clean_frozen_sha>
 ```
 
@@ -48,6 +48,10 @@ python run_v33_pilot_variance.py `
   的位置计数，达到 ceiling 时在进入底层router前 fail closed；
 - 任一预登记 block 失败后停止，不生成 replacement seed。
 
+v3.3.1 runner把共享配置中的滚动别名在内存中覆盖为
+`qwen-plus-2025-12-01`。该覆盖只作用于v3.3.1；v3.2 runner和共享YAML仍保持
+`qwen-plus`。Pilot validity gate同时要求run summary记录准确的具体模型版本。
+
 限额实现不得替换或包装`build_inner_router`返回的真实`ModelRouter`。Pilot与已经
 验证可运行的Real-LLM稳健性入口必须共享同一模型构造链。这里的provider call是
 一次底层`ModelRouter.chat`语义调用；AgentKernel/DashScope客户端内部针对同一调用
@@ -60,7 +64,7 @@ python run_v33_pilot_variance.py `
 block，不进入Pilot方差表，也不形成Pilot结果。修复后必须从P001按原冻结seed grid
 重新开始完整suite，不把失败尝试当作replacement或正式样本。
 
-用户已在查看Pilot结果前批准并冻结`N_max=10`。重新准入提案已给出1200次调用、2小时和20元费用接受上限，但provider-call ceiling、时间/费用预算、模型版本选择和真实Pilot授权仍需用户明确确认。Pilot与正式blocks不取消，但当前仍不得运行该入口。完整状态见`PILOT_EXECUTION_CONDITIONS.md`与`PILOT_REENTRY_FREEZE_PROPOSAL_V331.md`。
+用户已在查看Pilot结果前批准并冻结`N_max=10`，并于2026-08-16接受1200次调用、2小时、CNY 20行政费用容忍度及具体模型方案。Pilot授权以新模型固定提交通过Windows全量测试并记录clean execution SHA为生效条件；当前仍不得运行该入口。Pilot与正式blocks均未取消，正式执行仍未授权。完整状态见`PILOT_EXECUTION_CONDITIONS.md`、`PILOT_REENTRY_FREEZE_PROPOSAL_V331.md`与`PILOT_EXECUTION_AUTHORIZATION_V331.md`。
 
 ## 4. 方差与样本量规则
 

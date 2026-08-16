@@ -44,7 +44,7 @@ Status vocabulary:
 | S03 | System construction | Tests and engineering verification chain | `tests/`, architecture result records | AVAILABLE | Verification subsection, not formal inference |
 | S04 | System construction | Fixed-network state/flow animation | `greenconsumer_v33/network_animation.py` | AVAILABLE | System demonstration with fixed-topology caveat |
 | E01 | Experiment design | Primary/secondary estimands and analysis family | `FORMAL_EXPERIMENT_PROTOCOL.md` | AVAILABLE | Formal design section |
-| E02 | Experiment design | Pilot seed and replication design with pre-result `N_max=10` | Pilot protocol/contract/code, `PILOT_EXECUTION_CONDITIONS.md` | DEFERRED_BY_USER | Temporarily deferred for thesis drafting, not cancelled; N=10 is not justified as formal N |
+| E02 | Experiment design | Pilot seed and replication design with pre-result `N_max=10` | Pilot protocol/contract/code, execution-conditions and authorization records | PLANNED_NOT_EXECUTED | Parameters accepted and conditionally authorized; new clean SHA still needs Windows testing; N=10 is not justified as formal N |
 | E04 | Experiment design | N=10 small-sample diagnostic and sensitivity rules | `SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` | AVAILABLE | Apply only if OC gate accepts N=10; results cannot drive method switching |
 | E03 | Experiment design | Formal N, seed ledger and frozen analysis SHA | not yet created | NOT_AUTHORIZED | No thesis value may be reported yet |
 | R01 | Simulation results | v3.3.1 engineering robustness results | `EXPERIMENT_EVIDENCE_REGISTER.md` and committed result records | AVAILABLE | Robustness/verification appendix with engineering label |
@@ -201,3 +201,17 @@ Prepared `PILOT_REENTRY_FREEZE_PROPOSAL_V331.md` from the only admitted executio
 Added a required positive `--max-wall-clock-hours` gate to the real Pilot CLI and execution path. The runner now checks time before provider calls and bounds each current block by the remaining suite time; expiration fails closed and does not admit a replacement seed. Plan-only execution with the proposed values passed locally and still reports zero real calls and no authorization. Python compilation and a direct deterministic time-gate check passed; this Linux environment does not contain pytest, so the full regression suite remains assigned to the user's Windows `Kernel` environment before any execution SHA can be frozen.
 
 The proposed numerical caps, model version, clean execution SHA and actual P001–P006 authorization remain unfrozen. This work generated no GABM run, provider call, valid Pilot observation or formal inference.
+
+## 16. Work log entry — 2026-08-16: v3.3.1 model pin and conditional Pilot authorization
+
+The user accepted the proposed 1,200 provider-call ceiling, two-hour wall-clock ceiling,
+CNY 20 administrative cost tolerance and the recommended dated model
+`qwen-plus-2025-12-01`. The same decision conditionally authorizes P001–P006 only after
+the model-pin commit passes the complete Windows `Kernel` test suite and its clean remote
+SHA is recorded. Formal execution remains unauthorized.
+
+The implementation keeps the shared YAML and closed v3.2 runner on the historical
+`qwen-plus` alias, while v3.3.1 applies a memory-only model override. Pilot plan output,
+seed ledger, run summary and validity checks now expose or verify the dated identifier.
+Historical Real-LLM robustness outputs are not retrospectively relabelled. This change
+generated no GABM run, provider call, valid Pilot observation or formal inference.

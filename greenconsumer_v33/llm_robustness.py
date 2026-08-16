@@ -89,8 +89,17 @@ def _prompt_router_patch(profile: str, holder: dict):
 
     original_builder = runner_module.build_inner_router
 
-    def builder(mode: str, requested_llm_seed: int):
-        base = original_builder(mode, requested_llm_seed)
+    def builder(
+        mode: str,
+        requested_llm_seed: int,
+        *,
+        model_override: str | None = None,
+    ):
+        base = original_builder(
+            mode,
+            requested_llm_seed,
+            model_override=model_override,
+        )
         wrapped = PromptProfileRouter(base, profile)
         holder["router"] = wrapped
         return wrapped
@@ -189,6 +198,12 @@ def _invariants(run_payloads: list[dict], audits: pd.DataFrame) -> pd.DataFrame:
         payload = item["payload"]
         cond = payload.get("condition_meta") or []
         replay_miss = sum(int(x.get("replay_misses", 0)) for x in cond)
+        frozen_real_llm_settings = (
+            payload.get("llm_mode") == "real"
+            and payload.get("llm_model") == runner_module.MODEL
+            and abs(float(payload.get("llm_temperature", -1)) - 0.3) < 1e-12
+            and int(payload.get("total_ticks", -1)) == 35
+        )
         rows.extend(
             [
                 {
@@ -215,9 +230,14 @@ def _invariants(run_payloads: list[dict], audits: pd.DataFrame) -> pd.DataFrame:
                 {
                     "check_id": "FROZEN_REAL_LLM_SETTINGS",
                     "profile_id": p["profile_id"],
-                    "status": "PASS" if payload.get("llm_mode") == "real" and abs(float(payload.get("llm_temperature", -1)) - 0.3) < 1e-12 and int(payload.get("total_ticks", -1)) == 35 else "FAIL",
-                    "observed": f"mode={payload.get('llm_mode')}; temp={payload.get('llm_temperature')}; T={payload.get('total_ticks')}",
-                    "criterion": "real qwen-plus path at temperature .3 and T35",
+                    "status": "PASS" if frozen_real_llm_settings else "FAIL",
+                    "observed": (
+                        f"mode={payload.get('llm_mode')}; "
+                        f"model={payload.get('llm_model')}; "
+                        f"temp={payload.get('llm_temperature')}; "
+                        f"T={payload.get('total_ticks')}"
+                    ),
+                    "criterion": f"real {runner_module.MODEL} path at temperature .3 and T35",
                 },
             ]
         )
@@ -259,7 +279,10 @@ def _plot_estimand_by_prompt(estimands: pd.DataFrame, eid: str, path: Path) -> s
     ax.axhline(0.0, linewidth=0.8)
     ax.set_xlabel("Pre-specified prompt layout profile")
     ax.set_ylabel(str(df["unit"].iloc[0]))
-    ax.set_title(f"Real-LLM prompt-layout robustness: {eid}\nqwen-plus, temperature .3, T35; descriptive only")
+    ax.set_title(
+        f"Real-LLM prompt-layout robustness: {eid}\n"
+        f"{runner_module.MODEL}, temperature .3, T35; descriptive only"
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout(); fig.savefig(path, dpi=180); plt.close(fig)
     return str(path)
@@ -381,6 +404,7 @@ async def run_suite(*, output_root: Path, allow_real_llm: bool) -> dict:
         "baseline_repeats": 3,
         "profiles_run": int(len(profiles)),
         "requested_llm_seed_held_constant": DEFAULT_LLM_SEED,
+        "llm_model": runner_module.MODEL,
         "simulation_seed": DEFAULT_SIMULATION_SEED,
         "demand_seed": DEFAULT_DEMAND_SEED,
         "temperature": 0.3,
@@ -411,6 +435,7 @@ def plan_payload() -> dict:
         "prompt_profiles": list(PROMPT_PROFILES),
         "baseline_repeats": 3,
         "same_requested_seed_across_repeats": True,
+        "llm_model": runner_module.MODEL,
         "estimated_cost_note": "Five full 9-condition Real-LLM engineering blocks; actual provider-call count is runtime-dependent.",
     }
 

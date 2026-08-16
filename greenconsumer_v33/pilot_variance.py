@@ -31,6 +31,7 @@ CONTROL = "NoClarification-Control"
 TOTAL_TICKS = 35
 DELIVERY_LAG = 1
 MICRO_BUYERS = 25
+PILOT_LLM_MODEL = "qwen-plus-2025-12-01"
 
 P1 = "P1_OVERALL_CLARIFICATION_POST_TRUST_V33"
 P2 = "P2_CONTENT_POST_TRUST_V33"
@@ -132,6 +133,7 @@ def plan_payload(
         "offline_demand_seeds": demand_seed_table().to_dict(orient="records"),
         "cognitive_blocks": 6,
         "p5_demand_realizations": 18,
+        "llm_model": PILOT_LLM_MODEL,
         "n_max": int(n_max) if caps_frozen else None,
         "provider_call_ceiling": int(provider_call_ceiling) if caps_frozen else None,
         "max_wall_clock_hours": (
@@ -139,6 +141,9 @@ def plan_payload(
         ),
         "execution_caps_frozen": caps_frozen,
         "execution_authorized": False,
+        "pilot_authorization_status": (
+            "USER_AUTHORIZED_CONDITIONAL_ON_WINDOWS_TESTED_CLEAN_SHA"
+        ),
         "minimum_oc_replications_per_scenario": DEFAULT_OC_REPLICATIONS,
         "estimated_cost_note": (
             "Six complete nine-condition Real-LLM cognitive blocks; actual provider "
@@ -658,6 +663,7 @@ def analyze_existing_suite(
         "oc_replications_per_scenario": int(replications),
         "oc_random_seed": int(random_seed),
         "formal_execution_authorized": False,
+        "llm_model": PILOT_LLM_MODEL,
         "interpretation": (
             "selected_formal_n is a pre-formal design recommendation only; protocol 1.1, "
             "a formal seed ledger, frozen source SHA, and explicit authorization remain required"
@@ -814,6 +820,7 @@ def _validity_row(pilot_id: str, payload: dict, run_dir: Path) -> tuple[dict, pd
         "semantic_fallback_zero": int(payload.get("semantic_fallback_events", -1)) == 0,
         "replay_miss_zero": sum(int(x.get("replay_misses", 0)) for x in condition_meta) == 0,
         "t35": int(payload.get("total_ticks", -1)) == TOTAL_TICKS,
+        "dated_llm_model": payload.get("llm_model") == PILOT_LLM_MODEL,
         "strict_internal_validation": bool(strict_validation),
         "state_and_memory_bounds": bool(state_bounds),
         "p1_through_p5_reconstructable": {P1, P2, P3, P4, P5}.issubset(estimand_ids),
@@ -862,6 +869,7 @@ async def run_pilot_suite(
     profiles = profile_table()
     seed_ledger = profiles.copy()
     seed_ledger["offline_demand_seeds"] = ";".join(str(x) for x in DEMAND_SEEDS)
+    seed_ledger["llm_model"] = PILOT_LLM_MODEL
     seed_ledger["git_head"] = provenance["git_head"]
     _write_frame(seed_ledger, suite_dir / "pilot_seed_ledger.csv")
 
@@ -978,6 +986,7 @@ async def run_pilot_suite(
                 "error_message": str(exc),
                 "provider_call_ceiling": int(provider_call_ceiling),
                 "provider_calls_attempted": int(budget.calls_attempted),
+                "llm_model": PILOT_LLM_MODEL,
                 "max_wall_clock_hours": float(max_wall_clock_hours),
                 "wall_clock_seconds_elapsed": budget.elapsed_seconds(),
                 "formal_inference_performed": False,
@@ -1027,6 +1036,7 @@ async def run_pilot_suite(
             "provider_calls_attempted": int(budget.calls_attempted),
             "max_wall_clock_hours": float(max_wall_clock_hours),
             "wall_clock_seconds_elapsed": budget.elapsed_seconds(),
+            "llm_model": PILOT_LLM_MODEL,
             "git_provenance": provenance,
         }
     )

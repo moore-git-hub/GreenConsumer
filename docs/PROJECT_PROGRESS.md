@@ -49,7 +49,7 @@ Rational-evidence / Emotional-empathy
 | 12 | Selected Real-LLM robustness | 已完成 | `llmrob_20260814_230111`结果记录 | 不作为正式样本 |
 | 13 | Provenance、网络和内部有效性输出 | 已完成 | `V331_OUTPUT_AND_VALIDATION.md` | 正式runner复用并加固 |
 | 14 | 正式处理、estimand与Pilot协议v1.0 | 已完成 | `FORMAL_EXPERIMENT_PROTOCOL.md` | 保持处理与分析规则冻结 |
-| 15 | Pilot variance执行 | 暂缓 | 论文基础包已闭合并进入重新准入；当前无有效Pilot block，真实执行仍未授权 | 用户确认调用/时间/费用与模型版本；Windows测试后冻结clean SHA |
+| 15 | Pilot variance执行 | 部分完成 | N=10、1200次调用、2小时、CNY 20行政费用容忍度及具体模型已接受；当前无有效Pilot block | 模型固定候选SHA通过Windows完整测试后冻结并从P001开始 |
 | 16 | 正式N与正式seed ledger | 未开始 | N仍待Pilot | Pilot后按冻结OC规则确定 |
 | 17 | v3.3.1正式runner与分析包 | 未开始 | 当前runner仅engineering/demo | 添加测试、合同和SHA冻结 |
 | 18 | v3.3.1正式实验 | 未开始 | `FORMAL_NOT_AUTHORIZED` | 协议1.1和明确授权 |
@@ -57,7 +57,7 @@ Rational-evidence / Emotional-empathy
 | 20 | Agent cognition evolution论文输出 | 已完成 | 预选Real-LLM run的schema 1.2真实产物已完成provenance、9项输出hash、完整面板、matched-Control算术与视觉审计；用户确认clean commit上的认知直接测试和Windows全量测试均通过 | 仅作为单次工程run的有限描述性证据；不把Agents当重复块、不推断隐性CoT、不作策略排名或总体推断 |
 | 21 | 语义→心理→网络→行为机制总图 | 已完成 | `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg`与model-to-code traceability逐层对齐；LLM理由复用为UGC的边界已更正 | 既有PNG含修正前文字，定稿前在Windows中文字体环境从SVG重导出；不改变机制 |
 | 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、第五章空结果合同、第六章条件式结论模板、基础包、来源台账、ODD＋D、各阶段审计、N=10诊断协议、阈值工作表及引用审计已建立 | 正式结果产生前不再填充第五、六章；后续只做必要引用/导师意见修订 |
-| 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、调用及wall-clock fail-closed tests | 用户冻结预算、模型版本并另行授权后才可执行Pilot |
+| 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、调用及wall-clock fail-closed tests；v3.3.1具体模型固定 | 新候选SHA完成Windows回归并冻结后方可执行Pilot |
 | 24 | 实验结果证据台账与版本分层 | 已完成 | `EXPERIMENT_EVIDENCE_REGISTER.md`；结果记录commits；v3.2 archive | 正式写作时按已建立的table/figure registry持续登记 |
 | 25 | 论文工作—证据—表图追踪体系 | 已完成 | `MODEL_TO_CODE_TRACEABILITY_V331.md`、`THESIS_WORK_AND_OUTPUT_REGISTER.md` | 任何新run或正文表图进入论文时同步更新 |
 | 26 | 第一至第六章RQ—证据—结论全链路审计 | 已完成 | `FULL_THESIS_RQ_EVIDENCE_CLAIM_AUDIT_V331.md`；第六章条件式模板；跨章硬冲突复核 | 最终定题仍为高风险未决gate；正式结果后重新审计 |
@@ -66,9 +66,9 @@ Rational-evidence / Emotional-empathy
 
 ```text
 已完成：21
-部分完成：1
+部分完成：2
 未开始：3
-暂缓：1
+暂缓：0
 阻塞：0（用户回传Windows `Kernel`完整测试：129 passed in 8.29s，HEAD为`b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`）
 ```
 
@@ -109,20 +109,21 @@ Rational-evidence / Emotional-empathy
 4. 不把工程参数写成文献估计值；
 5. 不用一般性文献替代模型具体识别条件。
 
-第一至第四章正文底稿、ODD＋D附录和第五章报告模板已在对应句段使用“作者、年份、题名”引用，并通过`docs/thesis/CITATION_CLAIM_AUDIT_V331.md`记录每项来源的允许用途和禁止外推。题目—RQ—证据—贡献审计已建立。论文正文事项保持“部分完成”，因为第五章正式结果和第六章仍未完成；用户暂缓Pilot后，更不能以已有工程材料替代未产生的正式证据。
+第一至第四章正文底稿、ODD＋D附录和第五章报告模板已在对应句段使用“作者、年份、题名”引用，并通过`docs/thesis/CITATION_CLAIM_AUDIT_V331.md`记录每项来源的允许用途和禁止外推。题目—RQ—证据—贡献审计已建立。论文正文事项保持“部分完成”，因为第五章正式结果和第六章仍未完成；Pilot虽已获条件式授权但尚无有效block，更不能以已有工程材料替代未产生的正式证据。
 
 ## 6. 下一门槛
 
 当前下一门槛改为：
 
 ```text
-PILOT-REENTRY-FREEZE：论文写作基础包已经闭合，重新准入提案已经形成。用户需确认
-provider-call ceiling、费用与时间预算及模型版本；随后完成Windows全量测试并冻结
-当时clean execution SHA。参数冻结不等于执行授权，仍须另行明确授权后才可从P001开始。
+PILOT-CANDIDATE-SHA：用户已接受1200次provider-call、2小时、CNY 20行政费用
+容忍度和`qwen-plus-2025-12-01`，并条件式授权P001–P006。现在必须发布模型固定候选
+SHA，由用户在Windows `Kernel`环境对该准确HEAD运行完整pytest和零API plan-only；
+通过后记录clean execution SHA，条件式授权才生效。正式实验仍未授权。
 ```
 
 第六章条件式模板与第一至第六章全链路审计已经完成。审计清除了第二章残留的“每七个Tick”硬冲突，统一了RQ2的认知意向与条件选择概率，且把P1/P5写成八cell等权平均而非“任一澄清”。当前工作题目仍被评为高风险：P4没有消费者cascade estimand，P5也不是绿色产品总体采纳扩散；跑完正式blocks不会自动消除这一范围错配。第五、六章全部结果占位符保持为空。本轮没有新增文献、GABM run、provider call、Pilot observation或formal inference。
 
-零API基础设施已完成，Windows clean HEAD `b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`的129项测试已由用户回传全部通过。此前命令因缺少provider-call ceiling在参数解析阶段停止，没有启动新的suite或形成有效Pilot block。重新准入审计根据历史5 blocks/743 calls提出1200次调用、2小时和20元费用接受上限，并识别出`qwen-plus`滚动别名的复现风险；这些值和模型版本在用户确认前均未冻结。代码已新增wall-clock fail-closed门禁，但尚待Windows完整回归。`N_max=10`仍只是预结果预算上限，不是已证明的正式N。
+零API基础设施已完成，Windows clean HEAD `b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`的129项测试已由用户回传全部通过。此前命令因缺少provider-call ceiling在参数解析阶段停止，没有启动新的suite或形成有效Pilot block。重新准入审计根据历史5 blocks/743 calls冻结1200次调用、2小时和CNY 20行政费用容忍度；v3.3.1固定到`qwen-plus-2025-12-01`，v3.2路径保持`qwen-plus`。旧HEAD的测试不能验证新的模型固定提交，故执行SHA仍待新的Windows完整回归。`N_max=10`仍只是预结果预算上限，不是已证明的正式N。
 
 不触发真实LLM的认知输出工作包已经关闭：预选的同一v3.3.1 run已生成schema 1.2产物，manifest中的9项输出均完成独立hash复核；`06_control_adjusted_agent_recovery.csv`的1120行完整，matched-Control算术与源Agent ledger在浮点容差内一致；三张图完成视觉审查；用户确认clean代码commit上的认知直接测试和Windows全量测试均通过。该产物仅升级为单次Real-LLM工程run的有限描述性证据，不升级为Pilot或正式推断，不形成稳定策略排名。

@@ -508,6 +508,26 @@ DashScope客户端为同一次调用执行的HTTP transport retry不另计为新
 
 ---
 
+## DR-20260816-33：v3.3.1具体模型与Pilot重新准入条件冻结
+
+**状态：parameters frozen; Pilot conditionally authorized; clean execution SHA pending**
+
+用户在查看任何有效Pilot结果前接受重新准入建议：`N_max=10`、1200次底层语义
+调用、2小时wall-clock、CNY 20行政费用容忍度，以及模型方案A
+`qwen-plus-2025-12-01`。用户的“开始”记录为P001–P006条件式授权，仅在模型固定
+提交通过Windows完整回归、零API plan-only核对并记录clean execution SHA后生效。
+这不是正式实验授权。
+
+实现采用版本作用域覆盖：共享`configs/models_config.yaml`及v3.2 runner继续保留
+`qwen-plus`，v3.3.1 runner在内存模型配置中覆盖为具体版本。这样避免改写已关闭的
+v3.2路径，同时使后续Pilot run summary、seed ledger和validity gate审计具体模型。
+历史五个Real-LLM稳健性blocks继续按其真实元数据记作滚动别名，不追溯性改名。
+
+模型固定必然产生新代码SHA，因此旧SHA的129项Windows PASS不能作为新提交的执行
+证明。当前新增GABM run=0、provider call=0、有效Pilot observation=0、formal inference=0。
+
+---
+
 ## DR-20260816-27：确认保留Pilot与正式blocks并建立跨章统一口径
 
 **状态：formal route retained; execution deferred for writing; cross-chapter audit available**

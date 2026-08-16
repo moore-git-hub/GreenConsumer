@@ -16,6 +16,7 @@ from greenconsumer_v33.pilot_variance import (
     P1,
     P2,
     P5,
+    PILOT_LLM_MODEL,
     SIMULATION_SEEDS,
     ProviderCallBudgetExceeded,
     WallClockBudgetExceeded,
@@ -93,6 +94,7 @@ def test_plan_only_is_explicitly_nonexecuting() -> None:
     assert payload["cognitive_blocks"] == 6
     assert payload["p5_demand_realizations"] == 18
     assert payload["max_wall_clock_hours"] == 2.0
+    assert payload["llm_model"] == "qwen-plus-2025-12-01"
 
 
 def test_execution_caps_fail_closed() -> None:
@@ -331,3 +333,43 @@ def test_machine_contract_matches_code_constants() -> None:
     assert payload["execution"]["pilot_execution_authorized"] is False
     assert payload["execution"]["formal_execution_authorized"] is False
     assert payload["execution"]["max_wall_clock_hours_required_before_pilot"] is True
+
+
+def test_v331_model_is_dated_and_v32_model_path_is_unchanged() -> None:
+    root = Path(__file__).parents[1]
+    contract_path = (
+        root
+        / "docs"
+        / "architecture"
+        / "task_pv01_pilot_variance_contract1.0.json"
+    )
+    payload = json.loads(contract_path.read_text(encoding="utf-8"))
+
+    def assigned_string(path: Path, name: str) -> str:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in tree.body:
+            if isinstance(node, ast.Assign):
+                if any(
+                    isinstance(target, ast.Name) and target.id == name
+                    for target in node.targets
+                ):
+                    assert isinstance(node.value, ast.Constant)
+                    return str(node.value.value)
+        raise AssertionError(f"{name} assignment not found in {path}")
+
+    v33_runner = root / "greenconsumer_v33" / "runner.py"
+    v32_runner = root / "greenconsumer_v32" / "runner.py"
+    assert assigned_string(v33_runner, "MODEL") == "qwen-plus-2025-12-01"
+    assert assigned_string(v32_runner, "MODEL") == "qwen-plus"
+
+    source = v33_runner.read_text(encoding="utf-8")
+    assert "model_override=MODEL" in source
+    shared_config = (root / "configs" / "models_config.yaml").read_text(
+        encoding="utf-8-sig"
+    )
+    assert "model: qwen-plus" in shared_config
+    assert payload["frozen_model"]["llm_model"] == "qwen-plus-2025-12-01"
+    assert PILOT_LLM_MODEL == payload["frozen_model"]["llm_model"]
+    assert payload["execution"]["n_max"] == 10
+    assert payload["execution"]["provider_call_ceiling"] == 1200
+    assert payload["execution"]["max_wall_clock_hours"] == 2.0

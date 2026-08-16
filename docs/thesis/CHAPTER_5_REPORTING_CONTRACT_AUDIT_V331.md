@@ -59,4 +59,4 @@
 
 ## 7. 科研与版本记录
 
-本轮没有填入结果、增加文献、改变处理、estimand、阈值、主分析、参数、prompt或seed。新增GABM run=0、provider call=0、有效Pilot observation=0、formal inference=0。Pilot和正式独立replication blocks继续保留但暂缓执行。
+本轮没有填入结果、增加文献、改变处理、estimand、阈值、主分析、参数、prompt或seed。新增GABM run=0、provider call=0、有效Pilot observation=0、formal inference=0。Pilot已获条件式授权但尚未执行；正式独立replication blocks仍未授权。

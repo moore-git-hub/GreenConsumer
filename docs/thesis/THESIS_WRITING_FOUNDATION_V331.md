@@ -113,7 +113,7 @@ LLM边界必须在方法章节和图中同时说明：LLM不直接决定购买�
 
 正式统计单位是完整replication block。确认性family固定为P1、P2、P5，并使用Holm step-down控制family-wise alpha=.05；P3和P4为探索性/机制性estimands。Agent、Agent×Tick、provider call和micro-buyer都不是独立统计单位。
 
-Pilot预设P001–P006六个cognitive blocks并对每个历史离线交叉三个demand seeds。用户已在看到v3.3.1 Pilot结果前冻结`N_max=10`。这意味着正式N只能在10这一唯一预算可行点接受或判定不可行：后续恢复Pilot后，只有当保守planning SD下三项确认性检出概率均达到.80，协议1.1才可冻结正式N=10；否则状态必须转为`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。用户于2026-08-16决定先继续论文写作，Pilot与正式独立blocks暂缓但不取消；当前没有有效Pilot block，也没有正式N或正式推断。
+Pilot预设P001–P006六个cognitive blocks并对每个历史离线交叉三个demand seeds。用户已在看到v3.3.1 Pilot结果前冻结`N_max=10`。这意味着正式N只能在10这一唯一预算可行点接受或判定不可行：Pilot完成后，只有当保守planning SD下三项确认性检出概率均达到.80，协议1.1才可冻结正式N=10；否则状态必须转为`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。用户于2026-08-16进一步接受1200次调用、2小时、CNY 20行政费用容忍度和`qwen-plus-2025-12-01`，并条件式授权P001–P006；该授权只在新提交通过Windows全量测试并冻结clean SHA后生效。当前没有有效Pilot block，也没有正式N或正式推断。
 
 ## 7. 验证与证据层级
 

@@ -51,7 +51,7 @@ from .config import (
 )
 from .demand import simulate_demand
 
-MODEL = "qwen-plus"
+MODEL = "qwen-plus-2025-12-01"
 TEMPERATURE = 0.3
 RUN_SCHEMA = "task005_fmcg_v331_engineering_run1.1"
 
@@ -147,7 +147,11 @@ async def execute(
     run_dir.mkdir(parents=True)
 
     configs = _configs(settings)
-    inner = build_inner_router(settings.llm_mode, settings.requested_llm_seed)
+    inner = build_inner_router(
+        settings.llm_mode,
+        settings.requested_llm_seed,
+        model_override=MODEL,
+    )
 
     control_cache = None
     all_cognitive: list[dict] = []

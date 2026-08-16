@@ -4,19 +4,26 @@
 
 | 字段 | 冻结值 |
 |---|---|
-| 协议版本 | `1.0.2` |
-| 协议日期 | `2026-08-15` |
+| 协议版本 | `1.0.3` |
+| 协议日期 | `2026-08-16` |
 | 代码分支 | `refactor/task005-v32-clean-codebase` |
 | 协议起草时 HEAD | `7d7a4e595969d6912995c7b7d068144b28d92771` |
 | 模型版本 | `TASK_005_FMCG_V3.3.1` |
-| 当前状态 | `TREATMENT_AND_PILOT_PROTOCOL_FROZEN; N_MAX_10_FROZEN; SMALL_N_DIAGNOSTIC_FROZEN; PILOT_NOT_EXECUTED; FORMAL_NOT_AUTHORIZED` |
+| 当前状态 | `PILOT_PARAMETERS_FROZEN; PILOT_AUTHORIZED_CONDITIONAL_ON_WINDOWS_TESTED_CLEAN_SHA; PILOT_NOT_EXECUTED; FORMAL_NOT_AUTHORIZED` |
 | 论文用途 | 工商管理硕士论文的正式实验准备与方法审计 |
 
-本协议冻结 v3.3.1 的处理矩阵、研究问题、estimand、推断单位、Pilot 方差设计、失败规则与正式样本量选择规则。它不授权真实 LLM Pilot 或正式实验。任何真实 LLM 执行仍须另行生成执行授权、seed ledger、源码清洁性证明和费用上限。
+本协议冻结 v3.3.1 的处理矩阵、研究问题、estimand、推断单位、Pilot 方差设计、失败规则与正式样本量选择规则。用户已对P001–P006作出有前置条件的授权；模型固定提交只有在Windows完整回归通过、clean SHA落盘后才能执行。正式实验仍未授权。
 
 ### 0.1 预算上限修订记录
 
-用户于2026-08-15在查看v3.3.1 Pilot结果前冻结正式replication-block上限`N_max=10`。该值是Pilot执行前的计算/费用约束，不是Pilot block数，也不是已经由方差证据证明的正式N。P001–P006六个Pilot blocks保持不变；Pilot后若N=10不能满足第7节的operating-characteristic规则，必须判定`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。`PILOT_REENTRY_FREEZE_PROPOSAL_V331.md`已提出调用、时间和费用边界并补充程序化wall-clock门禁，但provider-call ceiling、时间/费用预算、模型版本、clean execution SHA和真实Pilot授权在用户确认前仍未冻结。
+用户于2026-08-15在查看v3.3.1 Pilot结果前冻结正式replication-block上限`N_max=10`。该值是Pilot执行前的计算/费用约束，不是Pilot block数，也不是已经由方差证据证明的正式N。P001–P006六个Pilot blocks保持不变；Pilot后若N=10不能满足第7节的operating-characteristic规则，必须判定`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。用户于2026-08-16进一步冻结1200次provider-call、2小时wall-clock、CNY 20行政费用容忍度及具体模型`qwen-plus-2025-12-01`。clean execution SHA和该SHA上的Windows测试仍是条件式Pilot授权生效前的最后门禁。
+
+### 0.3 Pilot前模型版本修订记录
+
+协议1.0.3在任何有效Pilot block产生前，把v3.3.1 Real-LLM模型由滚动别名固定为
+`qwen-plus-2025-12-01`。共享YAML和v3.2 runner继续保持`qwen-plus`，避免改写已关闭
+的v3.2执行路径；v3.3.1在router构造时只作内存内版本覆盖。此前五个Real-LLM
+稳健性blocks按历史运行元数据继续记为`qwen-plus`，不得追溯性重标为具体版本。
 
 ### 0.2 小样本诊断修订记录
 
@@ -89,7 +96,7 @@ Immediate 和 Delayed 是预设时间窗口，不代表现实世界中普适的�
 | Paid amplification | edge probability=.55；delivery lag=1 | engineering assumptions，已做敏感性分析但未经验校准 |
 | Trust | v3.3.1 asymmetric memory、partial adjustment、repair saturation、hypocrisy amplifier | 参数为 engineering assumptions |
 | Demand | renewal purchase opportunities；bounded-EWMA loyalty | 未经验校准 |
-| Real LLM | `qwen-plus`；temperature=.3；prompt=`baseline_exact` | LLM 只执行语义 appraisal，不直接决定购买 |
+| Real LLM | `qwen-plus-2025-12-01`；temperature=.3；prompt=`baseline_exact` | LLM 只执行语义 appraisal，不直接决定购买；v3.2路径不变 |
 | Conversion support | 正式 P5 固定为 `absent` | 不构成第四个正式因子；present 仅保留为既有工程诊断 |
 
 以上设置只能因预先记录的实现缺陷、测量完整性问题或不可执行性而修改。任何修改必须先写入 `MODEL_DESIGN_DECISION_LOG.md`，生成新协议版本，并说明旧 Pilot/正式结果是否作废。
@@ -328,8 +335,9 @@ P3、P4 报告各 block 值、mean、SD、median、IQR、min、max及轨迹/触�
 - Pilot runner 与零 API 测试；
 - `pilot_seed_ledger.csv`；
 - Pilot attempt/validity contract；
-- provider-call 预算与用户明确执行授权；
-- clean Git HEAD；
+- 已冻结的1200次provider-call与2小时wall-clock门禁；
+- 条件式Pilot授权记录；
+- Windows完整回归通过并已冻结的clean Git HEAD；
 - `python run_v33.py preflight --real` PASS；
 - 结果目录与 manifest 写出测试 PASS。
 

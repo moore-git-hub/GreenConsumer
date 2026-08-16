@@ -56,15 +56,16 @@ Rational-evidence / Emotional-empathy
 | 19 | 固定拓扑网络状态/传播动画 | 已完成 | `greenconsumer_v33/network_animation.py` | 论文中不得称拓扑演化 |
 | 20 | Agent cognition evolution论文输出 | 已完成 | 预选Real-LLM run的schema 1.2真实产物已完成provenance、9项输出hash、完整面板、matched-Control算术与视觉审计；用户确认clean commit上的认知直接测试和Windows全量测试均通过 | 仅作为单次工程run的有限描述性证据；不把Agents当重复块、不推断隐性CoT、不作策略排名或总体推断 |
 | 21 | 语义→心理→网络→行为机制总图 | 已完成 | `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg`与model-to-code traceability逐层对齐；LLM理由复用为UGC的边界已更正 | 既有PNG含修正前文字，定稿前在Windows中文字体环境从SVG重导出；不改变机制 |
-| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、基础包、来源台账、ODD＋D附录、第五章正式结果模板、题目—RQ—贡献审计、跨章一致性审计、第一二章编辑审计、第三四章接口审计、第五章报告合同审计、N=10诊断协议、阈值工作表及引用审计已建立 | 建立不预写结果的第六章讨论—结论分支模板并做全包整合审计 |
+| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、第五章空结果合同、第六章条件式结论模板、基础包、来源台账、ODD＋D、各阶段审计、N=10诊断协议、阈值工作表及引用审计已建立 | 正式结果产生前不再填充第五、六章；后续只做必要引用/导师意见修订 |
 | 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、tests | 用户冻结预算并另行授权后才可执行Pilot |
 | 24 | 实验结果证据台账与版本分层 | 已完成 | `EXPERIMENT_EVIDENCE_REGISTER.md`；结果记录commits；v3.2 archive | 正式写作时按已建立的table/figure registry持续登记 |
 | 25 | 论文工作—证据—表图追踪体系 | 已完成 | `MODEL_TO_CODE_TRACEABILITY_V331.md`、`THESIS_WORK_AND_OUTPUT_REGISTER.md` | 任何新run或正文表图进入论文时同步更新 |
+| 26 | 第一至第六章RQ—证据—结论全链路审计 | 已完成 | `FULL_THESIS_RQ_EVIDENCE_CLAIM_AUDIT_V331.md`；第六章条件式模板；跨章硬冲突复核 | 最终定题仍为高风险未决gate；正式结果后重新审计 |
 
 当前计数：
 
 ```text
-已完成：20
+已完成：21
 部分完成：1
 未开始：3
 暂缓：1
@@ -115,12 +116,12 @@ Rational-evidence / Emotional-empathy
 当前下一门槛改为：
 
 ```text
-THESIS-CH6-CONDITIONAL-SYNTHESIS：在不预设正式结果方向的前提下，建立第六章
-讨论、理论贡献、管理启示、局限与结论的结果条件分支；随后对第一至第六章执行
-一次研究问题—证据—结论全链路审计。
+PILOT-REENTRY-FREEZE：论文写作基础包已经闭合。若用户决定恢复实验，需重新冻结
+provider-call ceiling、费用与时间预算、当时clean execution SHA及明确执行授权；
+之后才可从P001按原seed grid开始。
 ```
 
-第五章报告合同审计已经完成。表5-2补齐exact raw p与Holm p的分离报告，新增median/IQR/MAD/LOBO诊断附表，并把95%区间明确为block-level t区间；P1—P5的等权、复合刺激、早期启动、直接触达和路径条件概率边界已写入表头及结果句式。语义操纵检查新增实际观察分母、非空记录数、可用率和信息来源类型，避免把未暴露或空记录当作中性评价。所有正式值仍为空。本轮没有新增文献、GABM run、provider call、Pilot observation或formal inference。
+第六章条件式模板与第一至第六章全链路审计已经完成。审计清除了第二章残留的“每七个Tick”硬冲突，统一了RQ2的认知意向与条件选择概率，且把P1/P5写成八cell等权平均而非“任一澄清”。当前工作题目仍被评为高风险：P4没有消费者cascade estimand，P5也不是绿色产品总体采纳扩散；跑完正式blocks不会自动消除这一范围错配。第五、六章全部结果占位符保持为空。本轮没有新增文献、GABM run、provider call、Pilot observation或formal inference。
 
 零API基础设施已完成，Windows clean HEAD `b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`的129项测试已由用户回传全部通过。此前命令因缺少provider-call ceiling在参数解析阶段停止，没有启动新的suite或形成有效Pilot block。用户已确认Pilot和正式独立replication blocks不取消，只在论文基础章节写作期间暂缓。`N_max=10`仍只是预结果预算上限，不是已证明的正式N；后续必须先完成Pilot可行性门禁，再恢复正式执行。
 

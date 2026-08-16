@@ -18,7 +18,7 @@
 | Channel | Hub | Random | 相同企业付费种子节点数量K=3下的节点选择规则 |
 | Timing | Immediate | Delayed | 危机后T6与T10，不代表现实最优时间 |
 
-八个处理单元为Rational/Empathy×Hub/Random×Immediate/Delayed。NoClarification-Control不属于Timing的第三个水平，也不进入三因素编码。控制组用于识别任一企业澄清相对于无企业回应的总体模型内差异。
+八个处理单元为Rational/Empathy×Hub/Random×Immediate/Delayed。NoClarification-Control不属于Timing的第三个水平，也不进入三因素编码。控制组用于识别八个冻结处理单元等权平均相对于无企业回应的总体模型内差异；该等权权重是预先规定的estimand组成，不代表现实策略采用比例。
 
 ### 4.2.2 因果对比的识别条件
 
@@ -44,7 +44,7 @@ $$AUC_{c,a:b}=\frac{1}{b-a}\sum_{t=a}^{b-1}\frac{\bar T_{c,t}+\bar T_{c,t+1}}{2}
 
 1. P1为八个澄清单元T6—T35 Trust AUC等权均值减去共同控制组AUC；
 2. P2为四个Rational单元AUC等权均值减去四个Empathy单元AUC等权均值；
-3. P5为无外部支持（support absent）条件下，八个澄清单元T6—T35焦点品牌预期选择份额等权均值减去共同控制组对应值。
+3. P5为无外部支持（support absent）条件下，八个澄清单元T6—T35购买机会上的焦点品牌条件选择概率等权均值减去共同控制组对应值。
 
 P1和P5是对八种策略单元等权后的模型内总体澄清对比，不对应现实企业策略组合的经验权重。P2则是对渠道及时机等权边际化后的复合内容对比；若存在内容×渠道或内容×时机异质性，P2可能掩盖条件差异，而当前协议没有冻结确认性交互estimand。
 
@@ -82,7 +82,7 @@ P1和P2采用3×2平衡网格的两向矩估计，分解simulation/network、req
 
 ### 4.6.1 预设设计阈值
 
-P1、P2和P5的预设阈值分别为0.15 Trust points、0.15 Trust points和0.05 expected-choice share。这些数值目前只能称为“预先设定的设计阈值”，不能称为已由企业决策数据证明的“管理上重要差异”。若论文希望使用后者，需要额外提供管理决策依据。
+P1、P2和P5的预设阈值分别为0.15 Trust points、0.15 Trust points和0.05选择概率比例（5个百分点；机器输出单位标签为`expected-choice share`）。这些数值目前只能称为“预先设定的设计阈值”，不能称为已由企业决策数据证明的“管理上重要差异”。若论文希望使用后者，需要额外提供管理决策依据。
 
 ### 4.6.2 N_max=10的含义
 

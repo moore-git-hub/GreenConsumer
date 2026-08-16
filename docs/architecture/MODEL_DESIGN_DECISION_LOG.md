@@ -570,9 +570,23 @@ formal inference=0。
 
 ---
 
+## DR-20260816-30：第五章正式结果报告合同冻结
+
+**状态：Chapter 5 reporting contract v1.1 available; all formal cells empty; no scientific execution**
+
+在Pilot和正式结果产生前，依据第三、四章接口审计对第五章空模板执行报告合同审计。原模板虽然没有预写结果，但仍存在四类可导致证据—结论错配的风险：P5的`expected share`简称可能被误作市场份额；P3标题没有直接呈现Delayed尚未启动；语义操纵表没有实际观察分母；通用结果句式不能强制保留复合刺激、等权平均和直接触达边界。
+
+修订后的表5-2明确P1/P2/P5完整定义和单位，区分ordinary t-test family与exact sign-flip sensitivity family，并同时预留exact raw p和exact Holm p；95% t区间明确为逐项未调整边际区间。新增附表5-A1以容纳median、IQR、range、MAD标记、联合LOBO均值范围、同方向次数和同决策次数。正式轨迹及语义摘要必须先在每个block内聚合，再跨blocks展示，Agent、消息、appraisal、机会或micro-buyer行不得直接贡献推断精度。P5统一写为“购买机会条件下、包含micro-buyer PBC、偏好和实现选择所形成loyalty路径的焦点品牌选择概率”，0.05阈值说明为5个百分点，不得改写为销量、复购率或市场份额。
+
+P3表头现明确为T6—T9中Immediate已启动与Delayed尚未启动的早期处理启动对比；P4明确为各自企业投递窗口内的直接触达。语义操纵检查新增可评价观察行数、非空记录数、可用率和来源类型；认知层purchase intention与需求层条件选择概率分图呈现。单次Real-LLM结果仍是工程run描述，且模型生成显式理由进入UGC时不被写成真实消费者语料。
+
+新增`CHAPTER_5_REPORTING_CONTRACT_AUDIT_V331.md`，区分可以由透明报告缓解的风险与必须依靠新增设计或现实校准才可改变的结构性限制。此次只冻结报告接口，没有填入任何结果，也没有改变模型、处理、estimand、阈值、统计主分析、参数、prompt或seed。新增GABM run=0、provider call=0、有效Pilot observation=0、formal inference=0。Pilot与正式独立blocks继续保留但暂缓执行。
+
+---
+
 ## 后续预登记队列
 
-- 将第三、四章冻结的estimand限定语同步进入第五章空表、图注、结果句式和讨论防火墙；
+- 建立不预设结果方向的第六章讨论—结论条件分支，并执行第一至第六章全链路一致性审计；
 - 整理现有工程表图，但不得冒充正式推断；
 - 论文基础章节稳定后重新冻结Pilot费用、时间、clean SHA和执行授权；
 - Pilot后按预设OC规则判断N=10可行性，再生成正式seed ledger。

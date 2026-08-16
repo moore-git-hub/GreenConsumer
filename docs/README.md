@@ -14,6 +14,7 @@
 - `thesis/CROSS_CHAPTER_CONSISTENCY_AUDIT_V331.md` — 第一至第四章术语、RQ、时间点、estimand与证据身份的统一口径
 - `thesis/CHAPTER_1_2_EDITORIAL_AUDIT_V331.md` — 第一、二章结构性精修、已修复问题与剩余审稿风险
 - `thesis/CHAPTER_3_4_INTERFACE_AUDIT_V331.md` — 第三、四章理论—规则—estimand—可声明结论接口审计
+- `thesis/CHAPTER_5_REPORTING_CONTRACT_AUDIT_V331.md` — 第五章表头、图注、统计字段、结果句式及讨论边界审计
 - `thesis/CHAPTER_2_LITERATURE_AND_THEORY_DRAFT_V331.md` — 第二章文献综述与理论基础正文底稿，含作者—年份—题名引用
 - `thesis/CHAPTER_3_MODEL_AND_METHOD_DRAFT_V331.md` — 第三章GABM模型构建正文底稿，区分文献依据、研究设计与工程假设
 - `thesis/CHAPTER_4_EXPERIMENT_AND_VALIDATION_DRAFT_V331.md` — 第四章实验设计与模型验证正文底稿，区分工程证据、Pilot计划和正式推断

@@ -218,6 +218,10 @@ Pilot预设P001–P006六个cognitive blocks并对每个历史离线交叉三个
 9. 四项中文核心文献和八项包外补充文献的条目核验；
 10. 第五章正式结果空表、空图与受约束报告模板：`CHAPTER_5_RESULTS_REPORTING_TEMPLATE_V331.md`；
 11. Pilot前N=10小样本诊断协议与P1/P2/P5阈值依据工作表。
+12. 第三、四章理论—模型—estimand接口审计：`CHAPTER_3_4_INTERFACE_AUDIT_V331.md`；
+13. 第五章正式结果报告合同审计：`CHAPTER_5_REPORTING_CONTRACT_AUDIT_V331.md`。
+
+下一项为在不预写结果方向的前提下建立第六章条件式讨论与结论模板，并对第一至第六章执行RQ—证据—结论全链路审计。
 
 下一队列：
 

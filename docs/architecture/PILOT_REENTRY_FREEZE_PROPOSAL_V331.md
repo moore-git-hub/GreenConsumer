@@ -1,5 +1,7 @@
 # v3.3.1 Pilot重新准入冻结提案
 
+> 历史状态（已由2026-08-16协议1.0.4取代）：本文件记录原6-block、`N_max=10`建议。用户在任何有效Pilot observation产生前取消该上限并接受24-block方差设计。当前执行依据为`PILOT_EXECUTION_CONDITIONS.md`和`task_pv01_pilot_variance_contract1.1.json`；不得照本文件旧cap运行。
+
 ## 1. 文件性质
 
 状态：`USER_ACCEPTED_2026_08_16; ZERO_API; PENDING_WINDOWS_TESTED_CLEAN_SHA; PILOT_NOT_EXECUTED`

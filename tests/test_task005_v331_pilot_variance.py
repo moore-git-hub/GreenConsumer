@@ -16,12 +16,15 @@ from greenconsumer_v33.pilot_variance import (
     P1,
     P2,
     P5,
+    P5_DEMAND_REALIZATIONS,
+    PILOT_COGNITIVE_BLOCKS,
     PILOT_LLM_MODEL,
     SIMULATION_SEEDS,
     ProviderCallBudgetExceeded,
     WallClockBudgetExceeded,
     _ProviderCallBudget,
     _holm_rejections,
+    correlation_scenarios,
     demand_seed_table,
     operating_characteristics,
     plan_payload,
@@ -30,6 +33,7 @@ from greenconsumer_v33.pilot_variance import (
     three_way_variance_components,
     two_way_variance_components,
     validate_execution_budget,
+    validate_completed_pilot_inputs,
     variance_component_table,
 )
 from greenconsumer_v32.routers import RecordingRouter, ReplayRouter, prompt_key
@@ -52,14 +56,13 @@ def _synthetic_inputs() -> tuple[pd.DataFrame, pd.DataFrame]:
                 {**common, "estimand_id": P2, "value": -0.10 + 0.01 * s - 0.02 * l + 0.003 * s * l},
             ]
         )
-        for demand_seed in DEMAND_SEEDS:
-            d = demand_seed - DEMAND_SEEDS[0]
+        for d, demand_seed in enumerate(DEMAND_SEEDS):
             demand_rows.append(
                 {
                     **common,
                     "estimand_id": P5,
                     "demand_seed": demand_seed,
-                    "value": 0.04 + 0.01 * s + 0.02 * l + 0.03 * d + 0.002 * s * l * d,
+                    "value": 0.04 + 0.003 * s + 0.004 * l + 0.0005 * d + 0.00002 * s * l * d,
                 }
             )
     return pd.DataFrame(block_rows), pd.DataFrame(demand_rows)
@@ -67,8 +70,8 @@ def _synthetic_inputs() -> tuple[pd.DataFrame, pd.DataFrame]:
 
 def test_frozen_seed_grid_is_exact() -> None:
     profiles = profile_table()
-    assert profiles["pilot_id"].tolist() == [f"P{i:03d}" for i in range(1, 7)]
-    assert profiles[["simulation_network_seed", "requested_llm_seed"]].to_records(index=False).tolist() == [
+    assert profiles["pilot_id"].tolist() == [f"P{i:03d}" for i in range(1, 25)]
+    assert profiles[["simulation_network_seed", "requested_llm_seed"]].to_records(index=False).tolist()[:6] == [
         (2026081501, 2026081601),
         (2026081501, 2026081602),
         (2026081502, 2026081601),
@@ -76,14 +79,14 @@ def test_frozen_seed_grid_is_exact() -> None:
         (2026081503, 2026081601),
         (2026081503, 2026081602),
     ]
-    assert demand_seed_table()["demand_seed"].tolist() == [2026081701, 2026081702, 2026081703]
+    assert len(profiles.drop_duplicates(["simulation_network_seed", "requested_llm_seed"])) == 24
+    assert demand_seed_table()["demand_seed"].tolist() == list(range(2026081701, 2026081725))
 
 
 def test_plan_only_is_explicitly_nonexecuting() -> None:
     payload = plan_payload(
-        n_max=40,
-        provider_call_ceiling=10_000,
-        max_wall_clock_hours=2.0,
+        provider_call_ceiling=4_800,
+        max_wall_clock_hours=8.0,
     )
     assert payload["status"] == "PLAN_ONLY"
     assert payload["real_llm_calls_started"] is False
@@ -91,35 +94,33 @@ def test_plan_only_is_explicitly_nonexecuting() -> None:
     assert payload["formal_experiment_started"] is False
     assert payload["formal_inference_performed"] is False
     assert payload["execution_authorized"] is False
-    assert payload["cognitive_blocks"] == 6
-    assert payload["p5_demand_realizations"] == 18
-    assert payload["max_wall_clock_hours"] == 2.0
+    assert payload["cognitive_blocks"] == PILOT_COGNITIVE_BLOCKS == 24
+    assert payload["p5_demand_realizations"] == P5_DEMAND_REALIZATIONS == 576
+    assert payload["formal_n_cap"] is None
+    assert payload["max_wall_clock_hours"] == 8.0
     assert payload["llm_model"] == "qwen-plus-2025-12-01"
 
 
 def test_execution_caps_fail_closed() -> None:
-    for n_max, ceiling, hours in (
-        (9, 100, 2.0),
-        (10, 0, 2.0),
-        (10, -1, 2.0),
-        (10, 100, 0.0),
-        (10, 100, float("inf")),
+    for ceiling, hours in (
+        (0, 2.0),
+        (-1, 2.0),
+        (100, 0.0),
+        (100, float("inf")),
     ):
         try:
-            validate_execution_budget(n_max, ceiling, hours)
+            validate_execution_budget(ceiling, hours)
         except ValueError:
             pass
         else:
-            raise AssertionError((n_max, ceiling, hours))
-    validate_execution_budget(10, 1, 0.01)
+            raise AssertionError((ceiling, hours))
+    validate_execution_budget(1, 0.01)
 
 
 def test_plan_caps_must_be_supplied_together() -> None:
     partials = (
-        {"n_max": 10},
         {"provider_call_ceiling": 1200},
         {"max_wall_clock_hours": 2.0},
-        {"n_max": 10, "provider_call_ceiling": 1200},
     )
     for kwargs in partials:
         try:
@@ -170,6 +171,26 @@ def test_provider_budget_blocks_before_excess_call() -> None:
         raise AssertionError("provider ceiling did not stop the second call")
     assert inner.calls == 1
     assert budget.calls_attempted == 1
+
+
+def test_resumed_budget_preserves_cumulative_caps() -> None:
+    now = [100.0]
+    budget = _ProviderCallBudget(
+        5,
+        max_wall_clock_hours=1.0,
+        initial_calls=4,
+        initial_elapsed_seconds=3590.0,
+        clock=lambda: now[0],
+    )
+    budget.reserve()
+    assert budget.calls_attempted == 5
+    assert budget.elapsed_seconds() == 3590.0
+    try:
+        budget.reserve()
+    except ProviderCallBudgetExceeded:
+        pass
+    else:
+        raise AssertionError("resumed provider ceiling was not cumulative")
 
 
 def test_replay_hits_do_not_consume_provider_budget() -> None:
@@ -240,6 +261,12 @@ def test_planning_sd_is_conservative_and_does_not_use_pilot_mean() -> None:
     assert (planning["planning_variance"] >= planning["raw_block_variance"]).all()
     p5 = planning.set_index("estimand_id").loc[P5]
     assert p5["planning_variance"] >= p5["component_sum_variance"]
+    assert planning["one_sided_sd_ucl_confidence"].eq(0.90).all()
+    assert planning["sd_ucl_factor"].between(1.24, 1.25).all()
+    assert (
+        planning["planning_variance"]
+        >= planning["maximum_leave_one_block_out_variance"]
+    ).all()
 
 
 def test_zero_variance_is_unresolved_not_modified() -> None:
@@ -273,16 +300,66 @@ def test_operating_characteristics_are_deterministic_and_mean_free() -> None:
     components = variance_component_table(block, demand)
     planning = planning_sd_table(block, demand, components)
     correlation = np.eye(3)
-    first, first_n = operating_characteristics(
-        planning, correlation, n_max=10, replications=1_000, random_seed=123
+    first, first_selection, first_n = operating_characteristics(
+        planning, correlation, replications=1_000, random_seed=123
     )
-    second, second_n = operating_characteristics(
-        planning, correlation, n_max=10, replications=1_000, random_seed=123
+    second, second_selection, second_n = operating_characteristics(
+        planning, correlation, replications=1_000, random_seed=123
     )
     pd.testing.assert_frame_equal(first, second)
+    pd.testing.assert_frame_equal(first_selection, second_selection)
     assert first_n == second_n
+    assert first_n >= 10
+    assert len(first_selection) == 4
     assert first["pilot_mean_used"].eq(False).all()
-    assert len(first) == 5 * 3
+    assert set(first["correlation_scenario"]) == set(first_selection["correlation_scenario"])
+
+
+def test_correlation_sensitivity_set_is_frozen_and_valid() -> None:
+    observed = np.array(
+        [[1.0, 0.8, -0.4], [0.8, 1.0, -0.2], [-0.4, -0.2, 1.0]]
+    )
+    scenarios = correlation_scenarios(observed)
+    assert list(scenarios) == [
+        "PILOT_SHRUNK_50",
+        "INDEPENDENT",
+        "EQUICORR_POSITIVE_0_50",
+        "EQUICORR_NEGATIVE_0_25",
+    ]
+    for matrix in scenarios.values():
+        assert np.allclose(np.diag(matrix), 1.0)
+        assert np.linalg.eigvalsh(matrix).min() >= -1e-10
+
+
+def test_completed_pilot_contract_requires_all_24_blocks(tmp_path: Path) -> None:
+    profiles = profile_table()
+    seeds = profiles.copy()
+    seeds.to_csv(tmp_path / "pilot_seed_ledger.csv", index=False)
+    attempts = profiles.copy()
+    attempts["status"] = "PASS"
+    attempts["replacement_seed_used"] = False
+    attempts.to_csv(tmp_path / "pilot_attempt_ledger.csv", index=False)
+    validity = profiles[["pilot_id"]].copy()
+    validity["status"] = "PASS"
+    validity.to_csv(tmp_path / "pilot_block_validity.csv", index=False)
+    block, demand = _synthetic_inputs()
+    validate_completed_pilot_inputs(tmp_path, block, demand)
+
+    attempts.iloc[:-1].to_csv(tmp_path / "pilot_attempt_ledger.csv", index=False)
+    try:
+        validate_completed_pilot_inputs(tmp_path, block, demand)
+    except ValueError as exc:
+        assert "P001-P024" in str(exc)
+    else:
+        raise AssertionError("incomplete 23-block Pilot was accepted")
+
+
+def test_cli_has_no_scientific_n_cap_argument() -> None:
+    source = (Path(__file__).parents[1] / "run_v33_pilot_variance.py").read_text(
+        encoding="utf-8"
+    )
+    assert "--n-max" not in source
+    assert "--resume-real-pilot" in source
 
 
 def test_zero_api_module_has_no_top_level_runner_or_agentkernel_import() -> None:
@@ -321,7 +398,7 @@ def test_machine_contract_matches_code_constants() -> None:
         Path(__file__).parents[1]
         / "docs"
         / "architecture"
-        / "task_pv01_pilot_variance_contract1.0.json"
+        / "task_pv01_pilot_variance_contract1.1.json"
     )
     payload = json.loads(path.read_text(encoding="utf-8"))
     code_profiles = profile_table()[
@@ -341,7 +418,7 @@ def test_v331_model_is_dated_and_v32_model_path_is_unchanged() -> None:
         root
         / "docs"
         / "architecture"
-        / "task_pv01_pilot_variance_contract1.0.json"
+        / "task_pv01_pilot_variance_contract1.1.json"
     )
     payload = json.loads(contract_path.read_text(encoding="utf-8"))
 
@@ -370,6 +447,6 @@ def test_v331_model_is_dated_and_v32_model_path_is_unchanged() -> None:
     assert "model: qwen-plus" in shared_config
     assert payload["frozen_model"]["llm_model"] == "qwen-plus-2025-12-01"
     assert PILOT_LLM_MODEL == payload["frozen_model"]["llm_model"]
-    assert payload["execution"]["n_max"] == 10
-    assert payload["execution"]["provider_call_ceiling"] == 1200
-    assert payload["execution"]["max_wall_clock_hours"] == 2.0
+    assert payload["execution"]["formal_n_cap"] is None
+    assert payload["execution"]["provider_call_ceiling"] == 4800
+    assert payload["execution"]["max_wall_clock_hours"] == 8.0

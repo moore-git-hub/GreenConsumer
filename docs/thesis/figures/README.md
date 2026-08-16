@@ -15,8 +15,8 @@
 - 论文预览：`FIG-ROUTE-01_v331_thesis_technical_route.png`
 - 建议图题：图1-X 研究与技术路线
 - 状态语义：绿色为已完成/可用基础，黄色为部分固定但禁止执行，灰色为尚未开始。
-- Pilot口径：`N_max=10`是查看Pilot结果前固定的正式replication-block预算上限；P001–P006仍是6个Pilot cognitive blocks；正式N尚未由方差证据证明。
-- 当前执行门禁：provider-call ceiling、时间预算、clean execution SHA和真实Pilot授权仍缺失。
+- Pilot口径：P001–P024为24个独立cognitive blocks；D1–D24 replay只提供条件性P5方差信息。正式`N_required`将在Pilot后按四相关场景和90%功效规则动态计算，不设科研上限。
+- 当前执行门禁：4800-call和8-hour hard caps已实现；费用容忍度、clean execution SHA、Windows回归和真实Pilot授权仍缺失。
 
 ## 渲染与版本规则
 

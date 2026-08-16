@@ -33,10 +33,12 @@
 
 ## v3.3.1正式实验准备
 - `architecture/FORMAL_EXPERIMENT_PROTOCOL.md`
+- `architecture/task_pv01_pilot_variance_contract1.1.json` — 当前24-block Pilot与动态正式N机器合同
+- `architecture/V331_PILOT_AND_FORMAL_N_WORK_PLAN_20260816.md` — 从候选SHA到正式论文填值的逐门禁工作计划
 - `architecture/PILOT_EXECUTION_CONDITIONS.md`
-- `architecture/PILOT_REENTRY_FREEZE_PROPOSAL_V331.md` — P001–P006调用、时间、费用、模型版本与clean SHA重新准入决策单
+- `architecture/PILOT_REENTRY_FREEZE_PROPOSAL_V331.md` — 已被1.0.4取代的旧6-block重新准入历史记录
 - `architecture/PILOT_EXECUTION_AUTHORIZATION_V331.md` — 用户接受值、条件式Pilot授权与尚未闭合的clean-SHA门禁
-- `architecture/SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` — Pilot前冻结的N=10诊断、联合LOBO与exact sign-flip敏感性规则
+- `architecture/SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` — 动态正式N下的全block诊断、联合LOBO与sign-flip敏感性规则
 - `architecture/DESIGN_THRESHOLD_JUSTIFICATION_WORKSHEET_V331.md` — P1/P2/P5设计阈值来源、证据缺口与补充材料接口
 - `architecture/THESIS_WORK_AND_OUTPUT_REGISTER.md`
 - `PROJECT_PROGRESS.md`

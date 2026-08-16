@@ -27,7 +27,7 @@
 | 实现验证 | 5.2及方法附录 | 证明数据合同、时序、边界和provenance符合设计 | 模型效应或外部效度 |
 | 工程稳健性 | 5.7 | 披露结果对预设工程扰动的依赖范围 | Pilot方差或正式推断 |
 | 单次Real-LLM描述 | 5.6 | 展示固定run的机制可见性和Agent异质性 | 独立block证据 |
-| Pilot | 仅在方法/执行附录报告 | 估计planning variance并判断N=10是否可行 | 正式效果、方向或策略排序 |
+| Pilot | 仅在方法/执行附录报告 | 用24个独立blocks估计planning variance并计算`N_required` | 正式效果、方向或策略排序 |
 | 正式replication blocks | 5.2—5.5 | 在协议允许范围内进行模型内block-level推断 | 现实消费者总体因果效应 |
 
 ## 5.2 正式Block流转、数据质量与区组描述

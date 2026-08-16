@@ -71,7 +71,7 @@ P2不识别单一credibility、evidence strength、valence、arousal或empathy�
 | 实现验证 | 通过、符合合同、可重建、边界内 | 真实、有效策略、现实显著 |
 | 工程稳健性 | 在预设工程扰动中未观察到方向翻转；显示模型依赖 | 普遍稳健、参数已校准、现实机制成立 |
 | 单次Real-LLM描述 | 该固定工程run呈现、描述性轨迹显示 | 总体、显著、置信区间、策略排名 |
-| Pilot | 估计planning variance、判断N=10设计可行性 | 正式效果、研究假设成立 |
+| Pilot | 用24个独立blocks估计planning variance、计算`N_required` | 正式效果、研究假设成立 |
 | 正式blocks | 模型内block-level估计、Holm决策 | 现实消费者总体因果效应、现实最优策略 |
 
 ## 7. 当前已修正事项

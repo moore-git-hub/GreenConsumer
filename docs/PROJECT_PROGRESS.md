@@ -48,16 +48,16 @@ Rational-evidence / Emotional-empathy
 | 11 | Micro-buyer resolution | 已完成 | micro-buyer plan/result | M=25保持numerical resolution解释 |
 | 12 | Selected Real-LLM robustness | 已完成 | `llmrob_20260814_230111`结果记录 | 不作为正式样本 |
 | 13 | Provenance、网络和内部有效性输出 | 已完成 | `V331_OUTPUT_AND_VALIDATION.md` | 正式runner复用并加固 |
-| 14 | 正式处理、estimand与Pilot协议v1.0 | 已完成 | `FORMAL_EXPERIMENT_PROTOCOL.md` | 保持处理与分析规则冻结 |
-| 15 | Pilot variance执行 | 部分完成 | N=10、1200次调用、2小时、CNY 20行政费用容忍度及具体模型已接受；当前无有效Pilot block | 模型固定候选SHA通过Windows完整测试后冻结并从P001开始 |
-| 16 | 正式N与正式seed ledger | 未开始 | N仍待Pilot | Pilot后按冻结OC规则确定 |
+| 14 | 正式处理、estimand与Pilot协议v1.0.4 | 已完成 | `FORMAL_EXPERIMENT_PROTOCOL.md`、contract1.1 | 保持处理、24-block Pilot和动态N规则冻结 |
+| 15 | Pilot variance执行 | 部分完成 | 24-block代码、24 demand seeds、4800-call/8-hour硬门禁和同seed恢复已实现；当前无有效Pilot block | 新候选SHA通过Windows完整测试并重新确认费用边界后从P001开始 |
+| 16 | 正式N与正式seed ledger | 未开始 | `N_max`已取消；`N_required`仍待Pilot | Pilot后按四相关场景、90% power规则计算，再做资源评估 |
 | 17 | v3.3.1正式runner与分析包 | 未开始 | 当前runner仅engineering/demo | 添加测试、合同和SHA冻结 |
 | 18 | v3.3.1正式实验 | 未开始 | `FORMAL_NOT_AUTHORIZED` | 协议1.1和明确授权 |
 | 19 | 固定拓扑网络状态/传播动画 | 已完成 | `greenconsumer_v33/network_animation.py` | 论文中不得称拓扑演化 |
 | 20 | Agent cognition evolution论文输出 | 已完成 | 预选Real-LLM run的schema 1.2真实产物已完成provenance、9项输出hash、完整面板、matched-Control算术与视觉审计；用户确认clean commit上的认知直接测试和Windows全量测试均通过 | 仅作为单次工程run的有限描述性证据；不把Agents当重复块、不推断隐性CoT、不作策略排名或总体推断 |
 | 21 | 语义→心理→网络→行为机制总图 | 已完成 | `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg`与model-to-code traceability逐层对齐；LLM理由复用为UGC的边界已更正 | 既有PNG含修正前文字，定稿前在Windows中文字体环境从SVG重导出；不改变机制 |
-| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、第五章空结果合同、第六章条件式结论模板、基础包、来源台账、ODD＋D、各阶段审计、N=10诊断协议、阈值工作表及引用审计已建立 | 正式结果产生前不再填充第五、六章；后续只做必要引用/导师意见修订 |
-| 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、合同、调用及wall-clock fail-closed tests；v3.3.1具体模型固定 | 新候选SHA完成Windows回归并冻结后方可执行Pilot |
+| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、第五章空结果合同、第六章条件式结论模板、基础包、来源台账、ODD＋D、各阶段审计、诊断协议、阈值工作表及引用审计已建立 | 同步24-block和动态N口径；正式结果产生前不填结果占位符 |
+| 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、contract1.1、24-block grid、动态OC、累计cap和恢复tests | 新候选SHA完成Windows回归并冻结后方可执行Pilot |
 | 24 | 实验结果证据台账与版本分层 | 已完成 | `EXPERIMENT_EVIDENCE_REGISTER.md`；结果记录commits；v3.2 archive | 正式写作时按已建立的table/figure registry持续登记 |
 | 25 | 论文工作—证据—表图追踪体系 | 已完成 | `MODEL_TO_CODE_TRACEABILITY_V331.md`、`THESIS_WORK_AND_OUTPUT_REGISTER.md` | 任何新run或正文表图进入论文时同步更新 |
 | 26 | 第一至第六章RQ—证据—结论全链路审计 | 已完成 | `FULL_THESIS_RQ_EVIDENCE_CLAIM_AUDIT_V331.md`；第六章条件式模板；跨章硬冲突复核 | 最终定题仍为高风险未决gate；正式结果后重新审计 |
@@ -116,14 +116,14 @@ Rational-evidence / Emotional-empathy
 当前下一门槛改为：
 
 ```text
-PILOT-CANDIDATE-SHA：用户已接受1200次provider-call、2小时、CNY 20行政费用
-容忍度和`qwen-plus-2025-12-01`，并条件式授权P001–P006。现在必须发布模型固定候选
-SHA，由用户在Windows `Kernel`环境对该准确HEAD运行完整pytest和零API plan-only；
-通过后记录clean execution SHA，条件式授权才生效。正式实验仍未授权。
+PILOT-24-CANDIDATE-SHA：用户已取消`N_max`并接受24-block Pilot与动态正式N的
+科学设计。现在必须发布新候选SHA，由用户在Windows `Kernel`环境对该准确HEAD运行
+完整pytest和零API plan-only；同时重新确认24-block费用容忍度。通过后记录clean
+execution SHA，才可另行授权真实Pilot。正式实验仍未授权。
 ```
 
 第六章条件式模板与第一至第六章全链路审计已经完成。审计清除了第二章残留的“每七个Tick”硬冲突，统一了RQ2的认知意向与条件选择概率，且把P1/P5写成八cell等权平均而非“任一澄清”。当前工作题目仍被评为高风险：P4没有消费者cascade estimand，P5也不是绿色产品总体采纳扩散；跑完正式blocks不会自动消除这一范围错配。第五、六章全部结果占位符保持为空。本轮没有新增文献、GABM run、provider call、Pilot observation或formal inference。
 
-零API基础设施已完成，Windows clean HEAD `b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`的129项测试已由用户回传全部通过。此前命令因缺少provider-call ceiling在参数解析阶段停止，没有启动新的suite或形成有效Pilot block。重新准入审计根据历史5 blocks/743 calls冻结1200次调用、2小时和CNY 20行政费用容忍度；v3.3.1固定到`qwen-plus-2025-12-01`，v3.2路径保持`qwen-plus`。旧HEAD的测试不能验证新的模型固定提交，故执行SHA仍待新的Windows完整回归。`N_max=10`仍只是预结果预算上限，不是已证明的正式N。
+Windows clean HEAD `b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`的129项测试属于旧6-block基础设施，不验证本轮24-block修订。此前命令在参数解析阶段停止，没有启动suite或形成有效Pilot block。当前v3.3.1仍固定`qwen-plus-2025-12-01`，v3.2保持`qwen-plus`；`N_max=10`已在任何有效Pilot结果前取消。新候选SHA和Windows完整回归尚待发布/验证，真实Pilot和正式实验均未开始。
 
 不触发真实LLM的认知输出工作包已经关闭：预选的同一v3.3.1 run已生成schema 1.2产物，manifest中的9项输出均完成独立hash复核；`06_control_adjusted_agent_recovery.csv`的1120行完整，matched-Control算术与源Agent ledger在浮点容差内一致；三张图完成视觉审查；用户确认clean代码commit上的认知直接测试和Windows全量测试均通过。该产物仅升级为单次Real-LLM工程run的有限描述性证据，不升级为Pilot或正式推断，不形成稳定策略排名。

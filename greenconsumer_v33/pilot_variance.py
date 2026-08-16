@@ -25,7 +25,7 @@ from scipy.stats import chi2, t, wishart
 from greenconsumer_v32.io import read_csv, write_json
 from greenconsumer_v33.analysis import _single_block_estimands
 
-SCHEMA = "task005_fmcg_v331_pilot_variance1.0"
+SCHEMA = "task005_fmcg_v331_pilot_variance1.1"
 EXPECTED_BRANCH = "refactor/task005-v32-clean-codebase"
 CONTROL = "NoClarification-Control"
 TOTAL_TICKS = 35
@@ -42,30 +42,49 @@ CONFIRMATORY_ESTIMANDS = (P1, P2, P5)
 EXPLORATORY_ESTIMANDS = (P3, P4)
 MDE = {P1: 0.15, P2: 0.15, P5: 0.05}
 
-SIMULATION_SEEDS = (2026081501, 2026081502, 2026081503)
-LLM_SEEDS = (2026081601, 2026081602)
-DEMAND_SEEDS = (2026081701, 2026081702, 2026081703)
+SIMULATION_SEEDS = tuple(range(2026081501, 2026081507))
+LLM_SEEDS = tuple(range(2026081601, 2026081605))
+DEMAND_SEEDS = tuple(range(2026081701, 2026081725))
+PILOT_COGNITIVE_BLOCKS = len(SIMULATION_SEEDS) * len(LLM_SEEDS)
+P5_DEMAND_REALIZATIONS = PILOT_COGNITIVE_BLOCKS * len(DEMAND_SEEDS)
 DEFAULT_OC_REPLICATIONS = 200_000
 DEFAULT_OC_SEED = 2026081801
+FORMAL_N_START = 10
+TARGET_MARGINAL_POWER = 0.90
+HOLM_FWER_ALPHA = 0.05
+PILOT_SD_UCL_CONFIDENCE = 0.90
+CORRELATION_SHRINKAGE_WEIGHT = 0.50
 
 
 def profile_table() -> pd.DataFrame:
-    """Return the frozen 3x2 cognitive Pilot grid in canonical order."""
+    """Return the frozen 6x4 cognitive Pilot grid in canonical order.
 
+    P001-P006 retain the seed identities frozen in contract 1.0.  The other
+    18 cells extend that grid without renaming or replacing an old profile.
+    """
+
+    old_pairs = [
+        (simulation_seed, llm_seed)
+        for simulation_seed in SIMULATION_SEEDS[:3]
+        for llm_seed in LLM_SEEDS[:2]
+    ]
+    all_pairs = [
+        (simulation_seed, llm_seed)
+        for simulation_seed in SIMULATION_SEEDS
+        for llm_seed in LLM_SEEDS
+    ]
+    ordered_pairs = old_pairs + [pair for pair in all_pairs if pair not in old_pairs]
     rows = []
-    index = 1
-    for simulation_seed in SIMULATION_SEEDS:
-        for llm_seed in LLM_SEEDS:
-            rows.append(
-                {
-                    "pilot_id": f"P{index:03d}",
-                    "simulation_network_seed": simulation_seed,
-                    "requested_llm_seed": llm_seed,
-                    "baseline_demand_seed": DEMAND_SEEDS[0],
-                    "status": "PLANNED_NOT_EXECUTED",
-                }
-            )
-            index += 1
+    for index, (simulation_seed, llm_seed) in enumerate(ordered_pairs, start=1):
+        rows.append(
+            {
+                "pilot_id": f"P{index:03d}",
+                "simulation_network_seed": simulation_seed,
+                "requested_llm_seed": llm_seed,
+                "baseline_demand_seed": DEMAND_SEEDS[0],
+                "status": "PLANNED_NOT_EXECUTED",
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -79,14 +98,11 @@ def demand_seed_table() -> pd.DataFrame:
 
 
 def validate_execution_budget(
-    n_max: int,
     provider_call_ceiling: int,
     max_wall_clock_hours: float,
 ) -> None:
-    """Validate caps that must be frozen before any Pilot provider call."""
+    """Validate operational caps; these do not constrain scientific formal N."""
 
-    if int(n_max) < 10:
-        raise ValueError("n_max must be at least 10")
     if int(provider_call_ceiling) <= 0:
         raise ValueError("provider_call_ceiling must be positive")
     if (
@@ -98,24 +114,21 @@ def validate_execution_budget(
 
 def plan_payload(
     *,
-    n_max: int | None = None,
     provider_call_ceiling: int | None = None,
     max_wall_clock_hours: float | None = None,
 ) -> dict:
     supplied = (
-        n_max is not None,
         provider_call_ceiling is not None,
         max_wall_clock_hours is not None,
     )
     if any(supplied) and not all(supplied):
         raise ValueError(
-            "n_max, provider_call_ceiling, and max_wall_clock_hours "
-            "must be supplied together"
+            "provider_call_ceiling and max_wall_clock_hours must be supplied together"
         )
-    caps_frozen = n_max is not None
+    caps_frozen = provider_call_ceiling is not None
     if caps_frozen:
         validate_execution_budget(
-            int(n_max), int(provider_call_ceiling), float(max_wall_clock_hours)
+            int(provider_call_ceiling), float(max_wall_clock_hours)
         )
     return {
         "schema_version": SCHEMA,
@@ -131,10 +144,14 @@ def plan_payload(
         "managerial_design_thresholds": MDE,
         "cognitive_profiles": profile_table().to_dict(orient="records"),
         "offline_demand_seeds": demand_seed_table().to_dict(orient="records"),
-        "cognitive_blocks": 6,
-        "p5_demand_realizations": 18,
+        "cognitive_blocks": PILOT_COGNITIVE_BLOCKS,
+        "p5_demand_realizations": P5_DEMAND_REALIZATIONS,
         "llm_model": PILOT_LLM_MODEL,
-        "n_max": int(n_max) if caps_frozen else None,
+        "formal_n_cap": None,
+        "formal_n_selection": (
+            "smallest N>=10 passing all pre-specified correlation scenarios, "
+            "Holm FWER compatibility, and 0.90 marginal power for P1/P2/P5"
+        ),
         "provider_call_ceiling": int(provider_call_ceiling) if caps_frozen else None,
         "max_wall_clock_hours": (
             float(max_wall_clock_hours) if caps_frozen else None
@@ -142,11 +159,11 @@ def plan_payload(
         "execution_caps_frozen": caps_frozen,
         "execution_authorized": False,
         "pilot_authorization_status": (
-            "USER_AUTHORIZED_CONDITIONAL_ON_WINDOWS_TESTED_CLEAN_SHA"
+            "DESIGN_USER_ACCEPTED; REAL_EXECUTION_REQUIRES_WINDOWS_TESTED_CLEAN_SHA_AND_COST_RECONFIRMATION"
         ),
         "minimum_oc_replications_per_scenario": DEFAULT_OC_REPLICATIONS,
         "estimated_cost_note": (
-            "Six complete nine-condition Real-LLM cognitive blocks; actual provider "
+            "Twenty-four complete nine-condition Real-LLM cognitive blocks; actual provider "
             "calls are runtime-dependent and execution requires a hard user-approved cap."
         ),
     }
@@ -174,7 +191,7 @@ def two_way_variance_components(
     *,
     value_col: str = "value",
 ) -> pd.DataFrame:
-    """Method-of-moments components for the frozen 3x2 cognitive grid.
+    """Method-of-moments components for the frozen 6x4 cognitive grid.
 
     With one observation per cell, the interaction and residual cannot be
     separated.  The returned interaction component is therefore explicitly
@@ -216,7 +233,7 @@ def two_way_variance_components(
                 "boundary_zero": bool(estimate <= 0),
                 "method": "balanced two-way random-effects method of moments",
                 "warning": (
-                    "3x2 small-sample estimate; interaction is confounded with "
+                    "6x4 Pilot estimate; interaction is confounded with "
                     "unresolved provider/runtime variation; boundary zero does not prove absence"
                 ),
             }
@@ -251,7 +268,7 @@ def three_way_variance_components(
     *,
     value_col: str = "value",
 ) -> pd.DataFrame:
-    """Method-of-moments components for the frozen 3x2x3 P5 grid."""
+    """Method-of-moments components for the frozen 6x4x24 P5 grid."""
 
     factors = (
         "simulation_network_seed",
@@ -311,7 +328,8 @@ def three_way_variance_components(
                 "boundary_zero": bool(estimate <= 0),
                 "method": "balanced three-way random-effects method of moments",
                 "warning": (
-                    "3x2x3 small-sample estimate; components are model-dependent and "
+                    "6x4x24 Pilot estimate; offline replays are conditional rather than "
+                    "independent blocks; components are model-dependent and "
                     "unstable; boundary zero does not prove absence"
                 ),
             }
@@ -344,8 +362,12 @@ def planning_sd_table(
     """Compute conservative planning SDs without using Pilot means or signs."""
 
     rows = []
-    df = len(profile_table()) - 1
-    upper_factor = df / float(chi2.ppf(0.20, df))
+    pilot_n = len(profile_table())
+    df = pilot_n - 1
+    variance_ucl_factor = df / float(
+        chi2.ppf(1.0 - PILOT_SD_UCL_CONFIDENCE, df)
+    )
+    sd_ucl_factor = math.sqrt(variance_ucl_factor)
     for estimand_id in CONFIRMATORY_ESTIMANDS:
         if estimand_id == P5:
             selected = demand_estimands[
@@ -360,27 +382,58 @@ def planning_sd_table(
             )
         else:
             selected = block_estimands[block_estimands["estimand_id"] == estimand_id]
-            component_sum = float("nan")
+            component_sum = float(
+                components.loc[
+                    components["estimand_id"] == estimand_id,
+                    "bounded_variance_component",
+                ].sum()
+            )
         values = pd.to_numeric(selected["value"], errors="raise")
-        if len(values) != 6:
-            raise ValueError(f"{estimand_id} requires six block-level values")
+        if len(values) != pilot_n:
+            raise ValueError(
+                f"{estimand_id} requires {pilot_n} independent cognitive-block values"
+            )
         raw_variance = float(values.var(ddof=1))
-        base_variance = max(raw_variance, component_sum) if estimand_id == P5 else raw_variance
-        planning_variance = base_variance * upper_factor
+        ucl_variance = raw_variance * variance_ucl_factor
+        loo_variances = [
+            float(values.drop(values.index[index]).var(ddof=1))
+            for index in range(len(values))
+        ]
+        max_loo_variance = max(loo_variances)
+        planning_variance = max(ucl_variance, max_loo_variance, component_sum)
+        selected_source = max(
+            (
+                ("one_sided_90pct_block_sd_ucl", ucl_variance),
+                ("maximum_leave_one_block_out_sd", max_loo_variance),
+                ("bounded_variance_component_synthesis", component_sum),
+            ),
+            key=lambda item: item[1],
+        )[0]
         status = "PASS" if planning_variance > 0 and math.isfinite(planning_variance) else "VARIANCE_ZERO_UNRESOLVED"
         rows.append(
             {
                 "estimand_id": estimand_id,
-                "pilot_n_cognitive_blocks": 6,
+                "pilot_n_cognitive_blocks": pilot_n,
                 "raw_block_variance": raw_variance,
                 "component_sum_variance": component_sum,
-                "base_variance_rule": "max(raw_D1_block_variance, bounded_component_sum)" if estimand_id == P5 else "raw_block_variance",
-                "small_sample_upper_factor": upper_factor,
+                "one_sided_sd_ucl_confidence": PILOT_SD_UCL_CONFIDENCE,
+                "variance_ucl_factor": variance_ucl_factor,
+                "sd_ucl_factor": sd_ucl_factor,
+                "one_sided_ucl_variance": ucl_variance,
+                "maximum_leave_one_block_out_variance": max_loo_variance,
+                "planning_variance_rule": (
+                    "max(one-sided 90% block-SD UCL squared, maximum leave-one-"
+                    "cognitive-block-out SD squared, bounded variance-component synthesis)"
+                ),
+                "planning_variance_selected_source": selected_source,
                 "planning_variance": planning_variance,
                 "planning_sd": math.sqrt(planning_variance) if planning_variance >= 0 else np.nan,
                 "status": status,
                 "pilot_mean_used": False,
-                "warning": "80% one-sided chi-square upper variance bound with df=5; planning device, not a confidence claim about treatment effectiveness",
+                "warning": (
+                    "Conservative design-stage variance rule; offline demand replays are "
+                    "not independent replication blocks and Pilot means/signs are excluded"
+                ),
             }
         )
     return pd.DataFrame(rows)
@@ -411,9 +464,33 @@ def estimand_correlation(
     ][["pilot_id", "estimand_id", "value"]]
     wide = pd.concat([base, p5]).pivot(index="pilot_id", columns="estimand_id", values="value")
     wide = wide.loc[:, list(CONFIRMATORY_ESTIMANDS)]
-    if len(wide) != 6 or wide.isna().any().any():
-        raise ValueError("estimand correlation requires complete P1/P2/P5 values for six blocks")
+    if len(wide) != PILOT_COGNITIVE_BLOCKS or wide.isna().any().any():
+        raise ValueError(
+            "estimand correlation requires complete P1/P2/P5 values for "
+            f"{PILOT_COGNITIVE_BLOCKS} cognitive blocks"
+        )
     return _nearest_correlation(wide.corr().to_numpy(float))
+
+
+def correlation_scenarios(pilot_correlation: np.ndarray) -> dict[str, np.ndarray]:
+    """Return the frozen dependence sensitivity set used for formal-N selection."""
+
+    observed = _nearest_correlation(pilot_correlation)
+    identity = np.eye(3)
+    shrunk = _nearest_correlation(
+        CORRELATION_SHRINKAGE_WEIGHT * observed
+        + (1.0 - CORRELATION_SHRINKAGE_WEIGHT) * identity
+    )
+    positive = np.full((3, 3), 0.50)
+    np.fill_diagonal(positive, 1.0)
+    negative = np.full((3, 3), -0.25)
+    np.fill_diagonal(negative, 1.0)
+    return {
+        "PILOT_SHRUNK_50": shrunk,
+        "INDEPENDENT": identity,
+        "EQUICORR_POSITIVE_0_50": positive,
+        "EQUICORR_NEGATIVE_0_25": negative,
+    }
 
 
 def _holm_rejections(p_values: np.ndarray, alpha: float = 0.05) -> np.ndarray:
@@ -437,14 +514,16 @@ def operating_characteristics(
     planning_sd: pd.DataFrame,
     correlation: np.ndarray,
     *,
-    n_max: int,
     replications: int = DEFAULT_OC_REPLICATIONS,
     random_seed: int = DEFAULT_OC_SEED,
-) -> tuple[pd.DataFrame, int | None]:
-    """Monte Carlo Holm operating characteristics using only MDE and planning SD."""
+) -> tuple[pd.DataFrame, pd.DataFrame, int]:
+    """Find formal N without a scientific cap under frozen Holm OC rules.
 
-    if int(n_max) < 10:
-        raise ValueError("n_max must be at least 10")
+    The search starts at ten independent blocks and ends at the first N that
+    passes every frozen correlation scenario.  Resource affordability is
+    assessed only after this scientifically required N is known.
+    """
+
     if int(replications) < 1_000:
         raise ValueError("replications must be at least 1,000")
     ordered = planning_sd.set_index("estimand_id").loc[list(CONFIRMATORY_ESTIMANDS)]
@@ -453,9 +532,8 @@ def operating_characteristics(
     sd = ordered["planning_sd"].to_numpy(float)
     if not np.isfinite(sd).all() or (sd <= 0).any():
         raise ValueError("planning SDs must be finite and positive")
-    corr = _nearest_correlation(correlation)
-    rng = np.random.default_rng(int(random_seed))
-    scenarios = {
+    dependence = correlation_scenarios(correlation)
+    effect_scenarios = {
         "GLOBAL_NULL": np.zeros(3),
         "P1_SINGLE_MDE": np.array([MDE[P1], 0.0, 0.0]),
         "P2_SINGLE_MDE": np.array([0.0, MDE[P2], 0.0]),
@@ -463,63 +541,95 @@ def operating_characteristics(
         "ALL_AT_MDE": np.array([MDE[P1], MDE[P2], MDE[P5]]),
     }
     rows = []
-    selected_n = None
-    for n in range(10, int(n_max) + 1):
-        # Exact joint t-statistic construction under the multivariate-normal
-        # planning model: sample means and the Wishart sample covariance are
-        # independent, while the three sample-variance denominators retain
-        # their block-level dependence.  Common random numbers are reused
-        # across design-effect scenarios at the same candidate N.
-        z = rng.multivariate_normal(np.zeros(3), corr, size=int(replications))
-        scatter = wishart.rvs(
-            df=n - 1,
-            scale=corr,
-            size=int(replications),
-            random_state=rng,
-        )
-        denominator = np.sqrt(
-            np.diagonal(scatter, axis1=-2, axis2=-1) / (n - 1)
-        )
-        scenario_results = {}
-        for scenario, effects in scenarios.items():
-            numerator = z + effects * math.sqrt(n) / sd
-            statistics = numerator / denominator
-            p_values = 2.0 * t.sf(np.abs(statistics), df=n - 1)
-            rejected = _holm_rejections(p_values)
-            rates = rejected.mean(axis=0)
-            any_rate = float(rejected.any(axis=1).mean())
-            all_rate = float(rejected.all(axis=1).mean())
-            mcse_any = math.sqrt(any_rate * (1.0 - any_rate) / replications)
-            scenario_results[scenario] = (rates, any_rate, all_rate, mcse_any)
-            for index, estimand_id in enumerate(CONFIRMATORY_ESTIMANDS):
-                rows.append(
-                    {
-                        "formal_n": n,
-                        "scenario": scenario,
-                        "estimand_id": estimand_id,
-                        "true_effect_design_value": float(effects[index]),
-                        "holm_rejection_probability": float(rates[index]),
-                        "probability_any_rejection": any_rate,
-                        "probability_all_three_rejected": all_rate,
-                        "mcse_any_rejection": mcse_any,
-                        "global_null_compatibility_limit": (
-                            0.05 + 2.0 * mcse_any if scenario == "GLOBAL_NULL" else np.nan
-                        ),
-                        "replications": int(replications),
-                        "random_seed": int(random_seed),
-                        "pilot_mean_used": False,
-                    }
+    selected_by_dependence: dict[str, int] = {}
+    n = FORMAL_N_START
+    while True:
+        passes_at_current_n: dict[str, bool] = {}
+        for dependence_index, (dependence_name, corr) in enumerate(dependence.items()):
+            # The seed is a pure function of N and the dependence scenario, so
+            # results are invariant to search history and execution order.
+            rng = np.random.default_rng(
+                np.random.SeedSequence([int(random_seed), n, dependence_index])
+            )
+            z = rng.multivariate_normal(np.zeros(3), corr, size=int(replications))
+            scatter = wishart.rvs(
+                df=n - 1,
+                scale=corr,
+                size=int(replications),
+                random_state=rng,
+            )
+            denominator = np.sqrt(
+                np.diagonal(scatter, axis1=-2, axis2=-1) / (n - 1)
+            )
+            scenario_results = {}
+            for scenario, effects in effect_scenarios.items():
+                numerator = z + effects * math.sqrt(n) / sd
+                statistics = numerator / denominator
+                p_values = 2.0 * t.sf(np.abs(statistics), df=n - 1)
+                rejected = _holm_rejections(p_values, alpha=HOLM_FWER_ALPHA)
+                rates = rejected.mean(axis=0)
+                rate_mcse = np.sqrt(rates * (1.0 - rates) / replications)
+                any_rate = float(rejected.any(axis=1).mean())
+                all_rate = float(rejected.all(axis=1).mean())
+                mcse_any = math.sqrt(any_rate * (1.0 - any_rate) / replications)
+                scenario_results[scenario] = (rates, rate_mcse, any_rate, all_rate, mcse_any)
+                for index, estimand_id in enumerate(CONFIRMATORY_ESTIMANDS):
+                    rows.append(
+                        {
+                            "formal_n": n,
+                            "correlation_scenario": dependence_name,
+                            "correlation_matrix": json.dumps(corr.tolist()),
+                            "effect_scenario": scenario,
+                            "estimand_id": estimand_id,
+                            "true_effect_design_value": float(effects[index]),
+                            "holm_rejection_probability": float(rates[index]),
+                            "mcse_rejection_probability": float(rate_mcse[index]),
+                            "probability_any_rejection": any_rate,
+                            "probability_all_three_rejected": all_rate,
+                            "mcse_any_rejection": mcse_any,
+                            "global_null_compatibility_limit": (
+                                HOLM_FWER_ALPHA + 2.0 * mcse_any
+                                if scenario == "GLOBAL_NULL"
+                                else np.nan
+                            ),
+                            "target_marginal_power": TARGET_MARGINAL_POWER,
+                            "replications": int(replications),
+                            "random_seed": int(random_seed),
+                            "pilot_mean_used": False,
+                        }
+                    )
+            null_any = scenario_results["GLOBAL_NULL"][2]
+            null_mcse = scenario_results["GLOBAL_NULL"][4]
+            power_ok = all(
+                scenario_results[name][0][index] >= TARGET_MARGINAL_POWER
+                for index, name in enumerate(
+                    ("P1_SINGLE_MDE", "P2_SINGLE_MDE", "P5_SINGLE_MDE")
                 )
-        null_any, null_mcse = scenario_results["GLOBAL_NULL"][1], scenario_results["GLOBAL_NULL"][3]
-        power_ok = all(
-            scenario_results[name][0][index] >= 0.80
-            for index, name in enumerate(("P1_SINGLE_MDE", "P2_SINGLE_MDE", "P5_SINGLE_MDE"))
-        )
-        fwer_compatible = null_any <= 0.05 + 2.0 * null_mcse
-        if selected_n is None and power_ok and fwer_compatible:
-            selected_n = n
+            )
+            fwer_compatible = null_any <= HOLM_FWER_ALPHA + 2.0 * null_mcse
+            passes_at_current_n[dependence_name] = power_ok and fwer_compatible
+            if power_ok and fwer_compatible:
+                selected_by_dependence.setdefault(dependence_name, n)
+        if all(passes_at_current_n.values()):
             break
-    return pd.DataFrame(rows), selected_n
+        n += 1
+
+    selection = pd.DataFrame(
+        [
+            {
+                "correlation_scenario": name,
+                "first_passing_formal_n": selected_by_dependence[name],
+                "selected_formal_n_all_scenarios": n,
+                "passes_at_selected_formal_n": True,
+                "target_marginal_power": TARGET_MARGINAL_POWER,
+                "holm_fwer_alpha": HOLM_FWER_ALPHA,
+                "global_null_rule": "empirical FWER <= alpha + 2*MCSE",
+            }
+            for name in dependence
+        ]
+    )
+    selected_n = n
+    return pd.DataFrame(rows), selection, selected_n
 
 
 def validate_completed_pilot_inputs(
@@ -544,16 +654,17 @@ def validate_completed_pilot_inputs(
         frozen[identity].reset_index(drop=True),
         check_dtype=False,
     )
-    if len(attempts) != 6 or set(attempts["pilot_id"]) != set(frozen["pilot_id"]):
-        raise ValueError("attempt ledger must contain exactly P001-P006")
+    expected_ids = set(frozen["pilot_id"])
+    if len(attempts) != PILOT_COGNITIVE_BLOCKS or set(attempts["pilot_id"]) != expected_ids:
+        raise ValueError("attempt ledger must contain exactly P001-P024")
     if not attempts["status"].eq("PASS").all():
-        raise ValueError("all six pre-registered Pilot attempts must PASS")
+        raise ValueError("all 24 pre-registered Pilot attempts must PASS")
     if "replacement_seed_used" not in attempts or not attempts["replacement_seed_used"].astype(str).str.lower().isin({"false", "0"}).all():
         raise ValueError("replacement seeds are not permitted")
-    if len(validity) != 6 or set(validity["pilot_id"]) != set(frozen["pilot_id"]):
-        raise ValueError("validity ledger must contain exactly P001-P006")
+    if len(validity) != PILOT_COGNITIVE_BLOCKS or set(validity["pilot_id"]) != expected_ids:
+        raise ValueError("validity ledger must contain exactly P001-P024")
     if not validity["status"].eq("PASS").all():
-        raise ValueError("all six Pilot blocks must pass the frozen validity contract")
+        raise ValueError("all 24 Pilot blocks must pass the frozen validity contract")
 
     _require_columns(
         block,
@@ -568,13 +679,13 @@ def validate_completed_pilot_inputs(
     for estimand_id in CONFIRMATORY_ESTIMANDS:
         source = demand if estimand_id == P5 else block
         selected = source[source["estimand_id"] == estimand_id]
-        expected = 18 if estimand_id == P5 else 6
+        expected = P5_DEMAND_REALIZATIONS if estimand_id == P5 else PILOT_COGNITIVE_BLOCKS
         if len(selected) != expected:
             raise ValueError(f"{estimand_id} requires {expected} Pilot values")
         if set(selected["pilot_id"]) != set(frozen["pilot_id"]):
-            raise ValueError(f"{estimand_id} does not cover P001-P006")
+            raise ValueError(f"{estimand_id} does not cover P001-P024")
     if set(pd.to_numeric(demand["demand_seed"], errors="raise")) != set(DEMAND_SEEDS):
-        raise ValueError("P5 demand estimands must use exactly D1-D3")
+        raise ValueError("P5 demand estimands must use exactly D1-D24")
 
 
 def _write_frame(frame: pd.DataFrame, path: Path) -> None:
@@ -604,7 +715,6 @@ def _write_manifest(suite_dir: Path, names: list[str]) -> Path:
 def analyze_existing_suite(
     suite_dir: Path,
     *,
-    n_max: int,
     replications: int = DEFAULT_OC_REPLICATIONS,
     random_seed: int = DEFAULT_OC_SEED,
 ) -> dict:
@@ -625,15 +735,15 @@ def analyze_existing_suite(
     oc_status = "NOT_RUN_VARIANCE_UNRESOLVED"
     if (planning["status"] == "PASS").all():
         correlation = estimand_correlation(block, demand)
-        oc, selected_n = operating_characteristics(
+        oc, selection, selected_n = operating_characteristics(
             planning,
             correlation,
-            n_max=n_max,
             replications=replications,
             random_seed=random_seed,
         )
         _write_frame(oc, suite_dir / "pilot_operating_characteristics.csv")
-        oc_status = "PASS" if selected_n is not None else "DESIGN_NOT_FEASIBLE_WITHIN_CAP"
+        _write_frame(selection, suite_dir / "pilot_formal_n_selection.csv")
+        oc_status = "PASS"
     else:
         _write_frame(
             pd.DataFrame(
@@ -650,6 +760,17 @@ def analyze_existing_suite(
             ),
             suite_dir / "pilot_operating_characteristics.csv",
         )
+        _write_frame(
+            pd.DataFrame(
+                [
+                    {
+                        "correlation_scenario": "NOT_RUN_VARIANCE_UNRESOLVED",
+                        "first_passing_formal_n": "",
+                    }
+                ]
+            ),
+            suite_dir / "pilot_formal_n_selection.csv",
+        )
 
     summary = {
         "schema_version": SCHEMA,
@@ -658,14 +779,15 @@ def analyze_existing_suite(
         "pilot_results_are_formal_sample": False,
         "formal_inference_performed": False,
         "pilot_means_used_for_design": False,
-        "n_max": int(n_max),
-        "selected_formal_n": selected_n,
+        "formal_n_cap": None,
+        "scientifically_required_formal_n": selected_n,
         "oc_replications_per_scenario": int(replications),
         "oc_random_seed": int(random_seed),
         "formal_execution_authorized": False,
         "llm_model": PILOT_LLM_MODEL,
         "interpretation": (
-            "selected_formal_n is a pre-formal design recommendation only; protocol 1.1, "
+            "scientifically_required_formal_n is a pre-formal design recommendation only; "
+            "affordability is assessed after N is calculated; protocol 1.1, "
             "a formal seed ledger, frozen source SHA, and explicit authorization remain required"
         ),
     }
@@ -680,6 +802,7 @@ def analyze_existing_suite(
         "pilot_variance_components.csv",
         "pilot_planning_sd.csv",
         "pilot_operating_characteristics.csv",
+        "pilot_formal_n_selection.csv",
         "pilot_summary.json",
     ]
     _write_manifest(suite_dir, names)
@@ -700,10 +823,17 @@ class _ProviderCallBudget:
         ceiling: int,
         max_wall_clock_hours: float | None = None,
         *,
+        initial_calls: int = 0,
+        initial_elapsed_seconds: float = 0.0,
         clock=time.monotonic,
     ):
         self.ceiling = int(ceiling)
-        self.calls_attempted = 0
+        self.calls_attempted = int(initial_calls)
+        if self.calls_attempted < 0 or self.calls_attempted > self.ceiling:
+            raise ValueError("initial provider calls must be within the frozen ceiling")
+        self.initial_elapsed_seconds = float(initial_elapsed_seconds)
+        if self.initial_elapsed_seconds < 0:
+            raise ValueError("initial elapsed seconds cannot be negative")
         self.max_wall_clock_hours = (
             None if max_wall_clock_hours is None else float(max_wall_clock_hours)
         )
@@ -712,11 +842,15 @@ class _ProviderCallBudget:
         self._deadline = (
             None
             if self.max_wall_clock_hours is None
-            else self._started + self.max_wall_clock_hours * 3600.0
+            else self._started
+            + self.max_wall_clock_hours * 3600.0
+            - self.initial_elapsed_seconds
         )
 
     def elapsed_seconds(self) -> float:
-        return max(0.0, float(self._clock()) - self._started)
+        return self.initial_elapsed_seconds + max(
+            0.0, float(self._clock()) - self._started
+        )
 
     def remaining_seconds(self) -> float | None:
         if self._deadline is None:
@@ -843,18 +977,16 @@ async def run_pilot_suite(
     *,
     output_root: Path,
     allow_real_llm: bool,
-    n_max: int,
     provider_call_ceiling: int,
     max_wall_clock_hours: float,
     expected_git_head: str,
+    resume_suite: Path | None = None,
 ) -> dict:
-    """Explicitly execute P001-P006; never called by plan or analysis paths."""
+    """Explicitly execute P001-P024; never called by plan or analysis paths."""
 
     if not allow_real_llm:
         raise ValueError("Pilot execution requires explicit allow_real_llm=True")
-    validate_execution_budget(
-        n_max, provider_call_ceiling, max_wall_clock_hours
-    )
+    validate_execution_budget(provider_call_ceiling, max_wall_clock_hours)
 
     # Delayed imports are the central zero-API safety boundary.
     from greenconsumer_v33 import runner as runner_module
@@ -863,38 +995,141 @@ async def run_pilot_suite(
     from greenconsumer_v33.demand import simulate_demand
 
     provenance = _git_execution_preflight(runner_module.PROJECT_ROOT, expected_git_head)
-    suite_id = dt.datetime.now().strftime("pilotvar_%Y%m%d_%H%M%S")
-    suite_dir = Path(output_root) / suite_id
-    suite_dir.mkdir(parents=True, exist_ok=False)
     profiles = profile_table()
-    seed_ledger = profiles.copy()
-    seed_ledger["offline_demand_seeds"] = ";".join(str(x) for x in DEMAND_SEEDS)
-    seed_ledger["llm_model"] = PILOT_LLM_MODEL
-    seed_ledger["git_head"] = provenance["git_head"]
-    _write_frame(seed_ledger, suite_dir / "pilot_seed_ledger.csv")
+    identity = ["pilot_id", "simulation_network_seed", "requested_llm_seed"]
+    if resume_suite is None:
+        suite_id = dt.datetime.now().strftime("pilotvar_%Y%m%d_%H%M%S")
+        suite_dir = Path(output_root) / suite_id
+        suite_dir.mkdir(parents=True, exist_ok=False)
+        seed_ledger = profiles.copy()
+        seed_ledger["offline_demand_seeds"] = ";".join(str(x) for x in DEMAND_SEEDS)
+        seed_ledger["llm_model"] = PILOT_LLM_MODEL
+        seed_ledger["git_head"] = provenance["git_head"]
+        _write_frame(seed_ledger, suite_dir / "pilot_seed_ledger.csv")
+        attempts: list[dict] = []
+        validity: list[dict] = []
+        validity_details: list[pd.DataFrame] = []
+        block_frames: list[pd.DataFrame] = []
+        demand_rows: list[dict] = []
+        initial_calls = 0
+        initial_elapsed_seconds = 0.0
+    else:
+        suite_dir = Path(resume_suite)
+        if not suite_dir.is_dir():
+            raise FileNotFoundError(f"resume suite does not exist: {suite_dir}")
+        seed_path = suite_dir / "pilot_seed_ledger.csv"
+        attempt_path = suite_dir / "pilot_attempt_ledger.csv"
+        if not seed_path.exists() or not attempt_path.exists():
+            raise FileNotFoundError("resume requires seed and attempt ledgers")
+        seed_ledger = pd.read_csv(seed_path)
+        pd.testing.assert_frame_equal(
+            seed_ledger[identity].reset_index(drop=True),
+            profiles[identity].reset_index(drop=True),
+            check_dtype=False,
+        )
+        if not seed_ledger["llm_model"].eq(PILOT_LLM_MODEL).all():
+            raise ValueError("resume suite model does not match the frozen Pilot model")
+        if not seed_ledger["git_head"].eq(provenance["git_head"]).all():
+            raise ValueError("resume suite Git SHA does not match the frozen execution SHA")
+        attempts = pd.read_csv(attempt_path).to_dict(orient="records")
+        statuses = {str(row.get("status", "")) for row in attempts}
+        if any(status.startswith("FAIL") for status in statuses):
+            raise ValueError("a failed Pilot suite cannot be resumed")
+        if not statuses.issubset({"PASS", "RUNNING"}):
+            raise ValueError(f"resume suite has unsupported attempt status: {sorted(statuses)}")
+        for row in attempts:
+            if str(row.get("status")) == "RUNNING" and (
+                pd.isna(row.get("ended_utc")) or not str(row.get("ended_utc", "")).strip()
+            ):
+                raise ValueError(
+                    "unclean process termination has no final wall-clock checkpoint; "
+                    "resume is refused rather than understating the frozen time budget"
+                )
+        initial_calls = max(
+            (int(row.get("provider_calls_cumulative", 0)) for row in attempts),
+            default=0,
+        )
+        initial_elapsed_seconds = max(
+            (
+                float(row.get("wall_clock_seconds_cumulative", 0.0))
+                for row in attempts
+                if pd.notna(row.get("wall_clock_seconds_cumulative", np.nan))
+            ),
+            default=0.0,
+        )
+        validity_path = suite_dir / "pilot_block_validity.csv"
+        details_path = suite_dir / "pilot_block_validity_details.csv"
+        block_path = suite_dir / "pilot_block_estimands.csv"
+        demand_path = suite_dir / "pilot_demand_estimands.csv"
+        validity = (
+            pd.read_csv(validity_path).to_dict(orient="records")
+            if validity_path.exists()
+            else []
+        )
+        validity_details = (
+            [pd.read_csv(details_path)] if details_path.exists() else []
+        )
+        block_frames = [pd.read_csv(block_path)] if block_path.exists() else []
+        demand_rows = (
+            pd.read_csv(demand_path).to_dict(orient="records")
+            if demand_path.exists()
+            else []
+        )
 
     budget = _ProviderCallBudget(
         provider_call_ceiling,
         max_wall_clock_hours=max_wall_clock_hours,
+        initial_calls=initial_calls,
+        initial_elapsed_seconds=initial_elapsed_seconds,
     )
-    attempts: list[dict] = []
-    validity: list[dict] = []
-    validity_details: list[pd.DataFrame] = []
-    block_frames: list[pd.DataFrame] = []
-    demand_rows: list[dict] = []
 
     for profile in profiles.to_dict(orient="records"):
-        attempt = {
-            **profile,
-            "started_utc": _utc_now(),
-            "ended_utc": "",
-            "status": "RUNNING",
-            "error_type": "",
-            "error_message": "",
-            "provider_calls_cumulative": budget.calls_attempted,
-            "replacement_seed_used": False,
-        }
-        attempts.append(attempt)
+        prior = [row for row in attempts if str(row.get("pilot_id")) == profile["pilot_id"]]
+        if prior and str(prior[0].get("status")) == "PASS":
+            continue
+        if prior:
+            attempt = prior[0]
+            previous_resume_count = attempt.get("resume_count", 0)
+            if pd.isna(previous_resume_count):
+                previous_resume_count = 0
+            attempt.update(
+                {
+                    "last_resume_utc": _utc_now(),
+                    "ended_utc": "",
+                    "status": "RUNNING",
+                    "error_type": "",
+                    "error_message": "",
+                    "resume_count": int(previous_resume_count) + 1,
+                }
+            )
+            pilot_id = str(profile["pilot_id"])
+            validity = [row for row in validity if str(row.get("pilot_id")) != pilot_id]
+            validity_details = [
+                frame[frame["pilot_id"].astype(str) != pilot_id]
+                for frame in validity_details
+            ]
+            block_frames = [
+                frame[frame["pilot_id"].astype(str) != pilot_id]
+                for frame in block_frames
+            ]
+            demand_rows = [
+                row for row in demand_rows if str(row.get("pilot_id")) != pilot_id
+            ]
+        else:
+            attempt = {
+                **profile,
+                "started_utc": _utc_now(),
+                "last_resume_utc": "",
+                "ended_utc": "",
+                "status": "RUNNING",
+                "error_type": "",
+                "error_message": "",
+                "provider_calls_cumulative": budget.calls_attempted,
+                "wall_clock_seconds_cumulative": budget.elapsed_seconds(),
+                "replacement_seed_used": False,
+                "resume_count": 0,
+            }
+            attempts.append(attempt)
         _write_frame(pd.DataFrame(attempts), suite_dir / "pilot_attempt_ledger.csv")
         try:
             budget.check_time()
@@ -908,11 +1143,20 @@ async def run_pilot_suite(
                 total_ticks=TOTAL_TICKS, prompt_profile="baseline_exact",
             )
             remaining = budget.remaining_seconds()
+            def reserve_and_checkpoint() -> None:
+                budget.reserve()
+                attempt["provider_calls_cumulative"] = budget.calls_attempted
+                attempt["wall_clock_seconds_cumulative"] = budget.elapsed_seconds()
+                _write_frame(
+                    pd.DataFrame(attempts),
+                    suite_dir / "pilot_attempt_ledger.csv",
+                )
+
             try:
                 payload = await asyncio.wait_for(
                     runner_module.execute(
                         settings,
-                        before_provider_call=budget.reserve,
+                        before_provider_call=reserve_and_checkpoint,
                     ),
                     timeout=remaining,
                 )
@@ -997,6 +1241,7 @@ async def run_pilot_suite(
         finally:
             attempt["ended_utc"] = _utc_now()
             attempt["provider_calls_cumulative"] = budget.calls_attempted
+            attempt["wall_clock_seconds_cumulative"] = budget.elapsed_seconds()
             _write_frame(pd.DataFrame(attempts), suite_dir / "pilot_attempt_ledger.csv")
             if validity:
                 _write_frame(pd.DataFrame(validity), suite_dir / "pilot_block_validity.csv")
@@ -1024,8 +1269,9 @@ async def run_pilot_suite(
                 )
 
     result = analyze_existing_suite(
-        suite_dir, n_max=n_max,
-        replications=DEFAULT_OC_REPLICATIONS, random_seed=DEFAULT_OC_SEED,
+        suite_dir,
+        replications=DEFAULT_OC_REPLICATIONS,
+        random_seed=DEFAULT_OC_SEED,
     )
     summary_path = suite_dir / "pilot_summary.json"
     summary = json.loads(summary_path.read_text(encoding="utf-8"))

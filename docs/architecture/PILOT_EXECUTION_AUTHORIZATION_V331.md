@@ -1,51 +1,40 @@
-# v3.3.1 Pilot条件式执行授权记录
+# v3.3.1 Pilot授权与边界记录
 
-## 1. 授权身份
+## 1. 最新用户决定
 
 | 字段 | 记录 |
 |---|---|
-| 用户决定日期 | 2026-08-16 |
-| 用户原话 | “检查通过，接受建议，开始” |
-| 解释范围 | 接受重新准入建议，并授权在全部前置门禁闭合后执行P001–P006 |
-| 当前状态 | `AUTHORIZED_CONDITIONAL_ON_WINDOWS_TESTED_CLEAN_SHA` |
-| Pilot执行状态 | `NOT_EXECUTED` |
-| 正式实验状态 | `NOT_AUTHORIZED` |
+| 决定日期 | 2026-08-16 |
+| 用户决定 | 取消`N_max`限制，根据科学所需计算Pilot与正式N；确认开始实施 |
+| 已授权范围 | 修改、测试并发布24-block Pilot与动态正式N计算基础设施 |
+| 未授权范围 | 真实LLM Pilot调用、正式实验、结果解释 |
+| 当前状态 | `IMPLEMENTATION_AUTHORIZED; REAL_PILOT_PENDING_WINDOWS_SHA_AND_COST_RECONFIRMATION` |
+| Pilot observations | 0 |
+| Formal blocks | 0 |
 
-该授权不能脱离`PILOT_REENTRY_FREEZE_PROPOSAL_V331.md`理解。它不授权在旧代码、脏
-工作树、不同模型、不同seed或未通过Windows回归的提交上运行，也不授权正式实验。
+该决定在任何有效v3.3.1 Pilot observation产生前作出，不是观察结果后的样本量调整。此前“N=10上限、6-block Pilot、1200 calls、2小时、CNY 20”的授权边界由新科学设计取代；旧记录保留在合同1.0和Git历史中，不得继续作为当前执行依据。
 
-## 2. 用户接受的边界
+## 2. 当前接受的科学边界
 
-| 条件 | 冻结值 |
-|---|---|
-| `N_max` | 10（正式block预算上限，不是已证明的正式N） |
-| Pilot cognitive blocks | P001–P006 |
-| provider-call ceiling | 1200次底层语义调用 |
-| wall-clock ceiling | 2.0小时 |
-| 费用容忍度 | CNY 20，行政边界而非代码可强制的token上限 |
-| v3.3.1模型 | `qwen-plus-2025-12-01` |
-| temperature | 0.3 |
-| prompt | `baseline_exact` |
-| replacement seed | 禁止 |
+- Pilot为P001–P024，共24个独立cognitive blocks；
+- 每个block使用D1–D24进行离线demand replay，共576个P5条件性值；
+- P1/P2/P5为确认性family，P3/P4为探索性；
+- planning SD取单侧90% SD UCL、最大LOO SD和方差分量合成SD三者最大值；
+- 正式N从10向上搜索，不设科研上限；
+- 目标为每项single-MDE Holm detection probability≥.90；
+- 使用四个预设相关结构场景，并取全部场景在同一N共同通过的最小值；
+- Pilot和正式blocks相互独立，Pilot不得并入正式样本；
+- 不因结果不理想追加、替换seed、降低MDE、降功效或删除确认性estimand。
 
-共享`configs/models_config.yaml`继续保留`qwen-plus`，用于不改变已关闭v3.2路径；
-v3.3.1 runner在内存中以版本作用域覆盖成上述具体模型。此前五个Real-LLM工程blocks
-仍按历史事实记录为滚动别名`qwen-plus`，不追溯性改写其运行元数据。
+## 3. 真实Pilot尚未获准的原因
 
-## 3. 授权生效条件
+真实Pilot仍需同时满足：
 
-必须同时满足：
+1. 新候选commit发布到`refactor/task005-v32-clean-codebase`；
+2. 用户Windows `Kernel`环境在准确HEAD上完整pytest通过；
+3. 零API plan-only核对24 blocks、576 demand realizations、4800 calls、8小时和具体模型；
+4. Git工作树clean且HEAD与命令显式值一致；
+5. 用户重新确认24-block计划的行政费用容忍度；
+6. API key只由环境变量提供。
 
-1. 模型固定代码和审计测试已发布到远端分支；
-2. 用户在Windows `Kernel`环境对该准确HEAD运行完整pytest并回传PASS；
-3. 同一HEAD的零APIplan-only显示N=10、1200次、2小时和具体模型；
-4. 远端commit、分支、clean worktree均已记录；
-5. 执行前real preflight通过且API key仅由环境变量提供。
-
-满足后从P001开始完整suite；任何block、调用或时间门禁失败均停止且不得替换seed。
-Pilot只用于planning variance和OC，不属于正式样本。Pilot完成后若N=10不满足冻结规则，
-状态必须为`DESIGN_NOT_FEASIBLE_WITHIN_CAP`，不得根据Pilot结果调MDE或扩大上限。
-
-## 4. 零结果声明
-
-本授权记录产生GABM run=0、provider call=0、有效Pilot observation=0、formal inference=0。
+因此，“确定开始”授权的是本轮代码与协议实施，不是立即消费API。正式实验仍须Pilot完成、`N_required`计算、协议1.1、formal seed ledger和新的明确授权。

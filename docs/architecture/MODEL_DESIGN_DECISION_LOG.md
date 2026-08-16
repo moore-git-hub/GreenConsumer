@@ -508,6 +508,18 @@ DashScope客户端为同一次调用执行的HTTP transport retry不另计为新
 
 ---
 
+## DR-20260816-34：取消N_max并以方差精度和预注册OC确定Pilot及正式N
+
+**状态：scientific redesign accepted before Pilot observations; supersedes DR-33 sample/cost caps; implementation candidate pending Windows regression**
+
+用户在任何有效v3.3.1 Pilot observation产生前取消`N_max=10`，要求Pilot规模和正式N均由科学准则决定。旧6-block设计的单侧90% SD上界膨胀因子约1.762，方差规划过度受小样本不确定性影响；新Pilot固定为6个simulation/network seeds×4个requested LLM seeds，即24个独立cognitive blocks，其对应因子约1.245，满足预先选择的≤25%膨胀精度门槛。P001–P006身份保留，P007–P024补全交叉网格；每个block离线交叉D1–D24，共576个P5条件性realizations，但不把它们伪作576个独立blocks。
+
+Planning SD冻结为三者最大值：block SD的单侧90%卡方上置信界、最大leave-one-cognitive-block-out SD、非负方差分量合成SD。P1/P2/P5仍是唯一确认性family，MDE仍为.15/.15/.05且只称预设设计阈值。正式N从10向上搜索，不设科研上限；在Pilot相关50%收缩、独立、等相关+.50和等相关−.25四个场景中，三项single-MDE Holm检出概率须≥.90且global-null经验FWER须≤.05+2×MCSE，最终取四场景在同一候选N共同通过的最小值为`N_required`，并报告各场景首个通过N。资源不足只能触发`SCIENTIFIC_N_NOT_RESOURCE_FEASIBLE`，不得降低power、调MDE、删estimand或把预算包装为科学N。
+
+24-block运行边界按历史743 calls/5 blocks线性外推并保留原34.6%余量，实现为4800 calls和8小时累计hard caps；原CNY 20行政容忍度不能自动外推，真实执行前须重新确认。实现支持同一SHA、同一suite、同一seed的中断恢复，逐provider call持久化累计预算；`FAIL*`或validity失败不可恢复。该决定授权代码、测试和文档实施，不授权真实LLM Pilot或正式实验。本轮新增GABM run=0、provider call=0、有效Pilot observation=0、formal inference=0。
+
+---
+
 ## DR-20260816-33：v3.3.1具体模型与Pilot重新准入条件冻结
 
 **状态：parameters frozen; Pilot conditionally authorized; clean execution SHA pending**
@@ -621,8 +633,9 @@ P3表头现明确为T6—T9中Immediate已启动与Delayed尚未启动的早期�
 ## 后续预登记队列
 
 - 整理现有工程表图，但不得冒充正式推断；
-- 用户决定恢复实验后，重新冻结Pilot provider-call ceiling、费用、时间、clean SHA和执行授权；
-- Pilot后按预设OC规则判断N=10可行性，再生成正式seed ledger。
+- 发布24-block Pilot候选SHA并完成Windows准确HEAD回归；
+- 重新确认费用容忍度、clean SHA和真实Pilot执行授权；
+- Pilot后按预设四相关场景和90%功效规则计算`N_required`，再生成正式seed ledger。
 
 ---
 

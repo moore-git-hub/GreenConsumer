@@ -55,14 +55,14 @@
 
   <circle cx="105" cy="1068" r="23" fill="#A97713"/><text class="zh box-title" x="105" y="1075" text-anchor="middle" fill="#fff">4</text>
   <text class="zh phase" x="145" y="1073">Pilot方差与正式N可行性</text><text class="zh en" x="145" y="1099" fill="#A97713">PILOT PLANNING — PARTIALLY FROZEN, NOT EXECUTED</text>
-  <rect x="105" y="1135" width="290" height="76" rx="13" fill="#fff" stroke="#E2C87A"/><text class="zh box-title" x="250" y="1166" text-anchor="middle">P001–P006</text><text class="zh small" x="250" y="1192" text-anchor="middle">6个cognitive blocks + D1–D3 replay</text>
-  <rect x="425" y="1135" width="245" height="76" rx="13" fill="#FFF9E8" stroke="#D9AE45"/><text class="zh box-title" x="547" y="1166" text-anchor="middle">N_max = 10</text><text class="zh small" x="547" y="1192" text-anchor="middle">已在Pilot结果前固定</text>
-  <rect class="gate" x="700" y="1135" width="270" height="76" rx="13"/><text class="zh box-title" x="835" y="1166" text-anchor="middle">待固定</text><text class="zh small" x="835" y="1192" text-anchor="middle">calls · 时间 · clean SHA</text>
+  <rect x="105" y="1135" width="290" height="76" rx="13" fill="#fff" stroke="#E2C87A"/><text class="zh box-title" x="250" y="1166" text-anchor="middle">P001–P024</text><text class="zh small" x="250" y="1192" text-anchor="middle">24个blocks + D1–D24 replay</text>
+  <rect x="425" y="1135" width="245" height="76" rx="13" fill="#FFF9E8" stroke="#D9AE45"/><text class="zh box-title" x="547" y="1166" text-anchor="middle">动态N_required</text><text class="zh small" x="547" y="1192" text-anchor="middle">90% power · 无科研上限</text>
+  <rect class="gate" x="700" y="1135" width="270" height="76" rx="13"/><text class="zh box-title" x="835" y="1166" text-anchor="middle">待固定</text><text class="zh small" x="835" y="1192" text-anchor="middle">费用 · clean SHA</text>
   <rect class="gate" x="1000" y="1135" width="275" height="76" rx="13"/><text class="zh box-title" x="1138" y="1166" text-anchor="middle">待明确授权</text><text class="zh small" x="1138" y="1192" text-anchor="middle">真实LLM Pilot执行</text>
 
   <circle cx="105" cy="1348" r="23" fill="#7B8993"/><text class="zh box-title" x="105" y="1355" text-anchor="middle" fill="#fff">5</text>
   <text class="zh phase" x="145" y="1353">正式实验、结果解释与论文综合</text><text class="zh en" x="145" y="1379" fill="#6D7B85">FORMAL INFERENCE AND THESIS SYNTHESIS — NOT STARTED</text>
-  <rect class="gate" x="105" y="1415" width="260" height="76" rx="13"/><text class="zh box-title" x="235" y="1446" text-anchor="middle">OC判断</text><text class="zh small" x="235" y="1472" text-anchor="middle">N=10通过或设计不可行</text>
+  <rect class="gate" x="105" y="1415" width="260" height="76" rx="13"/><text class="zh box-title" x="235" y="1446" text-anchor="middle">OC计算</text><text class="zh small" x="235" y="1472" text-anchor="middle">四相关场景取最保守N</text>
   <rect class="gate" x="395" y="1415" width="260" height="76" rx="13"/><text class="zh box-title" x="525" y="1446" text-anchor="middle">协议1.1</text><text class="zh small" x="525" y="1472" text-anchor="middle">正式seeds与分析SHA</text>
   <rect class="gate" x="685" y="1415" width="260" height="76" rx="13"/><text class="zh box-title" x="815" y="1446" text-anchor="middle">正式blocks</text><text class="zh small" x="815" y="1472" text-anchor="middle">P1/P2/P5 + Holm</text>
   <rect class="gate" x="975" y="1415" width="300" height="76" rx="13"/><text class="zh box-title" x="1125" y="1446" text-anchor="middle">论文结论与管理启示</text><text class="zh small" x="1125" y="1472" text-anchor="middle">严格限定模型内与外推边界</text>

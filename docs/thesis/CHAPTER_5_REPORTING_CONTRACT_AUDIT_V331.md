@@ -53,7 +53,7 @@
 3. P4只覆盖固定网络中的企业直接投递，不能回答消费者级联扩散效率。
 4. LLM显式理由可进入UGC传播，但没有真实消费者文本的criterion/content validation。
 5. P5条件于未经验校准的购买机会、偏好和loyalty机制。
-6. N=10是否满足正式设计仍须由Pilot planning variance和预设operating-characteristic gate决定。
+6. 正式`N_required`仍须由24-block Pilot planning variance和预设operating-characteristic gate决定。
 
 这些问题中，前五项只能通过新增设计或现实校准材料实质改善，不能依靠更强措辞修复；第六项必须恢复Pilot后按冻结规则判定。当前报告合同的作用是防止越界，不是提高证据强度。
 

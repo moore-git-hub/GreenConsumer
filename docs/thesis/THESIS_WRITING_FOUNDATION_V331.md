@@ -113,7 +113,7 @@ LLM边界必须在方法章节和图中同时说明：LLM不直接决定购买�
 
 正式统计单位是完整replication block。确认性family固定为P1、P2、P5，并使用Holm step-down控制family-wise alpha=.05；P3和P4为探索性/机制性estimands。Agent、Agent×Tick、provider call和micro-buyer都不是独立统计单位。
 
-Pilot预设P001–P006六个cognitive blocks并对每个历史离线交叉三个demand seeds。用户已在看到v3.3.1 Pilot结果前冻结`N_max=10`。这意味着正式N只能在10这一唯一预算可行点接受或判定不可行：Pilot完成后，只有当保守planning SD下三项确认性检出概率均达到.80，协议1.1才可冻结正式N=10；否则状态必须转为`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。用户于2026-08-16进一步接受1200次调用、2小时、CNY 20行政费用容忍度和`qwen-plus-2025-12-01`，并条件式授权P001–P006；该授权只在新提交通过Windows全量测试并冻结clean SHA后生效。当前没有有效Pilot block，也没有正式N或正式推断。
+Pilot预设P001–P024共24个cognitive blocks，由6个simulation/network seeds×4个requested LLM seeds完整交叉；P001–P006保留旧身份。每个认知历史离线交叉24个demand seeds，形成576个P5条件性realizations，但独立Pilot单位仍为24。用户在看到任何v3.3.1 Pilot结果前取消`N_max=10`。正式`N_required`将在Pilot后从N=10向上搜索，并取四个冻结相关结构场景中同时满足P1/P2/P5 single-MDE Holm检出概率≥.90及global-null数值FWER门禁的最保守首个通过N。Planning SD取单侧90% SD上界、最大leave-one-block-out SD和方差分量合成SD三者最大值，不使用Pilot均值或方向。当前没有有效Pilot block、正式N或正式推断；真实Pilot仍待新SHA的Windows回归和24-block费用容忍度确认。
 
 ## 7. 验证与证据层级
 
@@ -217,19 +217,19 @@ Pilot预设P001–P006六个cognitive blocks并对每个历史离线交叉三个
 8. v3.3.1 ODD＋D复现附录：`APPENDIX_ODD_D_MODEL_DESCRIPTION_V331.md`；
 9. 四项中文核心文献和八项包外补充文献的条目核验；
 10. 第五章正式结果空表、空图与受约束报告模板：`CHAPTER_5_RESULTS_REPORTING_TEMPLATE_V331.md`；
-11. Pilot前N=10小样本诊断协议与P1/P2/P5阈值依据工作表。
+11. Pilot前诊断协议与P1/P2/P5阈值依据工作表；诊断协议须在`N_required`确定后参数化修订。
 12. 第三、四章理论—模型—estimand接口审计：`CHAPTER_3_4_INTERFACE_AUDIT_V331.md`；
 13. 第五章正式结果报告合同审计：`CHAPTER_5_REPORTING_CONTRACT_AUDIT_V331.md`。
 14. 第六章正式结果条件式讨论与结论模板：`CHAPTER_6_DISCUSSION_AND_CONCLUSION_TEMPLATE_V331.md`；
 15. 第一至第六章RQ—证据—结论全链路审计：`FULL_THESIS_RQ_EVIDENCE_CLAIM_AUDIT_V331.md`。
 
-论文写作基础包至此闭合，但第五、六章仍是空结果合同而非完成的结果正文。下一科学门槛是重新冻结Pilot费用、时间、provider-call ceiling和当时clean execution SHA；只有用户再次授权后才恢复P001—P006。
+论文写作基础包至此闭合，但第五、六章仍是空结果合同而非完成的结果正文。下一科学门槛是发布24-block基础设施候选SHA、完成准确HEAD的Windows回归，并重新确认费用容忍度；只有新的真实执行授权后才可从P001开始。
 
 下一队列：
 
 1. 如需把设计阈值称为管理阈值，由用户补充企业/导师决策记录、可比数据或可核验原始文献；缺失时继续使用“预先设定的设计阈值”；
 2. 定稿前根据实际estimands与结果解决当前题目过宽的高风险gate；
 3. 在Windows中文字体环境从修订SVG重导出PNG；
-4. 重新冻结provider-call ceiling、时间预算与当时clean SHA，并在用户再次授权后恢复P001–P006；
-5. Pilot后只按预设OC规则判断N=10可行性，再生成正式seed ledger并执行独立blocks；
+4. 核对4800-call、8-hour运行边界，重新确认费用容忍度与clean SHA，并在用户再次授权后执行P001–P024；
+5. Pilot后按预设四相关场景和90%功效OC计算`N_required`，再生成正式seed ledger并执行独立blocks；
 6. 正式结果生成前不得填充第五、六章的结果与结论占位符。

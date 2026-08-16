@@ -4,7 +4,7 @@
 
 本章说明处理设计、estimand、推断单位、Pilot方差方案、正式分析规则以及已经完成的模型验证。需要首先划定五层证据边界：实现验证回答“代码是否按设计运行”；工程稳健性回答“模型内方向或结构是否依赖某一预设工程条件”；单次Real-LLM描述只展示固定工程run中的状态与异质性；Pilot只回答“在预算上限内是否可能形成可接受的正式重复设计”；正式replication blocks才用于确认性推断。五层证据不能相互替代。
 
-因此，本章可以报告已经完成的实现检查和工程稳健性，但不能报告v3.3.1正式处理效应。P001—P006尚未执行，正式N尚未获得方差证据支持，P1、P2和P5的p值、置信区间及Holm结论均不存在。将工程PASS写成现实消费者效应，会形成直接的证据—结论不匹配。
+因此，本章可以报告已经完成的实现检查和工程稳健性，但不能报告v3.3.1正式处理效应。P001—P024尚未执行，正式`N_required`尚未获得方差证据支持，P1、P2和P5的p值、置信区间及Holm结论均不存在。将工程PASS写成现实消费者效应，会形成直接的证据—结论不匹配。
 
 ## 4.2 处理设计
 
@@ -64,19 +64,19 @@ P3比较Immediate与Delayed在T6—T9的Trust AUC，用于刻画即时澄清已�
 
 ## 4.5 Pilot方差设计
 
-> 当前执行状态：用户于2026-08-16已接受Pilot预算、具体模型并作出条件式授权；仍须由新模型固定提交通过Windows全量测试和clean-SHA冻结后方可执行。以下内容是预先形成的设计方案，不代表Pilot已经执行，也不形成正式N或结果。
+> 当前执行状态：用户于2026-08-16已接受24-block科学设计与动态N规则；真实Pilot仍须新候选提交通过Windows全量测试、clean-SHA冻结并重新确认费用容忍度。以下内容是预先形成的设计方案，不代表Pilot已经执行，也不形成正式N或结果。
 
 ### 4.5.1 目的与网格
 
-Pilot预设3个simulation/network seeds×2个requested LLM seeds，共6个完整认知blocks，即P001—P006。每个认知历史再使用3个预设demand seeds进行离线重放，产生18个P5 realizations。后者共享认知历史，只用于需求层方差分解，不构成18个独立blocks。
+Pilot预设6个simulation/network seeds×4个requested LLM seeds，共24个完整认知blocks，即P001—P024；前六个ID与seed映射保持不变。每个认知历史再使用24个预设demand seeds进行离线重放，产生576个P5 realizations。后者在block内共享认知历史，只用于需求层方差分解，不构成576个独立blocks。
 
-Pilot均值、符号和策略排序不得用于修改机制、选择prompt、改变estimand或调整MDE。Pilot只用于估计P1、P2、P5的planning variance、检查正式runner和validity gate，并判断预算上限内的设计是否可行。
+Pilot均值、符号和策略排序不得用于修改机制、选择prompt、改变estimand或调整MDE。Pilot只用于估计P1、P2、P5的planning variance、检查正式runner和validity gate，并计算科学所需`N_required`。
 
 ### 4.5.2 方差分解及其局限
 
-P1和P2采用3×2平衡网格的两向矩估计，分解simulation/network、requested LLM/provider以及二者交互加未解析runtime波动。P5在3×2×3网格中进一步分离offline-demand分量。由于每个单元只有一个观测，交互与残差不能完全区分；负方差分量被有界到零只是一种planning处理，不能证明该随机来源不存在。
+P1和P2采用6×4平衡网格的两向矩估计，分解simulation/network、requested LLM/provider以及二者交互加未解析runtime波动。P5在6×4×24网格中进一步分离offline-demand分量。由于每个cognitive交叉单元只有一个观测，交互与残差仍不能完全区分；负方差分量被有界到零只是一种planning处理，不能证明该随机来源不存在。
 
-规划方差不使用Pilot均值。P1和P2以六个block值的样本方差为基础；P5取D1 block方差与有界方差分量和中的较大值；随后使用df=5的单侧80%卡方上界因子形成保守planning SD。该做法减少根据Pilot结果选择较小N的空间，但六个blocks仍会导致方差估计高度不稳定。
+规划方差不使用Pilot均值。P1、P2和P5均以24个独立cognitive-block值为基础；P5的其余demand replays只进入方差分量合成。逐estimand的planning SD取单侧90% block-SD上界、最大leave-one-cognitive-block-out SD和非负方差分量合成SD三者最大值。n=24时单侧90% SD上界膨胀因子约1.245，低于预设25%容忍界。
 
 ## 4.6 正式样本量门禁与统计分析
 
@@ -84,13 +84,13 @@ P1和P2采用3×2平衡网格的两向矩估计，分解simulation/network、req
 
 P1、P2和P5的预设阈值分别为0.15 Trust points、0.15 Trust points和0.05选择概率比例（5个百分点；机器输出单位标签为`expected-choice share`）。这些数值目前只能称为“预先设定的设计阈值”，不能称为已由企业决策数据证明的“管理上重要差异”。若论文希望使用后者，需要额外提供管理决策依据。
 
-### 4.6.2 N_max=10的含义
+### 4.6.2 正式N的科学选择与资源分离
 
-用户已在查看Pilot结果前冻结正式replication-block预算上限N_max=10。由于协议要求正式N不低于10，当前唯一预算候选是N=10。只有当保守planning SD下P1、P2和P5在各自阈值处的边际检出概率均不低于0.80时，才能发布协议1.1并冻结正式N=10；否则必须记录DESIGN_NOT_FEASIBLE_WITHIN_CAP。
+用户已在查看任何有效Pilot结果前取消N_max。正式N不再由预算先验截断，而由预注册OC动态求得：从N=10开始，逐N同时评估Pilot相关50%收缩、独立、等相关+.50和等相关−.25四个场景；P1、P2和P5在各自阈值处的Holm边际检出概率均须≥.90，global-null经验FWER须≤.05+2×MCSE，`N_required`取四场景在同一候选N共同通过的最小值。
 
-N_max=10不是已证明的正式样本量。更严厉的审稿风险在于：即使operating-characteristic计算通过，N=10下block-level t统计量仍可能对异常block和分布偏离敏感。为避免看到结果后选择方法，本研究已在Pilot前冻结小样本诊断协议：主分析仍为双侧one-sample t-test与Holm校正；同时完整展示10个block值、Q-Q图和MAD影响提示，执行10次联合leave-one-block-out，并对每项estimand完整枚举2^10=1024种符号组合形成exact sign-flip敏感性family。置换推断依赖零假设下相应的数据变换不变性，sign-flip在此具体依赖block contrasts关于零的符号可交换/对称条件，因此其结果不被包装为无条件优于t-test（Ernst，2004，《Permutation Methods: A Basis for Exact Inference》）。
+Planning SD逐estimand取单侧90% block-SD上界、最大leave-one-cognitive-block-out SD和方差分量合成SD三者最大值。该规则只使用方差结构，不使用Pilot均值、符号或策略排序。`N_required`产生后才评估API、时间和费用；若资源不足，记录`SCIENTIFIC_N_NOT_RESOURCE_FEASIBLE`，不得降低功效、删除确认性指标或改写MDE。
 
-诊断只用于披露脆弱性。通过validity gate的极端block不得删除，Shapiro–Wilk不作为方法切换门禁，LOBO的N=9结果不得替代N=10主分析。若主分析拒绝而exact sign-flip或LOBO不一致，结果仍报告主分析决定，但必须标记为`PRIMARY_SUPPORTED_BUT_DIAGNOSTICALLY_FRAGILE`。
+异常值和分布诊断仍在结果前保留：主分析为双侧one-sample t-test与Holm校正，并展示全部block值、Q-Q图、MAD影响提示和联合leave-one-block-out。Exact sign-flip敏感性依赖block contrasts关于零的符号可交换/对称条件（Ernst，2004，《Permutation Methods: A Basis for Exact Inference》）；其完整枚举仅在未来`N_required`计算可行时执行，否则须在正式协议1.1中预先冻结等价Monte Carlo精度。诊断只披露脆弱性，不触发删除有效block或选择有利方法。
 
 ### 4.6.3 多重检验
 
@@ -138,7 +138,7 @@ ABM校准方法对模型规模、经验目标、计算预算和识别条件敏�
 
 第二，Persona面板用于机制覆盖，没有人口权重；网络是受控拓扑，没有真实follower/followee或信息流方向数据；需求层没有植物奶扫描面板校准。这些缺口限制外部效度，而不是靠增加Fake-LLM运行数量可以修复。
 
-第三，N_max=10可能使正式设计在预设阈值下不可行。若Pilot后出现该结论，它是研究设计的真实失败模式，不应通过提高效应、减少family、放宽power或重新定义MDE来消除。N=10的诊断与敏感性规则虽已在结果前冻结，但不能补偿检出概率不足。
+第三，动态计算的`N_required`可能超过可用API、时间或费用资源。若Pilot后出现该结论，它是资源可行性失败，不应通过提高效应、减少family、放宽power或重新定义MDE来消除。诊断与敏感性规则不能补偿检出概率不足。
 
 第四，P1/P2/P5的0.15/0.15/0.05仍缺少企业决策、可比经验效应或测量分辨率依据。目前只能称为预先设定的设计阈值。即使正式均值达到阈值，也不能自动写为“具有管理意义”；相关依据必须在`DESIGN_THRESHOLD_JUSTIFICATION_WORKSHEET_V331.md`中补齐并经决策日志准入。
 

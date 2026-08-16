@@ -4,19 +4,21 @@
 
 | 字段 | 冻结值 |
 |---|---|
-| 协议版本 | `1.0.3` |
+| 协议版本 | `1.0.4` |
 | 协议日期 | `2026-08-16` |
 | 代码分支 | `refactor/task005-v32-clean-codebase` |
 | 协议起草时 HEAD | `7d7a4e595969d6912995c7b7d068144b28d92771` |
 | 模型版本 | `TASK_005_FMCG_V3.3.1` |
-| 当前状态 | `PILOT_PARAMETERS_FROZEN; PILOT_AUTHORIZED_CONDITIONAL_ON_WINDOWS_TESTED_CLEAN_SHA; PILOT_NOT_EXECUTED; FORMAL_NOT_AUTHORIZED` |
+| 当前状态 | `PILOT_DESIGN_24_BLOCKS_FROZEN; N_MAX_CANCELLED; EXECUTION_SHA_AND_COST_RECONFIRMATION_PENDING; PILOT_NOT_EXECUTED; FORMAL_NOT_AUTHORIZED` |
 | 论文用途 | 工商管理硕士论文的正式实验准备与方法审计 |
 
-本协议冻结 v3.3.1 的处理矩阵、研究问题、estimand、推断单位、Pilot 方差设计、失败规则与正式样本量选择规则。用户已对P001–P006作出有前置条件的授权；模型固定提交只有在Windows完整回归通过、clean SHA落盘后才能执行。正式实验仍未授权。
+本协议冻结 v3.3.1 的处理矩阵、研究问题、estimand、推断单位、Pilot 方差设计、失败规则与正式样本量选择规则。用户已接受24-block Pilot和取消正式`N_max`的科学修订；真实执行仍须新候选SHA通过Windows完整回归、clean SHA落盘并重新确认行政费用边界。正式实验仍未授权。
 
-### 0.1 预算上限修订记录
+### 0.1 Pilot规模与正式N修订记录
 
-用户于2026-08-15在查看v3.3.1 Pilot结果前冻结正式replication-block上限`N_max=10`。该值是Pilot执行前的计算/费用约束，不是Pilot block数，也不是已经由方差证据证明的正式N。P001–P006六个Pilot blocks保持不变；Pilot后若N=10不能满足第7节的operating-characteristic规则，必须判定`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。用户于2026-08-16进一步冻结1200次provider-call、2小时wall-clock、CNY 20行政费用容忍度及具体模型`qwen-plus-2025-12-01`。clean execution SHA和该SHA上的Windows测试仍是条件式Pilot授权生效前的最后门禁。
+用户于2026-08-16在任何有效v3.3.1 Pilot observation产生前取消`N_max=10`。科学所需正式N不得再被预算上限截断：先按第7节计算`N_required`，再单独判断资源可行性。Pilot由原3×2扩展为6个simulation/network seeds×4个requested LLM seeds，共24个独立cognitive blocks；P001–P006身份保留，P007–P024补全网格。每个block离线交叉24个demand seeds，共576个P5条件性realizations，但独立推断单位仍只有24个cognitive blocks。
+
+24-block规模依据方差估计精度而非效应均值选择：单侧90%卡方SD上界膨胀因子在n=24时约为1.245，低于预设25%容忍界；n=6时约为1.762。Pilot operational caps暂按4800次provider calls和8小时实现，但CNY费用容忍度须在真实执行前重新确认。这些运行限额不得解释为正式N的科学上限。
 
 ### 0.3 Pilot前模型版本修订记录
 
@@ -25,9 +27,9 @@
 的v3.2执行路径；v3.3.1在router构造时只作内存内版本覆盖。此前五个Real-LLM
 稳健性blocks按历史运行元数据继续记为`qwen-plus`，不得追溯性重标为具体版本。
 
-### 0.2 小样本诊断修订记录
+### 0.2 小样本诊断修订记录（历史触发条件）
 
-用户于2026-08-15在查看Pilot和正式结果前批准继续完善论文与执行前方法接口。`SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md`据此冻结N=10时的全block披露、Q-Q图、MAD影响提示、联合leave-one-block-out与exact sign-flip/Holm敏感性规则。主分析仍为本协议8.1节的双侧one-sample t-test与Holm family；诊断不触发结果驱动的方法切换或block删除。P1/P2/P5阈值仍为0.15/0.15/0.05，管理依据缺口登记于`DESIGN_THRESHOLD_JUSTIFICATION_WORKSHEET_V331.md`，当前不得称为管理上重要差异。
+`SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md`最初针对N=10冻结。取消`N_max`后，其中全block披露、Q-Q图、MAD影响提示、联合leave-one-block-out与sign-flip/Holm敏感性仍保留；N≤20时完整枚举，N>20时使用预先冻结的Monte Carlo次数和种子。主分析仍为本协议8.1节的双侧one-sample t-test与Holm family。P1/P2/P5阈值仍为0.15/0.15/0.05，管理依据缺口未解决，当前不得称为管理上重要差异。
 
 ## 1. 科学范围与版本边界
 
@@ -176,32 +178,21 @@ Pilot 禁止计算或报告正式 p-value、置信区间、显著性、策略胜
 
 ### 6.2 Pilot cognitive grid
 
-Pilot cognitive grid 预设为 3 个 simulation/network seeds × 2 个 requested LLM seeds，共 6 个完整 cognitive blocks：
+Pilot cognitive grid预设为6个simulation/network seeds×4个requested LLM seeds，共24个完整cognitive blocks。simulation/network seeds为`2026081501..2026081506`，requested LLM seeds为`2026081601..2026081604`。P001–P006保留协议1.0中的原始配对和ID，P007–P024补全剩余18个交叉单元；完整逐行映射以`task_pv01_pilot_variance_contract1.1.json`为机器可读唯一来源。
 
-| Pilot ID | Simulation/network seed | Requested LLM seed |
-|---|---:|---:|
-| `P001` | 2026081501 | 2026081601 |
-| `P002` | 2026081501 | 2026081602 |
-| `P003` | 2026081502 | 2026081601 |
-| `P004` | 2026081502 | 2026081602 |
-| `P005` | 2026081503 | 2026081601 |
-| `P006` | 2026081503 | 2026081602 |
-
-这一小型交叉设计用于工程性方差分解，不把六个 Pilot blocks 当作正式样本。requested seed 不被视为 provider 完全确定性的保证；LLM 分量应解释为 requested-seed 与实际 provider/runtime variability 的合成波动。
+这一交叉设计用于工程性方差分解，不把24个Pilot blocks当作正式样本。requested seed不被视为provider完全确定性的保证；LLM分量应解释为requested-seed与实际provider/runtime variability的合成波动。Pilot规模不由观察效应、显著性或策略排序决定。
 
 当前 baseline runner 未把 network seed 与 simulation seed 完全拆分，因此 Pilot 只能估计联合的 simulation/network 分量，不能声称单独识别 network variance。
 
 ### 6.3 Demand-only 交叉
 
-每个已完成的 cognitive block 使用以下三个预设 demand seeds 进行离线 demand replay：
+每个已完成的cognitive block使用24个预设demand seeds进行离线demand replay：
 
 ```text
-D1 = 2026081701
-D2 = 2026081702
-D3 = 2026081703
+D1..D24 = 2026081701..2026081724
 ```
 
-由此得到 6×3=18 个 P5 demand realizations，但它们共享 cognitive histories，不能作为18个独立 replication blocks。它们只用于估计 demand-layer variance component；正式 P5 planning variance 应由 cognitive 与 demand components 合成，并报告模型依赖性。
+由此得到24×24=576个P5 demand realizations，但同一cognitive block内的24个replays共享cognitive history，不能作为576个独立replication blocks。它们只用于估计demand-layer variance component；正式P5 planning variance必须以24个cognitive blocks为独立层级，并报告方差分量模型依赖性。
 
 ### 6.4 Pilot 输出
 
@@ -214,6 +205,7 @@ Pilot 实现必须至少生成：
 - `pilot_variance_components.csv`；
 - `pilot_planning_sd.csv`；
 - `pilot_operating_characteristics.csv`；
+- `pilot_formal_n_selection.csv`；
 - `pilot_summary.json`；
 - 每项文件的 SHA-256 manifest。
 
@@ -235,19 +227,19 @@ Pilot 实现必须至少生成：
 
 ### 7.2 Operating-characteristic 规则
 
-正式 N 从满足 `N≥10` 的整数中选择符合以下全部条件的最小值：
+正式N从满足`N≥10`的整数中向上搜索，不设科研样本量上限。逐N同时检验全部预设相关结构场景，并把所有场景在同一N上同时符合以下条件的最小值作为`N_required`；另行报告各场景首个通过N：
 
-1. P1、P2、P5 在各自 MDE 下的边际检出概率均不低于 .80；
+1. P1、P2、P5在各自single-MDE场景下的边际检出概率均不低于.90；
 2. 三项确认性检验使用 Holm step-down，family-wise alpha=.05；
 3. Holm规则提供理论上的strong FWER control；global-null Monte Carlo只作实现兼容性诊断，其经验FWER不高于`.05 + 2×MCSE`，避免把有限Monte Carlo误差误判为规则失效；
-4. planning SD 使用 Pilot 方差的保守值，不使用 Pilot 均值作为备择效应；
+4. planning SD逐estimand取以下三者最大值：block SD的单侧90%卡方上置信界、最大leave-one-cognitive-block-out SD、非负method-of-moments方差分量合成值的平方根；不使用Pilot均值或符号；
 5. Monte Carlo operating-characteristic 模拟次数不少于 200,000/场景，并冻结随机种子；
-6. Pilot执行前的`N_max`已由用户在查看Pilot结果前冻结为10；该上限不得根据Pilot结果修改；
-7. 若`N≤N_max`无法满足条件，协议状态改为`DESIGN_NOT_FEASIBLE_WITHIN_CAP`，不得直接启动正式实验。
+6. 相关结构场景固定为：50%向单位阵收缩的Pilot相关矩阵、单位阵、等相关+0.50、等相关−0.25；不得只选择产生较小N的场景；
+7. `N_required`计算完成后才进行provider calls、时间和费用可行性审查；资源不足时记录`SCIENTIFIC_N_NOT_RESOURCE_FEASIBLE`并修改执行计划，不得降低功效门槛、删减确认性estimand或把预算写成科学上限。
 
 保守 planning SD 的具体计算实现必须在 Pilot 分析代码中预先锁定并测试。至少同时报告原始 Pilot SD 与小样本不确定性调整后的 planning SD；不得选择产生更小 N 的估计量。
 
-正式 N 确定后，须发布协议 `1.1`，写入唯一 N、正式 block IDs、正式 seed ledger、provider-call ceiling、冻结源码 SHA 和正式分析代码 SHA。协议 `1.1` 之前禁止正式执行。
+正式N确定后，须发布协议`1.1`，写入唯一`N_required`、正式block IDs、正式seed ledger、provider-call ceiling、冻结源码SHA和正式分析代码SHA。协议`1.1`之前禁止正式执行。
 
 ## 8. 正式统计分析规则
 
@@ -256,7 +248,7 @@ Pilot 实现必须至少生成：
 - 对 P1、P2、P5 分别在 replication-block 层面进行双侧 one-sample t-test versus 0；
 - 使用 Holm step-down 控制三项 family-wise error rate=.05；
 - 报告有效 block 数、mean、SD、SE、95% ordinary CI、raw p、Holm-adjusted p、Holm decision、MDE 和设计阈值分类；
-- 按`SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md`报告全部block值、Q-Q、影响提示、联合leave-one-block-out和exact sign-flip/Holm敏感性；置换参考分布的有效性依赖相应不变性条件（Ernst，2004，《Permutation Methods: A Basis for Exact Inference》）；
+- 按`SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md`报告全部block值、Q-Q、影响提示、联合leave-one-block-out和预设sign-flip/Holm敏感性；置换参考分布的有效性依赖相应不变性条件（Ernst，2004，《Permutation Methods: A Basis for Exact Inference》）；
 - 诊断结果不替代主分析，不触发删除有效block或在多个方法中选择有利结果；主分析与敏感性不一致时必须标记为diagnostically fragile；
 - 不能把“未拒绝零假设”写成“证明无效”，也不能把统计显著写成现实市场外部有效性。
 
@@ -335,7 +327,8 @@ P3、P4 报告各 block 值、mean、SD、median、IQR、min、max及轨迹/触�
 - Pilot runner 与零 API 测试；
 - `pilot_seed_ledger.csv`；
 - Pilot attempt/validity contract；
-- 已冻结的1200次provider-call与2小时wall-clock门禁；
+- 已实现的4800次provider-call与8小时累计wall-clock门禁；
+- 用户重新确认24-block计划的行政费用容忍度；
 - 条件式Pilot授权记录；
 - Windows完整回归通过并已冻结的clean Git HEAD；
 - `python run_v33.py preflight --real` PASS；

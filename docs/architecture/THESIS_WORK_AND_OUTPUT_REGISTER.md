@@ -25,7 +25,7 @@ Status vocabulary:
 | W06 | Thesis chapter | Chapter 4 experiment design and validation draft without formal results | `docs/thesis/CHAPTER_4_EXPERIMENT_AND_VALIDATION_DRAFT_V331.md` | AVAILABLE | Treatment, estimand, Pilot and engineering validation prose; no formal effect claim |
 | W07 | Reproducibility appendix | v3.3.1 ODD＋D model and human-decision description | `docs/thesis/APPENDIX_ODD_D_MODEL_DESCRIPTION_V331.md` | AVAILABLE | Reproducibility specification; not validity proof |
 | W08 | Thesis chapter | Chapter 5 formal-results reporting template with empty tables, figures and guarded prose | `docs/thesis/CHAPTER_5_RESULTS_REPORTING_TEMPLATE_V331.md` | AVAILABLE | Structure only; no Pilot/formal value, direction or significance exists |
-| W09 | Analysis protocol | Pre-Pilot N=10 diagnostics, joint LOBO and exact sign-flip sensitivity | `SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` | AVAILABLE | Frozen analysis interface; does not prove N=10 feasible and does not replace primary analysis |
+| W09 | Analysis protocol | Pre-result diagnostics, joint LOBO and exact sign-flip sensitivity | `SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` | AVAILABLE | Originally written for N=10; retain diagnostics but parameterize enumeration/reporting by future `N_required` |
 | W10 | Design worksheet | P1/P2/P5 threshold provenance and evidence-gap worksheet | `DESIGN_THRESHOLD_JUSTIFICATION_WORKSHEET_V331.md` | AVAILABLE | Thresholds remain design values; managerial justification unresolved |
 | W11 | Thesis chapter | Chapter 1 introduction draft with scoped background, RQs, methods and contribution boundaries | `docs/thesis/CHAPTER_1_INTRODUCTION_DRAFT_V331.md` | AVAILABLE | Working thesis prose; no Pilot/formal result implied |
 | W12 | Thesis audit | Title–RQ–evidence–contribution consistency and retained formal-execution route | `docs/thesis/TITLE_RQ_CONTRIBUTION_AUDIT_V331.md` | AVAILABLE | Mandatory before Chapter 5 is finalized |
@@ -44,8 +44,8 @@ Status vocabulary:
 | S03 | System construction | Tests and engineering verification chain | `tests/`, architecture result records | AVAILABLE | Verification subsection, not formal inference |
 | S04 | System construction | Fixed-network state/flow animation | `greenconsumer_v33/network_animation.py` | AVAILABLE | System demonstration with fixed-topology caveat |
 | E01 | Experiment design | Primary/secondary estimands and analysis family | `FORMAL_EXPERIMENT_PROTOCOL.md` | AVAILABLE | Formal design section |
-| E02 | Experiment design | Pilot seed and replication design with pre-result `N_max=10` | Pilot protocol/contract/code, execution-conditions and authorization records | PLANNED_NOT_EXECUTED | Parameters accepted and conditionally authorized; new clean SHA still needs Windows testing; N=10 is not justified as formal N |
-| E04 | Experiment design | N=10 small-sample diagnostic and sensitivity rules | `SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` | AVAILABLE | Apply only if OC gate accepts N=10; results cannot drive method switching |
+| E02 | Experiment design | 24-block Pilot and uncapped scientific formal-N design | Protocol1.0.4、contract1.1、code、execution-conditions and authorization records | PLANNED_NOT_EXECUTED | Scientific design accepted; new clean SHA, Windows tests and cost reconfirmation still required |
+| E04 | Experiment design | Formal-N diagnostic and sensitivity rules | `SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` | REVISION_REQUIRED_AFTER_N | Preserve LOBO/influence logic; exact enumeration feasibility and wording must be set after `N_required` |
 | E03 | Experiment design | Formal N, seed ledger and frozen analysis SHA | not yet created | NOT_AUTHORIZED | No thesis value may be reported yet |
 | R01 | Simulation results | v3.3.1 engineering robustness results | `EXPERIMENT_EVIDENCE_REGISTER.md` and committed result records | AVAILABLE | Robustness/verification appendix with engineering label |
 | R02 | Simulation results | Selected Real-LLM robustness | committed Real-LLM result record | AVAILABLE | Engineering robustness only |
@@ -215,3 +215,11 @@ The implementation keeps the shared YAML and closed v3.2 runner on the historica
 seed ledger, run summary and validity checks now expose or verify the dated identifier.
 Historical Real-LLM robustness outputs are not retrospectively relabelled. This change
 generated no GABM run, provider call, valid Pilot observation or formal inference.
+
+## 17. Work log entry — 2026-08-16: 24-block Pilot and dynamic formal-N redesign
+
+Before any valid v3.3.1 Pilot observation existed, the user cancelled `N_max=10` and accepted a variance-precision-based Pilot plus scientifically uncapped formal-N calculation. The Pilot grid is now 6 simulation/network seeds×4 requested LLM seeds (P001–P024); the first six identities remain unchanged. Each cognitive history is replayed over 24 frozen demand seeds, producing 576 conditional P5 measurements while retaining 24 as the number of independent Pilot units.
+
+The planning SD rule now takes the maximum of a one-sided 90% block-SD upper confidence bound, the maximum leave-one-cognitive-block-out SD and the square root of the bounded variance-component synthesis. Formal N starts at 10 and increases until all four frozen correlation scenarios satisfy 90% single-MDE marginal Holm power and the global-null numerical FWER check; the largest first-passing N is recorded as `N_required`. Affordability is assessed afterward and cannot alter the scientific calculation.
+
+Operational safeguards were scaled to 4,800 provider calls and eight cumulative hours, with same-suite/same-seed interruption recovery and per-call ledger checkpointing. The former CNY 20 tolerance is explicitly not extrapolated and requires reconfirmation. Protocol1.0.4, machine contract1.1, execution conditions, authorization boundaries, tests and thesis-method records were updated. This implementation work generated GABM run=0, provider call=0, valid Pilot observation=0 and formal inference=0; a new Windows-tested clean SHA is still required.

@@ -41,7 +41,7 @@ Rules:
 | P5 overall clarification effect on expected repeat choice, support absent | same | `greenconsumer_v33/analysis.py`; `pilot_variance.py` | Estimand frozen; opportunity-conditional probability is averaged over the realized loyalty path; v3.3.1 formal estimate not available |
 | P3 Immediate vs Delayed | same | `greenconsumer_v33/analysis.py` | Exploratory early treatment-onset contrast over T6–T9; not a full or continuous timing-response estimand |
 | P4 Hub vs Random enterprise reach | same | `greenconsumer_v33/analysis.py` | Exploratory direct-enterprise-reach estimand within the frozen delivery window; not UGC cascade, persuasion or purchase |
-| Pilot variance components and planning SD | `TASK_PV01_PILOT_VARIANCE_IMPLEMENTATION.md` | `greenconsumer_v33/pilot_variance.py` | Infrastructure complete; P001–P006 not executed |
+| Pilot variance components and planning SD | `TASK_PV01_PILOT_VARIANCE_IMPLEMENTATION.md` | `greenconsumer_v33/pilot_variance.py` | 24-block infrastructure complete; P001–P024 not executed |
 | Cognition evolution | this register and `THESIS_WORK_AND_OUTPUT_REGISTER.md` | `greenconsumer_v33/cognition_outputs.py` | Schema 1.2 retained real run verified; limited single-run descriptive engineering evidence only |
 
 ## 4. Claim firewall

@@ -1,103 +1,81 @@
-# TASK-PV01 Pilot variance 基础设施
+# TASK-PV01 Pilot variance 基础设施1.1
 
 ## 1. 状态与范围
 
-实现状态：`PILOT_PARAMETERS_FROZEN; MODEL_PIN_IMPLEMENTED; PENDING_WINDOWS_TESTED_CLEAN_SHA; NO_VALID_PILOT_BLOCK; FORMAL_NOT_AUTHORIZED`
+实现状态：`24_BLOCK_DESIGN_IMPLEMENTED; DYNAMIC_FORMAL_N_IMPLEMENTED; PENDING_WINDOWS_TESTED_CLEAN_SHA; NO_VALID_PILOT_BLOCK; FORMAL_NOT_AUTHORIZED`
 
-本工作包实现 v3.3.1 Pilot 的计划、执行门禁、seed/attempt ledger、方差分解、planning SD 和 Holm operating-characteristic 分析。它不生成 Pilot 结果，不授权 P001–P006，也不启动正式实验。
+本工作包实现v3.3.1 Pilot的计划、真实执行门禁、中断恢复、seed/attempt ledger、方差分解、conservative planning SD和Holm operating-characteristic分析。它不生成Pilot结果，不调用provider，也不授权正式实验。科学规则以`FORMAL_EXPERIMENT_PROTOCOL.md`1.0.4和`task_pv01_pilot_variance_contract1.1.json`为准。
 
-唯一科学协议是 `FORMAL_EXPERIMENT_PROTOCOL.md`。本文件只说明代码如何兑现协议，不改变 2×2×2+共同 Control、estimand、MDE 或 seed grid。
+## 2. 零API入口
 
-## 2. 零 API 边界
-
-以下命令不构建 router、不加载 AgentKernel、不读取 API key，也不调用 provider：
+以下命令不构建router、不加载AgentKernel、不读取API key：
 
 ```powershell
-python run_v33_pilot_variance.py --plan-only
+python -X utf8 .\run_v33_pilot_variance.py --plan-only `
+  --provider-call-ceiling 4800 `
+  --max-wall-clock-hours 8
 
-python run_v33_pilot_variance.py `
-  --analyze-existing "results\v33_pilot_variance\<suite_id>" `
-  --n-max <pre_frozen_cap>
+python -X utf8 .\run_v33_pilot_variance.py `
+  --analyze-existing "results\v33_pilot_variance\<suite_id>"
 ```
 
-`greenconsumer_v33.pilot_variance` 的普通导入路径只依赖离线 I/O、NumPy、pandas、SciPy 和已有 estimand 函数。`runner`、AgentKernel 与真实 router 只在显式 execution function 内延迟导入。
+`--analyze-existing`不再接受或需要`--n-max`。科学N由已完成Pilot的planning SD和冻结OC规则动态求得。
 
-## 3. 真实执行门禁
+## 3. 真实执行与恢复门禁
 
-真实 Pilot 入口必须同时提供：
+新suite入口：
 
 ```powershell
-python run_v33_pilot_variance.py `
+python -X utf8 .\run_v33_pilot_variance.py `
   --execute-real-pilot `
   --allow-real-llm `
-  --n-max 10 `
-  --provider-call-ceiling 1200 `
-  --max-wall-clock-hours 2 `
-  --expected-git-head <clean_frozen_sha>
+  --provider-call-ceiling 4800 `
+  --max-wall-clock-hours 8 `
+  --expected-git-head <windows_tested_clean_sha>
 ```
 
-即使命令完整，执行仍要求：
+仅在技术中断后恢复同一suite：
 
-- 当前分支严格等于 `refactor/task005-v32-clean-codebase`；
-- Git worktree clean；
-- HEAD 严格等于显式传入的 frozen SHA；
-- `N_max≥10`；
-- provider-call ceiling 为正数；
-- wall-clock ceiling为有限正数；当前block由剩余时间包裹，到时取消并fail closed；
-- provider 调用在现有`RecordingRouter/ReplayRouter`决定调用底层`ModelRouter.chat`
-  的位置计数，达到 ceiling 时在进入底层router前 fail closed；
-- 任一预登记 block 失败后停止，不生成 replacement seed。
+```powershell
+python -X utf8 .\run_v33_pilot_variance.py `
+  --resume-real-pilot "results\v33_pilot_variance\<suite_id>" `
+  --allow-real-llm `
+  --provider-call-ceiling 4800 `
+  --max-wall-clock-hours 8 `
+  --expected-git-head <same_windows_tested_clean_sha>
+```
 
-v3.3.1 runner把共享配置中的滚动别名在内存中覆盖为
-`qwen-plus-2025-12-01`。该覆盖只作用于v3.3.1；v3.2 runner和共享YAML仍保持
-`qwen-plus`。Pilot validity gate同时要求run summary记录准确的具体模型版本。
+两条真实入口都要求正确分支、clean worktree、准确HEAD、具体模型`qwen-plus-2025-12-01`和正的调用/时间cap。恢复只跳过已PASS blocks并重启经受控中断、具有最终时间checkpoint且状态为`RUNNING`的同seed block；provider calls和wall-clock跨会话累计。每次provider调用前先持久化累计计数。无法核验最终时间的强制杀进程、任何`FAIL*`或validity失败都不可恢复、不可replacement。
 
-限额实现不得替换或包装`build_inner_router`返回的真实`ModelRouter`。Pilot与已经
-验证可运行的Real-LLM稳健性入口必须共享同一模型构造链。这里的provider call是
-一次底层`ModelRouter.chat`语义调用；AgentKernel/DashScope客户端内部针对同一调用
-进行的HTTP transport retry不另算一个独立科学语义调用，也不由本计数器控制。
+## 4. Pilot规模与方差规则
 
-2026-08-16观察到旧实现首次执行时在P001发生HTTP 400并停止。旧实现曾用
-`_BudgetedRouter`猴子补丁替换`runner.build_inner_router`，与已验证的Real-LLM入口
-形成了不必要的路由差异。该实现已撤销，限额钩子下移到原有
-`RecordingRouter/ReplayRouter`。失败目录只作为工程故障审计保留；没有完成的valid
-block，不进入Pilot方差表，也不形成Pilot结果。修复后必须从P001按原冻结seed grid
-重新开始完整suite，不把失败尝试当作replacement或正式样本。
-
-用户已在查看Pilot结果前批准并冻结`N_max=10`，并于2026-08-16接受1200次调用、2小时、CNY 20行政费用容忍度及具体模型方案。Pilot授权以新模型固定提交通过Windows全量测试并记录clean execution SHA为生效条件；当前仍不得运行该入口。Pilot与正式blocks均未取消，正式执行仍未授权。完整状态见`PILOT_EXECUTION_CONDITIONS.md`、`PILOT_REENTRY_FREEZE_PROPOSAL_V331.md`与`PILOT_EXECUTION_AUTHORIZATION_V331.md`。
-
-## 4. 方差与样本量规则
-
-| Estimand | Pilot data | 分解 | planning variance |
+| Estimand | Pilot data | 方差分解 | planning SD |
 |---|---|---|---|
-| P1 | 3 simulation/network × 2 requested-LLM/provider | balanced two-way method of moments | raw six-block variance 的单侧80%小样本上界 |
+| P1 | 6 simulation/network×4 requested-LLM/provider | balanced two-way MOM | 三规则最大值 |
 | P2 | 同P1 | 同P1 | 同P1 |
-| P5 | 3 simulation/network × 2 requested-LLM/provider × 3 offline demand | balanced three-way method of moments | `max(D1六block方差, 非负分量之和)`的单侧80%小样本上界 |
+| P5 | 6×4×24 offline demand | balanced three-way MOM | 同P1；D1的24个block用于block SD，全部replay用于component synthesis |
 
-负的 method-of-moments 分量保留在 `raw_variance_component`，planning 时才截断为零。边界零明确标记，不能解释为随机来源不存在。3×2 两向设计只有每格一个观察，interaction 与未解析 provider/runtime 波动不可分离。
+三规则为：
 
-若任一 planning variance 为零，状态设为 `VARIANCE_ZERO_UNRESOLVED`，不注入噪声、不借用旧实验方差、不生成正式 N。
+1. block SD的单侧90%卡方上置信界；
+2. 最大leave-one-cognitive-block-out SD；
+3. 非负method-of-moments方差分量合成值的平方根。
 
-Operating-characteristic 模拟：
+负分量保留在`raw_variance_component`，合成时截断为零并标记boundary。零planning variance记为`VARIANCE_ZERO_UNRESOLVED`，不借用旧研究方差、不注入噪声。576个P5 replay仅是条件性测量，独立Pilot n始终为24。
 
-- 只使用预设 MDE、planning SD 和六 block 的 estimand 相关结构；
-- 不使用 Pilot mean、sign 或策略排序；
-- 三项均为双侧 one-sample t 检验并执行 Holm step-down；
-- 在multivariate-normal planning model下，用相关正态样本均值与Wishart样本协方差联合生成三个相关t统计量；该分布假设只服务于样本量设计，不是Pilot效应结论；
-- 每个候选 N、每场景至少 200,000 Monte Carlo replications；
-- global-null 以 `.05 + 2×MCSE` 作为数值模拟兼容阈值；Holm 的强 FWER 控制是分析规则，Monte Carlo 值只是实现诊断；
-- 在 `10..N_max` 中选择三项 single-MDE marginal detection probability 均≥.80的最小 N；无解则 `DESIGN_NOT_FEASIBLE_WITHIN_CAP`。
+## 5. 动态正式N
 
-## 5. 输出与失败语义
+OC只使用预设MDE、planning SD和相关结构，不使用Pilot mean/sign/ranking。每个候选N与相关场景使用相关正态样本均值和Wishart样本协方差构造三个联合t统计量，执行双侧Holm step-down：
 
-成功 Pilot 至少包含协议列出的八项文件和 SHA-256 manifest，另生成 block validity ledger。失败 attempt 也保留 seed、attempt、已有部分输出、失败摘要和 manifest；不得静默删除。
+- 从N=10逐整数向上搜索，无科研`N_max`；
+- 四个相关场景：Pilot相关50%收缩、独立、等相关+.50、等相关−.25；
+- P1/P2/P5各自single-MDE检出概率均须≥.90；
+- global-null empirical FWER须≤`.05+2×MCSE`；
+- 每场景至少200,000 replications；
+- 各相关场景分别记录首个通过N；最终`N_required`为全部场景在同一候选N同时通过的最小值，避免Monte Carlo波动下把“各自曾经通过”误当作“同一N共同通过”。
 
-`selected_formal_n` 只是协议1.1的输入，不是正式执行授权。正式实验仍须新协议、正式 seed ledger、源码/分析 SHA 和用户明确授权。
+输出新增`pilot_formal_n_selection.csv`。`scientifically_required_formal_n`只供协议1.1和资源评估使用，不等于正式执行授权。
 
-## 6. 验证
+## 6. 验证范围
 
-测试文件：`tests/test_task005_v331_pilot_variance.py`
-
-覆盖：冻结 seed grid、plan-only 非执行状态、调用和wall-clock cap fail-closed、replay不消耗provider
-预算、禁止Pilot猴子补丁修改`build_inner_router`、两向/三向方差分量、保守planning
-SD、零方差停止、Holm step-down、OC可复现性，以及零API顶层import contract。
+`tests/test_task005_v331_pilot_variance.py`覆盖24×24 seed合同、零API plan、运行cap、跨恢复累计预算、replay计数、router不被猴子补丁替换、两向/三向方差分量、90% UCL＋LOO规则、零方差停止、Holm、四相关场景OC可复现性、模型版本隔离和机器合同一致性。

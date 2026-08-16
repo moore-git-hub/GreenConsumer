@@ -97,7 +97,7 @@ P3为探索性estimand，不使用确认性显著性语言。工程敏感性若�
 
 ### 6.5.3 统计与计算限制
 
-`N_max=10`只是预算上限。只有Pilot的保守planning variance与operating-characteristic gate通过，N=10才可进入正式设计；否则必须报告`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。即便通过，N=10仍可能对长尾和单block敏感，故主分析、exact sign-flip和联合LOBO必须并列披露。Agent、Tick、provider call和micro-buyer数量不能补偿独立block不足。
+正式N不设科研上限。只有P001—P024 Pilot完成后，才能依据保守planning variance与四相关场景operating-characteristic gate计算`N_required`；资源不足时必须报告`SCIENTIFIC_N_NOT_RESOURCE_FEASIBLE`，不得降低统计标准。无论最终N多少，主分析、预设分布/影响诊断和联合LOBO均须披露；exact sign-flip的完整枚举或Monte Carlo实现须在协议1.1中按实际N预先冻结。Agent、Tick、provider call和micro-buyer数量不能补偿独立block不足。
 
 ### 6.5.4 构念和测量限制
 
@@ -107,7 +107,7 @@ P3为探索性estimand，不使用确认性显著性语言。工程敏感性若�
 
 | 优先级 | 工作 | 解决的问题 | 不得与当前结果混合的边界 |
 |---:|---|---|---|
-| 0 | 恢复P001—P006 Pilot并执行预设N=10可行性门禁 | 正式设计是否可行 | Pilot均值不进入正式效果结论 |
+| 0 | 执行P001—P024 Pilot并按预设OC计算`N_required` | 正式设计的科学N与资源可行性 | Pilot均值不进入正式效果结论 |
 | 1 | 若门禁通过，冻结协议1.1、正式seed ledger及执行/分析SHA并完成独立blocks | 形成v3.3.1模型内重复推断 | 不与v3.2或工程runs合并 |
 | 2 | 由真实消费者或专家双盲编码语义评价和模型生成UGC | LLM criterion/content validity | 作为独立验证研究，不事后改写当前prompt |
 | 3 | 使用消费者纵向信任、平台网络和购买面板数据进行校准与外部验证 | Trust、网络和需求的现实对应 | 新校准版本与v3.3.1结果分层 |
@@ -134,7 +134,7 @@ P3为探索性estimand，不使用确认性显著性语言。工程敏感性若�
 - “P5提高5%”，却不区分绝对概率百分点与相对百分比；
 - “LLM再现真实消费者心理或真实UGC”；
 - “20个Agent或250/500个micro-buyers构成消费者样本”；
-- “N=10已经足够”，除非Pilot OC门禁已通过；
+- “正式N已经足够”，除非Pilot OC已按四相关场景完成并冻结`N_required`；
 - “达到设计阈值即具有管理意义”；
 - 以工程稳健性方向、单次Real-LLM轨迹或cell排序替代正式结论；
 - 将未拒绝零假设写成无效、无差异或等效。

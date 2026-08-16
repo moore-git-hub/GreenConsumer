@@ -223,3 +223,20 @@ Before any valid v3.3.1 Pilot observation existed, the user cancelled `N_max=10`
 The planning SD rule now takes the maximum of a one-sided 90% block-SD upper confidence bound, the maximum leave-one-cognitive-block-out SD and the square root of the bounded variance-component synthesis. Formal N starts at 10 and increases until all four frozen correlation scenarios satisfy 90% single-MDE marginal Holm power and the global-null numerical FWER check; the largest first-passing N is recorded as `N_required`. Affordability is assessed afterward and cannot alter the scientific calculation.
 
 Operational safeguards were scaled to 4,800 provider calls and eight cumulative hours, with same-suite/same-seed interruption recovery and per-call ledger checkpointing. The former CNY 20 tolerance is explicitly not extrapolated and requires reconfirmation. Protocol1.0.4, machine contract1.1, execution conditions, authorization boundaries, tests and thesis-method records were updated. This implementation work generated GABM run=0, provider call=0, valid Pilot observation=0 and formal inference=0; a new Windows-tested clean SHA is still required.
+
+## 18. Work log entry — 2026-08-16: midterm-defense reprioritization and conversation handoff
+
+The user deferred real v3.3.1 Pilot execution and formal-N calculation because the midterm
+defense is expected in approximately two weeks. The 24-block Pilot, 24 demand seeds,
+conservative planning-SD rule, four-scenario dynamic formal-N calculation, operational caps
+and recovery contract remain frozen and are not cancelled. Post-defense execution still
+requires an exact-SHA Windows regression, zero-API plan review, cost reconfirmation and a new
+explicit authorization.
+
+Created `docs/handoff/V331_MIDTERM_DEFENSE_HANDOFF_PROMPT_20260816.md` as a self-contained
+cross-conversation entry point. It separates implementation evidence, engineering robustness,
+single-run Real-LLM descriptive evidence and absent formal inference; inventories completed
+work and evidence gaps; defines the report–PPT–script workflow; lists the templates and defense
+requirements still needed from the user; and contains a complete prompt for a new conversation.
+This prioritization created no new literature claim, simulation, provider call, Pilot observation,
+formal block or formal inference.

@@ -5,14 +5,18 @@
 | 字段 | 记录 |
 |---|---|
 | 决定日期 | 2026-08-16 |
-| 用户决定 | 取消`N_max`限制，根据科学所需计算Pilot与正式N；确认开始实施 |
+| 用户决定 | 取消`N_max`限制，根据科学所需计算Pilot与正式N；随后因中期答辩将真实执行暂缓 |
 | 已授权范围 | 修改、测试并发布24-block Pilot与动态正式N计算基础设施 |
 | 未授权范围 | 真实LLM Pilot调用、正式实验、结果解释 |
-| 当前状态 | `IMPLEMENTATION_AUTHORIZED; REAL_PILOT_PENDING_WINDOWS_SHA_AND_COST_RECONFIRMATION` |
+| 当前状态 | `IMPLEMENTATION_COMPLETE; REAL_PILOT_DEFERRED_FOR_MIDTERM_DEFENSE` |
 | Pilot observations | 0 |
 | Formal blocks | 0 |
 
 该决定在任何有效v3.3.1 Pilot observation产生前作出，不是观察结果后的样本量调整。此前“N=10上限、6-block Pilot、1200 calls、2小时、CNY 20”的授权边界由新科学设计取代；旧记录保留在合同1.0和Git历史中，不得继续作为当前执行依据。
+
+2026-08-16新增调度决定：用户因约两周后进行中期答辩，将真实Pilot与正式N计算暂缓。
+这不改变24-block Pilot、动态正式N、种子、estimand、MDE、功效或停止规则，也不构成
+真实执行授权。中期答辩后须重新满足第3节全部条件，并由用户作出新的明确授权。
 
 ## 2. 当前接受的科学边界
 

@@ -49,26 +49,27 @@ Rational-evidence / Emotional-empathy
 | 12 | Selected Real-LLM robustness | 已完成 | `llmrob_20260814_230111`结果记录 | 不作为正式样本 |
 | 13 | Provenance、网络和内部有效性输出 | 已完成 | `V331_OUTPUT_AND_VALIDATION.md` | 正式runner复用并加固 |
 | 14 | 正式处理、estimand与Pilot协议v1.0.4 | 已完成 | `FORMAL_EXPERIMENT_PROTOCOL.md`、contract1.1 | 保持处理、24-block Pilot和动态N规则冻结 |
-| 15 | Pilot variance执行 | 部分完成 | 24-block代码、24 demand seeds、4800-call/8-hour硬门禁和同seed恢复已实现；当前无有效Pilot block | 新候选SHA通过Windows完整测试并重新确认费用边界后从P001开始 |
-| 16 | 正式N与正式seed ledger | 未开始 | `N_max`已取消；`N_required`仍待Pilot | Pilot后按四相关场景、90% power规则计算，再做资源评估 |
+| 15 | Pilot variance执行 | 暂缓 | 24-block代码、24 demand seeds、4800-call/8-hour硬门禁和同seed恢复已实现；当前无有效Pilot block | 中期答辩后，新候选SHA通过Windows完整测试并重新确认费用边界，再由用户重新授权从P001开始 |
+| 16 | 正式N与正式seed ledger | 暂缓 | `N_max`已取消；`N_required`仍待Pilot；科学方案完整保留 | 中期答辩后完成Pilot，再按四相关场景、90% power规则计算并做资源评估 |
 | 17 | v3.3.1正式runner与分析包 | 未开始 | 当前runner仅engineering/demo | 添加测试、合同和SHA冻结 |
 | 18 | v3.3.1正式实验 | 未开始 | `FORMAL_NOT_AUTHORIZED` | 协议1.1和明确授权 |
 | 19 | 固定拓扑网络状态/传播动画 | 已完成 | `greenconsumer_v33/network_animation.py` | 论文中不得称拓扑演化 |
 | 20 | Agent cognition evolution论文输出 | 已完成 | 预选Real-LLM run的schema 1.2真实产物已完成provenance、9项输出hash、完整面板、matched-Control算术与视觉审计；用户确认clean commit上的认知直接测试和Windows全量测试均通过 | 仅作为单次工程run的有限描述性证据；不把Agents当重复块、不推断隐性CoT、不作策略排名或总体推断 |
 | 21 | 语义→心理→网络→行为机制总图 | 已完成 | `docs/thesis/figures/FIG-MECH-01_v331_mechanism_architecture.svg`与model-to-code traceability逐层对齐；LLM理由复用为UGC的边界已更正 | 既有PNG含修正前文字，定稿前在Windows中文字体环境从SVG重导出；不改变机制 |
-| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、第五章空结果合同、第六章条件式结论模板、基础包、来源台账、ODD＋D、各阶段审计、诊断协议、阈值工作表及引用审计已建立 | 同步24-block和动态N口径；正式结果产生前不填结果占位符 |
-| 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、contract1.1、24-block grid、动态OC、累计cap和恢复tests | 新候选SHA完成Windows回归并冻结后方可执行Pilot |
+| 22 | 论文正文与文献证据映射 | 部分完成 | 第一至第四章正文底稿、第五章空结果合同、第六章条件式结论模板、基础包、来源台账、ODD＋D、各阶段审计、诊断协议、阈值工作表及引用审计已建立 | 当前优先生成中期报告、答辩PPT和讲稿；正式结果产生前不填结果占位符 |
+| 23 | TASK-PV01零API基础设施 | 已完成 | `pilot_variance.py`、独立CLI、contract1.1、24-block grid、动态OC、累计cap和恢复tests | 方案冻结保存；中期答辩后再恢复Windows准入与执行授权 |
 | 24 | 实验结果证据台账与版本分层 | 已完成 | `EXPERIMENT_EVIDENCE_REGISTER.md`；结果记录commits；v3.2 archive | 正式写作时按已建立的table/figure registry持续登记 |
 | 25 | 论文工作—证据—表图追踪体系 | 已完成 | `MODEL_TO_CODE_TRACEABILITY_V331.md`、`THESIS_WORK_AND_OUTPUT_REGISTER.md` | 任何新run或正文表图进入论文时同步更新 |
 | 26 | 第一至第六章RQ—证据—结论全链路审计 | 已完成 | `FULL_THESIS_RQ_EVIDENCE_CLAIM_AUDIT_V331.md`；第六章条件式模板；跨章硬冲突复核 | 最终定题仍为高风险未决gate；正式结果后重新审计 |
+| 27 | 中期答辩跨对话交接与三件套计划 | 已完成 | `docs/handoff/V331_MIDTERM_DEFENSE_HANDOFF_PROMPT_20260816.md` | 等待用户提供官方报告/PPT模板、答辩规则和最新导师意见 |
 
 当前计数：
 
 ```text
-已完成：21
-部分完成：2
-未开始：3
-暂缓：0
+已完成：22
+部分完成：1
+未开始：2
+暂缓：2
 阻塞：0（用户回传Windows `Kernel`完整测试：129 passed in 8.29s，HEAD为`b4ba27cd3a770081d1fcaeaf373aa1b6e37b0004`）
 ```
 
@@ -116,11 +117,17 @@ Rational-evidence / Emotional-empathy
 当前下一门槛改为：
 
 ```text
-PILOT-24-CANDIDATE-SHA：用户已取消`N_max`并接受24-block Pilot与动态正式N的
-科学设计。现在必须发布新候选SHA，由用户在Windows `Kernel`环境对该准确HEAD运行
-完整pytest和零API plan-only；同时重新确认24-block费用容忍度。通过后记录clean
-execution SHA，才可另行授权真实Pilot。正式实验仍未授权。
+MIDTERM-DEFENSE-PACKAGE：Pilot与正式N仅因中期答辩时间压力暂缓，设计不撤销。
+当前先接收学校中期报告模板、PPT模板/参考、答辩时长与规则及最新导师意见，随后完成
+“模板—正文—证据”映射、中期报告、答辩PPT、逐页讲稿和一致性审计。中期材料只可
+使用实现证据、工程稳健性证据和明确标注的单次工程run描述，不得生成或暗示v3.3.1
+正式效果结论。
 ```
+
+中期答辩后恢复原科学门槛：发布/核对24-block候选SHA，在准确HEAD完成Windows完整
+pytest和零API plan-only，重新确认费用边界并由用户明确授权真实Pilot；Pilot完成后
+再按冻结规则计算动态`N_required`。详见
+`docs/handoff/V331_MIDTERM_DEFENSE_HANDOFF_PROMPT_20260816.md`。
 
 第六章条件式模板与第一至第六章全链路审计已经完成。审计清除了第二章残留的“每七个Tick”硬冲突，统一了RQ2的认知意向与条件选择概率，且把P1/P5写成八cell等权平均而非“任一澄清”。当前工作题目仍被评为高风险：P4没有消费者cascade estimand，P5也不是绿色产品总体采纳扩散；跑完正式blocks不会自动消除这一范围错配。第五、六章全部结果占位符保持为空。本轮没有新增文献、GABM run、provider call、Pilot observation或formal inference。
 

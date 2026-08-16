@@ -18,6 +18,7 @@ from greenconsumer_v33.pilot_variance import (
     P5,
     SIMULATION_SEEDS,
     ProviderCallBudgetExceeded,
+    WallClockBudgetExceeded,
     _ProviderCallBudget,
     _holm_rejections,
     demand_seed_table,
@@ -78,7 +79,11 @@ def test_frozen_seed_grid_is_exact() -> None:
 
 
 def test_plan_only_is_explicitly_nonexecuting() -> None:
-    payload = plan_payload(n_max=40, provider_call_ceiling=10_000)
+    payload = plan_payload(
+        n_max=40,
+        provider_call_ceiling=10_000,
+        max_wall_clock_hours=2.0,
+    )
     assert payload["status"] == "PLAN_ONLY"
     assert payload["real_llm_calls_started"] is False
     assert payload["pilot_executed"] is False
@@ -87,17 +92,59 @@ def test_plan_only_is_explicitly_nonexecuting() -> None:
     assert payload["execution_authorized"] is False
     assert payload["cognitive_blocks"] == 6
     assert payload["p5_demand_realizations"] == 18
+    assert payload["max_wall_clock_hours"] == 2.0
 
 
 def test_execution_caps_fail_closed() -> None:
-    for n_max, ceiling in ((9, 100), (10, 0), (10, -1)):
+    for n_max, ceiling, hours in (
+        (9, 100, 2.0),
+        (10, 0, 2.0),
+        (10, -1, 2.0),
+        (10, 100, 0.0),
+        (10, 100, float("inf")),
+    ):
         try:
-            validate_execution_budget(n_max, ceiling)
+            validate_execution_budget(n_max, ceiling, hours)
         except ValueError:
             pass
         else:
-            raise AssertionError((n_max, ceiling))
-    validate_execution_budget(10, 1)
+            raise AssertionError((n_max, ceiling, hours))
+    validate_execution_budget(10, 1, 0.01)
+
+
+def test_plan_caps_must_be_supplied_together() -> None:
+    partials = (
+        {"n_max": 10},
+        {"provider_call_ceiling": 1200},
+        {"max_wall_clock_hours": 2.0},
+        {"n_max": 10, "provider_call_ceiling": 1200},
+    )
+    for kwargs in partials:
+        try:
+            plan_payload(**kwargs)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(kwargs)
+
+
+def test_wall_clock_budget_blocks_before_late_provider_call() -> None:
+    now = [100.0]
+    budget = _ProviderCallBudget(
+        10,
+        max_wall_clock_hours=1.0,
+        clock=lambda: now[0],
+    )
+    budget.reserve()
+    assert budget.calls_attempted == 1
+    now[0] += 3600.0
+    try:
+        budget.reserve()
+    except WallClockBudgetExceeded:
+        pass
+    else:
+        raise AssertionError("wall-clock ceiling did not stop the late call")
+    assert budget.calls_attempted == 1
 
 
 def test_provider_budget_blocks_before_excess_call() -> None:
@@ -283,3 +330,4 @@ def test_machine_contract_matches_code_constants() -> None:
     assert payload["analysis"]["confirmatory_estimands"] == list(CONFIRMATORY_ESTIMANDS)
     assert payload["execution"]["pilot_execution_authorized"] is False
     assert payload["execution"]["formal_execution_authorized"] is False
+    assert payload["execution"]["max_wall_clock_hours_required_before_pilot"] is True

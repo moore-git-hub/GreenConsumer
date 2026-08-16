@@ -34,6 +34,7 @@
 ## v3.3.1正式实验准备
 - `architecture/FORMAL_EXPERIMENT_PROTOCOL.md`
 - `architecture/PILOT_EXECUTION_CONDITIONS.md`
+- `architecture/PILOT_REENTRY_FREEZE_PROPOSAL_V331.md` — P001–P006调用、时间、费用、模型版本与clean SHA重新准入决策单
 - `architecture/SMALL_N_DIAGNOSTIC_PROTOCOL_V331.md` — Pilot前冻结的N=10诊断、联合LOBO与exact sign-flip敏感性规则
 - `architecture/DESIGN_THRESHOLD_JUSTIFICATION_WORKSHEET_V331.md` — P1/P2/P5设计阈值来源、证据缺口与补充材料接口
 - `architecture/THESIS_WORK_AND_OUTPUT_REGISTER.md`

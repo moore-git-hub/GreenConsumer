@@ -7,6 +7,7 @@ N_MAX_FROZEN_10
 PROVIDER_CALL_CEILING_NOT_FROZEN
 TIME_BUDGET_NOT_FROZEN
 EXECUTION_SHA_NOT_FROZEN
+REENTRY_FREEZE_PROPOSAL_AVAILABLE
 PILOT_NOT_AUTHORIZED
 PILOT_DEFERRED_NOT_CANCELLED_2026_08_16
 FORMAL_NOT_AUTHORIZED
@@ -34,12 +35,14 @@ FORMAL_NOT_AUTHORIZED
 | 条件 | 当前状态 | 执行前必须记录的值 |
 |---|---|---|
 | provider-call ceiling | 未冻结 | 正整数硬上限及估算依据 |
-| 最大运行时间 | 未冻结 | 小时数及中断规则 |
+| 最大运行时间 | 未冻结；程序化硬门禁已实现 | 正小时数及中断规则 |
 | clean execution SHA | 未冻结 | 远端commit、分支和clean证明 |
 | provider/model配置 | 协议已有基线，执行前仍需确认 | model、temperature、prompt profile和API可用性 |
 | 真实Pilot授权 | 未授予 | 用户明确授权P001–P006及费用边界 |
 
 任一条件缺失时，真实Pilot入口必须fail closed。
+
+重新准入提案见`PILOT_REENTRY_FREEZE_PROPOSAL_V331.md`。其中1200次调用、2小时和20元均为待用户确认值，不因写入提案而自动冻结；模型滚动别名与固定版本的选择也仍未解决。
 
 ## 4. 后续记录顺序
 

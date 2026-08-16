@@ -16,7 +16,7 @@
 
 ### 0.1 预算上限修订记录
 
-用户于2026-08-15在查看v3.3.1 Pilot结果前冻结正式replication-block上限`N_max=10`。该值是Pilot执行前的计算/费用约束，不是Pilot block数，也不是已经由方差证据证明的正式N。P001–P006六个Pilot blocks保持不变；Pilot后若N=10不能满足第7节的operating-characteristic规则，必须判定`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。provider-call ceiling、时间预算、clean execution SHA和真实Pilot授权仍未冻结。
+用户于2026-08-15在查看v3.3.1 Pilot结果前冻结正式replication-block上限`N_max=10`。该值是Pilot执行前的计算/费用约束，不是Pilot block数，也不是已经由方差证据证明的正式N。P001–P006六个Pilot blocks保持不变；Pilot后若N=10不能满足第7节的operating-characteristic规则，必须判定`DESIGN_NOT_FEASIBLE_WITHIN_CAP`。`PILOT_REENTRY_FREEZE_PROPOSAL_V331.md`已提出调用、时间和费用边界并补充程序化wall-clock门禁，但provider-call ceiling、时间/费用预算、模型版本、clean execution SHA和真实Pilot授权在用户确认前仍未冻结。
 
 ### 0.2 小样本诊断修订记录
 

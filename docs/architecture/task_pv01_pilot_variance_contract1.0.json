@@ -42,6 +42,7 @@
     "n_max_required_before_pilot": true,
     "pilot_execution_authorized": false,
     "provider_call_ceiling_required_before_pilot": true,
+    "max_wall_clock_hours_required_before_pilot": true,
     "replacement_seed_permitted": false,
     "stop_after_failed_block": true
   },

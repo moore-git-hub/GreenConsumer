@@ -15,6 +15,7 @@ import hashlib
 import json
 import math
 import subprocess
+import time
 from pathlib import Path
 
 import numpy as np
@@ -76,25 +77,45 @@ def demand_seed_table() -> pd.DataFrame:
     )
 
 
-def validate_execution_budget(n_max: int, provider_call_ceiling: int) -> None:
+def validate_execution_budget(
+    n_max: int,
+    provider_call_ceiling: int,
+    max_wall_clock_hours: float,
+) -> None:
     """Validate caps that must be frozen before any Pilot provider call."""
 
     if int(n_max) < 10:
         raise ValueError("n_max must be at least 10")
     if int(provider_call_ceiling) <= 0:
         raise ValueError("provider_call_ceiling must be positive")
+    if (
+        not math.isfinite(float(max_wall_clock_hours))
+        or float(max_wall_clock_hours) <= 0
+    ):
+        raise ValueError("max_wall_clock_hours must be finite and positive")
 
 
 def plan_payload(
     *,
     n_max: int | None = None,
     provider_call_ceiling: int | None = None,
+    max_wall_clock_hours: float | None = None,
 ) -> dict:
-    if (n_max is None) != (provider_call_ceiling is None):
-        raise ValueError("n_max and provider_call_ceiling must be supplied together")
+    supplied = (
+        n_max is not None,
+        provider_call_ceiling is not None,
+        max_wall_clock_hours is not None,
+    )
+    if any(supplied) and not all(supplied):
+        raise ValueError(
+            "n_max, provider_call_ceiling, and max_wall_clock_hours "
+            "must be supplied together"
+        )
     caps_frozen = n_max is not None
     if caps_frozen:
-        validate_execution_budget(int(n_max), int(provider_call_ceiling))
+        validate_execution_budget(
+            int(n_max), int(provider_call_ceiling), float(max_wall_clock_hours)
+        )
     return {
         "schema_version": SCHEMA,
         "status": "PLAN_ONLY",
@@ -113,6 +134,9 @@ def plan_payload(
         "p5_demand_realizations": 18,
         "n_max": int(n_max) if caps_frozen else None,
         "provider_call_ceiling": int(provider_call_ceiling) if caps_frozen else None,
+        "max_wall_clock_hours": (
+            float(max_wall_clock_hours) if caps_frozen else None
+        ),
         "execution_caps_frozen": caps_frozen,
         "execution_authorized": False,
         "minimum_oc_replications_per_scenario": DEFAULT_OC_REPLICATIONS,
@@ -660,12 +684,49 @@ class ProviderCallBudgetExceeded(RuntimeError):
     pass
 
 
+class WallClockBudgetExceeded(RuntimeError):
+    pass
+
+
 class _ProviderCallBudget:
-    def __init__(self, ceiling: int):
+    def __init__(
+        self,
+        ceiling: int,
+        max_wall_clock_hours: float | None = None,
+        *,
+        clock=time.monotonic,
+    ):
         self.ceiling = int(ceiling)
         self.calls_attempted = 0
+        self.max_wall_clock_hours = (
+            None if max_wall_clock_hours is None else float(max_wall_clock_hours)
+        )
+        self._clock = clock
+        self._started = float(self._clock())
+        self._deadline = (
+            None
+            if self.max_wall_clock_hours is None
+            else self._started + self.max_wall_clock_hours * 3600.0
+        )
+
+    def elapsed_seconds(self) -> float:
+        return max(0.0, float(self._clock()) - self._started)
+
+    def remaining_seconds(self) -> float | None:
+        if self._deadline is None:
+            return None
+        return max(0.0, self._deadline - float(self._clock()))
+
+    def check_time(self) -> None:
+        remaining = self.remaining_seconds()
+        if remaining is not None and remaining <= 0:
+            raise WallClockBudgetExceeded(
+                f"wall-clock ceiling {self.max_wall_clock_hours:g} hours reached; "
+                "fail-closed stop"
+            )
 
     def reserve(self) -> None:
+        self.check_time()
         if self.calls_attempted >= self.ceiling:
             raise ProviderCallBudgetExceeded(
                 f"provider-call ceiling {self.ceiling} reached; fail-closed stop"
@@ -777,13 +838,16 @@ async def run_pilot_suite(
     allow_real_llm: bool,
     n_max: int,
     provider_call_ceiling: int,
+    max_wall_clock_hours: float,
     expected_git_head: str,
 ) -> dict:
     """Explicitly execute P001-P006; never called by plan or analysis paths."""
 
     if not allow_real_llm:
         raise ValueError("Pilot execution requires explicit allow_real_llm=True")
-    validate_execution_budget(n_max, provider_call_ceiling)
+    validate_execution_budget(
+        n_max, provider_call_ceiling, max_wall_clock_hours
+    )
 
     # Delayed imports are the central zero-API safety boundary.
     from greenconsumer_v33 import runner as runner_module
@@ -801,7 +865,10 @@ async def run_pilot_suite(
     seed_ledger["git_head"] = provenance["git_head"]
     _write_frame(seed_ledger, suite_dir / "pilot_seed_ledger.csv")
 
-    budget = _ProviderCallBudget(provider_call_ceiling)
+    budget = _ProviderCallBudget(
+        provider_call_ceiling,
+        max_wall_clock_hours=max_wall_clock_hours,
+    )
     attempts: list[dict] = []
     validity: list[dict] = []
     validity_details: list[pd.DataFrame] = []
@@ -822,6 +889,7 @@ async def run_pilot_suite(
         attempts.append(attempt)
         _write_frame(pd.DataFrame(attempts), suite_dir / "pilot_attempt_ledger.csv")
         try:
+            budget.check_time()
             settings = RunSettings(
                 llm_mode="real", condition="all",
                 simulation_seed=int(profile["simulation_network_seed"]),
@@ -831,10 +899,20 @@ async def run_pilot_suite(
                 run_demand=True, support_mode="absent", allow_real_llm=True,
                 total_ticks=TOTAL_TICKS, prompt_profile="baseline_exact",
             )
-            payload = await runner_module.execute(
-                settings,
-                before_provider_call=budget.reserve,
-            )
+            remaining = budget.remaining_seconds()
+            try:
+                payload = await asyncio.wait_for(
+                    runner_module.execute(
+                        settings,
+                        before_provider_call=budget.reserve,
+                    ),
+                    timeout=remaining,
+                )
+            except asyncio.TimeoutError as exc:
+                raise WallClockBudgetExceeded(
+                    f"wall-clock ceiling {max_wall_clock_hours:g} hours reached "
+                    f"during {profile['pilot_id']}; fail-closed stop"
+                ) from exc
             run_dir = Path(payload["output_dir"])
             analyze_run(run_dir)
             valid, details = _validity_row(str(profile["pilot_id"]), payload, run_dir)
@@ -900,6 +978,8 @@ async def run_pilot_suite(
                 "error_message": str(exc),
                 "provider_call_ceiling": int(provider_call_ceiling),
                 "provider_calls_attempted": int(budget.calls_attempted),
+                "max_wall_clock_hours": float(max_wall_clock_hours),
+                "wall_clock_seconds_elapsed": budget.elapsed_seconds(),
                 "formal_inference_performed": False,
                 "formal_execution_authorized": False,
             }
@@ -945,6 +1025,8 @@ async def run_pilot_suite(
             "pilot_execution_status": "PASS",
             "provider_call_ceiling": int(provider_call_ceiling),
             "provider_calls_attempted": int(budget.calls_attempted),
+            "max_wall_clock_hours": float(max_wall_clock_hours),
+            "wall_clock_seconds_elapsed": budget.elapsed_seconds(),
             "git_provenance": provenance,
         }
     )

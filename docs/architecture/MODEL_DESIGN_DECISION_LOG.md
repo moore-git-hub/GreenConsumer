@@ -603,3 +603,17 @@ P3表头现明确为T6—T9中Immediate已启动与Delayed尚未启动的早期�
 - 整理现有工程表图，但不得冒充正式推断；
 - 用户决定恢复实验后，重新冻结Pilot provider-call ceiling、费用、时间、clean SHA和执行授权；
 - Pilot后按预设OC规则判断N=10可行性，再生成正式seed ledger。
+
+---
+
+## DR-20260816-32：Pilot重新准入预算提案与墙钟时间硬门禁
+
+**状态：re-entry proposal available; wall-clock gate implemented; user freeze and execution authorization absent**
+
+论文预结果基础包闭合后恢复Pilot准入审计。既有Real-LLM稳健性suite的仓库记录显示5个完整blocks共743次底层语义调用，历史均值为148.6次/block，六个Pilot blocks的点估算为891.6次。基于该有限证据提出1200次provider-call ceiling和2小时wall-clock ceiling，分别保留约34.6%调用余量并容纳provider重试与本地I/O。20元仅作为建议的用户可接受费用，不是代码可强制的token费用上限；现有ModelRouter接口未向本项目账本暴露usage对象，调用数也不能精确换算成费用。
+
+真实Pilot入口新增`--max-wall-clock-hours`必填参数。调用预算对象在每次底层provider调用前同时检查调用数和剩余时间，并用剩余时间包裹当前block；超时或超调用数均使当前block失败并停止suite，不产生replacement seed。零API plan-only路径仍不构建router或调用provider。
+
+同时识别出模型版本风险：配置使用滚动别名`qwen-plus`，阿里云官方价格页在2026-08-16显示其当前能力等同`qwen-plus-2025-12-01`。为提高复现性，建议在任何Pilot结果前固定具体版本；是否固定仍需用户决定，不能静默改变科学配置。1200次、2小时、20元、模型版本、clean execution SHA与真实Pilot授权当前均未冻结。
+
+本阶段新增GABM run=0、provider call=0、有效Pilot observation=0、formal inference=0。

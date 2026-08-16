@@ -29,6 +29,7 @@ def main(argv=None) -> int:
     parser.add_argument("--allow-real-llm", action="store_true")
     parser.add_argument("--n-max", type=int)
     parser.add_argument("--provider-call-ceiling", type=int)
+    parser.add_argument("--max-wall-clock-hours", type=float)
     parser.add_argument("--expected-git-head")
     parser.add_argument(
         "--oc-replications",
@@ -44,11 +45,20 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     if args.plan_only:
-        if (args.n_max is None) != (args.provider_call_ceiling is None):
-            parser.error("plan-only accepts --n-max and --provider-call-ceiling only together")
+        supplied = (
+            args.n_max is not None,
+            args.provider_call_ceiling is not None,
+            args.max_wall_clock_hours is not None,
+        )
+        if any(supplied) and not all(supplied):
+            parser.error(
+                "plan-only accepts --n-max, --provider-call-ceiling, and "
+                "--max-wall-clock-hours only together"
+            )
         payload = plan_payload(
             n_max=args.n_max,
             provider_call_ceiling=args.provider_call_ceiling,
+            max_wall_clock_hours=args.max_wall_clock_hours,
         )
         print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
@@ -68,6 +78,7 @@ def main(argv=None) -> int:
         "--allow-real-llm": args.allow_real_llm,
         "--n-max": args.n_max is not None,
         "--provider-call-ceiling": args.provider_call_ceiling is not None,
+        "--max-wall-clock-hours": args.max_wall_clock_hours is not None,
         "--expected-git-head": bool(args.expected_git_head),
     }
     missing = [name for name, present in required.items() if not present]
@@ -81,6 +92,7 @@ def main(argv=None) -> int:
         allow_real_llm=True,
         n_max=args.n_max,
         provider_call_ceiling=args.provider_call_ceiling,
+        max_wall_clock_hours=args.max_wall_clock_hours,
         expected_git_head=args.expected_git_head,
     )
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))

@@ -32,6 +32,7 @@ python run_v33_pilot_variance.py `
   --allow-real-llm `
   --n-max <user_approved_cap> `
   --provider-call-ceiling <user_approved_cap> `
+  --max-wall-clock-hours <user_approved_hours> `
   --expected-git-head <clean_frozen_sha>
 ```
 
@@ -42,6 +43,7 @@ python run_v33_pilot_variance.py `
 - HEAD 严格等于显式传入的 frozen SHA；
 - `N_max≥10`；
 - provider-call ceiling 为正数；
+- wall-clock ceiling为有限正数；当前block由剩余时间包裹，到时取消并fail closed；
 - provider 调用在现有`RecordingRouter/ReplayRouter`决定调用底层`ModelRouter.chat`
   的位置计数，达到 ceiling 时在进入底层router前 fail closed；
 - 任一预登记 block 失败后停止，不生成 replacement seed。
@@ -58,7 +60,7 @@ python run_v33_pilot_variance.py `
 block，不进入Pilot方差表，也不形成Pilot结果。修复后必须从P001按原冻结seed grid
 重新开始完整suite，不把失败尝试当作replacement或正式样本。
 
-用户已在查看Pilot结果前批准并冻结`N_max=10`，但provider-call ceiling、时间预算和真实Pilot授权仍不存在。用户于2026-08-16决定先完成论文基础章节；Pilot与正式blocks不取消，但当前仍不得运行该入口。完整状态见`PILOT_EXECUTION_CONDITIONS.md`。
+用户已在查看Pilot结果前批准并冻结`N_max=10`。重新准入提案已给出1200次调用、2小时和20元费用接受上限，但provider-call ceiling、时间/费用预算、模型版本选择和真实Pilot授权仍需用户明确确认。Pilot与正式blocks不取消，但当前仍不得运行该入口。完整状态见`PILOT_EXECUTION_CONDITIONS.md`与`PILOT_REENTRY_FREEZE_PROPOSAL_V331.md`。
 
 ## 4. 方差与样本量规则
 
@@ -92,6 +94,6 @@ Operating-characteristic 模拟：
 
 测试文件：`tests/test_task005_v331_pilot_variance.py`
 
-覆盖：冻结 seed grid、plan-only 非执行状态、cap fail-closed、replay不消耗provider
+覆盖：冻结 seed grid、plan-only 非执行状态、调用和wall-clock cap fail-closed、replay不消耗provider
 预算、禁止Pilot猴子补丁修改`build_inner_router`、两向/三向方差分量、保守planning
 SD、零方差停止、Holm step-down、OC可复现性，以及零API顶层import contract。

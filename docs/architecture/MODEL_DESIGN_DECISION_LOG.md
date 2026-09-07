@@ -520,6 +520,27 @@ Planning SD冻结为三者最大值：block SD的单侧90%卡方上置信界、�
 
 ---
 
+## DR-20260816-35：中期答辩优先并暂缓Pilot与正式N执行
+
+**状态：execution deferred; scientific plan preserved; midterm-defense package prioritized**
+
+用户说明约两周后进行中期答辩，决定把真实v3.3.1 Pilot及其后的正式N计算暂缓，
+当前优先完成中期报告、答辩PPT和逐页讲稿。该决定只改变工作调度，不撤销
+DR-20260816-34冻结的24-block Pilot、24 demand seeds、planning SD、四相关场景
+动态N、4800-call/8-hour累计门禁、同seed恢复规则或Pilot/正式样本独立性。
+
+新增跨对话交接文件`docs/handoff/V331_MIDTERM_DEFENSE_HANDOFF_PROMPT_20260816.md`，
+记录已完成工作、证据等级、禁止外推、三件套生产步骤、所需用户材料及可直接粘贴到
+新对话的完整Prompt。中期材料允许报告研究设计、可审计实现、工程敏感性和明确标注
+的单次Real-LLM工程run描述；不得把它们升级为v3.3.1正式策略效果或现实总体结论。
+
+恢复Pilot前仍须核对届时准确远端HEAD，在Windows `Kernel`环境完成全量pytest与
+零API plan-only，确认clean tree、模型和24-block费用容忍度，并取得用户新的真实
+执行授权。中期答辩准备本身新增GABM run=0、provider call=0、有效Pilot block=0、
+formal block=0、formal inference=0。
+
+---
+
 ## DR-20260816-33：v3.3.1具体模型与Pilot重新准入条件冻结
 
 **状态：parameters frozen; Pilot conditionally authorized; clean execution SHA pending**

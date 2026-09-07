@@ -1,0 +1,299 @@
+{
+  "schema_version": "task005_fmcg_v331_pilot_variance_contract1.1",
+  "status": "SCIENTIFIC_DESIGN_USER_ACCEPTED; EXECUTION_SHA_AND_COST_RECONFIRMATION_PENDING; PILOT_NOT_EXECUTED; FORMAL_NOT_AUTHORIZED",
+  "supersedes": "task_pv01_pilot_variance_contract1.0.json",
+  "frozen_model": {
+    "treatment_design": "2x2x2 Content x Channel x Timing plus one common NoClarification-Control",
+    "conditions": 9,
+    "cognitive_agents": 20,
+    "crisis_tick": 5,
+    "endpoint_tick": 35,
+    "delivery_lag": 1,
+    "conversion_support": "absent",
+    "demand_micro_buyers_per_agent": 25,
+    "paid_edge_probability": 0.55,
+    "prompt_profile": "baseline_exact",
+    "llm_model": "qwen-plus-2025-12-01",
+    "model_pin_decision_date": "2026-08-16",
+    "previous_engineering_alias": "qwen-plus",
+    "llm_temperature": 0.3
+  },
+  "pilot_design": {
+    "independent_cognitive_blocks": 24,
+    "simulation_network_seed_levels": 6,
+    "requested_llm_seed_levels": 4,
+    "design": "balanced 6x4; P001-P006 retain contract1.0 identities",
+    "offline_demand_seeds_per_cognitive_block": 24,
+    "total_p5_replay_realizations": 576,
+    "independence_note": "Only the 24 cognitive blocks are independent replication units; the 576 P5 replays are conditional measurements."
+  },
+  "pilot_profiles": [
+    {
+      "pilot_id": "P001",
+      "requested_llm_seed": 2026081601,
+      "simulation_network_seed": 2026081501
+    },
+    {
+      "pilot_id": "P002",
+      "requested_llm_seed": 2026081602,
+      "simulation_network_seed": 2026081501
+    },
+    {
+      "pilot_id": "P003",
+      "requested_llm_seed": 2026081601,
+      "simulation_network_seed": 2026081502
+    },
+    {
+      "pilot_id": "P004",
+      "requested_llm_seed": 2026081602,
+      "simulation_network_seed": 2026081502
+    },
+    {
+      "pilot_id": "P005",
+      "requested_llm_seed": 2026081601,
+      "simulation_network_seed": 2026081503
+    },
+    {
+      "pilot_id": "P006",
+      "requested_llm_seed": 2026081602,
+      "simulation_network_seed": 2026081503
+    },
+    {
+      "pilot_id": "P007",
+      "requested_llm_seed": 2026081603,
+      "simulation_network_seed": 2026081501
+    },
+    {
+      "pilot_id": "P008",
+      "requested_llm_seed": 2026081604,
+      "simulation_network_seed": 2026081501
+    },
+    {
+      "pilot_id": "P009",
+      "requested_llm_seed": 2026081603,
+      "simulation_network_seed": 2026081502
+    },
+    {
+      "pilot_id": "P010",
+      "requested_llm_seed": 2026081604,
+      "simulation_network_seed": 2026081502
+    },
+    {
+      "pilot_id": "P011",
+      "requested_llm_seed": 2026081603,
+      "simulation_network_seed": 2026081503
+    },
+    {
+      "pilot_id": "P012",
+      "requested_llm_seed": 2026081604,
+      "simulation_network_seed": 2026081503
+    },
+    {
+      "pilot_id": "P013",
+      "requested_llm_seed": 2026081601,
+      "simulation_network_seed": 2026081504
+    },
+    {
+      "pilot_id": "P014",
+      "requested_llm_seed": 2026081602,
+      "simulation_network_seed": 2026081504
+    },
+    {
+      "pilot_id": "P015",
+      "requested_llm_seed": 2026081603,
+      "simulation_network_seed": 2026081504
+    },
+    {
+      "pilot_id": "P016",
+      "requested_llm_seed": 2026081604,
+      "simulation_network_seed": 2026081504
+    },
+    {
+      "pilot_id": "P017",
+      "requested_llm_seed": 2026081601,
+      "simulation_network_seed": 2026081505
+    },
+    {
+      "pilot_id": "P018",
+      "requested_llm_seed": 2026081602,
+      "simulation_network_seed": 2026081505
+    },
+    {
+      "pilot_id": "P019",
+      "requested_llm_seed": 2026081603,
+      "simulation_network_seed": 2026081505
+    },
+    {
+      "pilot_id": "P020",
+      "requested_llm_seed": 2026081604,
+      "simulation_network_seed": 2026081505
+    },
+    {
+      "pilot_id": "P021",
+      "requested_llm_seed": 2026081601,
+      "simulation_network_seed": 2026081506
+    },
+    {
+      "pilot_id": "P022",
+      "requested_llm_seed": 2026081602,
+      "simulation_network_seed": 2026081506
+    },
+    {
+      "pilot_id": "P023",
+      "requested_llm_seed": 2026081603,
+      "simulation_network_seed": 2026081506
+    },
+    {
+      "pilot_id": "P024",
+      "requested_llm_seed": 2026081604,
+      "simulation_network_seed": 2026081506
+    }
+  ],
+  "demand_seeds": [
+    {
+      "demand_id": "D1",
+      "demand_seed": 2026081701
+    },
+    {
+      "demand_id": "D2",
+      "demand_seed": 2026081702
+    },
+    {
+      "demand_id": "D3",
+      "demand_seed": 2026081703
+    },
+    {
+      "demand_id": "D4",
+      "demand_seed": 2026081704
+    },
+    {
+      "demand_id": "D5",
+      "demand_seed": 2026081705
+    },
+    {
+      "demand_id": "D6",
+      "demand_seed": 2026081706
+    },
+    {
+      "demand_id": "D7",
+      "demand_seed": 2026081707
+    },
+    {
+      "demand_id": "D8",
+      "demand_seed": 2026081708
+    },
+    {
+      "demand_id": "D9",
+      "demand_seed": 2026081709
+    },
+    {
+      "demand_id": "D10",
+      "demand_seed": 2026081710
+    },
+    {
+      "demand_id": "D11",
+      "demand_seed": 2026081711
+    },
+    {
+      "demand_id": "D12",
+      "demand_seed": 2026081712
+    },
+    {
+      "demand_id": "D13",
+      "demand_seed": 2026081713
+    },
+    {
+      "demand_id": "D14",
+      "demand_seed": 2026081714
+    },
+    {
+      "demand_id": "D15",
+      "demand_seed": 2026081715
+    },
+    {
+      "demand_id": "D16",
+      "demand_seed": 2026081716
+    },
+    {
+      "demand_id": "D17",
+      "demand_seed": 2026081717
+    },
+    {
+      "demand_id": "D18",
+      "demand_seed": 2026081718
+    },
+    {
+      "demand_id": "D19",
+      "demand_seed": 2026081719
+    },
+    {
+      "demand_id": "D20",
+      "demand_seed": 2026081720
+    },
+    {
+      "demand_id": "D21",
+      "demand_seed": 2026081721
+    },
+    {
+      "demand_id": "D22",
+      "demand_seed": 2026081722
+    },
+    {
+      "demand_id": "D23",
+      "demand_seed": 2026081723
+    },
+    {
+      "demand_id": "D24",
+      "demand_seed": 2026081724
+    }
+  ],
+  "analysis": {
+    "confirmatory_estimands": [
+      "P1_OVERALL_CLARIFICATION_POST_TRUST_V33",
+      "P2_CONTENT_POST_TRUST_V33",
+      "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V33"
+    ],
+    "exploratory_estimands": [
+      "P3_TIMING_PRE_DELAY_TRUST_V33",
+      "P4_CHANNEL_EVENTUAL_ENTERPRISE_REACH_V33"
+    ],
+    "managerial_design_thresholds": {
+      "P1_OVERALL_CLARIFICATION_POST_TRUST_V33": 0.15,
+      "P2_CONTENT_POST_TRUST_V33": 0.15,
+      "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V33": 0.05
+    },
+    "pilot_mean_or_sign_used_for_design": false,
+    "planning_sd_rule": "max(one-sided 90% block-SD UCL, maximum leave-one-cognitive-block-out SD, square root of bounded variance-component synthesis)",
+    "planning_sd_upper_confidence_level": 0.9,
+    "holm_family_alpha": 0.05,
+    "target_marginal_power": 0.9,
+    "formal_n_search_starts_at": 10,
+    "formal_n_cap": null,
+    "minimum_oc_replications_per_scenario": 200000,
+    "correlation_scenarios": [
+      "PILOT_SHRUNK_50",
+      "INDEPENDENT",
+      "EQUICORR_POSITIVE_0_50",
+      "EQUICORR_NEGATIVE_0_25"
+    ],
+    "formal_n_selection_rule": "smallest common N where every correlation scenario simultaneously has all three single-MDE endpoint detection probabilities >=0.90 and global-null empirical FWER <=0.05+2*MCSE; also report each scenario's first passing N",
+    "formal_inference_performed": false
+  },
+  "execution": {
+    "allow_real_llm_required": true,
+    "clean_git_required": true,
+    "expected_git_head_required": true,
+    "provider_call_ceiling": 4800,
+    "provider_call_ceiling_required_before_pilot": true,
+    "max_wall_clock_hours": 8,
+    "max_wall_clock_hours_required_before_pilot": true,
+    "administrative_cost_tolerance_cny": null,
+    "administrative_cost_tolerance_required_before_pilot": true,
+    "replacement_seed_permitted": false,
+    "stop_after_failed_block": true,
+    "pilot_authorization_status": "USER_AUTHORIZED_DESIGN; WINDOWS_TESTED_CLEAN_SHA_AND_COST_TOLERANCE_PENDING",
+    "pilot_execution_authorized": false,
+    "formal_execution_authorized": false,
+    "formal_n_cap": null
+  }
+}

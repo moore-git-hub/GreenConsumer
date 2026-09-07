@@ -1,0 +1,104 @@
+{
+  "analysis": {
+    "confirmatory_estimands": [
+      "P1_OVERALL_CLARIFICATION_POST_TRUST_V33",
+      "P2_CONTENT_POST_TRUST_V33",
+      "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V33"
+    ],
+    "exploratory_estimands": [
+      "P3_TIMING_PRE_DELAY_TRUST_V33",
+      "P4_CHANNEL_EVENTUAL_ENTERPRISE_REACH_V33"
+    ],
+    "formal_inference_performed": false,
+    "holm_family_alpha": 0.05,
+    "managerial_design_thresholds": {
+      "P1_OVERALL_CLARIFICATION_POST_TRUST_V33": 0.15,
+      "P2_CONTENT_POST_TRUST_V33": 0.15,
+      "P5_OVERALL_CLARIFICATION_EXPECTED_REPEAT_CHOICE_V33": 0.05
+    },
+    "minimum_oc_replications_per_scenario": 200000,
+    "pilot_mean_or_sign_used_for_design": false,
+    "planning_variance_upper_confidence_level": 0.8
+  },
+  "demand_seeds": [
+    {
+      "demand_id": "D1",
+      "demand_seed": 2026081701
+    },
+    {
+      "demand_id": "D2",
+      "demand_seed": 2026081702
+    },
+    {
+      "demand_id": "D3",
+      "demand_seed": 2026081703
+    }
+  ],
+  "execution": {
+    "allow_real_llm_required": true,
+    "clean_git_required": true,
+    "expected_git_head_required": true,
+    "formal_execution_authorized": false,
+    "n_max": 10,
+    "n_max_required_before_pilot": true,
+    "pilot_execution_authorized": false,
+    "pilot_authorization_status": "USER_AUTHORIZED_CONDITIONAL_ON_WINDOWS_TESTED_CLEAN_SHA",
+    "provider_call_ceiling": 1200,
+    "provider_call_ceiling_required_before_pilot": true,
+    "max_wall_clock_hours": 2.0,
+    "max_wall_clock_hours_required_before_pilot": true,
+    "administrative_cost_tolerance_cny": 20,
+    "replacement_seed_permitted": false,
+    "stop_after_failed_block": true
+  },
+  "frozen_model": {
+    "conditions": 9,
+    "conversion_support": "absent",
+    "cognitive_agents": 20,
+    "crisis_tick": 5,
+    "demand_micro_buyers_per_agent": 25,
+    "delivery_lag": 1,
+    "endpoint_tick": 35,
+    "llm_model": "qwen-plus-2025-12-01",
+    "model_pin_decision_date": "2026-08-16",
+    "previous_engineering_alias": "qwen-plus",
+    "llm_temperature": 0.3,
+    "paid_edge_probability": 0.55,
+    "prompt_profile": "baseline_exact",
+    "treatment_design": "2x2x2 Content x Channel x Timing plus one common NoClarification-Control"
+  },
+  "pilot_profiles": [
+    {
+      "pilot_id": "P001",
+      "requested_llm_seed": 2026081601,
+      "simulation_network_seed": 2026081501
+    },
+    {
+      "pilot_id": "P002",
+      "requested_llm_seed": 2026081602,
+      "simulation_network_seed": 2026081501
+    },
+    {
+      "pilot_id": "P003",
+      "requested_llm_seed": 2026081601,
+      "simulation_network_seed": 2026081502
+    },
+    {
+      "pilot_id": "P004",
+      "requested_llm_seed": 2026081602,
+      "simulation_network_seed": 2026081502
+    },
+    {
+      "pilot_id": "P005",
+      "requested_llm_seed": 2026081601,
+      "simulation_network_seed": 2026081503
+    },
+    {
+      "pilot_id": "P006",
+      "requested_llm_seed": 2026081602,
+      "simulation_network_seed": 2026081503
+    }
+  ],
+  "schema_version": "task005_fmcg_v331_pilot_variance_contract1.0",
+  "status": "PILOT_PARAMETERS_USER_ACCEPTED; EXECUTION_SHA_PENDING; PILOT_NOT_EXECUTED; FORMAL_NOT_AUTHORIZED"
+}

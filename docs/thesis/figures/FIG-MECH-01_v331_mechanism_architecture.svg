@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">v3.3.1语义—心理—网络—行为机制架构</title>
+  <desc id="desc">展示绿色快消品信任危机下，企业处理、LLM语义评价、心理状态、固定社会网络传播、重复品牌选择和论文估计量之间的关系。</desc>
+  <defs>
+    <linearGradient id="header" x1="0" x2="1">
+      <stop offset="0" stop-color="#17324D"/>
+      <stop offset="1" stop-color="#245B78"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#16324F" flood-opacity="0.13"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#35566F"/>
+    </marker>
+    <marker id="feedback" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2E7D6E"/>
+    </marker>
+    <style>
+      .zh { font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif; fill: #183042; }
+      .title { font-size: 34px; font-weight: 700; fill: #FFFFFF; }
+      .subtitle { font-size: 18px; fill: #DCEAF2; }
+      .card-title { font-size: 24px; font-weight: 700; }
+      .card-sub { font-size: 15px; font-weight: 600; letter-spacing: 0.5px; }
+      .body { font-size: 18px; }
+      .small { font-size: 15px; }
+      .micro { font-size: 13px; }
+      .label { font-size: 15px; font-weight: 700; fill: #35566F; }
+      .arrow { fill: none; stroke: #35566F; stroke-width: 3; marker-end: url(#arrow); }
+      .feedback { fill: none; stroke: #2E7D6E; stroke-width: 3; stroke-dasharray: 9 7; marker-end: url(#feedback); }
+      .divider { stroke: #C8D6DF; stroke-width: 1.5; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1000" fill="#F7FAFC"/>
+  <rect x="0" y="0" width="1600" height="104" fill="url(#header)"/>
+  <text class="zh title" x="70" y="50">v3.3.1 语义—心理—网络—行为机制架构</text>
+  <text class="zh subtitle" x="70" y="82">绿色快消品信任危机 · 2×2×2澄清策略 + 共同不澄清对照 · 单次运行内网络拓扑固定</text>
+
+  <g filter="url(#shadow)">
+    <rect x="65" y="145" width="430" height="290" rx="22" fill="#FFF4D6" stroke="#D9AE45" stroke-width="2"/>
+    <rect x="585" y="145" width="430" height="290" rx="22" fill="#E8F4EC" stroke="#4F9B76" stroke-width="2"/>
+    <rect x="1105" y="145" width="430" height="290" rx="22" fill="#EAF0FB" stroke="#5D7EB8" stroke-width="2"/>
+    <rect x="65" y="520" width="430" height="285" rx="22" fill="#E7F6F5" stroke="#45968E" stroke-width="2"/>
+    <rect x="585" y="520" width="430" height="285" rx="22" fill="#FCECE8" stroke="#C66B57" stroke-width="2"/>
+    <rect x="1105" y="520" width="430" height="285" rx="22" fill="#F1EBF8" stroke="#8464A5" stroke-width="2"/>
+  </g>
+
+  <text class="zh card-title" x="95" y="188">① 情境与企业处理</text>
+  <text class="zh card-sub" x="95" y="215" fill="#9B6B12">CONTEXT AND TREATMENT</text>
+  <line class="divider" x1="95" y1="232" x2="465" y2="232"/>
+  <text class="zh body" x="95" y="270">• 虚构品牌 VerdantCo Oat</text>
+  <text class="zh body" x="95" y="302">• T5：绿色主张受到质疑</text>
+  <text class="zh body" x="95" y="334">• 内容：理性证据 / 情感共情</text>
+  <text class="zh body" x="95" y="366">• 渠道：Hub / Random（K=3）</text>
+  <text class="zh body" x="95" y="398">• 时机：T6即时 / T10延迟</text>
+  <text class="zh small" x="95" y="423" fill="#6B5A2E">共同Control：不发送企业澄清</text>
+
+  <text class="zh card-title" x="615" y="188">② LLM语义评价</text>
+  <text class="zh card-sub" x="615" y="215" fill="#2E7D58">SEMANTIC APPRAISAL ONLY</text>
+  <line class="divider" x1="615" y1="232" x2="985" y2="232"/>
+  <text class="zh body" x="615" y="270">输入：实际观察到的自然语言信息</text>
+  <text class="zh body" x="615" y="304">输出：valence · arousal · credibility</text>
+  <text class="zh body" x="615" y="336">evidence · relevance · empathy</text>
+  <text class="zh body" x="615" y="368">peer approval · hypocrisy</text>
+  <rect x="615" y="388" width="370" height="34" rx="9" fill="#CDE9D8"/>
+  <text class="zh small" x="800" y="411" text-anchor="middle" fill="#215A42">不决定行为；显式理由可作为UGC正文</text>
+
+  <text class="zh card-title" x="1135" y="188">③ 心理状态与意向</text>
+  <text class="zh card-sub" x="1135" y="215" fill="#47699C">DETERMINISTIC TRANSITION</text>
+  <line class="divider" x1="1135" y1="232" x2="1505" y2="232"/>
+  <text class="zh body" x="1135" y="270">• Trust：危机/修复记忆与部分调整</text>
+  <text class="zh body" x="1135" y="302">• Attitude：语义评价驱动更新</text>
+  <text class="zh body" x="1135" y="334">• Subjective norm：仅由同伴观察更新</text>
+  <text class="zh body" x="1135" y="366">• PBC：Persona/state输入，基线不动态</text>
+  <text class="zh body" x="1135" y="398">• TPB式桥接 → purchase intention</text>
+  <text class="zh small" x="1135" y="423" fill="#536B87">全部状态有边界、schema与审计记录</text>
+
+  <text class="zh card-title" x="95" y="563">④ 固定社会网络与传播</text>
+  <text class="zh card-sub" x="95" y="590" fill="#2F7771">FIXED TOPOLOGY, DYNAMIC FLOW</text>
+  <line class="divider" x1="95" y1="607" x2="465" y2="607"/>
+  <text class="zh body" x="95" y="645">• 基线：有向BA网络</text>
+  <text class="zh body" x="95" y="677">• 企业：公共暴露 + paid seeds</text>
+  <text class="zh body" x="95" y="709">• 概率性一跳放大，lag=1</text>
+  <text class="zh body" x="95" y="741">• 消费者UGC沿实际网络边传播</text>
+  <text class="zh small" x="95" y="778" fill="#3F716C">Hub改变选点与触达，不等于提高说服</text>
+
+  <text class="zh card-title" x="615" y="563">⑤ FMCG重复品牌选择</text>
+  <text class="zh card-sub" x="615" y="590" fill="#A85343">OFFLINE RENEWAL DEMAND</text>
+  <line class="divider" x1="615" y1="607" x2="985" y2="607"/>
+  <text class="zh body" x="615" y="645">品类购买机会</text>
+  <text class="zh body" x="615" y="681">↓ purchase intention + PBC + Trust</text>
+  <text class="zh body" x="615" y="717">条件品牌选择概率</text>
+  <text class="zh body" x="615" y="753">↓ bounded-EWMA loyalty update</text>
+  <text class="zh small" x="615" y="784" fill="#8B4D40">M=25仅为数值分辨率，不是统计样本</text>
+
+  <text class="zh card-title" x="1135" y="563">⑥ 论文输出与估计量</text>
+  <text class="zh card-sub" x="1135" y="590" fill="#6F4F8E">EVIDENCE-SEPARATED OUTPUTS</text>
+  <line class="divider" x1="1135" y1="607" x2="1505" y2="607"/>
+  <text class="zh body" x="1135" y="645">确认性：P1 Trust总体澄清效应</text>
+  <text class="zh body" x="1135" y="677">         P2 内容框架差异</text>
+  <text class="zh body" x="1135" y="709">         P5 expected repeat choice</text>
+  <text class="zh body" x="1135" y="741">探索性：P3时机 · P4直接触达</text>
+  <text class="zh small" x="1135" y="778" fill="#694D7D">Agent轨迹只作有限描述，不作正式推断</text>
+
+  <path class="arrow" d="M495 290 L585 290"/>
+  <text class="zh label" x="540" y="275" text-anchor="middle">文本刺激</text>
+  <path class="arrow" d="M1015 290 L1105 290"/>
+  <text class="zh label" x="1060" y="275" text-anchor="middle">结构化语义</text>
+  <path class="arrow" d="M1320 435 L1320 520"/>
+  <text class="zh label" x="1335" y="485">状态与意向</text>
+  <path class="arrow" d="M1015 662 L1105 662"/>
+  <text class="zh label" x="1060" y="646" text-anchor="middle">需求结果</text>
+  <path class="arrow" d="M1105 720 C1060 720 1055 720 1015 720"/>
+  <path class="arrow" d="M495 662 L585 662"/>
+  <text class="zh label" x="540" y="647" text-anchor="middle">心理历史</text>
+  <path class="arrow" d="M280 435 L280 520"/>
+  <text class="zh label" x="295" y="485">澄清投递</text>
+  <path class="feedback" d="M335 520 C390 460 520 470 650 435"/>
+  <text class="zh small" x="455" y="474" fill="#2E7D6E">观察与social feed</text>
+  <path class="feedback" d="M1215 435 C1070 480 750 470 445 520"/>
+  <text class="zh small" x="825" y="489" fill="#2E7D6E">UGC发布概率与反馈</text>
+
+  <rect x="65" y="858" width="1470" height="92" rx="18" fill="#FFFFFF" stroke="#B8C8D4" stroke-width="1.5"/>
+  <text class="zh body" x="95" y="895" font-weight="700">证据防火墙</text>
+  <circle cx="265" cy="889" r="8" fill="#4F9B76"/>
+  <text class="zh small" x="282" y="895">实现证据：测试、schema、replay、provenance</text>
+  <circle cx="675" cy="889" r="8" fill="#D9AE45"/>
+  <text class="zh small" x="692" y="895">工程验证：敏感性与稳健性</text>
+  <circle cx="1015" cy="889" r="8" fill="#8464A5"/>
+  <text class="zh small" x="1032" y="895">正式推断：独立replication blocks</text>
+  <text class="zh small" x="95" y="928" fill="#536B7B">当前：前两层及单次Real-LLM描述性证据可用；Pilot和v3.3.1正式推断尚未执行。</text>
+  <text class="zh micro" x="1535" y="982" text-anchor="end" fill="#6C7D88">Figure source: TASK_005_FMCG_V3.3.1 · 2026-08-15</text>
+</svg>

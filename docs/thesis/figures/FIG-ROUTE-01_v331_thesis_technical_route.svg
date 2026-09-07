@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1720" viewBox="0 0 1400 1720" role="img" aria-labelledby="title desc">
+  <title id="title">v3.3.1论文技术路线图</title>
+  <desc id="desc">展示研究定位、理论证据、GABM构建、工程验证、Pilot、正式实验和论文综合的顺序及当前状态。</desc>
+  <defs>
+    <linearGradient id="header" x1="0" x2="1"><stop offset="0" stop-color="#17324D"/><stop offset="1" stop-color="#245B78"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#183042" flood-opacity="0.12"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#44647A"/></marker>
+    <style>
+      .zh{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC","Source Han Sans SC",sans-serif;fill:#183042}
+      .title{font-size:34px;font-weight:700;fill:#fff}.subtitle{font-size:18px;fill:#DCEAF2}
+      .phase{font-size:24px;font-weight:700}.en{font-size:14px;font-weight:700;letter-spacing:.8px}
+      .box-title{font-size:19px;font-weight:700}.body{font-size:16px}.small{font-size:14px}.tiny{font-size:12px}
+      .flow{fill:none;stroke:#44647A;stroke-width:3;marker-end:url(#arrow)}
+      .done{fill:#E8F4EC;stroke:#4F9B76}.partial{fill:#FFF4D6;stroke:#D9AE45}.pending{fill:#F3F5F7;stroke:#99A8B3}
+      .card{stroke-width:2}.gate{fill:#FFFFFF;stroke:#6F8798;stroke-width:1.5;stroke-dasharray:7 5}
+    </style>
+  </defs>
+  <rect width="1400" height="1720" fill="#F7FAFC"/>
+  <rect width="1400" height="112" fill="url(#header)"/>
+  <text class="zh title" x="65" y="52">v3.3.1 论文研究与技术路线</text>
+  <text class="zh subtitle" x="65" y="84">从管理问题与理论证据到可复现GABM、分层验证、Pilot规划和正式block-level推断</text>
+
+  <g filter="url(#shadow)">
+    <rect class="card done" x="65" y="155" width="1270" height="190" rx="22"/>
+    <rect class="card done" x="65" y="405" width="1270" height="250" rx="22"/>
+    <rect class="card done" x="65" y="715" width="1270" height="250" rx="22"/>
+    <rect class="card partial" x="65" y="1025" width="1270" height="220" rx="22"/>
+    <rect class="card pending" x="65" y="1305" width="1270" height="220" rx="22"/>
+  </g>
+
+  <circle cx="105" cy="198" r="23" fill="#32775A"/><text class="zh box-title" x="105" y="205" text-anchor="middle" fill="#fff">1</text>
+  <text class="zh phase" x="145" y="203">研究定位与理论证据</text><text class="zh en" x="145" y="229" fill="#32775A">QUESTION AND LITERATURE — COMPLETED FOUNDATION</text>
+  <rect x="105" y="257" width="270" height="58" rx="12" fill="#fff" stroke="#AFCBBC"/><text class="zh body" x="240" y="292" text-anchor="middle">绿色FMCG信任危机</text>
+  <rect x="405" y="257" width="270" height="58" rx="12" fill="#fff" stroke="#AFCBBC"/><text class="zh body" x="540" y="292" text-anchor="middle">内容 × 渠道 × 时机</text>
+  <rect x="705" y="257" width="270" height="58" rx="12" fill="#fff" stroke="#AFCBBC"/><text class="zh body" x="840" y="292" text-anchor="middle">语义—心理—网络—行为</text>
+  <rect x="1005" y="257" width="270" height="58" rx="12" fill="#fff" stroke="#AFCBBC"/><text class="zh body" x="1140" y="284" text-anchor="middle">七个文献包 + 官方来源</text><text class="zh small" x="1140" y="305" text-anchor="middle">禁止虚构书目</text>
+
+  <circle cx="105" cy="448" r="23" fill="#32775A"/><text class="zh box-title" x="105" y="455" text-anchor="middle" fill="#fff">2</text>
+  <text class="zh phase" x="145" y="453">GABM模型构建与可审计实现</text><text class="zh en" x="145" y="479" fill="#32775A">MODEL CONSTRUCTION — IMPLEMENTED</text>
+  <rect x="105" y="515" width="230" height="105" rx="13" fill="#fff" stroke="#AFCBBC"/><text class="zh box-title" x="220" y="548" text-anchor="middle">情境与Agent</text><text class="zh small" x="220" y="575" text-anchor="middle">虚构植物奶品牌</text><text class="zh small" x="220" y="598" text-anchor="middle">20个engineering personas</text>
+  <rect x="355" y="515" width="230" height="105" rx="13" fill="#fff" stroke="#AFCBBC"/><text class="zh box-title" x="470" y="548" text-anchor="middle">LLM语义评价</text><text class="zh small" x="470" y="575" text-anchor="middle">不决定购买或发帖</text><text class="zh small" x="470" y="598" text-anchor="middle">理由可复用为UGC正文</text>
+  <rect x="605" y="515" width="230" height="105" rx="13" fill="#fff" stroke="#AFCBBC"/><text class="zh box-title" x="720" y="548" text-anchor="middle">心理与意向</text><text class="zh small" x="720" y="575" text-anchor="middle">Trust · Att · SN · PBC</text><text class="zh small" x="720" y="598" text-anchor="middle">TPB式purchase intention</text>
+  <rect x="855" y="515" width="230" height="105" rx="13" fill="#fff" stroke="#AFCBBC"/><text class="zh box-title" x="970" y="548" text-anchor="middle">固定网络传播</text><text class="zh small" x="970" y="575" text-anchor="middle">有向BA · Hub/Random</text><text class="zh small" x="970" y="598" text-anchor="middle">public + paid + UGC</text>
+  <rect x="1105" y="515" width="170" height="105" rx="13" fill="#fff" stroke="#AFCBBC"/><text class="zh box-title" x="1190" y="548" text-anchor="middle">重复选择</text><text class="zh small" x="1190" y="575" text-anchor="middle">renewal demand</text><text class="zh small" x="1190" y="598" text-anchor="middle">loyalty update</text>
+  <text class="zh small" x="105" y="642" fill="#436456">代码—变量—输出通过traceability、schema、seed与hash连接</text>
+
+  <circle cx="105" cy="758" r="23" fill="#32775A"/><text class="zh box-title" x="105" y="765" text-anchor="middle" fill="#fff">3</text>
+  <text class="zh phase" x="145" y="763">模型验证与工程证据</text><text class="zh en" x="145" y="789" fill="#32775A">VERIFICATION AND ENGINEERING VALIDATION — COMPLETED</text>
+  <rect x="105" y="825" width="220" height="105" rx="13" fill="#fff" stroke="#AFCBBC"/><text class="zh box-title" x="215" y="857" text-anchor="middle">实现验证</text><text class="zh small" x="215" y="884" text-anchor="middle">tests · invariants</text><text class="zh small" x="215" y="907" text-anchor="middle">replay · provenance</text>
+  <rect x="345" y="825" width="220" height="105" rx="13" fill="#fff" stroke="#AFCBBC"/><text class="zh box-title" x="455" y="857" text-anchor="middle">机制敏感性</text><text class="zh small" x="455" y="884" text-anchor="middle">Trust OAT / Morris</text><text class="zh small" x="455" y="907" text-anchor="middle">p × lag · horizon</text>
+  <rect x="585" y="825" width="220" height="105" rx="13" fill="#fff" stroke="#AFCBBC"/><text class="zh box-title" x="695" y="857" text-anchor="middle">网络稳健性</text><text class="zh small" x="695" y="884" text-anchor="middle">topology · orientation</text><text class="zh small" x="695" y="907" text-anchor="middle">N × paid-seed allocation</text>
+  <rect x="825" y="825" width="220" height="105" rx="13" fill="#fff" stroke="#AFCBBC"/><text class="zh box-title" x="935" y="857" text-anchor="middle">LLM工程稳健性</text><text class="zh small" x="935" y="884" text-anchor="middle">prompt profiles</text><text class="zh small" x="935" y="907" text-anchor="middle">schema / fallback audit</text>
+  <rect x="1065" y="825" width="210" height="105" rx="13" fill="#fff" stroke="#AFCBBC"/><text class="zh box-title" x="1170" y="857" text-anchor="middle">认知描述证据</text><text class="zh small" x="1170" y="884" text-anchor="middle">预选单次Real-LLM run</text><text class="zh small" x="1170" y="907" text-anchor="middle">非正式推断</text>
+
+  <circle cx="105" cy="1068" r="23" fill="#A97713"/><text class="zh box-title" x="105" y="1075" text-anchor="middle" fill="#fff">4</text>
+  <text class="zh phase" x="145" y="1073">Pilot方差与正式N可行性</text><text class="zh en" x="145" y="1099" fill="#A97713">PILOT PLANNING — PARTIALLY FROZEN, NOT EXECUTED</text>
+  <rect x="105" y="1135" width="290" height="76" rx="13" fill="#fff" stroke="#E2C87A"/><text class="zh box-title" x="250" y="1166" text-anchor="middle">P001–P024</text><text class="zh small" x="250" y="1192" text-anchor="middle">24个blocks + D1–D24 replay</text>
+  <rect x="425" y="1135" width="245" height="76" rx="13" fill="#FFF9E8" stroke="#D9AE45"/><text class="zh box-title" x="547" y="1166" text-anchor="middle">动态N_required</text><text class="zh small" x="547" y="1192" text-anchor="middle">90% power · 无科研上限</text>
+  <rect class="gate" x="700" y="1135" width="270" height="76" rx="13"/><text class="zh box-title" x="835" y="1166" text-anchor="middle">待固定</text><text class="zh small" x="835" y="1192" text-anchor="middle">费用 · clean SHA</text>
+  <rect class="gate" x="1000" y="1135" width="275" height="76" rx="13"/><text class="zh box-title" x="1138" y="1166" text-anchor="middle">待明确授权</text><text class="zh small" x="1138" y="1192" text-anchor="middle">真实LLM Pilot执行</text>
+
+  <circle cx="105" cy="1348" r="23" fill="#7B8993"/><text class="zh box-title" x="105" y="1355" text-anchor="middle" fill="#fff">5</text>
+  <text class="zh phase" x="145" y="1353">正式实验、结果解释与论文综合</text><text class="zh en" x="145" y="1379" fill="#6D7B85">FORMAL INFERENCE AND THESIS SYNTHESIS — NOT STARTED</text>
+  <rect class="gate" x="105" y="1415" width="260" height="76" rx="13"/><text class="zh box-title" x="235" y="1446" text-anchor="middle">OC计算</text><text class="zh small" x="235" y="1472" text-anchor="middle">四相关场景取最保守N</text>
+  <rect class="gate" x="395" y="1415" width="260" height="76" rx="13"/><text class="zh box-title" x="525" y="1446" text-anchor="middle">协议1.1</text><text class="zh small" x="525" y="1472" text-anchor="middle">正式seeds与分析SHA</text>
+  <rect class="gate" x="685" y="1415" width="260" height="76" rx="13"/><text class="zh box-title" x="815" y="1446" text-anchor="middle">正式blocks</text><text class="zh small" x="815" y="1472" text-anchor="middle">P1/P2/P5 + Holm</text>
+  <rect class="gate" x="975" y="1415" width="300" height="76" rx="13"/><text class="zh box-title" x="1125" y="1446" text-anchor="middle">论文结论与管理启示</text><text class="zh small" x="1125" y="1472" text-anchor="middle">严格限定模型内与外推边界</text>
+
+  <path class="flow" d="M700 345 L700 405"/><path class="flow" d="M700 655 L700 715"/><path class="flow" d="M700 965 L700 1025"/><path class="flow" d="M700 1245 L700 1305"/>
+
+  <rect x="65" y="1580" width="1270" height="86" rx="18" fill="#FFFFFF" stroke="#B8C8D4" stroke-width="1.5"/>
+  <circle cx="100" cy="1613" r="8" fill="#4F9B76"/><text class="zh small" x="118" y="1619">已完成或可进入论文</text>
+  <circle cx="360" cy="1613" r="8" fill="#D9AE45"/><text class="zh small" x="378" y="1619">部分固定、禁止执行</text>
+  <circle cx="650" cy="1613" r="8" fill="#99A8B3"/><text class="zh small" x="668" y="1619">尚未开始</text>
+  <text class="zh small" x="100" y="1648" fill="#526875">绿色状态不等于外部有效性；正式结果必须来自独立replication blocks，Agent和micro-buyers均不是重复单位。</text>
+  <text class="zh tiny" x="1335" y="1700" text-anchor="end" fill="#6C7D88">Figure source: thesis writing foundation v3.3.1 · 2026-08-15</text>
+</svg>

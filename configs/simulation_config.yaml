@@ -1,16 +1,16 @@
 # ===================================================================
-# Main Simulator Configuration File (Entry Point)
+# TASK_005 FMCG v3.2 — AgentKernel bootstrap configuration
+#
+# 这个 YAML 只服务于 simulation_core.py 中的 Builder 配置解析。
+# v3.2 的社会网络由 SocialNetworkPlugin 在内存中构建，因此这里不再声明
+# 已删除的 data/relation/relation.jsonl 或 data/map/agents.jsonl。
+# ===================================================================
 
-
-# --- Global Simulation Configuration ---
-# Parameters for controlling overall simulator behavior.
 simulation:
-  max_ticks: 30          # Maximum time steps for simulation run
-                         # 与 run_simulation.py 中 TOTAL_TICKS=30 保持一致
-                         # 事件时间轴: Tick1(发售预热) / Tick5(黑石漂绿丑闻) / Tick10(菜籽油健康风波)
+  # 与当前 v3.2 实验时域一致；真正的运行参数仍由 ExperimentConfig 控制。
+  max_ticks: 30
 
-# --- Module Path Configuration ---
-# Defines configuration file paths for all core modules.
+# AgentKernel load_config() 会读取下面这些模块配置。
 configs:
   environment: "environment_config.yaml"
   actions: "actions_config.yaml"
@@ -19,13 +19,7 @@ configs:
   database: "db_config.yaml"
   models: "models_config.yaml"
 
-# --- Data Path Configuration ---
-# Defines all static data files used to initialize environment and agents.
-
+# Builder 只需要 agent_profiles 来生成经过 Pydantic 验证的 AgentConfig。
+# simulation_core.py 会在 Builder 初始化前临时写入这个文件，运行后再恢复/删除。
 data:
-  # Agent-related data
   agent_profiles: "data/agents/profiles.jsonl"
-  # Environment-related data
-  agents_relation: "data/relation/relation.jsonl"
-  map_agents: "data/map/agents.jsonl"
-

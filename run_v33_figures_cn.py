@@ -52,9 +52,10 @@ def main(argv=None) -> int:
     parser.add_argument(
         "--only", type=str, default=None,
         choices=[
-            "trust-dynamics", "heatmap", "reach", "transmission",
+            "trust-dynamics", "heatmap", "all-conditions", "reach", "transmission",
             "radar", "heterogeneity", "interaction", "mechanism",
-            "topology", "all",
+            "topology", "choice-dynamics", "purchase-cluster", "choice-rate",
+            "loyalty", "purchase-cumulative", "all",
         ],
         help="只生成指定类型的图表",
     )
@@ -83,6 +84,7 @@ def main(argv=None) -> int:
         generate_all_run_figures_cn,
         plot_trust_dynamics_cn,
         plot_trust_delta_heatmap_cn,
+        plot_all_conditions_trust_cn,
         plot_reach_comparison_cn,
         plot_choice_transmission_cn,
         plot_semantic_radar_cn,
@@ -93,6 +95,11 @@ def main(argv=None) -> int:
         plot_experiment_matrix_cn,
         plot_sensitivity_tornado_cn,
         plot_morris_screening_cn,
+        plot_choice_share_dynamics_cn,
+        plot_purchase_by_cluster_cn,
+        plot_choice_rate_by_condition_cn,
+        plot_loyalty_dynamics_cn,
+        plot_purchase_cumulative_cn,
     )
 
     ESTIMAND_MAP = {
@@ -170,6 +177,7 @@ def main(argv=None) -> int:
     single_map = {
         "trust-dynamics": lambda: plot_trust_dynamics_cn(run_dir, out_dir),
         "heatmap": lambda: plot_trust_delta_heatmap_cn(run_dir, out_dir),
+        "all-conditions": lambda: plot_all_conditions_trust_cn(run_dir, out_dir),
         "reach": lambda: plot_reach_comparison_cn(run_dir, out_dir),
         "transmission": lambda: plot_choice_transmission_cn(run_dir, out_dir),
         "radar": lambda: plot_semantic_radar_cn(run_dir, out_dir),
@@ -181,6 +189,13 @@ def main(argv=None) -> int:
             run_dir, out_dir, condition=condition
         ),
         "topology": lambda: plot_network_topology_cn(run_dir, out_dir),
+        "choice-dynamics": lambda: plot_choice_share_dynamics_cn(run_dir, out_dir),
+        "purchase-cluster": lambda: plot_purchase_by_cluster_cn(
+            run_dir, out_dir, condition=condition
+        ),
+        "choice-rate": lambda: plot_choice_rate_by_condition_cn(run_dir, out_dir),
+        "loyalty": lambda: plot_loyalty_dynamics_cn(run_dir, out_dir),
+        "purchase-cumulative": lambda: plot_purchase_cumulative_cn(run_dir, out_dir),
     }
 
     try:
